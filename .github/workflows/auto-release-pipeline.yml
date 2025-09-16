@@ -205,7 +205,6 @@ jobs:
           tags: |
             await2719/docker-auto:latest
             await2719/docker-auto:${{ needs.check-changes.outputs.version }}
-            await2719/docker-auto:${{ env.VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
