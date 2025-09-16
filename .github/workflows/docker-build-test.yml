@@ -27,10 +27,7 @@ permissions:
 jobs:
   docker-build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [backend, frontend]
-    name: Build ${{ matrix.service }}
+    name: Build Unified Docker Image
 
     steps:
       - name: Checkout code
@@ -43,21 +40,19 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-unified-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.service }}-
+            ${{ runner.os }}-buildx-unified-
 
-      - name: Build Docker image (${{ matrix.service }})
+      - name: Build Unified Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./${{ matrix.service }}
-          file: ./${{ matrix.service }}/Dockerfile.dev
-          target: development
+          context: .
+          file: ./Dockerfile
           platforms: linux/amd64
           push: false
           tags: |
-            docker-auto-${{ matrix.service }}:test
-            docker-auto-${{ matrix.service }}:${{ github.sha }}
+            docker-auto:test
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
           load: true
@@ -225,7 +220,7 @@ jobs:
       - name: Build unified image for scanning
         run: |
           # Build unified Docker image for security scanning
-          docker build -t docker-auto:scan . -f Dockerfile
+          docker build -t docker-auto:scan .
 
       - name: Run Trivy security scan on unified image
         uses: aquasecurity/trivy-action@master
