@@ -125,7 +125,7 @@ EOF
 RUN cat > /docker-entrypoint.sh << 'EOF'
 #!/bin/sh
 
-echo "🚀 Starting Docker Auto Update System"
+echo "🚀 Starting Docker Auto Update System v2.2.0"
 
 # Wait for database if DB_HOST is provided
 if [ -n "$DB_HOST" ]; then

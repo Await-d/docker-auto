@@ -1,4 +1,4 @@
-# Docker Auto Update System - Development Environment
+# Docker Auto Update System - Production Ready v2.2.0
 version: '3.8'
 
 services:

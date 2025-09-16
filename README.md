@@ -29,6 +29,7 @@ The Docker Auto-Update System is a comprehensive solution for managing Docker co
 - **🔔 Notification System**: Email, Slack, webhook notifications for updates and alerts
 - **📱 Mobile Responsive**: Full mobile support for on-the-go management
 - **🎯 Single Image Architecture**: Unified container with frontend, backend, and docs
+- **⚡ Optimized Performance**: Enhanced build process with streamlined CI/CD integration
 
 ## 🏗️ Architecture
 
@@ -85,7 +86,7 @@ graph TB
 
 ## 🚦 Quick Start
 
-**New in v2.2.0**: Streamlined deployment with optimized CI/CD pipeline and enhanced single-image architecture!
+**New in v2.2.0**: Streamlined deployment with optimized CI/CD pipeline, enhanced single-image architecture, and improved build performance!
 
 ### Prerequisites
 
