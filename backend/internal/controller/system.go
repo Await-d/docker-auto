@@ -235,7 +235,7 @@ type CheckResult struct {
 
 var (
 	startTime = time.Now()
-	version   = "1.0.0" // This would typically be set during build
+	version   = "2.1.0" // This would typically be set during build
 	buildTime = "unknown"
 	gitCommit = "unknown"
 )

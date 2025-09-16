@@ -93,7 +93,7 @@ func (ma *MonitoringAPI) GetHealthStatus(c *gin.Context) {
 		"status":    "healthy",
 		"timestamp": time.Now(),
 		"uptime":    time.Since(time.Now().Add(-time.Hour)), // Placeholder
-		"version":   "1.0.0",
+		"version":   "2.1.0",
 	}
 
 	// Check if metrics collector is working

@@ -10,7 +10,7 @@
 [![Vue](https://img.shields.io/badge/vue-3.0+-green)](https://vuejs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-A professional Docker container auto-update management system with enterprise-grade features, real-time monitoring, and comprehensive web-based management interface.
+A professional Docker container auto-update management system with enterprise-grade features, real-time monitoring, comprehensive web-based management interface, and unified single-image architecture.
 
 ## 🚀 Overview
 
@@ -28,6 +28,7 @@ The Docker Auto-Update System is a comprehensive solution for managing Docker co
 - **⚡ High Performance**: Go backend with PostgreSQL and Redis caching
 - **🔔 Notification System**: Email, Slack, webhook notifications for updates and alerts
 - **📱 Mobile Responsive**: Full mobile support for on-the-go management
+- **🎯 Single Image Architecture**: Unified container with frontend, backend, and docs
 
 ## 🏗️ Architecture
 
@@ -326,8 +327,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Status**: 🚀 Production Ready
-**Version**: 2.0.0
-**Last Updated**: September 16, 2024
+**Version**: 2.1.0
+**Last Updated**: September 16, 2025
 
 <details>
 <summary>📊 Project Statistics</summary>

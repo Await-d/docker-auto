@@ -511,9 +511,9 @@ const formData = ref<GeneralSettings>({
 } as any)
 
 const systemInfo = ref({
-  version: '1.0.0',
+  version: '2.1.0',
   buildDate: new Date().toISOString(),
-  runtime: 'Node.js 18.17.0',
+  runtime: 'Node.js 20.x',
   platform: 'Linux x64',
   installPath: '/opt/docker-auto'
 })
