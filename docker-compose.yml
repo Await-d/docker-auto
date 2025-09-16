@@ -27,13 +27,12 @@ services:
       retries: 5
       start_period: 30s
 
-  # Backend Service
-  backend:
+  # Unified Docker Auto Service
+  docker-auto:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
-      target: development
-    container_name: docker-auto-backend
+      context: .
+      dockerfile: Dockerfile
+    container_name: docker-auto-system
     environment:
       # Application
       - APP_PORT=8080
@@ -60,25 +59,15 @@ services:
       - DOCKER_API_VERSION=1.41
       - DOCKER_TIMEOUT=30
 
-      # Development
-      - DEBUG_MODE=true
-      - API_DOCS_ENABLED=true
-      - HOT_RELOAD=true
-
-      # CORS (allow frontend access)
-      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
-
       # Timezone
       - TZ=Asia/Shanghai
     volumes:
       # Mount Docker socket for container management
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Mount source code for hot reload
-      - ./backend:/app
       # Mount logs directory
       - ./logs:/app/logs
     ports:
-      - "8080:8080"
+      - "80:80"
     networks:
       - docker-auto-network
     depends_on:
@@ -86,64 +75,11 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost/health", "&&", "curl", "-f", "http://localhost/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  # Frontend Service
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-      target: development
-    container_name: docker-auto-frontend
-    environment:
-      # API Configuration
-      - VUE_APP_API_BASE_URL=http://localhost:8080/api/v1
-      - VUE_APP_WS_URL=ws://localhost:8080/ws
-      - VUE_APP_TITLE=Docker Auto Update System
-      - VUE_APP_VERSION=1.0.0-dev
-
-      # Development
-      - NODE_ENV=development
-      - VITE_DEV_SERVER_HOST=0.0.0.0
-      - VITE_DEV_SERVER_PORT=3000
-
-      # Timezone
-      - TZ=Asia/Shanghai
-    volumes:
-      # Mount source code for hot reload
-      - ./frontend:/app
-      - /app/node_modules
-    ports:
-      - "3000:3000"
-    networks:
-      - docker-auto-network
-    depends_on:
-      - backend
-    restart: unless-stopped
-    stdin_open: true
-    tty: true
-
-  # Nginx Reverse Proxy (Optional for production-like setup)
-  nginx:
-    image: nginx:alpine
-    container_name: docker-auto-nginx
-    volumes:
-      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/logs:/var/log/nginx
-    ports:
-      - "80:80"
-    networks:
-      - docker-auto-network
-    depends_on:
-      - frontend
-      - backend
-    restart: unless-stopped
-    profiles:
-      - nginx  # Only start with --profile nginx
 
   # pgAdmin (Optional database management)
   pgadmin:

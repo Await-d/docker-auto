@@ -153,22 +153,22 @@ curl http://localhost:8080/api/health
 # docker-compose.yml - Production ready
 version: '3.8'
 services:
-  backend:
-    image: docker-auto/backend:latest
+  docker-auto:
+    image: await2719/docker-auto:latest
     environment:
-      - DATABASE_URL=postgresql://user:pass@db:5432/dockerauto
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=your-secret-key
+      - APP_PORT=8080
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=dockerauto
+      - DB_USER=dockerauto
+      - DB_PASSWORD=secure_password
+      - JWT_SECRET=your-secure-jwt-secret-key
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "80:80"
     depends_on:
       - db
-      - redis
-
-  frontend:
-    image: docker-auto/frontend:latest
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
 
   db:
     image: postgres:15
@@ -179,14 +179,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-
 volumes:
   postgres_data:
-  redis_data:
 ```
 
 ### Environment Variables
