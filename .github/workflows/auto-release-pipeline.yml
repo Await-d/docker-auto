@@ -102,6 +102,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.23'
+          cache: true
           cache-dependency-path: backend/go.sum
 
       - name: Install frontend dependencies
@@ -205,6 +206,7 @@ jobs:
           tags: |
             await2719/docker-auto:latest
             await2719/docker-auto:${{ needs.check-changes.outputs.version }}
+            await2719/docker-auto:${{ env.VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
