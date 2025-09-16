@@ -91,34 +91,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: './frontend/package-lock.json'
-
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.23'
-          cache: true
-          cache-dependency-path: './backend/go.sum'
-
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm ci
-
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
-
-      - name: Build backend
-        run: |
-          cd backend
-          CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o docker-auto-server ./cmd/server
+      # No need for separate Node.js/Go setup since Docker handles the build
 
       - name: Create VERSION file
         run: |
