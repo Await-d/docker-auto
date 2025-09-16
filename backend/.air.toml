@@ -1,0 +1,68 @@
+# Air configuration for Go hot reload
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  # 监听的命令
+  cmd = "go build -o ./tmp/main ./cmd/server"
+
+  # 二进制文件路径
+  bin = "tmp/main"
+
+  # 自定义二进制文件
+  full_bin = "APP_ENV=development APP_PORT=8080 ./tmp/main"
+
+  # 监听的文件扩展名
+  include_ext = ["go", "tpl", "tmpl", "html", "yaml", "yml", "json"]
+
+  # 忽略的文件
+  exclude_dir = ["assets", "tmp", "vendor", "frontend", "node_modules"]
+
+  # 包含的目录
+  include_dir = []
+
+  # 忽略的文件
+  exclude_file = []
+
+  # 忽略未更改的文件
+  exclude_unchanged = true
+
+  # 遵循符号链接进行目录
+  follow_symlink = true
+
+  # 这个日志文件放置在你的tmp_dir中
+  log = "air_errors.log"
+
+  # 轮询文件更改而不是使用文件系统通知
+  poll = false
+
+  # 文件更改的轮询间隔（默认是1000ms）
+  poll_interval = 500
+
+  # 延迟重启后的毫秒数
+  delay = 1000
+
+  # 当.air.toml文件更改时停止运行旧的二进制文件
+  stop_on_error = true
+
+  # 发送中断信号之前删除二进制文件
+  send_interrupt = false
+
+  # 发送kill信号之前的延迟
+  kill_delay = 500
+
+[log]
+  # 显示日志时间
+  time = true
+
+[color]
+  # 自定义每个部分显示的颜色。如果找不到颜色，使用原始的应用程序日志。
+  main = "magenta"
+  watcher = "cyan"
+  build = "yellow"
+  runner = "green"
+
+[misc]
+  # 退出时删除tmp目录
+  clean_on_exit = true

@@ -1,0 +1,421 @@
+/**
+ * Main SCSS entry point
+ * Imports all global styles for the Docker Auto-Update System
+ */
+
+// Import variables and mixins first
+@use 'variables' as *;
+
+// Import global styles
+@import 'global';
+
+// Element Plus theme customization
+:root {
+  // Custom Element Plus variables
+  --el-color-primary: #{$primary};
+  --el-color-primary-light-3: #{$primary-light-3};
+  --el-color-primary-light-5: #{$primary-light-5};
+  --el-color-primary-light-7: #{$primary-light-7};
+  --el-color-primary-light-8: #{$primary-light-8};
+  --el-color-primary-light-9: #{$primary-light-9};
+  --el-color-primary-dark-2: #{$primary-dark-2};
+
+  // Typography
+  --el-font-family: #{$font-family-base};
+  --el-font-size-base: #{$font-size-base};
+  --el-font-size-small: #{$font-size-small};
+  --el-font-size-large: #{$font-size-large};
+
+  // Border radius
+  --el-border-radius-base: #{$border-radius-base};
+  --el-border-radius-small: #{$border-radius-small};
+  --el-border-radius-large: #{$border-radius-large};
+
+  // Transitions
+  --el-transition-duration: #{$transition-base};
+  --el-transition-duration-fast: #{$transition-fast};
+
+  // Component heights
+  --el-component-size-large: #{$input-height-large};
+  --el-component-size: #{$input-height-default};
+  --el-component-size-small: #{$input-height-small};
+
+  // Shadows
+  --el-box-shadow-base: #{$box-shadow-base};
+  --el-box-shadow-light: #{$box-shadow-light};
+  --el-box-shadow-dark: #{$box-shadow-dark};
+}
+
+// Element Plus component customizations
+.el-button {
+  font-weight: $font-weight-primary;
+  border-radius: $border-radius-base;
+  transition: all $transition-base ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  // Primary button enhancements
+  &.el-button--primary {
+    box-shadow: 0 2px 4px rgba($primary, 0.2);
+
+    &:hover {
+      box-shadow: 0 4px 8px rgba($primary, 0.3);
+    }
+  }
+}
+
+.el-input {
+  .el-input__wrapper {
+    border-radius: $border-radius-base;
+    transition: all $transition-base ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: $box-shadow-light;
+    }
+
+    &.is-focus {
+      transform: translateY(-1px);
+      box-shadow: 0 0 0 2px rgba($primary, 0.2);
+    }
+  }
+}
+
+.el-card {
+  border-radius: $border-radius-base;
+  border: 1px solid var(--el-border-color-lighter);
+  transition: all $transition-base ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $box-shadow-medium;
+  }
+
+  .el-card__header {
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    padding: $spacing-lg;
+  }
+
+  .el-card__body {
+    padding: $spacing-lg;
+  }
+}
+
+.el-dialog {
+  border-radius: $border-radius-large;
+  box-shadow: $box-shadow-dark;
+
+  .el-dialog__header {
+    padding: $spacing-lg $spacing-lg $spacing-base;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+
+  .el-dialog__body {
+    padding: $spacing-lg;
+  }
+
+  .el-dialog__footer {
+    padding: $spacing-base $spacing-lg $spacing-lg;
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+}
+
+.el-drawer {
+  .el-drawer__header {
+    padding: $spacing-lg;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    margin-bottom: 0;
+  }
+
+  .el-drawer__body {
+    padding: $spacing-lg;
+  }
+}
+
+.el-table {
+  .el-table__header {
+    th {
+      background: var(--el-fill-color-lighter);
+      font-weight: $font-weight-primary;
+    }
+  }
+
+  .el-table__row {
+    &:hover {
+      background: var(--el-fill-color-light);
+    }
+  }
+}
+
+.el-menu {
+  border: none;
+
+  .el-menu-item,
+  .el-sub-menu__title {
+    height: 48px;
+    line-height: 48px;
+    border-radius: $border-radius-base;
+    margin: 2px 8px;
+
+    &:hover {
+      background: var(--el-fill-color-light);
+    }
+
+    &.is-active {
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+      font-weight: $font-weight-primary;
+    }
+  }
+}
+
+.el-form {
+  .el-form-item__label {
+    font-weight: $font-weight-primary;
+    color: var(--el-text-color-regular);
+  }
+
+  .el-form-item__error {
+    font-size: $font-size-small;
+  }
+}
+
+.el-alert {
+  border-radius: $border-radius-base;
+  border: none;
+  padding: $spacing-base $spacing-lg;
+
+  .el-alert__title {
+    font-weight: $font-weight-primary;
+  }
+}
+
+.el-notification {
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-dark;
+  border: none;
+
+  .el-notification__title {
+    font-weight: $font-weight-primary;
+  }
+}
+
+.el-message {
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-medium;
+  border: none;
+
+  .el-message__content {
+    font-weight: $font-weight-primary;
+  }
+}
+
+.el-tooltip__popper {
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-medium;
+}
+
+.el-dropdown-menu {
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-medium;
+  border: 1px solid var(--el-border-color-light);
+  padding: $spacing-xs 0;
+
+  .el-dropdown-menu__item {
+    padding: $spacing-sm $spacing-base;
+    font-weight: $font-weight-secondary;
+
+    &:hover {
+      background: var(--el-fill-color-light);
+    }
+  }
+}
+
+.el-breadcrumb {
+  .el-breadcrumb__item {
+    .el-breadcrumb__inner {
+      font-weight: $font-weight-primary;
+      color: var(--el-text-color-regular);
+
+      &:hover {
+        color: var(--el-color-primary);
+      }
+    }
+
+    &:last-child {
+      .el-breadcrumb__inner {
+        color: var(--el-text-color-primary);
+        font-weight: $font-weight-primary;
+      }
+    }
+  }
+}
+
+// Custom components styling
+.page-container {
+  padding: $spacing-lg;
+  background: var(--el-bg-color-page);
+  min-height: 100%;
+
+  @include max-screen($breakpoint-sm) {
+    padding: $spacing-base;
+  }
+}
+
+.content-card {
+  @include card-style();
+  margin-bottom: $spacing-lg;
+
+  .card-header {
+    @include flex-between;
+    padding: $spacing-lg;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+
+    .card-title {
+      font-size: $font-size-large;
+      font-weight: $font-weight-primary;
+      color: var(--el-text-color-primary);
+      margin: 0;
+    }
+  }
+
+  .card-body {
+    padding: $spacing-lg;
+  }
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius-round;
+  font-size: $font-size-small;
+  font-weight: $font-weight-primary;
+
+  &.status-success {
+    background: var(--el-color-success-light-9);
+    color: var(--el-color-success);
+  }
+
+  &.status-warning {
+    background: var(--el-color-warning-light-9);
+    color: var(--el-color-warning);
+  }
+
+  &.status-danger {
+    background: var(--el-color-danger-light-9);
+    color: var(--el-color-danger);
+  }
+
+  &.status-info {
+    background: var(--el-color-info-light-9);
+    color: var(--el-color-info);
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: $spacing-xxxl $spacing-lg;
+  color: var(--el-text-color-secondary);
+
+  .empty-icon {
+    font-size: 64px;
+    color: var(--el-border-color-darker);
+    margin-bottom: $spacing-lg;
+  }
+
+  .empty-title {
+    font-size: $font-size-large;
+    font-weight: $font-weight-primary;
+    color: var(--el-text-color-regular);
+    margin-bottom: $spacing-sm;
+  }
+
+  .empty-description {
+    font-size: $font-size-base;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+// Animation utilities
+.fade-in {
+  @include fade-in();
+}
+
+.slide-in-up {
+  @include slide-in-up();
+}
+
+.slide-in-down {
+  @include slide-in-down();
+}
+
+.bounce-in {
+  @include bounce-in();
+}
+
+// Loading states
+.skeleton-loader {
+  background: linear-gradient(90deg, var(--el-fill-color-lighter) 25%, var(--el-fill-color-light) 50%, var(--el-fill-color-lighter) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: $border-radius-base;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// Dark mode specific adjustments
+.dark {
+  .skeleton-loader {
+    background: linear-gradient(90deg, var(--el-fill-color-darker) 25%, var(--el-fill-color-dark) 50%, var(--el-fill-color-darker) 75%);
+    background-size: 200% 100%;
+  }
+
+  .el-card {
+    background: var(--el-bg-color-overlay);
+    border-color: var(--el-border-color-darker);
+  }
+
+  .status-badge {
+    &.status-success {
+      background: rgba($success, 0.2);
+    }
+
+    &.status-warning {
+      background: rgba($warning, 0.2);
+    }
+
+    &.status-danger {
+      background: rgba($danger, 0.2);
+    }
+
+    &.status-info {
+      background: rgba($info, 0.2);
+    }
+  }
+}
+
+// Responsive font scaling
+@include max-screen($breakpoint-sm) {
+  html {
+    font-size: 14px;
+  }
+
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.375rem; }
+  h3 { font-size: 1.125rem; }
+}

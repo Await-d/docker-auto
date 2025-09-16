@@ -1,0 +1,406 @@
+# Monitoring and Observability Configuration
+# Docker Auto-Update System
+
+# Logging Configuration
+logging:
+  # Logging level (DEBUG, INFO, WARN, ERROR, FATAL)
+  level: "INFO"
+
+  # Log format (json, text)
+  format: "json"
+
+  # Output destination (stdout, stderr, or file path)
+  output: "stdout"
+
+  # Component name for structured logging
+  component: "docker-auto-update"
+
+  # Log rotation settings
+  rotation:
+    enabled: true
+    max_size: 100    # MB
+    max_backups: 5
+    max_age: 30      # days
+    compress: true
+
+  # Request logging middleware
+  middleware:
+    enabled: true
+    log_request_body: false
+    log_response_body: false
+    max_body_size: 1024  # bytes
+    skip_paths:
+      - "/health"
+      - "/metrics"
+      - "/favicon.ico"
+    sensitive_headers:
+      - "authorization"
+      - "cookie"
+      - "x-api-key"
+
+# Metrics Collection Configuration
+monitoring:
+  # Enable/disable monitoring
+  enabled: true
+
+  # Metrics collection interval
+  collection_interval: "30s"
+
+  # Metrics retention period
+  retention_period: "7d"
+
+  # Maximum number of metrics to store
+  max_metrics: 10000
+
+  # Buffer size for metric updates
+  buffer_size: 1000
+
+  # Storage configuration
+  storage:
+    type: "memory"        # memory, file, database
+    path: "/var/lib/docker-auto/metrics"
+    max_size: 1073741824  # 1GB
+    compression: true
+
+  # Export configuration
+  export:
+    enabled: true
+    format: "prometheus"   # prometheus, json, influxdb
+    endpoint: ""           # External endpoint for metrics export
+    interval: "60s"
+    batch_size: 100
+
+# Health Check Configuration
+health_checks:
+  # Enable/disable health checks
+  enabled: true
+
+  # Health check interval
+  check_interval: "30s"
+
+  # Timeout for individual health checks
+  timeout: "10s"
+
+  # Number of consecutive failures before marking as unhealthy
+  failure_threshold: 3
+
+  # Number of consecutive successes before marking as healthy
+  success_threshold: 1
+
+  # Grace period before starting health checks
+  grace_period: "60s"
+
+  # Retry configuration
+  retry_attempts: 2
+  retry_delay: "5s"
+
+  # Automated recovery
+  enable_recovery: true
+  recovery_actions:
+    - "restart_service"
+    - "clear_cache"
+    - "reset_connections"
+
+# Individual Health Check Configurations
+health_check_configs:
+  # Database health check
+  database:
+    name: "database"
+    enabled: true
+    interval: "60s"
+    timeout: "5s"
+    failure_threshold: 3
+    success_threshold: 1
+    critical: true
+    connection_string: "${DATABASE_URL}"
+    query_timeout: "3s"
+    test_query: "SELECT 1"
+    max_connections: 100
+    max_idle_time: "5m"
+
+  # Docker daemon health check
+  docker:
+    name: "docker"
+    enabled: true
+    interval: "60s"
+    timeout: "10s"
+    failure_threshold: 2
+    success_threshold: 1
+    critical: true
+    docker_host: "unix:///var/run/docker.sock"
+    api_version: ""
+    request_timeout: "10s"
+    check_containers: true
+    check_images: true
+    check_networks: true
+
+  # HTTP endpoint health check
+  api:
+    name: "api"
+    enabled: true
+    interval: "30s"
+    timeout: "5s"
+    failure_threshold: 3
+    success_threshold: 1
+    critical: false
+    url: "http://localhost:8080/health"
+    method: "GET"
+    expected_status: [200]
+    tls_skip_verify: false
+    follow_redirects: true
+
+  # File system health check
+  filesystem:
+    name: "filesystem"
+    enabled: true
+    interval: "300s"  # 5 minutes
+    timeout: "5s"
+    failure_threshold: 2
+    success_threshold: 1
+    critical: false
+    path: "/var/lib/docker-auto"
+    min_free_space: 1073741824  # 1GB
+    min_free_percent: 10.0
+    check_writable: true
+    check_readable: true
+
+  # Memory health check
+  memory:
+    name: "memory"
+    enabled: true
+    interval: "60s"
+    timeout: "2s"
+    failure_threshold: 3
+    success_threshold: 1
+    critical: false
+    max_memory_percent: 90.0
+    max_memory_bytes: 2147483648  # 2GB
+    check_swap: true
+    max_swap_percent: 50.0
+
+  # CPU health check
+  cpu:
+    name: "cpu"
+    enabled: true
+    interval: "60s"
+    timeout: "5s"
+    failure_threshold: 5
+    success_threshold: 2
+    critical: false
+    max_cpu_percent: 95.0
+    max_load_average: 10.0
+    sample_duration: "30s"
+
+# Alerting Configuration
+alerting:
+  # Enable/disable alerting
+  enabled: true
+
+  # Rule evaluation interval
+  evaluation_interval: "30s"
+
+  # Alert timeout
+  alert_timeout: "5m"
+
+  # Alert resolve timeout
+  resolve_timeout: "5m"
+
+  # Alert grouping settings
+  group_wait: "30s"
+  group_interval: "5m"
+  repeat_interval: "12h"
+
+  # Maximum number of alerts to keep in memory
+  max_alerts: 1000
+
+  # Storage configuration for alerts
+  storage:
+    type: "memory"      # memory, file, database
+    path: "/var/lib/docker-auto/alerts"
+    retention: "30d"
+    max_size: 104857600  # 100MB
+    compress: true
+    backup: false
+
+  # Global configuration
+  global_config:
+    smtp_smarthost: "localhost:587"
+    smtp_from: "alerts@docker-auto-update.local"
+    smtp_require_tls: true
+
+# Alert Routes Configuration
+alert_routes:
+  # Default route
+  - receiver: "default"
+    group_by: ["alertname", "severity"]
+    group_wait: "10s"
+    group_interval: "5m"
+    repeat_interval: "1h"
+    continue: false
+
+# Alert Receivers Configuration
+alert_receivers:
+  - name: "default"
+    email_configs:
+      - to: ["admin@example.com"]
+        from: "alerts@docker-auto-update.local"
+        subject: "[Docker Auto-Update] {{ .Status }} - {{ .AlertName }}"
+        body: |
+          Alert: {{ .AlertName }}
+          Severity: {{ .Severity }}
+          Status: {{ .Status }}
+          Description: {{ .Description }}
+
+          Labels:
+          {{ range $key, $value := .Labels }}
+          - {{ $key }}: {{ $value }}
+          {{ end }}
+
+          Timestamp: {{ .Timestamp }}
+
+    slack_configs:
+      - webhook_url: "${SLACK_WEBHOOK_URL}"
+        channel: "#alerts"
+        username: "Docker Auto-Update"
+        icon_emoji: ":warning:"
+        title: "[{{ .Severity }}] {{ .AlertName }}"
+        text: "{{ .Description }}"
+
+    webhook_configs:
+      - url: "${WEBHOOK_URL}"
+        method: "POST"
+        headers:
+          Content-Type: "application/json"
+          Authorization: "Bearer ${WEBHOOK_TOKEN}"
+
+# Alert Rules Configuration
+alert_rules:
+  # High error rate
+  - id: "high_error_rate"
+    name: "High Error Rate"
+    description: "HTTP error rate is above threshold"
+    enabled: true
+    expression: "rate(http_errors_total[5m]) > 0.1"
+    condition: ">"
+    threshold: 0.1
+    severity: "warning"
+    duration: "5m"
+    evaluation_interval: "30s"
+    labels:
+      component: "api"
+    annotations:
+      summary: "High error rate detected"
+      description: "HTTP error rate is {{ .Value }}% over the last 5 minutes"
+    channels: ["default"]
+    cooldown: "30m"
+
+  # High response time
+  - id: "high_response_time"
+    name: "High Response Time"
+    description: "HTTP response time is above threshold"
+    enabled: true
+    expression: "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1.0"
+    condition: ">"
+    threshold: 1.0
+    severity: "warning"
+    duration: "5m"
+    evaluation_interval: "30s"
+    labels:
+      component: "api"
+    annotations:
+      summary: "High response time detected"
+      description: "95th percentile response time is {{ .Value }}s"
+    channels: ["default"]
+    cooldown: "30m"
+
+  # High memory usage
+  - id: "high_memory_usage"
+    name: "High Memory Usage"
+    description: "System memory usage is above threshold"
+    enabled: true
+    expression: "system_memory_usage_percent > 90"
+    condition: ">"
+    threshold: 90
+    severity: "critical"
+    duration: "5m"
+    evaluation_interval: "60s"
+    labels:
+      component: "system"
+    annotations:
+      summary: "High memory usage detected"
+      description: "Memory usage is {{ .Value }}%"
+    channels: ["default"]
+    cooldown: "1h"
+
+  # Docker daemon down
+  - id: "docker_daemon_down"
+    name: "Docker Daemon Down"
+    description: "Docker daemon is not responding"
+    enabled: true
+    expression: "docker_up == 0"
+    condition: "=="
+    threshold: 0
+    severity: "critical"
+    duration: "1m"
+    evaluation_interval: "30s"
+    labels:
+      component: "docker"
+    annotations:
+      summary: "Docker daemon is down"
+      description: "Docker daemon is not responding to health checks"
+    channels: ["default"]
+    cooldown: "15m"
+
+  # Container update failures
+  - id: "container_update_failures"
+    name: "Container Update Failures"
+    description: "High rate of container update failures"
+    enabled: true
+    expression: "rate(container_update_errors_total[10m]) > 0.05"
+    condition: ">"
+    threshold: 0.05
+    severity: "warning"
+    duration: "10m"
+    evaluation_interval: "60s"
+    labels:
+      component: "updater"
+    annotations:
+      summary: "High container update failure rate"
+      description: "Container update failure rate is {{ .Value }} over the last 10 minutes"
+    channels: ["default"]
+    cooldown: "1h"
+
+# Development/Testing Configuration
+development:
+  # Enable debug logging
+  debug_logging: false
+
+  # Enable metric debugging
+  debug_metrics: false
+
+  # Mock external services for testing
+  mock_services: false
+
+  # Test alert channels
+  test_alerts: false
+
+# Production Configuration Overrides
+production:
+  logging:
+    level: "INFO"
+    output: "/var/log/docker-auto-update/app.log"
+
+  monitoring:
+    retention_period: "30d"
+    storage:
+      type: "file"
+      max_size: 5368709120  # 5GB
+
+  health_checks:
+    grace_period: "300s"  # 5 minutes
+
+  alerting:
+    storage:
+      type: "file"
+      retention: "90d"
+      backup: true

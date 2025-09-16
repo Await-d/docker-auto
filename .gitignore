@@ -1,0 +1,332 @@
+# Docker Auto Update System - Git Ignore
+
+# ===========================================
+# Environment and Configuration Files
+# ===========================================
+.env
+.env.local
+.env.production
+.env.staging
+config.local.yml
+config.production.yml
+
+# ===========================================
+# Backend (Go) Files
+# ===========================================
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/backend/bin/
+/backend/dist/
+/backend/build/
+
+# Go test files
+*.test
+*.out
+/backend/coverage.txt
+/backend/coverage.html
+
+# Go modules
+/backend/go.sum.tmp
+/backend/vendor/
+
+# Air live reload
+/backend/.air/
+/backend/tmp/
+
+# Delve debugger
+/backend/__debug_bin
+
+# ===========================================
+# Frontend (Vue/Node.js) Files
+# ===========================================
+# Dependencies
+/frontend/node_modules/
+/frontend/.pnp
+/frontend/.pnp.js
+
+# Production builds
+/frontend/dist/
+/frontend/build/
+
+# Runtime data
+/frontend/pids
+/frontend/*.pid
+/frontend/*.seed
+/frontend/*.pid.lock
+
+# Coverage directory used by tools like istanbul
+/frontend/coverage/
+/frontend/.nyc_output
+
+# ESLint cache
+/frontend/.eslintcache
+
+# Parcel-bundler cache
+/frontend/.cache
+/frontend/.parcel-cache
+
+# Vite cache
+/frontend/.vite/
+
+# Next.js cache
+/frontend/.next/
+
+# Nuxt.js cache
+/frontend/.nuxt/
+
+# Vue.js cache
+/frontend/.vue/
+
+# ===========================================
+# Database Files
+# ===========================================
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Database dumps
+*.sql.gz
+*.sql.bak
+/database/dumps/
+
+# PostgreSQL files (if running locally)
+/postgres_data/
+/pg_data/
+
+# ===========================================
+# Docker and Container Files
+# ===========================================
+# Docker volumes (if using local volumes)
+/docker_volumes/
+/data/
+/logs/
+
+# Docker Compose override files
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.dev.yml
+
+# ===========================================
+# IDE and Editor Files
+# ===========================================
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ IDEA / GoLand / WebStorm
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+.atom/
+
+# ===========================================
+# Operating System Files
+# ===========================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ===========================================
+# Logs and Temporary Files
+# ===========================================
+# Application logs
+/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+/tmp/
+/temp/
+*.tmp
+*.temp
+
+# PID files
+*.pid
+
+# ===========================================
+# SSL Certificates and Keys
+# ===========================================
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+/nginx/ssl/
+/certs/
+/ssl/
+
+# SSH keys
+id_rsa
+id_rsa.pub
+*.key
+authorized_keys
+
+# ===========================================
+# Backup Files
+# ===========================================
+# Backup files
+*.bak
+*.backup
+*.old
+/backups/
+/backup/
+
+# Archive files
+*.tar
+*.tar.gz
+*.tar.bz2
+*.zip
+*.rar
+
+# ===========================================
+# Testing and Coverage
+# ===========================================
+# Test results
+/test-results/
+/coverage/
+/.coverage
+htmlcov/
+.pytest_cache/
+.cache/
+
+# ===========================================
+# Documentation Build
+# ===========================================
+# Documentation builds
+/docs/_build/
+/docs/site/
+/site/
+
+# ===========================================
+# Monitoring and Metrics
+# ===========================================
+# Prometheus data
+/prometheus_data/
+
+# Grafana data
+/grafana_data/
+
+# ===========================================
+# Package Manager Files
+# ===========================================
+# npm
+package-lock.json
+npm-shrinkwrap.json
+
+# Yarn
+yarn.lock
+.yarn/
+.yarn-integrity
+
+# pnpm
+pnpm-lock.yaml
+.pnpm-store/
+
+# Go modules
+go.sum
+
+# ===========================================
+# Custom Application Data
+# ===========================================
+# User uploads
+/uploads/
+/files/
+
+# Cache directories
+/cache/
+/.cache/
+
+# Runtime data
+/run/
+/var/run/
+
+# ===========================================
+# Security and Sensitive Files
+# ===========================================
+# Private keys and tokens
+*.secret
+*.token
+.secrets/
+secrets.yml
+secrets.json
+
+# API keys
+.api_keys
+api_keys.txt
+
+# Authentication files
+.htpasswd
+.htaccess
+
+# ===========================================
+# Custom Ignore Patterns
+# ===========================================
+# Add any project-specific files to ignore below this line
+
+# Local development overrides
+docker-compose.local.yml
+.local/
+
+# Performance profiling
+*.prof
+*.pprof
+
+# Binary releases
+/releases/
+/dist/

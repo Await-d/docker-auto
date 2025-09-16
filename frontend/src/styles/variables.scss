@@ -1,0 +1,514 @@
+/**
+ * SCSS Variables and Mixins
+ * Global styling configuration for the Docker Auto-Update System
+ */
+
+// ================================
+// Color System
+// ================================
+
+// Primary Colors
+$primary: #409EFF;
+$primary-light-9: #ecf5ff;
+$primary-light-8: #d9ecff;
+$primary-light-7: #c6e2ff;
+$primary-light-6: #b3d8ff;
+$primary-light-5: #a0cfff;
+$primary-light-4: #8cc5ff;
+$primary-light-3: #79bbff;
+$primary-light-2: #66b1ff;
+$primary-light-1: #53a8ff;
+$primary-dark-1: #3a8ee6;
+$primary-dark-2: #337ecc;
+
+// Success Colors
+$success: #67C23A;
+$success-light-9: #f0f9ff;
+$success-light-8: #e1f3d8;
+$success-light-7: #d1edc4;
+$success-light-6: #c2e7b0;
+$success-light-5: #b3e19d;
+$success-light-4: #a4db89;
+$success-light-3: #95d475;
+$success-light-2: #85ce61;
+$success-light-1: #76c84d;
+$success-dark-1: #5daf34;
+$success-dark-2: #529b2e;
+
+// Warning Colors
+$warning: #E6A23C;
+$warning-light-9: #fdf6ec;
+$warning-light-8: #faecd8;
+$warning-light-7: #f8e3c5;
+$warning-light-6: #f5dab1;
+$warning-light-5: #f3d19e;
+$warning-light-4: #f0c78a;
+$warning-light-3: #eebe77;
+$warning-light-2: #ebb563;
+$warning-light-1: #e9ac50;
+$warning-dark-1: #cf9236;
+$warning-dark-2: #b88230;
+
+// Danger/Error Colors
+$danger: #F56C6C;
+$danger-light-9: #fef0f0;
+$danger-light-8: #fde2e2;
+$danger-light-7: #fcd3d3;
+$danger-light-6: #fbc4c4;
+$danger-light-5: #fab6b6;
+$danger-light-4: #f9a7a7;
+$danger-light-3: #f89898;
+$danger-light-2: #f78989;
+$danger-light-1: #f67a7a;
+$danger-dark-1: #dd6161;
+$danger-dark-2: #c45656;
+
+// Info Colors
+$info: #909399;
+$info-light-9: #f4f4f5;
+$info-light-8: #e9e9eb;
+$info-light-7: #dedfe0;
+$info-light-6: #d3d4d6;
+$info-light-5: #c8c9cc;
+$info-light-4: #bdbec2;
+$info-light-3: #b1b3b8;
+$info-light-2: #a6a9ad;
+$info-light-1: #9b9ea3;
+$info-dark-1: #82848a;
+$info-dark-2: #74767a;
+
+// ================================
+// Typography
+// ================================
+
+// Font Families
+$font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+$font-family-mono: 'Fira Code', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+
+// Font Sizes
+$font-size-extra-large: 20px;
+$font-size-large: 16px;
+$font-size-medium: 14px;
+$font-size-base: 14px;
+$font-size-small: 13px;
+$font-size-extra-small: 12px;
+
+// Font Weights
+$font-weight-primary: 500;
+$font-weight-secondary: 400;
+$font-weight-bold: 600;
+$font-weight-extra-bold: 700;
+
+// Line Heights
+$line-height-primary: 1.5;
+$line-height-secondary: 1.6;
+
+// ================================
+// Spacing System
+// ================================
+
+$spacing-xxs: 2px;
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-base: 16px;
+$spacing-lg: 20px;
+$spacing-xl: 24px;
+$spacing-xxl: 32px;
+$spacing-xxxl: 40px;
+
+// ================================
+// Layout & Grid
+// ================================
+
+// Breakpoints
+$breakpoint-xs: 480px;
+$breakpoint-sm: 768px;
+$breakpoint-md: 1024px;
+$breakpoint-lg: 1280px;
+$breakpoint-xl: 1920px;
+
+// Container widths
+$container-sm: 100%;
+$container-md: 1024px;
+$container-lg: 1280px;
+$container-xl: 1440px;
+
+// Z-index layers
+$z-index-dropdown: 1000;
+$z-index-sticky: 1010;
+$z-index-fixed: 1020;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;
+$z-index-notification: 1080;
+
+// ================================
+// Border & Radius
+// ================================
+
+$border-radius-base: 4px;
+$border-radius-small: 2px;
+$border-radius-large: 6px;
+$border-radius-round: 20px;
+$border-radius-circle: 50%;
+
+$border-width-base: 1px;
+$border-width-medium: 2px;
+$border-width-thick: 3px;
+
+// ================================
+// Shadows
+// ================================
+
+$box-shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
+$box-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.1);
+$box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
+$box-shadow-dark: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+// ================================
+// Transitions & Animations
+// ================================
+
+$transition-fast: 0.15s;
+$transition-base: 0.3s;
+$transition-slow: 0.5s;
+
+$ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+$ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0);
+$ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+// ================================
+// Component Specific
+// ================================
+
+// Header
+$header-height: 64px;
+$header-background: #ffffff;
+$header-border: #f0f0f0;
+
+// Sidebar
+$sidebar-width: 260px;
+$sidebar-collapsed-width: 64px;
+$sidebar-background: #ffffff;
+$sidebar-border: #f0f0f0;
+
+// Button sizes
+$button-height-large: 48px;
+$button-height-default: 40px;
+$button-height-small: 32px;
+$button-height-mini: 28px;
+
+// Input sizes
+$input-height-large: 48px;
+$input-height-default: 40px;
+$input-height-small: 32px;
+$input-height-mini: 28px;
+
+// ================================
+// Mixins
+// ================================
+
+// Responsive mixins
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == 'xs' {
+    @media (max-width: #{$breakpoint-xs - 1px}) {
+      @content;
+    }
+  } @else if $breakpoint == 'sm' {
+    @media (min-width: #{$breakpoint-xs}) and (max-width: #{$breakpoint-sm - 1px}) {
+      @content;
+    }
+  } @else if $breakpoint == 'md' {
+    @media (min-width: #{$breakpoint-sm}) and (max-width: #{$breakpoint-md - 1px}) {
+      @content;
+    }
+  } @else if $breakpoint == 'lg' {
+    @media (min-width: #{$breakpoint-md}) and (max-width: #{$breakpoint-lg - 1px}) {
+      @content;
+    }
+  } @else if $breakpoint == 'xl' {
+    @media (min-width: #{$breakpoint-lg}) {
+      @content;
+    }
+  }
+}
+
+@mixin min-screen($breakpoint) {
+  @media (min-width: #{$breakpoint}) {
+    @content;
+  }
+}
+
+@mixin max-screen($breakpoint) {
+  @media (max-width: #{$breakpoint - 1px}) {
+    @content;
+  }
+}
+
+// Flexbox utilities
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-start {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+@mixin flex-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Text utilities
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin text-break {
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+@mixin text-truncate($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Button mixins
+@mixin button-variant($color, $background, $border) {
+  color: $color;
+  background-color: $background;
+  border-color: $border;
+
+  &:hover,
+  &:focus {
+    color: darken($color, 10%);
+    background-color: darken($background, 10%);
+    border-color: darken($border, 10%);
+  }
+
+  &:active {
+    color: darken($color, 15%);
+    background-color: darken($background, 15%);
+    border-color: darken($border, 15%);
+  }
+}
+
+@mixin button-size($height, $padding, $font-size, $border-radius) {
+  height: $height;
+  padding: 0 $padding;
+  font-size: $font-size;
+  border-radius: $border-radius;
+}
+
+// Card mixins
+@mixin card-style($shadow: $box-shadow-base) {
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light);
+  border-radius: $border-radius-base;
+  box-shadow: $shadow;
+  transition: box-shadow $transition-base ease;
+
+  &:hover {
+    box-shadow: $box-shadow-medium;
+  }
+}
+
+// Loading mixins
+@mixin loading-overlay {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 999;
+    backdrop-filter: blur(1px);
+  }
+
+  .dark &::before {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+
+// Scrollbar styling
+@mixin custom-scrollbar($size: 6px, $track-color: transparent, $thumb-color: rgba(0, 0, 0, 0.2)) {
+  &::-webkit-scrollbar {
+    width: $size;
+    height: $size;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $track-color;
+    border-radius: $size / 2;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $thumb-color;
+    border-radius: $size / 2;
+
+    &:hover {
+      background: darken($thumb-color, 10%);
+    }
+  }
+
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: $thumb-color $track-color;
+}
+
+// Animation mixins
+@mixin fade-in($duration: $transition-base) {
+  animation: fade-in $duration ease-out;
+}
+
+@mixin slide-in-up($duration: $transition-base) {
+  animation: slide-in-up $duration $ease-out-quart;
+}
+
+@mixin slide-in-down($duration: $transition-base) {
+  animation: slide-in-down $duration $ease-out-quart;
+}
+
+@mixin bounce-in($duration: 0.6s) {
+  animation: bounce-in $duration $ease-out-quart;
+}
+
+// Keyframes
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Utility classes (can be used as mixins)
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+@mixin sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@mixin reset-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@mixin reset-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+
+  &:focus {
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: 2px;
+  }
+}
