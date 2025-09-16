@@ -90,7 +90,7 @@ graph TB
 - **Docker**: 20.10+ with Docker Compose v2
 - **System**: Linux/macOS/Windows with 2GB+ RAM
 - **Network**: Internet access for image downloads
-- **Ports**: 3000 (frontend), 8080 (backend), 5432 (database)
+- **Ports**: 80 (unified service), 5432 (database)
 
 ### 1-Minute Setup
 
@@ -107,13 +107,14 @@ cp .env.example .env
 docker-compose up -d
 
 # Verify installation
-curl http://localhost:8080/api/health
+curl http://localhost/health
 ```
 
 ### Access the System
 
-- **Web Dashboard**: http://localhost:3000
-- **API Endpoint**: http://localhost:8080/api
+- **Web Dashboard**: http://localhost (unified interface)
+- **API Endpoint**: http://localhost/api
+- **Documentation**: http://localhost/docs
 - **Default Login**: admin@example.com / admin123 (change immediately)
 
 ## 📖 Documentation

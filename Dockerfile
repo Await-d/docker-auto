@@ -1,5 +1,6 @@
-# Docker Auto Update System - Unified Single Image
-# Multi-stage build for combining frontend, backend, and docs
+# Docker Auto Update System - Unified Single Image Architecture
+# Multi-stage build combining frontend, backend, and documentation services
+# Optimized for production deployment with minimal resource footprint
 
 # Stage 1: Build Frontend
 FROM node:20-alpine AS frontend-builder
