@@ -1,0 +1,366 @@
+name: Auto Release Pipeline
+
+on:
+  push:
+    branches:
+      - master
+      - main
+
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has-changes: ${{ steps.check.outputs.has-changes }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for significant changes
+        id: check
+        run: |
+          # Skip if commit message contains [skip ci] or [skip release]
+          if [[ "${{ github.event.head_commit.message }}" =~ \[(skip ci|skip release)\] ]]; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Skip if commit is from github-actions bot
+          if [[ "${{ github.event.pusher.name }}" == "github-actions[bot]" ]]; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check if there are significant changes (exclude docs and config)
+          git diff --name-only HEAD~1 HEAD > changed_files.txt
+
+          if grep -E '(backend/|frontend/|database/|docker-compose\.yml|Dockerfile)' changed_files.txt > /dev/null; then
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate version
+        id: version
+        if: steps.check.outputs.has-changes == 'true'
+        run: |
+          # Get latest tag
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $latest_tag"
+
+          # Extract version numbers
+          version_num=$(echo $latest_tag | sed 's/v//')
+          IFS='.' read -ra VERSION_PARTS <<< "$version_num"
+
+          major=${VERSION_PARTS[0]:-0}
+          minor=${VERSION_PARTS[1]:-0}
+          patch=${VERSION_PARTS[2]:-0}
+
+          # Check commit message for version bump type
+          commit_msg="${{ github.event.head_commit.message }}"
+
+          if [[ $commit_msg =~ \[major\] ]] || [[ $commit_msg =~ BREAKING\ CHANGE ]]; then
+            major=$((major + 1))
+            minor=0
+            patch=0
+          elif [[ $commit_msg =~ \[minor\] ]] || [[ $commit_msg =~ feat: ]] || [[ $commit_msg =~ feat\( ]]; then
+            minor=$((minor + 1))
+            patch=0
+          else
+            patch=$((patch + 1))
+          fi
+
+          new_version="v${major}.${minor}.${patch}"
+          echo "New version: $new_version"
+          echo "version=$new_version" >> $GITHUB_OUTPUT
+
+  build-and-release:
+    needs: check-changes
+    if: needs.check-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+          cache-dependency-path: backend/go.sum
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Build backend
+        run: |
+          cd backend
+          CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o docker-auto-server ./cmd/server
+
+      - name: Create VERSION file
+        run: |
+          echo "${{ needs.check-changes.outputs.version }}" > VERSION
+          echo "VERSION=${{ needs.check-changes.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$latest_tag" ]; then
+            commits=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            commits=$(git log ${latest_tag}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Create changelog
+          cat > CHANGELOG_CURRENT.md << EOF
+          ## ${{ needs.check-changes.outputs.version }} - $(date +%Y-%m-%d)
+
+          ### Changes
+          $commits
+
+          ### Features
+          - Docker Auto Update System
+          - Vue 3 + TypeScript Frontend
+          - Go Backend with REST API
+          - PostgreSQL Database
+          - WebSocket Real-time Updates
+          - Container Management
+          - User Authentication & Authorization
+          - System Monitoring & Logging
+
+          ### Technical Details
+          - **Backend**: Go 1.23 with Gin framework
+          - **Frontend**: Vue 3 + TypeScript + Element Plus
+          - **Database**: PostgreSQL with GORM
+          - **Containerization**: Docker Compose with multi-stage builds
+          - **Security**: JWT authentication, RBAC, rate limiting
+          - **Monitoring**: Prometheus metrics, structured logging
+
+          EOF
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG_CURRENT.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Git tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "${{ needs.check-changes.outputs.version }}" -m "Release ${{ needs.check-changes.outputs.version }}"
+          git push origin "${{ needs.check-changes.outputs.version }}"
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.check-changes.outputs.version }}
+          release_name: "Docker Auto Update System ${{ needs.check-changes.outputs.version }}"
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.dev
+          target: production
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/await-d/docker-auto-backend:latest
+            ghcr.io/await-d/docker-auto-backend:${{ needs.check-changes.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile.dev
+          target: production
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/await-d/docker-auto-frontend:latest
+            ghcr.io/await-d/docker-auto-frontend:${{ needs.check-changes.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push docs Docker image
+        run: |
+          # Create simple docs server
+          mkdir -p docs-server
+          cat > docs-server/Dockerfile << EOF
+          FROM nginx:alpine
+          COPY docs/ /usr/share/nginx/html/
+          COPY *.md /usr/share/nginx/html/
+          EXPOSE 80
+          EOF
+
+          # Copy documentation
+          cp -r docs docs-server/ || mkdir docs-server/docs
+          cp *.md docs-server/
+
+          docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/await-d/docker-auto-docs:latest -t ghcr.io/await-d/docker-auto-docs:${{ needs.check-changes.outputs.version }} --push docs-server/
+
+      - name: Create deployment archive
+        run: |
+          mkdir -p release-artifacts
+
+          # Copy deployment files
+          cp docker-compose.yml release-artifacts/
+          cp .env.example release-artifacts/.env
+          cp -r database release-artifacts/
+          cp README.md release-artifacts/
+          cp INSTALLATION.md release-artifacts/
+          cp DEPLOYMENT_GUIDE.md release-artifacts/
+
+          # Create quick start script
+          cat > release-artifacts/quick-start.sh << 'EOF'
+          #!/bin/bash
+          echo "🚀 Docker Auto Update System Quick Start"
+          echo "========================================"
+
+          # Check if Docker and Docker Compose are installed
+          if ! command -v docker &> /dev/null; then
+              echo "❌ Docker is not installed. Please install Docker first."
+              exit 1
+          fi
+
+          if ! command -v docker compose &> /dev/null; then
+              echo "❌ Docker Compose is not installed. Please install Docker Compose first."
+              exit 1
+          fi
+
+          echo "✅ Docker and Docker Compose are installed"
+
+          # Start services
+          echo "🐳 Starting Docker Auto Update System..."
+          docker compose up -d
+
+          echo ""
+          echo "🎉 System started successfully!"
+          echo ""
+          echo "📱 Access the application:"
+          echo "   Frontend:  http://localhost:3000"
+          echo "   Backend:   http://localhost:8080"
+          echo "   Database:  localhost:5432"
+          echo ""
+          echo "🔑 Default login credentials:"
+          echo "   Username: admin"
+          echo "   Password: admin123"
+          echo ""
+          echo "📚 View logs: docker compose logs -f"
+          echo "🛑 Stop system: docker compose down"
+          EOF
+
+          chmod +x release-artifacts/quick-start.sh
+
+          # Create archive
+          tar -czf docker-auto-system-${{ needs.check-changes.outputs.version }}.tar.gz -C release-artifacts .
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./docker-auto-system-${{ needs.check-changes.outputs.version }}.tar.gz
+          asset_name: docker-auto-system-${{ needs.check-changes.outputs.version }}.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Send Telegram notification
+        if: success()
+        run: |
+          if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+              -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -d parse_mode="Markdown" \
+              -d text="🎉 *Docker Auto Update System*
+
+          🚀 **New Release**: \`${{ needs.check-changes.outputs.version }}\`
+          📦 **Repository**: [docker-auto](https://github.com/Await-d/docker-auto)
+          🔗 **Release**: [View Release](https://github.com/Await-d/docker-auto/releases/tag/${{ needs.check-changes.outputs.version }})
+          🐳 **Docker Images**:
+          - \`ghcr.io/await-d/docker-auto-backend:${{ needs.check-changes.outputs.version }}\`
+          - \`ghcr.io/await-d/docker-auto-frontend:${{ needs.check-changes.outputs.version }}\`
+
+          💡 **Quick Start**:
+          \`\`\`bash
+          wget https://github.com/Await-d/docker-auto/releases/download/${{ needs.check-changes.outputs.version }}/docker-auto-system-${{ needs.check-changes.outputs.version }}.tar.gz
+          tar -xzf docker-auto-system-${{ needs.check-changes.outputs.version }}.tar.gz
+          ./quick-start.sh
+          \`\`\`"
+          fi
+
+  cleanup:
+    needs: [check-changes, build-and-release]
+    if: always() && needs.check-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup old releases and tags
+        run: |
+          # Keep only the latest 10 releases and tags
+          echo "🧹 Cleaning up old releases and tags..."
+
+          # Get all tags sorted by version (reverse)
+          tags=$(git tag -l "v*" | sort -V -r)
+          tag_count=$(echo "$tags" | wc -l)
+
+          if [ $tag_count -gt 10 ]; then
+            echo "Found $tag_count tags, keeping latest 10..."
+            old_tags=$(echo "$tags" | tail -n +11)
+
+            for tag in $old_tags; do
+              echo "Deleting tag: $tag"
+              git tag -d "$tag" 2>/dev/null || true
+              git push origin --delete "$tag" 2>/dev/null || true
+            done
+          fi
+
+          echo "✅ Cleanup completed"

@@ -1,0 +1,200 @@
+name: PR Lint and Format Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**.js'
+      - '**.jsx'
+      - '**.ts'
+      - '**.tsx'
+      - '**.vue'
+      - '**.json'
+      - '**.cjs'
+      - '**.mjs'
+      - '**.go'
+      - '**.md'
+      - '.prettierrc'
+      - '.eslintrc.cjs'
+      - 'package.json'
+      - 'frontend/**'
+      - 'backend/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    name: Check Code Quality
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+          cache-dependency-path: backend/go.sum
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json', '**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            **/*.js
+            **/*.jsx
+            **/*.ts
+            **/*.tsx
+            **/*.vue
+            **/*.json
+            **/*.go
+            **/*.md
+
+      - name: Install frontend dependencies
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          cd frontend
+          npm ci --prefer-offline --no-audit
+
+      - name: Install backend dependencies
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          cd backend
+          go mod download
+          go mod verify
+
+      - name: Run frontend linting
+        if: contains(steps.changed-files.outputs.all_changed_files, 'frontend/') || contains(steps.changed-files.outputs.all_changed_files, '.vue') || contains(steps.changed-files.outputs.all_changed_files, '.ts') || contains(steps.changed-files.outputs.all_changed_files, '.js')
+        run: |
+          cd frontend
+          npm run lint:check
+
+      - name: Check frontend formatting
+        if: contains(steps.changed-files.outputs.all_changed_files, 'frontend/') || contains(steps.changed-files.outputs.all_changed_files, '.vue') || contains(steps.changed-files.outputs.all_changed_files, '.ts') || contains(steps.changed-files.outputs.all_changed_files, '.js')
+        run: |
+          cd frontend
+          npm run format:check
+
+      - name: Run Go formatting check
+        if: contains(steps.changed-files.outputs.all_changed_files, 'backend/') || contains(steps.changed-files.outputs.all_changed_files, '.go')
+        run: |
+          cd backend
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Go code is not formatted. Please run 'gofmt -w .'"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Run Go vet
+        if: contains(steps.changed-files.outputs.all_changed_files, 'backend/') || contains(steps.changed-files.outputs.all_changed_files, '.go')
+        run: |
+          cd backend
+          go vet ./...
+
+      - name: Run Go build check
+        if: contains(steps.changed-files.outputs.all_changed_files, 'backend/') || contains(steps.changed-files.outputs.all_changed_files, '.go')
+        run: |
+          cd backend
+          go build -v ./...
+
+      - name: Frontend type checking
+        if: contains(steps.changed-files.outputs.all_changed_files, 'frontend/') || contains(steps.changed-files.outputs.all_changed_files, '.vue') || contains(steps.changed-files.outputs.all_changed_files, '.ts')
+        run: |
+          cd frontend
+          npm run type-check
+
+      - name: Comment PR results
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const { execSync } = require('child_process');
+
+            // Get job status
+            const jobStatus = '${{ job.status }}';
+
+            // Create comment body
+            let commentBody = `## 🔍 Code Quality Check Results\n\n`;
+
+            if (jobStatus === 'success') {
+              commentBody += `✅ **All checks passed!** Your code looks great.\n\n`;
+              commentBody += `- Frontend linting: ✅\n`;
+              commentBody += `- Frontend formatting: ✅\n`;
+              commentBody += `- Frontend type checking: ✅\n`;
+              commentBody += `- Go formatting: ✅\n`;
+              commentBody += `- Go vet: ✅\n`;
+              commentBody += `- Go build: ✅\n`;
+            } else {
+              commentBody += `❌ **Some checks failed.** Please fix the issues below:\n\n`;
+              commentBody += `Please check the workflow logs for detailed error messages.\n`;
+            }
+
+            commentBody += `\n---\n*Automated check by [Docker Auto Update System](https://github.com/Await-d/docker-auto) 🤖*`;
+
+            // Post comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security Vulnerability Scan
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      - name: Run Gosec Security Scanner
+        uses: securecodewarrior/github-action-gosec@master
+        with:
+          args: '-no-fail -fmt sarif -out gosec.sarif ./backend/...'
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: gosec.sarif
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'

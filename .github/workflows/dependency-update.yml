@@ -1,0 +1,300 @@
+name: Dependency Update Check
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-go-dependencies:
+    runs-on: ubuntu-latest
+    name: Update Go Dependencies
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      - name: Check for Go dependency updates
+        run: |
+          cd backend
+
+          echo "📦 Checking for Go dependency updates..."
+
+          # Get current modules
+          go list -m all > current_modules.txt
+
+          # Update all dependencies
+          go get -u ./...
+          go mod tidy
+
+          # Check if there are changes
+          if git diff --quiet go.mod go.sum; then
+            echo "no_updates=true" >> $GITHUB_ENV
+            echo "✅ All Go dependencies are up to date"
+          else
+            echo "no_updates=false" >> $GITHUB_ENV
+            echo "📋 Go dependency updates available"
+
+            # Show what changed
+            echo "## Go Dependency Updates" > ../go_updates.md
+            echo "" >> ../go_updates.md
+            git diff go.mod >> ../go_updates.md
+          fi
+
+      - name: Update Node.js dependencies
+        run: |
+          cd frontend
+
+          echo "📦 Checking for Node.js dependency updates..."
+
+          # Check for updates using npm outdated
+          if npm outdated --json > outdated.json 2>/dev/null; then
+            if [ -s outdated.json ]; then
+              echo "npm_updates=true" >> $GITHUB_ENV
+              echo "📋 Node.js dependency updates available"
+            else
+              echo "npm_updates=false" >> $GITHUB_ENV
+              echo "✅ All Node.js dependencies are up to date"
+            fi
+          else
+            echo "npm_updates=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create pull request for Go updates
+        if: env.no_updates == 'false'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update Go dependencies"
+          title: "🔄 Update Go Dependencies"
+          body: |
+            ## 📦 Automated Go Dependency Update
+
+            This PR updates Go dependencies to their latest versions.
+
+            ### Changes
+            - Updated Go modules in `backend/go.mod`
+            - Updated module checksums in `backend/go.sum`
+
+            ### Testing
+            - [ ] Backend builds successfully
+            - [ ] All tests pass
+            - [ ] No breaking changes detected
+
+            ### Notes
+            Please review the changes and ensure compatibility before merging.
+
+            ---
+            🤖 *This PR was created automatically by the dependency update workflow*
+          branch: update/go-dependencies
+          delete-branch: true
+
+      - name: Create issue for manual Node.js updates
+        if: env.npm_updates == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read outdated packages
+            let outdatedPackages = '';
+            try {
+              const outdated = JSON.parse(fs.readFileSync('frontend/outdated.json', 'utf8'));
+              for (const [pkg, info] of Object.entries(outdated)) {
+                outdatedPackages += `- **${pkg}**: ${info.current} → ${info.latest}\n`;
+              }
+            } catch (error) {
+              outdatedPackages = 'Unable to parse outdated packages information.';
+            }
+
+            const issueBody = `## 📦 Node.js Dependencies Need Manual Review
+
+            The following frontend dependencies have updates available:
+
+            ${outdatedPackages}
+
+            ### Action Required
+            Please review and manually update these dependencies:
+
+            1. Navigate to the \`frontend\` directory
+            2. Run \`npm outdated\` to see detailed version information
+            3. Update dependencies using \`npm update\` or \`npm install package@latest\`
+            4. Test the application thoroughly
+            5. Commit the changes
+
+            ### Testing Checklist
+            - [ ] Frontend builds successfully (\`npm run build\`)
+            - [ ] All linting passes (\`npm run lint\`)
+            - [ ] Type checking passes (\`npm run type-check\`)
+            - [ ] Application loads and functions correctly
+            - [ ] No breaking changes in UI/UX
+
+            ---
+            🤖 *This issue was created automatically by the dependency update workflow*
+            ⏰ *Generated on: ${new Date().toISOString()}*`;
+
+            // Check if there's already an open issue for this
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['dependencies', 'frontend'],
+              state: 'open'
+            });
+
+            const hasExistingIssue = existingIssues.data.some(issue =>
+              issue.title.includes('Node.js Dependencies Need Manual Review')
+            );
+
+            if (!hasExistingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🔄 Node.js Dependencies Need Manual Review',
+                body: issueBody,
+                labels: ['dependencies', 'frontend', 'maintenance']
+              });
+            }
+
+  security-audit:
+    runs-on: ubuntu-latest
+    name: Security Audit
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Go security audit
+        run: |
+          cd backend
+
+          # Install govulncheck
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+
+          # Run vulnerability check
+          echo "🔍 Running Go security audit..."
+          if govulncheck ./...; then
+            echo "go_vulns=false" >> $GITHUB_ENV
+            echo "✅ No Go security vulnerabilities found"
+          else
+            echo "go_vulns=true" >> $GITHUB_ENV
+            echo "⚠️ Go security vulnerabilities detected"
+          fi
+
+      - name: Node.js security audit
+        run: |
+          cd frontend
+
+          echo "🔍 Running Node.js security audit..."
+
+          # Run npm audit
+          if npm audit --audit-level high; then
+            echo "npm_vulns=false" >> $GITHUB_ENV
+            echo "✅ No high-severity npm vulnerabilities found"
+          else
+            echo "npm_vulns=true" >> $GITHUB_ENV
+            echo "⚠️ High-severity npm vulnerabilities detected"
+
+            # Generate audit report
+            npm audit --json > audit-report.json 2>/dev/null || true
+          fi
+
+      - name: Create security issue
+        if: env.go_vulns == 'true' || env.npm_vulns == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let issueBody = `## 🚨 Security Vulnerabilities Detected\n\n`;
+            issueBody += `This is an automated security audit report.\n\n`;
+
+            if (process.env.go_vulns === 'true') {
+              issueBody += `### 🐹 Go Vulnerabilities\n`;
+              issueBody += `High or critical vulnerabilities were detected in Go dependencies.\n\n`;
+              issueBody += `**Action Required:**\n`;
+              issueBody += `1. Run \`cd backend && govulncheck ./...\` to see detailed information\n`;
+              issueBody += `2. Update affected dependencies\n`;
+              issueBody += `3. Test the application thoroughly\n\n`;
+            }
+
+            if (process.env.npm_vulns === 'true') {
+              issueBody += `### 📦 npm Vulnerabilities\n`;
+              issueBody += `High-severity vulnerabilities were detected in Node.js dependencies.\n\n`;
+              issueBody += `**Action Required:**\n`;
+              issueBody += `1. Run \`cd frontend && npm audit\` to see detailed information\n`;
+              issueBody += `2. Run \`npm audit fix\` to automatically fix issues\n`;
+              issueBody += `3. For manual fixes, run \`npm update\` or update specific packages\n`;
+              issueBody += `4. Test the frontend application thoroughly\n\n`;
+            }
+
+            issueBody += `### 🔒 Security Best Practices\n`;
+            issueBody += `- Review all dependency updates before applying\n`;
+            issueBody += `- Test thoroughly in a development environment\n`;
+            issueBody += `- Consider using \`npm ci\` instead of \`npm install\` for production builds\n`;
+            issueBody += `- Monitor security advisories for your dependencies\n\n`;
+
+            issueBody += `---\n`;
+            issueBody += `🤖 *This issue was created automatically by the security audit workflow*\n`;
+            issueBody += `⏰ *Generated on: ${new Date().toISOString()}*`;
+
+            // Check if there's already an open security issue
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['security'],
+              state: 'open'
+            });
+
+            const hasExistingIssue = existingIssues.data.some(issue =>
+              issue.title.includes('Security Vulnerabilities Detected')
+            );
+
+            if (!hasExistingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 Security Vulnerabilities Detected - Action Required',
+                body: issueBody,
+                labels: ['security', 'high-priority', 'maintenance']
+              });
+            }
+
+  dockerfile-lint:
+    runs-on: ubuntu-latest
+    name: Dockerfile Security Lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Lint Backend Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: backend/Dockerfile.dev
+          failure-threshold: warning
+
+      - name: Lint Frontend Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: frontend/Dockerfile.dev
+          failure-threshold: warning
