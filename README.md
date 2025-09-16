@@ -85,6 +85,8 @@ graph TB
 
 ## 🚦 Quick Start
 
+**New in v2.2.0**: Streamlined deployment with optimized CI/CD pipeline and enhanced single-image architecture!
+
 ### Prerequisites
 
 - **Docker**: 20.10+ with Docker Compose v2
@@ -328,7 +330,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Status**: 🚀 Production Ready
-**Version**: 2.1.0
+**Version**: 2.2.0
 **Last Updated**: September 16, 2025
 
 <details>
