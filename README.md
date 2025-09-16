@@ -1,8 +1,12 @@
 # Docker Auto-Update System
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/your-org/docker-auto)
+![Auto Release](https://github.com/Await-d/docker-auto/actions/workflows/auto-release-pipeline.yml/badge.svg)
+![PR Checks](https://github.com/Await-d/docker-auto/actions/workflows/pr-lint-check.yml/badge.svg)
+![Docker Build](https://github.com/Await-d/docker-auto/actions/workflows/docker-build-test.yml/badge.svg)
+![Dependencies](https://github.com/Await-d/docker-auto/actions/workflows/dependency-update.yml/badge.svg)
+
 [![Docker](https://img.shields.io/badge/docker-supported-blue)](https://www.docker.com/)
-[![Go Version](https://img.shields.io/badge/go-1.21+-blue)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/go-1.23+-blue)](https://golang.org/)
 [![Vue](https://img.shields.io/badge/vue-3.0+-green)](https://vuejs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
