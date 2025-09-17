@@ -96,25 +96,24 @@ graph TB
 - **Docker**: 20.10+ 配合 Docker Compose v2
 - **系统**: Linux/macOS/Windows，2GB+ 内存
 - **网络**: 用于下载镜像的互联网访问
-- **端口**: 80（统一服务）、5432（数据库）
+- **端口**:
+  - **80**: Web 服务（必需）
+  - **5432**: 仅在使用外部数据库或 Docker Compose 时需要
 
 ### 快速安装
 
 #### 方法一：Docker Run 快捷安装（推荐）
 
 ```bash
-# 快速启动完整系统（包含数据库）
+# 快速启动统一容器（内置数据库）
 docker run -d \
   --name docker-auto-system \
   -p 80:80 \
-  -p 5432:5432 \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
   -v docker-auto-data:/app/data \
-  -e DB_HOST=localhost \
-  -e DB_NAME=dockerauto \
-  -e DB_USER=dockerauto \
-  -e DB_PASSWORD=secure_password_123 \
+  -e APP_ENV=production \
   -e JWT_SECRET=your-super-secure-jwt-secret-key-change-this \
+  -e LOG_LEVEL=info \
   await2719/docker-auto:latest
 
 # 等待服务启动（约30秒）
@@ -135,26 +134,20 @@ docker run -d \
   await2719/docker-auto:latest
 ```
 
-#### 方法三：完整配置启动
+#### 方法三：生产环境完整配置
 
 ```bash
-# 完整配置的生产环境启动
+# 生产环境统一容器启动
 docker run -d \
   --name docker-auto-prod \
   --restart unless-stopped \
   -p 80:80 \
-  -p 5432:5432 \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
   -v docker-auto-data:/app/data \
   -v docker-auto-logs:/app/logs \
   -v docker-auto-backups:/app/backups \
   -e APP_ENV=production \
   -e APP_PORT=8080 \
-  -e DB_HOST=localhost \
-  -e DB_PORT=5432 \
-  -e DB_NAME=dockerauto \
-  -e DB_USER=dockerauto \
-  -e DB_PASSWORD=your-secure-password \
   -e JWT_SECRET=your-jwt-secret-key \
   -e JWT_EXPIRE_HOURS=24 \
   -e DOCKER_HOST=unix:///var/run/docker.sock \
@@ -167,7 +160,27 @@ docker run -d \
 docker logs -f docker-auto-prod
 ```
 
-#### 方法四：Docker Compose 安装
+#### 方法三-B：外部数据库模式
+
+```bash
+# 使用外部 PostgreSQL 数据库
+docker run -d \
+  --name docker-auto-external-db \
+  --restart unless-stopped \
+  -p 80:80 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v docker-auto-data:/app/data \
+  -e APP_ENV=production \
+  -e DB_HOST=your-postgres-host \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=your-secure-db-password \
+  -e JWT_SECRET=your-jwt-secret-key \
+  await2719/docker-auto:latest
+```
+
+#### 方法四：Docker Compose 分离式部署
 
 ```bash
 # 克隆仓库
@@ -225,12 +238,10 @@ docker run -d \
   --name docker-auto-system \
   --restart unless-stopped \
   -p 80:80 \
-  -p 5432:5432 \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
   -v docker-auto-data:/app/data \
   -v docker-auto-logs:/app/logs \
   -e APP_ENV=production \
-  -e DB_PASSWORD="$DB_PASSWORD" \
   -e JWT_SECRET="$JWT_SECRET" \
   -e LOG_LEVEL=info \
   await2719/docker-auto:latest

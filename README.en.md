@@ -96,25 +96,24 @@ graph TB
 - **Docker**: 20.10+ with Docker Compose v2
 - **System**: Linux/macOS/Windows with 2GB+ RAM
 - **Network**: Internet access for image downloads
-- **Ports**: 80 (unified service), 5432 (database)
+- **Ports**:
+  - **80**: Web service (required)
+  - **5432**: Only needed when using external database or Docker Compose
 
 ### Quick Installation
 
 #### Method 1: Docker Run Quick Install (Recommended)
 
 ```bash
-# Quick start complete system (including database)
+# Quick start unified container (built-in database)
 docker run -d \
   --name docker-auto-system \
   -p 80:80 \
-  -p 5432:5432 \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
   -v docker-auto-data:/app/data \
-  -e DB_HOST=localhost \
-  -e DB_NAME=dockerauto \
-  -e DB_USER=dockerauto \
-  -e DB_PASSWORD=secure_password_123 \
+  -e APP_ENV=production \
   -e JWT_SECRET=your-super-secure-jwt-secret-key-change-this \
+  -e LOG_LEVEL=info \
   await2719/docker-auto:latest
 
 # Wait for service startup (about 30 seconds)
@@ -135,26 +134,20 @@ docker run -d \
   await2719/docker-auto:latest
 ```
 
-#### Method 3: Full Configuration Startup
+#### Method 3: Production Environment Full Configuration
 
 ```bash
-# Production environment startup with full configuration
+# Production unified container startup
 docker run -d \
   --name docker-auto-prod \
   --restart unless-stopped \
   -p 80:80 \
-  -p 5432:5432 \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
   -v docker-auto-data:/app/data \
   -v docker-auto-logs:/app/logs \
   -v docker-auto-backups:/app/backups \
   -e APP_ENV=production \
   -e APP_PORT=8080 \
-  -e DB_HOST=localhost \
-  -e DB_PORT=5432 \
-  -e DB_NAME=dockerauto \
-  -e DB_USER=dockerauto \
-  -e DB_PASSWORD=your-secure-password \
   -e JWT_SECRET=your-jwt-secret-key \
   -e JWT_EXPIRE_HOURS=24 \
   -e DOCKER_HOST=unix:///var/run/docker.sock \
@@ -167,7 +160,27 @@ docker run -d \
 docker logs -f docker-auto-prod
 ```
 
-#### Method 4: Docker Compose Installation
+#### Method 3-B: External Database Mode
+
+```bash
+# Using external PostgreSQL database
+docker run -d \
+  --name docker-auto-external-db \
+  --restart unless-stopped \
+  -p 80:80 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v docker-auto-data:/app/data \
+  -e APP_ENV=production \
+  -e DB_HOST=your-postgres-host \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=your-secure-db-password \
+  -e JWT_SECRET=your-jwt-secret-key \
+  await2719/docker-auto:latest
+```
+
+#### Method 4: Docker Compose Separated Deployment
 
 ```bash
 # Clone the repository
@@ -225,12 +238,10 @@ docker run -d \
   --name docker-auto-system \
   --restart unless-stopped \
   -p 80:80 \
-  -p 5432:5432 \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
   -v docker-auto-data:/app/data \
   -v docker-auto-logs:/app/logs \
   -e APP_ENV=production \
-  -e DB_PASSWORD="$DB_PASSWORD" \
   -e JWT_SECRET="$JWT_SECRET" \
   -e LOG_LEVEL=info \
   await2719/docker-auto:latest
