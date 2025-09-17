@@ -98,7 +98,76 @@ graph TB
 - **网络**: 用于下载镜像的互联网访问
 - **端口**: 80（统一服务）、5432（数据库）
 
-### 1 分钟安装
+### 快速安装
+
+#### 方法一：Docker Run 快捷安装（推荐）
+
+```bash
+# 快速启动完整系统（包含数据库）
+docker run -d \
+  --name docker-auto-system \
+  -p 80:80 \
+  -p 5432:5432 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v docker-auto-data:/app/data \
+  -e DB_HOST=localhost \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=secure_password_123 \
+  -e JWT_SECRET=your-super-secure-jwt-secret-key-change-this \
+  await2719/docker-auto:latest
+
+# 等待服务启动（约30秒）
+sleep 30
+
+# 验证安装
+curl http://localhost/health
+```
+
+#### 方法二：简化单命令启动
+
+```bash
+# 最简单的启动方式（使用默认配置）
+docker run -d \
+  --name docker-auto \
+  -p 80:80 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  await2719/docker-auto:latest
+```
+
+#### 方法三：完整配置启动
+
+```bash
+# 完整配置的生产环境启动
+docker run -d \
+  --name docker-auto-prod \
+  --restart unless-stopped \
+  -p 80:80 \
+  -p 5432:5432 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v docker-auto-data:/app/data \
+  -v docker-auto-logs:/app/logs \
+  -v docker-auto-backups:/app/backups \
+  -e APP_ENV=production \
+  -e APP_PORT=8080 \
+  -e DB_HOST=localhost \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=your-secure-password \
+  -e JWT_SECRET=your-jwt-secret-key \
+  -e JWT_EXPIRE_HOURS=24 \
+  -e DOCKER_HOST=unix:///var/run/docker.sock \
+  -e LOG_LEVEL=info \
+  -e PROMETHEUS_ENABLED=true \
+  -e METRICS_PORT=9090 \
+  await2719/docker-auto:latest
+
+# 查看启动日志
+docker logs -f docker-auto-prod
+```
+
+#### 方法四：Docker Compose 安装
 
 ```bash
 # 克隆仓库
@@ -114,6 +183,72 @@ docker-compose up -d
 
 # 验证安装
 curl http://localhost/health
+```
+
+### 🔧 快速配置选项
+
+| 环境变量 | 默认值 | 说明 |
+|---------|--------|------|
+| `APP_PORT` | `8080` | 应用端口 |
+| `DB_HOST` | `localhost` | 数据库主机 |
+| `DB_NAME` | `dockerauto` | 数据库名称 |
+| `DB_USER` | `dockerauto` | 数据库用户 |
+| `DB_PASSWORD` | `secure_password_123` | 数据库密码 |
+| `JWT_SECRET` | `your-jwt-secret` | JWT 密钥（必须修改） |
+| `LOG_LEVEL` | `info` | 日志级别 |
+| `PROMETHEUS_ENABLED` | `true` | 启用监控 |
+
+### 🚀 一键启动脚本
+
+```bash
+#!/bin/bash
+# 保存为 install-docker-auto.sh
+
+echo "🚀 正在启动 Docker Auto 管理系统..."
+
+# 检查 Docker 是否安装
+if ! command -v docker &> /dev/null; then
+    echo "❌ Docker 未安装，请先安装 Docker"
+    exit 1
+fi
+
+# 设置随机密码
+DB_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-50)
+
+echo "📝 生成的密码信息："
+echo "数据库密码: $DB_PASSWORD"
+echo "JWT 密钥: $JWT_SECRET"
+
+# 启动容器
+docker run -d \
+  --name docker-auto-system \
+  --restart unless-stopped \
+  -p 80:80 \
+  -p 5432:5432 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v docker-auto-data:/app/data \
+  -v docker-auto-logs:/app/logs \
+  -e APP_ENV=production \
+  -e DB_PASSWORD="$DB_PASSWORD" \
+  -e JWT_SECRET="$JWT_SECRET" \
+  -e LOG_LEVEL=info \
+  await2719/docker-auto:latest
+
+echo "⏳ 等待服务启动..."
+sleep 30
+
+# 检查服务状态
+if curl -s http://localhost/health > /dev/null; then
+    echo "✅ Docker Auto 系统启动成功！"
+    echo "🌐 访问地址: http://localhost"
+    echo "📧 默认登录: admin@example.com"
+    echo "🔑 默认密码: admin123"
+    echo "⚠️  请立即修改默认密码！"
+else
+    echo "❌ 服务启动失败，请检查日志:"
+    docker logs docker-auto-system
+fi
 ```
 
 ### 访问系统

@@ -98,7 +98,76 @@ graph TB
 - **Network**: Internet access for image downloads
 - **Ports**: 80 (unified service), 5432 (database)
 
-### 1-Minute Setup
+### Quick Installation
+
+#### Method 1: Docker Run Quick Install (Recommended)
+
+```bash
+# Quick start complete system (including database)
+docker run -d \
+  --name docker-auto-system \
+  -p 80:80 \
+  -p 5432:5432 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v docker-auto-data:/app/data \
+  -e DB_HOST=localhost \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=secure_password_123 \
+  -e JWT_SECRET=your-super-secure-jwt-secret-key-change-this \
+  await2719/docker-auto:latest
+
+# Wait for service startup (about 30 seconds)
+sleep 30
+
+# Verify installation
+curl http://localhost/health
+```
+
+#### Method 2: Simplified Single Command
+
+```bash
+# Simplest startup method (using default configuration)
+docker run -d \
+  --name docker-auto \
+  -p 80:80 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  await2719/docker-auto:latest
+```
+
+#### Method 3: Full Configuration Startup
+
+```bash
+# Production environment startup with full configuration
+docker run -d \
+  --name docker-auto-prod \
+  --restart unless-stopped \
+  -p 80:80 \
+  -p 5432:5432 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v docker-auto-data:/app/data \
+  -v docker-auto-logs:/app/logs \
+  -v docker-auto-backups:/app/backups \
+  -e APP_ENV=production \
+  -e APP_PORT=8080 \
+  -e DB_HOST=localhost \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=your-secure-password \
+  -e JWT_SECRET=your-jwt-secret-key \
+  -e JWT_EXPIRE_HOURS=24 \
+  -e DOCKER_HOST=unix:///var/run/docker.sock \
+  -e LOG_LEVEL=info \
+  -e PROMETHEUS_ENABLED=true \
+  -e METRICS_PORT=9090 \
+  await2719/docker-auto:latest
+
+# View startup logs
+docker logs -f docker-auto-prod
+```
+
+#### Method 4: Docker Compose Installation
 
 ```bash
 # Clone the repository
@@ -114,6 +183,72 @@ docker-compose up -d
 
 # Verify installation
 curl http://localhost/health
+```
+
+### 🔧 Quick Configuration Options
+
+| Environment Variable | Default Value | Description |
+|---------------------|---------------|-------------|
+| `APP_PORT` | `8080` | Application port |
+| `DB_HOST` | `localhost` | Database host |
+| `DB_NAME` | `dockerauto` | Database name |
+| `DB_USER` | `dockerauto` | Database user |
+| `DB_PASSWORD` | `secure_password_123` | Database password |
+| `JWT_SECRET` | `your-jwt-secret` | JWT secret key (must change) |
+| `LOG_LEVEL` | `info` | Log level |
+| `PROMETHEUS_ENABLED` | `true` | Enable monitoring |
+
+### 🚀 One-Click Installation Script
+
+```bash
+#!/bin/bash
+# Save as install-docker-auto.sh
+
+echo "🚀 Starting Docker Auto Management System..."
+
+# Check if Docker is installed
+if ! command -v docker &> /dev/null; then
+    echo "❌ Docker not installed, please install Docker first"
+    exit 1
+fi
+
+# Generate random passwords
+DB_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-50)
+
+echo "📝 Generated password information:"
+echo "Database password: $DB_PASSWORD"
+echo "JWT secret: $JWT_SECRET"
+
+# Start container
+docker run -d \
+  --name docker-auto-system \
+  --restart unless-stopped \
+  -p 80:80 \
+  -p 5432:5432 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v docker-auto-data:/app/data \
+  -v docker-auto-logs:/app/logs \
+  -e APP_ENV=production \
+  -e DB_PASSWORD="$DB_PASSWORD" \
+  -e JWT_SECRET="$JWT_SECRET" \
+  -e LOG_LEVEL=info \
+  await2719/docker-auto:latest
+
+echo "⏳ Waiting for service to start..."
+sleep 30
+
+# Check service status
+if curl -s http://localhost/health > /dev/null; then
+    echo "✅ Docker Auto system started successfully!"
+    echo "🌐 Access URL: http://localhost"
+    echo "📧 Default login: admin@example.com"
+    echo "🔑 Default password: admin123"
+    echo "⚠️  Please change the default password immediately!"
+else
+    echo "❌ Service startup failed, please check logs:"
+    docker logs docker-auto-system
+fi
 ```
 
 ### Access the System
