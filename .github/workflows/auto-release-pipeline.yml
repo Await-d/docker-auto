@@ -83,13 +83,13 @@ jobs:
           # Determine version bump type based on commit message
           commit_message="${{ github.event.head_commit.message }}"
 
-          if [[ "$commit_message" =~ ^feat(\(.+\))?!: ]] || [[ "$commit_message" =~ BREAKING[[:space:]]CHANGE ]] || [[ "$commit_message" == *"[major]"* ]]; then
+          if [[ "$commit_message" == feat*!:* ]] || [[ "$commit_message" == *"BREAKING CHANGE"* ]] || [[ "$commit_message" == *"[major]"* ]]; then
             # Major version bump
             major=$((major + 1))
             minor=0
             patch=0
             echo "Major version bump"
-          elif [[ "$commit_message" =~ ^feat(\(.+\))?: ]] || [[ "$commit_message" == *"[minor]"* ]]; then
+          elif [[ "$commit_message" == feat:* ]] || [[ "$commit_message" == feat\(*\):* ]] || [[ "$commit_message" == *"[minor]"* ]]; then
             # Minor version bump
             minor=$((minor + 1))
             patch=0
