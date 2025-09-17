@@ -30,6 +30,7 @@ The Docker Auto-Update System is a comprehensive solution for managing Docker co
 - **📱 Mobile Responsive**: Full mobile support for on-the-go management
 - **🎯 Single Image Architecture**: Unified container with frontend, backend, and docs
 - **⚡ Optimized Performance**: Enhanced build process with streamlined CI/CD integration
+- **🔧 Master Branch Integration**: Complete GitHub Actions workflow optimized for master branch
 
 ## 🏗️ Architecture
 
@@ -86,7 +87,7 @@ graph TB
 
 ## 🚦 Quick Start
 
-**New in v2.2.0**: Streamlined deployment with optimized CI/CD pipeline, enhanced single-image architecture, and improved build performance!
+**New in v2.3.0**: Complete GitHub Actions automation replication from claude-relay-service with optimized master branch integration!
 
 ### Prerequisites
 
@@ -331,7 +332,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Status**: 🚀 Production Ready
-**Version**: 2.2.0
+**Version**: 2.3.0
 **Last Updated**: September 16, 2025
 
 <details>
