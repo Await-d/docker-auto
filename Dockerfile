@@ -4,8 +4,12 @@
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
-COPY frontend/package*.json ./
-RUN npm ci
+
+# Copy package files and install dependencies
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm install --frozen-lockfile
+
+# Copy source files and build
 COPY frontend/ ./
 RUN npm run build
 
