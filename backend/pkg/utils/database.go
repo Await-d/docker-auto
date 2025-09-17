@@ -9,7 +9,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -33,19 +32,11 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 	return manager.Connect()
 }
 
-// Connect establishes database connection
+// Connect establishes database connection to external PostgreSQL only
 func (dm *DBManager) Connect() (*gorm.DB, error) {
-	var dialector gorm.Dialector
-
-	// Determine database type based on configuration
-	if dm.config.Database.Host == "sqlite" || dm.config.Database.Name == ":memory:" {
-		// SQLite for testing or development
-		dialector = sqlite.Open(dm.config.Database.Name)
-	} else {
-		// PostgreSQL for production
-		dsn := dm.config.GetDSN()
-		dialector = postgres.Open(dsn)
-	}
+	// Only PostgreSQL is supported - requires external database
+	dsn := dm.config.GetDSN()
+	dialector := postgres.Open(dsn)
 
 	// Configure GORM logger with performance optimizations
 	var logLevel logger.LogLevel
