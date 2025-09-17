@@ -107,7 +107,7 @@ server {
 EOF
 
 # Create supervisor configuration
-RUN cat > /etc/supervisor/conf.d/supervisord.conf << 'EOF'
+RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisor && cat > /etc/supervisor/conf.d/supervisord.conf << 'EOF'
 [supervisord]
 nodaemon=true
 user=root
