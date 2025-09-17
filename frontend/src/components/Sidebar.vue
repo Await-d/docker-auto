@@ -140,31 +140,20 @@ import {
 } from '@element-plus/icons-vue'
 import { useAuth } from '@/store/auth'
 import { useApp } from '@/store/app'
-import { MENU_ITEMS, USER_ROLES } from '@/utils/constants'
+import { storeToRefs } from 'pinia'
 
 // Composables
 const route = useRoute()
-const router = useRouter()
-const { user, hasPermission, hasRole, userDisplayName, userAvatar } = useAuth()
-const { sidebarCollapsed, toggleSidebar } = useApp()
+const authStore = useAuth()
+const appStore = useApp()
 
-// Icons mapping
-const iconComponents = {
-  Dashboard: Monitor,
-  Box: Files,
-  Picture,
-  Refresh,
-  Document,
-  Setting,
-  User,
-  Monitor,
-  DataAnalysis,
-  Bell,
-  Key,
-  Shield: Lock,
-  Warning,
-  SuccessFilled
-}
+// Reactive refs from stores
+const { user, userDisplayName, userAvatar } = storeToRefs(authStore)
+const { sidebarCollapsed } = storeToRefs(appStore)
+
+// Store methods
+const { hasPermission, hasRole } = authStore
+const { toggleSidebar } = appStore
 
 interface MenuItem {
   path: string

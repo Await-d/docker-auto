@@ -20,6 +20,7 @@ export interface Notification {
   message: string
   duration?: number
   timestamp: number
+  read: boolean
 }
 
 export const useAppStore = defineStore('app', () => {

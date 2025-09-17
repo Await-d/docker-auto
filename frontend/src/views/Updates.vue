@@ -445,7 +445,7 @@ import { storeToRefs } from 'pinia'
 import { useUpdateWebSocket } from '@/services/updateWebSocket'
 
 // Types
-import type { ContainerUpdate, UpdateFilter, VersionComparison as VersionComparisonData } from '@/types/updates'
+import type { UpdateFilter, VersionComparison as VersionComparisonData } from '@/types/updates'
 
 // Store instance
 const updatesStore = useUpdatesStore()
@@ -486,12 +486,17 @@ const showVersionComparison = ref(false)
 const showAllRunningUpdates = ref(false)
 const versionComparisonData = ref<VersionComparisonData | null>(null)
 
+// Methods
+const isUpdateLoading = (containerId: string): boolean => {
+  return runningUpdates.value.some(update => update.containerId === containerId)
+}
+
 // Computed properties
 const activeFiltersCount = computed(() => {
   let count = 0
-  if (filters.updateType?.length) count++
-  if (filters.riskLevel?.length) count++
-  if (filters.size?.min !== undefined || filters.size?.max !== undefined) count++
+  if (filters.value.updateType?.length) count++
+  if (filters.value.riskLevel?.length) count++
+  if (filters.value.size?.min !== undefined || filters.value.size?.max !== undefined) count++
   if (searchQuery.value) count++
   if (quickFilter.value !== 'all') count++
   return count
@@ -652,7 +657,7 @@ const handleBulkIgnore = async () => {
 
 const handleExportSelected = async () => {
   try {
-    const selectedUpdateIds = Array.from(selectedUpdates.value)
+    // TODO: Implement export for selected updates
     const exportFilters: UpdateFilter = {
       // Filter to only selected updates
       // This would need to be implemented in the API
@@ -708,29 +713,29 @@ const applyQuickFilter = () => {
 const handleSearch = () => {
   if (searchQuery.value) {
     updatesStore.setFilters({
-      ...filters,
+      ...filters.value,
       containerName: searchQuery.value
     })
   } else {
-    const newFilters = { ...filters }
+    const newFilters = { ...filters.value }
     delete newFilters.containerName
     updatesStore.setFilters(newFilters)
   }
 }
 
 const handleSort = () => {
-  updatesStore.setSorting(sortConfig.field)
+  updatesStore.setSorting(sortConfig.value.field)
 }
 
 const toggleSortDirection = () => {
-  updatesStore.setSorting(sortConfig.field,
-    sortConfig.direction === 'asc' ? 'desc' : 'asc'
+  updatesStore.setSorting(sortConfig.value.field,
+    sortConfig.value.direction === 'asc' ? 'desc' : 'asc'
   )
 }
 
 const handleSizeFilter = () => {
   updatesStore.setFilters({
-    ...filters,
+    ...filters.value,
     size: {
       min: sizeRange.value[0] * 1024 * 1024, // Convert MB to bytes
       max: sizeRange.value[1] * 1024 * 1024
@@ -739,8 +744,8 @@ const handleSizeFilter = () => {
 }
 
 const applyFilters = () => {
-  updatesStore.setFilters(filters)
-  showFilters = false
+  updatesStore.setFilters(filters.value)
+  showFilters.value = false
 }
 
 const clearAllFilters = () => {

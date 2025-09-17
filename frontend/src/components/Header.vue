@@ -159,21 +159,31 @@ import {
   CircleClose
 } from '@element-plus/icons-vue'
 import { useAuth } from '@/store/auth'
-import { useApp } from '@/store/app'
+import { useApp, type Notification } from '@/store/app'
+import { storeToRefs } from 'pinia'
 
 // Composables
 const route = useRoute()
 const router = useRouter()
-const { user, userDisplayName, userAvatar, logout } = useAuth()
+const authStore = useAuth()
+const appStore = useApp()
+
+// Reactive refs from stores
+const { user, userDisplayName, userAvatar } = storeToRefs(authStore)
 const {
   sidebarCollapsed,
-  toggleSidebar,
   theme,
+  notifications
+} = storeToRefs(appStore)
+
+// Store methods
+const { logout } = authStore
+const {
+  toggleSidebar,
   toggleTheme,
-  notifications,
   removeNotification,
   clearNotifications
-} = useApp()
+} = appStore
 
 // Reactive state
 const notificationDrawer = ref(false)
@@ -210,7 +220,7 @@ const userInitials = computed(() => {
 })
 
 const unreadNotifications = computed(() =>
-  notifications.value.filter(n => !n.read).length
+  notifications.value.filter((n: Notification) => !n.read).length
 )
 
 const themeIcon = computed(() => {
@@ -278,7 +288,7 @@ const toggleFullscreen = () => {
 }
 
 const markAllAsRead = () => {
-  notifications.value.forEach(notification => {
+  notifications.value.forEach((notification: Notification) => {
     notification.read = true
   })
 }
