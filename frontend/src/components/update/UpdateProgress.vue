@@ -3,15 +3,16 @@
     class="update-progress"
     :class="{
       'is-paused': update.status === 'paused',
-      'is-error': update.status === 'failed',
-      'is-stopping': update.status === 'stopping'
+      'is-stopping': update.status === 'stopping',
     }"
   >
     <!-- Header -->
     <div class="progress-header">
       <div class="container-info">
         <div class="container-name">
-          <el-icon class="container-icon"><Box /></el-icon>
+          <el-icon class="container-icon">
+            <Box />
+          </el-icon>
           <span class="name">{{ update.containerName }}</span>
           <el-tag
             :type="getStatusTagType(update.status)"
@@ -41,27 +42,25 @@
             size="small"
             :icon="VideoPause"
             circle
-            @click="$emit('pause', update.id)"
+            @click="emit('pause', update.id)"
           />
         </el-tooltip>
 
         <el-tooltip
-          v-if="update.status === 'paused'"
-          content="Resume Update"
-        >
+v-if="update.status === 'paused'" content="Resume Update"
+>
           <el-button
             size="small"
             :icon="VideoPlay"
             type="primary"
             circle
-            @click="$emit('resume', update.id)"
+            @click="emit('resume', update.id)"
           />
         </el-tooltip>
 
         <el-tooltip
-          v-if="update.canCancel"
-          content="Cancel Update"
-        >
+v-if="update.canCancel" content="Cancel Update"
+>
           <el-button
             size="small"
             :icon="Close"
@@ -83,14 +82,7 @@
                 <el-icon><View /></el-icon>
                 View Details
               </el-dropdown-item>
-              <el-dropdown-item
-                v-if="update.status === 'failed' && update.canRetry"
-                divided
-                @click="$emit('retry', update.id)"
-              >
-                <el-icon><Refresh /></el-icon>
-                Retry Update
-              </el-dropdown-item>
+              <!-- Retry option removed as RunningUpdate doesn't include failed status -->
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -127,8 +119,8 @@
       />
 
       <div class="progress-percentage">
-        {{ Math.round(update.progress) }}%
-      </div>
+{{ Math.round(update.progress) }}%
+</div>
     </div>
 
     <!-- Step Progress (Expanded View) -->
@@ -144,11 +136,13 @@
               'is-completed': step.status === 'completed',
               'is-failed': step.status === 'failed',
               'is-running': step.status === 'running',
-              'is-skipped': step.status === 'skipped'
+              'is-skipped': step.status === 'skipped',
             }"
           >
             <div class="step-indicator">
-              <div class="step-number">{{ index + 1 }}</div>
+              <div class="step-number">
+                {{ index + 1 }}
+              </div>
               <div class="step-status-icon">
                 <el-icon>
                   <component :is="getStepStatusIcon(step.status)" />
@@ -158,7 +152,9 @@
 
             <div class="step-content">
               <div class="step-header">
-                <h4 class="step-title">{{ step.name }}</h4>
+                <h4 class="step-title">
+                  {{ step.name }}
+                </h4>
                 <div class="step-meta">
                   <span v-if="step.duration" class="step-duration">
                     {{ formatDuration(step.duration) }}
@@ -182,7 +178,9 @@
                 </div>
               </div>
 
-              <p class="step-description">{{ step.description }}</p>
+              <p class="step-description">
+                {{ step.description }}
+              </p>
 
               <!-- Step Progress Bar -->
               <div v-if="step.status === 'running'" class="step-progress-bar">
@@ -211,20 +209,23 @@
                     Retry Step
                   </el-button>
                   <span class="retry-count">
-                    Attempt {{ (step.retryCount || 0) + 1 }} of {{ step.maxRetries || 3 }}
+                    Attempt {{ (step.retryCount || 0) + 1 }} of
+                    {{ step.maxRetries || 3 }}
                   </span>
                 </div>
               </div>
 
               <!-- Step Logs -->
-              <div v-if="step.logs.length > 0 && showStepLogs === step.id" class="step-logs">
+              <div
+                v-if="step.logs.length > 0 && showStepLogs === step.id"
+                class="step-logs"
+              >
                 <div class="logs-header">
                   <span>Step Logs</span>
                   <el-button
-                    text
-                    size="small"
-                    @click="showStepLogs = null"
-                  >
+text size="small"
+@click="showStepLogs = null"
+>
                     Hide
                   </el-button>
                 </div>
@@ -241,10 +242,9 @@
 
               <div v-else-if="step.logs.length > 0" class="step-logs-toggle">
                 <el-button
-                  text
-                  size="small"
-                  @click="showStepLogs = step.id"
-                >
+text size="small"
+@click="showStepLogs = step.id"
+>
                   View Step Logs ({{ step.logs.length }})
                 </el-button>
               </div>
@@ -297,7 +297,7 @@
           :icon="expanded ? 'ArrowUp' : 'ArrowDown'"
           @click="toggleExpanded"
         >
-          {{ expanded ? 'Less Details' : 'More Details' }}
+          {{ expanded ? "Less Details" : "More Details" }}
         </el-button>
       </div>
 
@@ -325,18 +325,17 @@
 
     <!-- Details Dialog -->
     <el-dialog
-      v-model="showDetails"
-      title="Update Details"
-      width="60%"
-    >
+v-model="showDetails" title="Update Details"
+width="60%"
+>
       <UpdateDetailsViewer :update="update" />
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ElMessageBox } from 'element-plus'
+import { ref } from "vue";
+import { ElMessageBox } from "element-plus";
 import {
   Box,
   VideoPause,
@@ -345,142 +344,157 @@ import {
   MoreFilled,
   Document,
   View,
-  Refresh,
-  Setting
-} from '@element-plus/icons-vue'
+  Setting,
+} from "@element-plus/icons-vue";
 
 // Components
-import UpdateLogsViewer from './UpdateLogsViewer.vue'
-import UpdateDetailsViewer from './UpdateDetailsViewer.vue'
+import UpdateLogsViewer from "./UpdateLogsViewer.vue";
+import UpdateDetailsViewer from "./UpdateDetailsViewer.vue";
 
 // Types
-import type { RunningUpdate, UpdateStep } from '@/types/updates'
+import type { RunningUpdate, UpdateStep } from "@/types/updates";
 
 // Props
 interface Props {
-  update: RunningUpdate
+  update: RunningUpdate;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // Emits
-defineEmits<{
-  cancel: [updateId: string]
-  pause: [updateId: string]
-  resume: [updateId: string]
-  retry: [updateId: string]
-}>()
+const emit = defineEmits<{
+  cancel: [updateId: string];
+  pause: [updateId: string];
+  resume: [updateId: string];
+  retry: [updateId: string];
+}>();
 
 // Local state
-const expanded = ref(false)
-const showLogs = ref(false)
-const showDetails = ref(false)
-const showStepLogs = ref<number | null>(null)
-const retryingStep = ref<number | null>(null)
+const expanded = ref(false);
+const showLogs = ref(false);
+const showDetails = ref(false);
+const showStepLogs = ref<number | null>(null);
+const retryingStep = ref<number | null>(null);
 
 // Methods
 const toggleExpanded = () => {
-  expanded.value = !expanded.value
-}
+  expanded.value = !expanded.value;
+};
 
 const handleCancel = async () => {
   try {
     await ElMessageBox.confirm(
-      'Are you sure you want to cancel this update? This may leave the container in an inconsistent state.',
-      'Cancel Update',
+      "Are you sure you want to cancel this update? This may leave the container in an inconsistent state.",
+      "Cancel Update",
       {
-        confirmButtonText: 'Yes, Cancel',
-        cancelButtonText: 'No',
-        type: 'warning'
-      }
-    )
-    $emit('cancel', props.update.id)
+        confirmButtonText: "Yes, Cancel",
+        cancelButtonText: "No",
+        type: "warning",
+      },
+    );
+    emit("cancel", props.update.id);
   } catch {
     // User cancelled
   }
-}
+};
 
 const handleLogsClose = () => {
-  showLogs.value = false
-}
+  showLogs.value = false;
+};
 
 const retryStep = async (step: UpdateStep) => {
-  retryingStep.value = step.id
+  retryingStep.value = step.id;
   try {
     // This would call an API to retry the specific step
     // await updatesAPI.retryStep(props.update.id, step.id)
-    console.log('Retrying step:', step.id)
+    console.log("Retrying step:", step.id);
   } catch (error) {
-    console.error('Failed to retry step:', error)
+    console.error("Failed to retry step:", error);
   } finally {
-    retryingStep.value = null
+    retryingStep.value = null;
   }
-}
+};
 
 const getCurrentStepName = () => {
   if (props.update.currentStep < props.update.steps.length) {
-    return props.update.steps[props.update.currentStep]?.name || 'Unknown'
+    return props.update.steps[props.update.currentStep]?.name || "Unknown";
   }
-  return 'Completed'
-}
+  return "Completed";
+};
 
 const getStatusTagType = (status: string) => {
   switch (status) {
-    case 'running': return 'primary'
-    case 'paused': return 'warning'
-    case 'stopping': return 'danger'
-    case 'failed': return 'danger'
-    default: return 'info'
+    case "running":
+      return "primary";
+    case "paused":
+      return "warning";
+    case "stopping":
+      return "danger";
+    case "failed":
+      return "danger";
+    default:
+      return "info";
   }
-}
+};
 
 const getStatusIcon = (status: string) => {
   switch (status) {
-    case 'running': return 'Loading'
-    case 'paused': return 'VideoPause'
-    case 'stopping': return 'Close'
-    case 'failed': return 'CircleClose'
-    case 'queued': return 'Clock'
-    default: return 'InfoFilled'
+    case "running":
+      return "Loading";
+    case "paused":
+      return "VideoPause";
+    case "stopping":
+      return "Close";
+    case "failed":
+      return "CircleClose";
+    case "queued":
+      return "Clock";
+    default:
+      return "InfoFilled";
   }
-}
+};
 
 const getProgressStatus = () => {
-  if (props.update.status === 'failed') return 'exception'
-  if (props.update.status === 'paused') return 'warning'
-  return undefined
-}
+  if (props.update.status === "paused") return "warning";
+  return undefined;
+};
 
 const getStepStatusIcon = (status: string) => {
   switch (status) {
-    case 'completed': return 'Check'
-    case 'failed': return 'Close'
-    case 'running': return 'Loading'
-    case 'skipped': return 'Minus'
-    case 'pending': return 'Clock'
-    default: return 'InfoFilled'
+    case "completed":
+      return "Check";
+    case "failed":
+      return "Close";
+    case "running":
+      return "Loading";
+    case "skipped":
+      return "Minus";
+    case "pending":
+      return "Clock";
+    default:
+      return "InfoFilled";
   }
-}
+};
 
 const formatDuration = (seconds: number) => {
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
-}
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+};
 
 const formatSpeed = (bytesPerSecond: number) => {
-  const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s']
-  if (bytesPerSecond === 0) return '0 B/s'
-  const i = Math.floor(Math.log(bytesPerSecond) / Math.log(1024))
-  return `${(bytesPerSecond / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
-}
+  const sizes = ["B/s", "KB/s", "MB/s", "GB/s"];
+  if (bytesPerSecond === 0) return "0 B/s";
+  const i = Math.floor(Math.log(bytesPerSecond) / Math.log(1024));
+  return `${(bytesPerSecond / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+};
 
 const formatBytes = (bytes: number) => {
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  if (bytes === 0) return '0 B'
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
-}
+  const sizes = ["B", "KB", "MB", "GB"];
+  if (bytes === 0) return "0 B";
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+};
 </script>
 
 <style scoped lang="scss">
@@ -493,13 +507,17 @@ const formatBytes = (bytes: number) => {
   overflow: hidden;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--el-color-primary), var(--el-color-success));
+    background: linear-gradient(
+      90deg,
+      var(--el-color-primary),
+      var(--el-color-success)
+    );
     animation: progress-pulse 2s infinite;
   }
 
@@ -532,7 +550,8 @@ const formatBytes = (bytes: number) => {
 }
 
 @keyframes progress-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -541,7 +560,8 @@ const formatBytes = (bytes: number) => {
 }
 
 @keyframes stopping-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -661,7 +681,7 @@ const formatBytes = (bytes: number) => {
   position: relative;
 
   &:not(:last-child)::after {
-    content: '';
+    content: "";
     position: absolute;
     left: 20px;
     top: 40px;
@@ -775,7 +795,8 @@ const formatBytes = (bytes: number) => {
 }
 
 @keyframes running-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(64, 158, 255, 0.7);
   }

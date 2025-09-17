@@ -1,14 +1,21 @@
 <template>
-  <div class="system-overview-widget" :class="{ 'compact-mode': displayMode === 'compact' }">
+  <div
+    class="system-overview-widget"
+    :class="{ 'compact-mode': displayMode === 'compact' }"
+  >
     <!-- System Status Header -->
     <div class="status-header">
       <div class="system-status" :class="systemStatusClass">
         <div class="status-indicator">
-          <div class="status-dot"></div>
+          <div class="status-dot" />
         </div>
         <div class="status-info">
-          <h3 class="status-title">{{ systemStatusText }}</h3>
-          <p class="status-subtitle">{{ systemStatusSubtitle }}</p>
+          <h3 class="status-title">
+            {{ systemStatusText }}
+          </h3>
+          <p class="status-subtitle">
+            {{ systemStatusSubtitle }}
+          </p>
         </div>
       </div>
       <div class="system-uptime">
@@ -22,7 +29,9 @@
       <!-- Container Metrics -->
       <div class="metric-card containers">
         <div class="metric-header">
-          <el-icon class="metric-icon"><Box /></el-icon>
+          <el-icon class="metric-icon">
+            <Box />
+          </el-icon>
           <span class="metric-label">Containers</span>
         </div>
         <div class="metric-content">
@@ -33,15 +42,24 @@
           <div class="metric-breakdown">
             <div class="breakdown-item running">
               <span class="breakdown-label">Running</span>
-              <span class="breakdown-value">{{ systemData.containers.running }}</span>
+              <span class="breakdown-value">{{
+                systemData.containers.running
+              }}</span>
             </div>
             <div class="breakdown-item stopped">
               <span class="breakdown-label">Stopped</span>
-              <span class="breakdown-value">{{ systemData.containers.stopped }}</span>
+              <span class="breakdown-value">{{
+                systemData.containers.stopped
+              }}</span>
             </div>
-            <div class="breakdown-item updating" v-if="systemData.containers.updating > 0">
+            <div
+              v-if="systemData.containers.updating > 0"
+              class="breakdown-item updating"
+            >
               <span class="breakdown-label">Updating</span>
-              <span class="breakdown-value">{{ systemData.containers.updating }}</span>
+              <span class="breakdown-value">{{
+                systemData.containers.updating
+              }}</span>
             </div>
           </div>
         </div>
@@ -50,7 +68,9 @@
       <!-- Update Status -->
       <div class="metric-card updates">
         <div class="metric-header">
-          <el-icon class="metric-icon"><Refresh /></el-icon>
+          <el-icon class="metric-icon">
+            <Refresh />
+          </el-icon>
           <span class="metric-label">Updates</span>
         </div>
         <div class="metric-content">
@@ -59,13 +79,20 @@
             <span class="metric-unit">available</span>
           </div>
           <div class="metric-breakdown">
-            <div class="breakdown-item security" v-if="systemData.updates.security > 0">
+            <div
+              v-if="systemData.updates.security > 0"
+              class="breakdown-item security"
+            >
               <span class="breakdown-label">Security</span>
-              <span class="breakdown-value">{{ systemData.updates.security }}</span>
+              <span class="breakdown-value">{{
+                systemData.updates.security
+              }}</span>
             </div>
             <div class="breakdown-item recent">
               <span class="breakdown-label">Recent</span>
-              <span class="breakdown-value">{{ systemData.updates.recent }}</span>
+              <span class="breakdown-value">{{
+                systemData.updates.recent
+              }}</span>
             </div>
           </div>
         </div>
@@ -74,7 +101,9 @@
       <!-- System Health -->
       <div class="metric-card health">
         <div class="metric-header">
-          <el-icon class="metric-icon"><CircleCheckFilled /></el-icon>
+          <el-icon class="metric-icon">
+            <CircleCheckFilled />
+          </el-icon>
           <span class="metric-label">Health</span>
         </div>
         <div class="metric-content">
@@ -102,13 +131,17 @@
       <!-- Activity Summary -->
       <div class="metric-card activity">
         <div class="metric-header">
-          <el-icon class="metric-icon"><DataLine /></el-icon>
+          <el-icon class="metric-icon">
+            <DataLine />
+          </el-icon>
           <span class="metric-label">Activity</span>
         </div>
         <div class="metric-content">
           <div class="activity-stats">
             <div class="activity-stat">
-              <span class="stat-value">{{ systemData.activity.events24h }}</span>
+              <span class="stat-value">{{
+                systemData.activity.events24h
+              }}</span>
               <span class="stat-label">Events (24h)</span>
             </div>
             <div class="activity-stat">
@@ -125,7 +158,9 @@
     </div>
 
     <!-- Resource Usage Bars -->
-    <div class="resource-usage" v-if="displayMode !== 'minimal'">
+    <div
+v-if="displayMode !== 'minimal'" class="resource-usage"
+>
       <div class="resource-item cpu">
         <div class="resource-header">
           <span class="resource-label">CPU Usage</span>
@@ -142,7 +177,8 @@
       <div class="resource-item memory">
         <div class="resource-header">
           <span class="resource-label">Memory Usage</span>
-          <span class="resource-value">{{ formatBytes(systemData.resources.memory.used) }} / {{ formatBytes(systemData.resources.memory.total) }}</span>
+          <span class="resource-value">{{ formatBytes(systemData.resources.memory.used) }} /
+            {{ formatBytes(systemData.resources.memory.total) }}</span>
         </div>
         <el-progress
           :percentage="memoryPercentage"
@@ -155,7 +191,8 @@
       <div class="resource-item disk">
         <div class="resource-header">
           <span class="resource-label">Disk Usage</span>
-          <span class="resource-value">{{ formatBytes(systemData.resources.disk.used) }} / {{ formatBytes(systemData.resources.disk.total) }}</span>
+          <span class="resource-value">{{ formatBytes(systemData.resources.disk.used) }} /
+            {{ formatBytes(systemData.resources.disk.total) }}</span>
         </div>
         <el-progress
           :percentage="diskPercentage"
@@ -167,7 +204,9 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="quick-actions" v-if="displayMode === 'detailed'">
+    <div
+v-if="displayMode === 'detailed'" class="quick-actions"
+>
       <el-button-group>
         <el-button size="small" @click="triggerUpdateScan">
           <el-icon><Refresh /></el-icon>
@@ -185,7 +224,10 @@
     </div>
 
     <!-- Alerts Section -->
-    <div class="alerts-section" v-if="systemData.alerts && systemData.alerts.length > 0">
+    <div
+      v-if="systemData.alerts && systemData.alerts.length > 0"
+      class="alerts-section"
+    >
       <div class="alerts-header">
         <el-icon><Warning /></el-icon>
         <span>Active Alerts ({{ systemData.alerts.length }})</span>
@@ -204,14 +246,18 @@
           </div>
           <div class="alert-content">
             <span class="alert-message">{{ alert.message }}</span>
-            <span class="alert-time">{{ formatRelativeTime(alert.timestamp) }}</span>
+            <span class="alert-time">{{
+              formatRelativeTime(alert.timestamp)
+            }}</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- System Information -->
-    <div class="system-info" v-if="displayMode === 'detailed'">
+    <div
+v-if="displayMode === 'detailed'" class="system-info"
+>
       <div class="info-grid">
         <div class="info-item">
           <span class="info-label">Version</span>
@@ -223,12 +269,17 @@
         </div>
         <div class="info-item">
           <span class="info-label">Last Backup</span>
-          <span class="info-value">{{ formatRelativeTime(systemData.lastBackup) }}</span>
+          <span class="info-value">{{
+            formatRelativeTime(systemData.lastBackup)
+          }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Maintenance Mode</span>
-          <el-tag :type="systemData.maintenanceMode ? 'warning' : 'success'" size="small">
-            {{ systemData.maintenanceMode ? 'Active' : 'Inactive' }}
+          <el-tag
+            :type="systemData.maintenanceMode ? 'warning' : 'success'"
+            size="small"
+          >
+            {{ systemData.maintenanceMode ? "Active" : "Inactive" }}
           </el-tag>
         </div>
       </div>
@@ -237,284 +288,297 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ElMessage } from "element-plus";
 import {
-  Box, Refresh, CircleCheckFilled, DataLine, Timer, Warning,
-  Document, Setting, InfoFilled, WarningFilled, CircleCloseFilled
-} from '@element-plus/icons-vue'
+  Box,
+  Refresh,
+  CircleCheckFilled,
+  DataLine,
+  Timer,
+  Warning,
+  Document,
+  Setting,
+  InfoFilled,
+  WarningFilled,
+  CircleCloseFilled,
+} from "@element-plus/icons-vue";
+
+// Used in dynamic components
+// @ts-ignore: _dynamicIcons is intentionally unused - exists to prevent unused import warnings
+const _dynamicIcons = { InfoFilled, WarningFilled, CircleCloseFilled };
 
 // Props
 interface Props {
-  widgetId: string
-  widgetConfig: any
-  widgetData?: any
-  displayMode?: 'default' | 'compact' | 'detailed' | 'minimal'
+  widgetId: string;
+  widgetConfig: any;
+  widgetData?: any;
+  displayMode?: "default" | "compact" | "detailed" | "minimal";
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  displayMode: 'default'
-})
+  displayMode: "default",
+});
 
 // Emits
 const emit = defineEmits<{
-  'data-updated': [data: any]
-  'error': [error: any]
-  'loading': [loading: boolean]
-  'metrics-updated': [metrics: any]
-}>()
+  "data-updated": [data: any];
+  error: [error: any];
+  loading: [loading: boolean];
+  "metrics-updated": [metrics: any];
+}>();
 
 // Reactive state
-const isLoading = ref(false)
+const isLoading = ref(false);
 const systemData = ref({
-  status: 'healthy',
+  status: "healthy",
   uptime: 86400000, // 1 day in ms
   containers: {
     total: 12,
     running: 10,
     stopped: 2,
-    updating: 0
+    updating: 0,
   },
   updates: {
     available: 3,
     security: 1,
-    recent: 7
+    recent: 7,
   },
   health: {
-    score: 92
+    score: 92,
   },
   activity: {
     events24h: 156,
     errors: 2,
-    warnings: 5
+    warnings: 5,
   },
   resources: {
     cpu: 45.2,
     memory: {
       used: 3221225472, // 3GB
-      total: 8589934592 // 8GB
+      total: 8589934592, // 8GB
     },
     disk: {
       used: 21474836480, // 20GB
-      total: 107374182400 // 100GB
-    }
+      total: 107374182400, // 100GB
+    },
   },
   alerts: [
     {
-      id: '1',
-      severity: 'warning',
-      message: 'High memory usage detected on container web-server',
-      timestamp: new Date(Date.now() - 300000) // 5 minutes ago
+      id: "1",
+      severity: "warning",
+      message: "High memory usage detected on container web-server",
+      timestamp: new Date(Date.now() - 300000), // 5 minutes ago
     },
     {
-      id: '2',
-      severity: 'info',
-      message: 'System backup completed successfully',
-      timestamp: new Date(Date.now() - 3600000) // 1 hour ago
-    }
+      id: "2",
+      severity: "info",
+      message: "System backup completed successfully",
+      timestamp: new Date(Date.now() - 3600000), // 1 hour ago
+    },
   ],
-  version: '1.2.3',
-  dockerVersion: '24.0.7',
+  version: "1.2.3",
+  dockerVersion: "24.0.7",
   lastBackup: new Date(Date.now() - 3600000), // 1 hour ago
-  maintenanceMode: false
-})
+  maintenanceMode: false,
+});
 
 // Computed properties
 const systemStatusClass = computed(() => {
   switch (systemData.value.status) {
-    case 'healthy':
-      return 'status-healthy'
-    case 'warning':
-      return 'status-warning'
-    case 'critical':
-      return 'status-critical'
-    case 'maintenance':
-      return 'status-maintenance'
+    case "healthy":
+      return "status-healthy";
+    case "warning":
+      return "status-warning";
+    case "critical":
+      return "status-critical";
+    case "maintenance":
+      return "status-maintenance";
     default:
-      return 'status-unknown'
+      return "status-unknown";
   }
-})
+});
 
 const systemStatusText = computed(() => {
   switch (systemData.value.status) {
-    case 'healthy':
-      return 'System Healthy'
-    case 'warning':
-      return 'Attention Required'
-    case 'critical':
-      return 'Critical Issues'
-    case 'maintenance':
-      return 'Maintenance Mode'
+    case "healthy":
+      return "System Healthy";
+    case "warning":
+      return "Attention Required";
+    case "critical":
+      return "Critical Issues";
+    case "maintenance":
+      return "Maintenance Mode";
     default:
-      return 'Unknown Status'
+      return "Unknown Status";
   }
-})
+});
 
 const systemStatusSubtitle = computed(() => {
-  const { containers, updates } = systemData.value
-  return `${containers.running}/${containers.total} containers running • ${updates.available} updates available`
-})
+  const { containers, updates } = systemData.value;
+  return `${containers.running}/${containers.total} containers running • ${updates.available} updates available`;
+});
 
 const healthScoreClass = computed(() => {
-  const score = systemData.value.health.score
-  if (score >= 90) return 'score-excellent'
-  if (score >= 75) return 'score-good'
-  if (score >= 60) return 'score-fair'
-  return 'score-poor'
-})
+  const score = systemData.value.health.score;
+  if (score >= 90) return "score-excellent";
+  if (score >= 75) return "score-good";
+  if (score >= 60) return "score-fair";
+  return "score-poor";
+});
 
 const healthIndicators = computed(() => [
   {
-    name: 'Services',
-    status: systemData.value.health.score >= 90 ? 'healthy' : 'warning',
-    icon: 'CircleCheckFilled'
+    name: "Services",
+    status: systemData.value.health.score >= 90 ? "healthy" : "warning",
+    icon: "CircleCheckFilled",
   },
   {
-    name: 'Network',
-    status: systemData.value.health.score >= 80 ? 'healthy' : 'warning',
-    icon: 'CircleCheckFilled'
+    name: "Network",
+    status: systemData.value.health.score >= 80 ? "healthy" : "warning",
+    icon: "CircleCheckFilled",
   },
   {
-    name: 'Storage',
-    status: systemData.value.health.score >= 70 ? 'healthy' : 'warning',
-    icon: 'CircleCheckFilled'
-  }
-])
+    name: "Storage",
+    status: systemData.value.health.score >= 70 ? "healthy" : "warning",
+    icon: "CircleCheckFilled",
+  },
+]);
 
 const memoryPercentage = computed(() => {
-  const { used, total } = systemData.value.resources.memory
-  return Math.round((used / total) * 100)
-})
+  const { used, total } = systemData.value.resources.memory;
+  return Math.round((used / total) * 100);
+});
 
 const diskPercentage = computed(() => {
-  const { used, total } = systemData.value.resources.disk
-  return Math.round((used / total) * 100)
-})
+  const { used, total } = systemData.value.resources.disk;
+  return Math.round((used / total) * 100);
+});
 
 // Methods
 const getResourceColor = (percentage: number) => {
-  if (percentage < 70) return '#67c23a'
-  if (percentage < 90) return '#e6a23c'
-  return '#f56c6c'
-}
+  if (percentage < 70) return "#67c23a";
+  if (percentage < 90) return "#e6a23c";
+  return "#f56c6c";
+};
 
 const getAlertIcon = (severity: string) => {
   switch (severity) {
-    case 'critical':
-      return 'CircleCloseFilled'
-    case 'warning':
-      return 'WarningFilled'
-    case 'info':
-      return 'InfoFilled'
+    case "critical":
+      return "CircleCloseFilled";
+    case "warning":
+      return "WarningFilled";
+    case "info":
+      return "InfoFilled";
     default:
-      return 'InfoFilled'
+      return "InfoFilled";
   }
-}
+};
 
 const formatUptime = (uptimeMs: number): string => {
-  const seconds = Math.floor(uptimeMs / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
+  const seconds = Math.floor(uptimeMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
 
-  if (days > 0) return `${days}d ${hours % 24}h`
-  if (hours > 0) return `${hours}h ${minutes % 60}m`
-  if (minutes > 0) return `${minutes}m ${seconds % 60}s`
-  return `${seconds}s`
-}
+  if (days > 0) return `${days}d ${hours % 24}h`;
+  if (hours > 0) return `${hours}h ${minutes % 60}m`;
+  if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+  return `${seconds}s`;
+};
 
 const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
-}
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
 
 const formatRelativeTime = (date: Date): string => {
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const seconds = Math.floor(diff / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
 
-  if (seconds < 60) return 'just now'
-  if (minutes < 60) return `${minutes}m ago`
-  if (hours < 24) return `${hours}h ago`
-  if (days < 7) return `${days}d ago`
-  return date.toLocaleDateString()
-}
+  if (seconds < 60) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString();
+};
 
 const fetchSystemData = async () => {
   try {
-    emit('loading', true)
-    isLoading.value = true
+    emit("loading", true);
+    isLoading.value = true;
 
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // In a real implementation, this would fetch from the API
-    const response = await fetch('/api/v1/dashboard/system-overview')
+    const response = await fetch("/api/v1/dashboard/system-overview");
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json()
-    systemData.value = { ...systemData.value, ...data }
+    const data = await response.json();
+    systemData.value = { ...systemData.value, ...data };
 
-    emit('data-updated', systemData.value)
-    emit('metrics-updated', {
+    emit("data-updated", systemData.value);
+    emit("metrics-updated", {
       loadTime: Date.now() - performance.now(),
-      dataSize: JSON.stringify(systemData.value).length
-    })
+      dataSize: JSON.stringify(systemData.value).length,
+    });
   } catch (error) {
-    console.error('Failed to fetch system data:', error)
-    emit('error', error)
-    ElMessage.error('Failed to load system overview data')
+    console.error("Failed to fetch system data:", error);
+    emit("error", error);
+    ElMessage.error("Failed to load system overview data");
   } finally {
-    emit('loading', false)
-    isLoading.value = false
+    emit("loading", false);
+    isLoading.value = false;
   }
-}
+};
 
 const triggerUpdateScan = () => {
-  ElMessage.info('Starting update scan...')
+  ElMessage.info("Starting update scan...");
   // Implementation for triggering update scan
-}
+};
 
 const viewSystemLogs = () => {
   // Navigate to system logs
-  ElMessage.info('Opening system logs...')
-}
+  ElMessage.info("Opening system logs...");
+};
 
 const openSystemSettings = () => {
   // Navigate to system settings
-  ElMessage.info('Opening system settings...')
-}
+  ElMessage.info("Opening system settings...");
+};
 
 // Lifecycle hooks
 onMounted(() => {
-  fetchSystemData()
+  fetchSystemData();
 
   // Set up auto-refresh if configured
-  const refreshInterval = props.widgetConfig?.refreshInterval || 30000
+  const refreshInterval = props.widgetConfig?.refreshInterval || 30000;
   if (refreshInterval > 0) {
-    const interval = setInterval(fetchSystemData, refreshInterval)
-    onUnmounted(() => clearInterval(interval))
+    const interval = setInterval(fetchSystemData, refreshInterval);
+    onUnmounted(() => clearInterval(interval));
   }
-})
+});
 
 // Watch for widget data changes from WebSocket
 watch(
   () => props.widgetData,
   (newData) => {
     if (newData) {
-      systemData.value = { ...systemData.value, ...newData }
+      systemData.value = { ...systemData.value, ...newData };
     }
   },
-  { deep: true }
-)
+  { deep: true },
+);
 </script>
 
 <style scoped lang="scss">
@@ -920,7 +984,8 @@ watch(
 
 // Animations
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

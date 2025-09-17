@@ -3,9 +3,7 @@ package monitoring
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/fs"
 	"os"
 	"runtime"
 	"strconv"
@@ -14,6 +12,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 )
 
@@ -259,7 +258,7 @@ func (smc *SystemMetricsCollector) collectDockerMetrics() (DockerMetrics, error)
 	}
 
 	// Get volume count
-	volumes, err := smc.dockerClient.VolumeList(ctx, types.VolumeListOptions{})
+	volumes, err := smc.dockerClient.VolumeList(ctx, volume.ListOptions{})
 	if err == nil {
 		metrics.Volumes = len(volumes.Volumes)
 	}

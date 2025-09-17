@@ -6,8 +6,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// Notification represents a user notification
-type Notification struct {
+// UserNotification represents a user notification stored in database
+type UserNotification struct {
 	ID        int64                  `json:"id" gorm:"primaryKey;autoIncrement"`
 	UserID    *int64                 `json:"user_id,omitempty" gorm:"index:idx_notifications_user_id"`
 	Type      string                 `json:"type" gorm:"not null;size:50;index:idx_notifications_type"`
@@ -44,8 +44,8 @@ type UserNotificationSettings struct {
 	User User `json:"-" gorm:"foreignKey:UserID"`
 }
 
-// NotificationFilter represents filters for querying notifications
-type NotificationFilter struct {
+// UserNotificationFilter represents filters for querying user notifications
+type UserNotificationFilter struct {
 	UserID    *int64 `json:"user_id,omitempty"`
 	Type      string `json:"type,omitempty"`
 	IsRead    *bool  `json:"is_read,omitempty"`
@@ -67,35 +67,35 @@ func (UserNotificationSettings) TableName() string {
 }
 
 // IsUnread checks if the notification is unread
-func (n *Notification) IsUnread() bool {
+func (n *UserNotification) IsUnread() bool {
 	return !n.IsRead
 }
 
 // MarkAsRead marks the notification as read
-func (n *Notification) MarkAsRead() {
+func (n *UserNotification) MarkAsRead() {
 	n.IsRead = true
 	now := time.Now()
 	n.ReadAt = &now
 }
 
 // MarkAsUnread marks the notification as unread
-func (n *Notification) MarkAsUnread() {
+func (n *UserNotification) MarkAsUnread() {
 	n.IsRead = false
 	n.ReadAt = nil
 }
 
 // IsBroadcast checks if the notification is a broadcast (no specific user)
-func (n *Notification) IsBroadcast() bool {
+func (n *UserNotification) IsBroadcast() bool {
 	return n.UserID == nil
 }
 
 // GetAge returns the age of the notification
-func (n *Notification) GetAge() time.Duration {
+func (n *UserNotification) GetAge() time.Duration {
 	return time.Since(n.CreatedAt)
 }
 
 // IsOlderThan checks if the notification is older than the specified duration
-func (n *Notification) IsOlderThan(duration time.Duration) bool {
+func (n *UserNotification) IsOlderThan(duration time.Duration) bool {
 	return n.GetAge() > duration
 }
 
@@ -118,7 +118,7 @@ func GetNotificationTypes() []string {
 }
 
 // BeforeCreate hook for Notification model
-func (n *Notification) BeforeCreate(tx *gorm.DB) error {
+func (n *UserNotification) BeforeCreate(tx *gorm.DB) error {
 	if n.Type == "" {
 		n.Type = "info"
 	}

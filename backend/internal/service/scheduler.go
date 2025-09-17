@@ -223,7 +223,7 @@ func (s *SchedulerService) CreateTask(ctx context.Context, userID int64, req *Cr
 		TargetContainers: s.serializeTargetContainers(req.TargetContainers),
 		Parameters:       s.serializeParameters(req.Parameters),
 		IsActive:         req.IsActive,
-		CreatedBy:        &userID,
+		CreatedBy:        func() *int { u := int(userID); return &u }(),
 	}
 
 	// Validate cron expression
@@ -450,7 +450,7 @@ func (s *SchedulerService) ListTasks(ctx context.Context, userID int64, filter *
 		Name:      filter.Name,
 		Type:      filter.Type,
 		IsActive:  filter.IsActive,
-		CreatedBy: &userID, // Filter by user
+		CreatedBy: func() *int { u := int(userID); return &u }(), // Filter by user
 		Limit:     filter.Limit,
 		Offset:    filter.Offset,
 		OrderBy:   "updated_at DESC",
@@ -645,7 +645,7 @@ func (s *SchedulerService) GetSchedulerStatus(ctx context.Context) (*SchedulerSt
 
 		totalTasks, _, err := s.taskRepo.List(ctx, &model.ScheduledTaskFilter{Limit: 1})
 		if err == nil {
-			status.TotalTasks = int(totalTasks)
+			status.TotalTasks = len(totalTasks)
 		}
 	}
 
@@ -678,7 +678,7 @@ func (s *SchedulerService) GetTaskExecutions(ctx context.Context, userID int64, 
 
 	// Build database filter
 	dbFilter := &model.TaskExecutionLogFilter{
-		TaskID: &taskID,
+		TaskID: func() *int { t := int(taskID); return &t }(),
 		Status: filter.Status,
 		Limit:  filter.Limit,
 		Offset: filter.Offset,
@@ -787,13 +787,13 @@ func (s *SchedulerService) registerTaskTypes() {
 // checkTaskPermission checks if user has permission to access task
 func (s *SchedulerService) checkTaskPermission(task *model.ScheduledTask, userID int64) error {
 	// Admin users can access all tasks
-	user, err := s.userService.GetByID(context.Background(), userID)
+	user, err := s.userService.GetUserByID(context.Background(), userID)
 	if err == nil && user.IsAdmin() {
 		return nil
 	}
 
 	// Users can only access their own tasks
-	if task.CreatedBy == nil || *task.CreatedBy != userID {
+	if task.CreatedBy == nil || int64(*task.CreatedBy) != userID {
 		return fmt.Errorf("access denied: user %d cannot access task %d", userID, task.ID)
 	}
 
@@ -817,7 +817,7 @@ func (s *SchedulerService) logTaskActivity(userID, taskID int64, action, descrip
 		UserID:       &userID,
 		Action:       action,
 		ResourceType: "scheduled_task",
-		ResourceID:   int(taskID),
+		ResourceID:   func() *int { r := int(taskID); return &r }(),
 		Description:  description,
 		Metadata:     metadataJSON,
 	}

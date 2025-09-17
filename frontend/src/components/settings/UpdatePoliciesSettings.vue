@@ -21,7 +21,11 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Default Strategy" prop="defaultStrategy" required>
+            <el-form-item
+              label="Default Strategy"
+              prop="defaultStrategy"
+              required
+            >
               <el-select
                 v-model="formData.defaultStrategy"
                 placeholder="Select update strategy"
@@ -33,7 +37,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Max Concurrent Updates" prop="maxConcurrentUpdates" required>
+            <el-form-item
+              label="Max Concurrent Updates"
+              prop="maxConcurrentUpdates"
+              required
+            >
               <el-input-number
                 v-model="formData.maxConcurrentUpdates"
                 :min="1"
@@ -56,7 +64,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Rollback Timeout" prop="rollbackTimeout" required>
+            <el-form-item
+              label="Rollback Timeout"
+              prop="rollbackTimeout"
+              required
+            >
               <div class="timeout-input">
                 <el-input-number
                   v-model="formData.rollbackTimeout"
@@ -82,7 +94,10 @@
         </template>
 
         <div class="maintenance-windows">
-          <div v-if="formData.maintenanceWindows.length === 0" class="empty-state">
+          <div
+            v-if="formData.maintenanceWindows.length === 0"
+            class="empty-state"
+          >
             <el-empty description="No maintenance windows configured">
               <el-button type="primary" @click="addMaintenanceWindow">
                 Add Maintenance Window
@@ -110,8 +125,8 @@
                 <el-button
                   type="text"
                   size="small"
-                  @click="removeMaintenanceWindow(index)"
                   class="danger-button"
+                  @click="removeMaintenanceWindow(index)"
                 >
                   <el-icon><Delete /></el-icon>
                 </el-button>
@@ -144,13 +159,13 @@
                       v-model="window.dayOfWeek"
                       @change="updateMaintenanceWindow(index)"
                     >
-                      <el-checkbox :label="0">Sun</el-checkbox>
-                      <el-checkbox :label="1">Mon</el-checkbox>
-                      <el-checkbox :label="2">Tue</el-checkbox>
-                      <el-checkbox :label="3">Wed</el-checkbox>
-                      <el-checkbox :label="4">Thu</el-checkbox>
-                      <el-checkbox :label="5">Fri</el-checkbox>
-                      <el-checkbox :label="6">Sat</el-checkbox>
+                      <el-checkbox :label="0"> Sun </el-checkbox>
+                      <el-checkbox :label="1"> Mon </el-checkbox>
+                      <el-checkbox :label="2"> Tue </el-checkbox>
+                      <el-checkbox :label="3"> Wed </el-checkbox>
+                      <el-checkbox :label="4"> Thu </el-checkbox>
+                      <el-checkbox :label="5"> Fri </el-checkbox>
+                      <el-checkbox :label="6"> Sat </el-checkbox>
                     </el-checkbox-group>
                   </el-form-item>
                 </el-col>
@@ -193,8 +208,8 @@
                 @change="handleFieldChange('allowPrerelease', $event)"
               />
               <div class="field-help">
-                Include pre-release versions
-              </div>
+Include pre-release versions
+</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -207,8 +222,8 @@
                 @change="handleFieldChange('securityUpdatePriority', $event)"
               />
               <div class="field-help">
-                Prioritize security updates
-              </div>
+Prioritize security updates
+</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -255,35 +270,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch } from "vue";
 import {
   Refresh,
   Clock,
   DocumentCopy,
   Bell,
   Plus,
-  Delete
-} from '@element-plus/icons-vue'
-import ConfigForm from './forms/ConfigForm.vue'
-import type { UpdateSettings, MaintenanceWindow } from '@/store/settings'
+  Delete,
+} from "@element-plus/icons-vue";
+import ConfigForm from "./forms/ConfigForm.vue";
+import type { UpdateSettings, MaintenanceWindow } from "@/store/settings";
 
 interface Props {
-  modelValue: UpdateSettings
-  loading?: boolean
-  validationErrors?: Record<string, string[]>
+  modelValue: UpdateSettings;
+  loading?: boolean;
+  validationErrors?: Record<string, string[]>;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: UpdateSettings): void
-  (e: 'field-change', field: string, value: any): void
-  (e: 'field-validate', field: string, value: any): void
+  (e: "update:modelValue", value: UpdateSettings): void;
+  (e: "field-change", field: string, value: any): void;
+  (e: "field-validate", field: string, value: any): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const formData = ref<UpdateSettings>({
-  defaultStrategy: 'manual',
+  defaultStrategy: "manual",
   maintenanceWindows: [],
   maxConcurrentUpdates: 3,
   retryAttempts: 3,
@@ -294,81 +309,136 @@ const formData = ref<UpdateSettings>({
   securityUpdatePriority: true,
   notifyOnAvailable: true,
   notifyOnComplete: true,
-  notifyOnFailure: true
-} as any)
+  notifyOnFailure: true,
+} as any);
 
 const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue)
-})
+  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
+});
 
 const formRules = computed(() => ({
   defaultStrategy: [
-    { required: true, message: 'Default strategy is required', trigger: 'change' }
+    {
+      required: true,
+      message: "Default strategy is required",
+      trigger: "change",
+    },
   ],
   maxConcurrentUpdates: [
-    { required: true, message: 'Max concurrent updates is required', trigger: 'blur' },
-    { type: 'number', min: 1, max: 20, message: 'Must be between 1 and 20', trigger: 'blur' }
+    {
+      required: true,
+      message: "Max concurrent updates is required",
+      trigger: "blur",
+    },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 1 || value > 20) {
+          callback(new Error("Must be between 1 and 20"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   retryAttempts: [
-    { required: true, message: 'Retry attempts is required', trigger: 'blur' },
-    { type: 'number', min: 0, max: 10, message: 'Must be between 0 and 10', trigger: 'blur' }
+    { required: true, message: "Retry attempts is required", trigger: "blur" },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 0 || value > 10) {
+          callback(new Error("Must be between 0 and 10"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   rollbackTimeout: [
-    { required: true, message: 'Rollback timeout is required', trigger: 'blur' },
-    { type: 'number', min: 30, max: 3600, message: 'Must be between 30 and 3600 seconds', trigger: 'blur' }
-  ]
-}))
+    {
+      required: true,
+      message: "Rollback timeout is required",
+      trigger: "blur",
+    },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 30 || value > 3600) {
+          callback(new Error("Must be between 30 and 3600 seconds"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+}));
 
 const generateId = (): string => {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9)
-}
+  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+};
 
 const addMaintenanceWindow = () => {
   const newWindow: MaintenanceWindow = {
     id: generateId(),
     name: `Window ${formData.value.maintenanceWindows.length + 1}`,
     dayOfWeek: [1, 2, 3, 4, 5], // Monday to Friday
-    startTime: '02:00',
-    endTime: '04:00',
-    timezone: 'UTC',
-    enabled: true
-  }
+    startTime: "02:00",
+    endTime: "04:00",
+    timezone: "UTC",
+    enabled: true,
+  };
 
-  formData.value.maintenanceWindows.push(newWindow)
-  updateMaintenanceWindows()
-}
+  formData.value.maintenanceWindows.push(newWindow);
+  updateMaintenanceWindows();
+};
 
 const removeMaintenanceWindow = (index: number) => {
-  formData.value.maintenanceWindows.splice(index, 1)
-  updateMaintenanceWindows()
-}
+  formData.value.maintenanceWindows.splice(index, 1);
+  updateMaintenanceWindows();
+};
 
-const updateMaintenanceWindow = (index: number) => {
-  updateMaintenanceWindows()
-}
+const updateMaintenanceWindow = (_index: number) => {
+  updateMaintenanceWindows();
+};
 
 const updateMaintenanceWindows = () => {
-  handleFieldChange('maintenanceWindows', formData.value.maintenanceWindows)
-}
+  handleFieldChange("maintenanceWindows", formData.value.maintenanceWindows);
+};
 
 const handleSave = () => {
-  emit('update:modelValue', formData.value)
-}
+  emit("update:modelValue", formData.value);
+};
 
 const handleReset = () => {
-  formData.value = { ...props.modelValue }
-}
+  formData.value = { ...props.modelValue };
+};
 
 const handleFieldChange = (field: string, value: any) => {
-  emit('field-change', field, value)
-}
+  emit("field-change", field, value);
+};
 
 // Initialize form data from props
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    formData.value = { ...newValue }
-  }
-}, { immediate: true, deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = { ...newValue };
+    }
+  },
+  { immediate: true, deep: true },
+);
 </script>
 
 <style scoped lang="scss">

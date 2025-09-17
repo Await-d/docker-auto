@@ -30,10 +30,14 @@
           >
             <div class="update-info">
               <span class="container-name">{{ update.containerName }}</span>
-              <span class="version-change">{{ update.currentVersion }} → {{ update.availableVersion }}</span>
+              <span class="version-change">{{ update.currentVersion }} →
+                {{ update.availableVersion }}</span>
             </div>
             <div class="update-meta">
-              <el-tag :type="getRiskColor(update.riskLevel)" size="small">{{ update.riskLevel }}</el-tag>
+              <el-tag
+:type="getRiskColor(update.riskLevel)" size="small">
+                update.riskLevel }}
+              </el-tag>
               <span class="size">{{ formatSize(update.size) }}</span>
               <span v-if="update.dependencies.length > 0" class="dependencies">
                 <el-icon><Connection /></el-icon>
@@ -46,13 +50,15 @@
 
       <!-- Bulk Configuration -->
       <el-form
-        ref="formRef"
-        :model="bulkForm"
-        label-width="160px"
-      >
+ref="formRef" :model="bulkForm"
+label-width="160px"
+>
         <!-- Update Strategy -->
         <el-form-item label="Execution Strategy">
-          <el-radio-group v-model="bulkForm.strategy" @change="updateEstimation">
+          <el-radio-group
+            v-model="bulkForm.strategy"
+            @change="updateEstimation"
+          >
             <el-radio label="sequential">
               <div class="strategy-option">
                 <span>Sequential</span>
@@ -131,7 +137,7 @@
               <div class="batch-header">
                 <span>Batch {{ index + 1 }}</span>
                 <el-tag size="small" effect="plain">
-                  {{ batch.length }} container{{ batch.length > 1 ? 's' : '' }}
+                  {{ batch.length }} container{{ batch.length > 1 ? "s" : "" }}
                 </el-tag>
               </div>
               <div class="batch-containers">
@@ -153,15 +159,21 @@
             <div class="time-breakdown">
               <div class="time-item">
                 <span class="time-label">Download:</span>
-                <span class="time-value">{{ formatDuration(estimation.downloadTime) }}</span>
+                <span class="time-value">{{
+                  formatDuration(estimation.downloadTime)
+                }}</span>
               </div>
               <div class="time-item">
                 <span class="time-label">Update:</span>
-                <span class="time-value">{{ formatDuration(estimation.updateTime) }}</span>
+                <span class="time-value">{{
+                  formatDuration(estimation.updateTime)
+                }}</span>
               </div>
               <div class="time-item total">
                 <span class="time-label">Total:</span>
-                <span class="time-value">{{ formatDuration(estimation.totalTime) }}</span>
+                <span class="time-value">{{
+                  formatDuration(estimation.totalTime)
+                }}</span>
               </div>
             </div>
             <div class="time-range">
@@ -186,7 +198,9 @@
             </el-icon>
             <div class="risk-content">
               <span class="risk-title">{{ risk.title }}</span>
-              <p class="risk-description">{{ risk.description }}</p>
+              <p class="risk-description">
+                {{ risk.description }}
+              </p>
             </div>
             <el-tag :type="getRiskTagType(risk.level)" size="small">
               {{ risk.level.toUpperCase() }}
@@ -202,10 +216,11 @@
           <el-progress
             :percentage="overallProgress"
             :stroke-width="12"
-            status="active"
+            status=""
           />
           <div class="progress-stats">
-            <span>{{ completedCount }} completed, {{ failedCount }} failed, {{ remainingCount }} remaining</span>
+            <span>{{ completedCount }} completed, {{ failedCount }} failed,
+              {{ remainingCount }} remaining</span>
           </div>
         </div>
 
@@ -228,7 +243,7 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">Cancel</el-button>
+        <el-button @click="handleClose"> Cancel </el-button>
         <el-button
           v-if="!isRunning"
           type="primary"
@@ -238,10 +253,9 @@
           Start Bulk Update
         </el-button>
         <el-button
-          v-else
-          type="danger"
-          @click="handleStop"
-        >
+v-else type="danger"
+@click="handleStop"
+>
           Stop All Updates
         </el-button>
       </div>
@@ -250,354 +264,388 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Connection } from '@element-plus/icons-vue'
+import { ref, computed, watch } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { Connection } from "@element-plus/icons-vue";
 
 // Store
-import { useUpdatesStore } from '@/store/updates'
+import { useUpdatesStore } from "@/store/updates";
 
 // Types
-import type { ContainerUpdate, BulkUpdateOperation } from '@/types/updates'
+import type { ContainerUpdate } from "@/types/updates";
 
 // Props
 interface Props {
-  modelValue: boolean
-  selectedUpdates: string[]
+  modelValue: boolean;
+  selectedUpdates: string[];
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // Emits
-defineEmits<{
-  'update:modelValue': [value: boolean]
-  'bulk-update-started': []
-}>()
+const emit = defineEmits<{
+  "update:modelValue": [value: boolean];
+  "bulk-update-started": [];
+}>();
 
 // Store
-const updatesStore = useUpdatesStore()
+const updatesStore = useUpdatesStore();
 
 // Local state
-const formRef = ref()
-const starting = ref(false)
-const isRunning = ref(false)
-const overallProgress = ref(0)
-const completedCount = ref(0)
-const failedCount = ref(0)
-const containerProgress = ref<Array<{
-  id: string
-  name: string
-  progress: number
-  status: 'pending' | 'running' | 'completed' | 'failed'
-}>>([])
+const formRef = ref();
+const starting = ref(false);
+const isRunning = ref(false);
+const overallProgress = ref(0);
+const completedCount = ref(0);
+const failedCount = ref(0);
+const containerProgress = ref<
+  Array<{
+    id: string;
+    name: string;
+    progress: number;
+    status: "pending" | "running" | "completed" | "failed";
+  }>
+>([]);
 
 const bulkForm = ref({
-  strategy: 'sequential' as 'sequential' | 'parallel' | 'rolling',
+  strategy: "sequential" as "sequential" | "parallel" | "rolling",
   maxConcurrent: 3,
   respectDependencies: true,
-  dependencyStrategy: 'strict' as 'strict' | 'loose',
+  dependencyStrategy: "strict" as "strict" | "loose",
   continueOnError: true,
   rollbackOnFailure: true,
-  runTests: false
-})
+  runTests: false,
+});
 
 const estimation = ref({
   downloadTime: 0,
   updateTime: 0,
-  totalTime: 0
-})
+  totalTime: 0,
+});
 
-const executionOrder = ref<string[][]>([])
+const executionOrder = ref<string[][]>([]);
 
 // Computed
 const visible = computed({
   get: () => props.modelValue,
-  set: (value) => $emit('update:modelValue', value)
-})
+  set: (value) => emit("update:modelValue", value),
+});
 
 const getSelectedUpdates = (): ContainerUpdate[] => {
-  return props.selectedUpdates.map(id =>
-    updatesStore.availableUpdates.find(u => u.id === id)
-  ).filter(Boolean) as ContainerUpdate[]
-}
+  return props.selectedUpdates
+    .map((id) => updatesStore.availableUpdates.find((u) => u.id === id))
+    .filter(Boolean) as ContainerUpdate[];
+};
 
-const criticalCount = computed(() =>
-  getSelectedUpdates().filter(u => u.riskLevel === 'critical').length
-)
+const criticalCount = computed(
+  () => getSelectedUpdates().filter((u) => u.riskLevel === "critical").length,
+);
 
-const securityCount = computed(() =>
-  getSelectedUpdates().filter(u => u.updateType === 'security' || u.securityPatches.length > 0).length
-)
+const securityCount = computed(
+  () =>
+    getSelectedUpdates().filter(
+      (u) => u.updateType === "security" || u.securityPatches.length > 0,
+    ).length,
+);
 
 const hasDependencies = computed(() =>
-  getSelectedUpdates().some(u => u.dependencies.length > 0 || u.conflicts.length > 0)
-)
+  getSelectedUpdates().some(
+    (u) => u.dependencies.length > 0 || u.conflicts.length > 0,
+  ),
+);
 
-const remainingCount = computed(() =>
-  props.selectedUpdates.length - completedCount.value - failedCount.value
-)
+const remainingCount = computed(
+  () => props.selectedUpdates.length - completedCount.value - failedCount.value,
+);
 
 const riskAssessment = computed(() => {
-  const risks = []
-  const updates = getSelectedUpdates()
+  const risks = [];
+  const updates = getSelectedUpdates();
 
   if (criticalCount.value > 0) {
     risks.push({
-      type: 'critical',
-      level: 'high',
-      title: 'Critical Updates',
-      description: `${criticalCount.value} critical updates may cause service disruption`
-    })
+      type: "critical",
+      level: "high",
+      title: "Critical Updates",
+      description: `${criticalCount.value} critical updates may cause service disruption`,
+    });
   }
 
   if (securityCount.value > 0) {
     risks.push({
-      type: 'security',
-      level: 'medium',
-      title: 'Security Updates',
-      description: `${securityCount.value} security updates should be applied promptly`
-    })
+      type: "security",
+      level: "medium",
+      title: "Security Updates",
+      description: `${securityCount.value} security updates should be applied promptly`,
+    });
   }
 
-  if (updates.some(u => u.conflicts.length > 0)) {
+  if (updates.some((u) => u.conflicts.length > 0)) {
     risks.push({
-      type: 'conflicts',
-      level: 'high',
-      title: 'Container Conflicts',
-      description: 'Some containers have conflicts that may cause issues'
-    })
+      type: "conflicts",
+      level: "high",
+      title: "Container Conflicts",
+      description: "Some containers have conflicts that may cause issues",
+    });
   }
 
-  if (bulkForm.value.strategy === 'parallel' && bulkForm.value.maxConcurrent > 5) {
+  if (
+    bulkForm.value.strategy === "parallel" &&
+    bulkForm.value.maxConcurrent > 5
+  ) {
     risks.push({
-      type: 'performance',
-      level: 'medium',
-      title: 'High Concurrency',
-      description: 'High concurrency may impact system performance'
-    })
+      type: "performance",
+      level: "medium",
+      title: "High Concurrency",
+      description: "High concurrency may impact system performance",
+    });
   }
 
-  return risks
-})
+  return risks;
+});
 
 // Methods
 const formatTotalSize = () => {
-  const total = getSelectedUpdates().reduce((sum, update) => sum + update.size, 0)
-  return formatSize(total)
-}
+  const total = getSelectedUpdates().reduce(
+    (sum, update) => sum + update.size,
+    0,
+  );
+  return formatSize(total);
+};
 
 const formatSize = (bytes: number) => {
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  if (bytes === 0) return '0 B'
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
-}
+  const sizes = ["B", "KB", "MB", "GB"];
+  if (bytes === 0) return "0 B";
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+};
 
 const formatDuration = (seconds: number) => {
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
-}
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+};
 
 const getRiskColor = (level: string) => {
   switch (level) {
-    case 'low': return 'success'
-    case 'medium': return 'warning'
-    case 'high': return 'danger'
-    case 'critical': return 'danger'
-    default: return 'info'
+    case "low":
+      return "success";
+    case "medium":
+      return "warning";
+    case "high":
+      return "danger";
+    case "critical":
+      return "danger";
+    default:
+      return "info";
   }
-}
+};
 
 const getRiskIcon = (level: string) => {
   switch (level) {
-    case 'low': return 'Check'
-    case 'medium': return 'Warning'
-    case 'high': return 'Close'
-    default: return 'InfoFilled'
+    case "low":
+      return "Check";
+    case "medium":
+      return "Warning";
+    case "high":
+      return "Close";
+    default:
+      return "InfoFilled";
   }
-}
+};
 
 const getRiskTagType = (level: string) => {
   switch (level) {
-    case 'low': return 'success'
-    case 'medium': return 'warning'
-    case 'high': return 'danger'
-    default: return 'info'
+    case "low":
+      return "success";
+    case "medium":
+      return "warning";
+    case "high":
+      return "danger";
+    default:
+      return "info";
   }
-}
+};
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'completed': return 'success'
-    case 'failed': return 'danger'
-    case 'running': return 'primary'
-    default: return 'info'
+    case "completed":
+      return "success";
+    case "failed":
+      return "danger";
+    case "running":
+      return "primary";
+    default:
+      return "info";
   }
-}
+};
 
 const getContainerName = (containerId: string) => {
-  const update = getSelectedUpdates().find(u => u.containerId === containerId)
-  return update?.containerName || containerId.substring(0, 8)
-}
+  const update = getSelectedUpdates().find(
+    (u) => u.containerId === containerId,
+  );
+  return update?.containerName || containerId.substring(0, 8);
+};
 
 const updateEstimation = () => {
-  const updates = getSelectedUpdates()
-  const totalDownloadTime = updates.reduce((sum, u) => sum + (u.size / (10 * 1024 * 1024)), 0) // Assume 10MB/s
-  const totalUpdateTime = updates.reduce((sum, u) => sum + u.estimatedDowntime, 0)
+  const updates = getSelectedUpdates();
+  const totalDownloadTime = updates.reduce(
+    (sum, u) => sum + u.size / (10 * 1024 * 1024),
+    0,
+  ); // Assume 10MB/s
+  const totalUpdateTime = updates.reduce(
+    (sum, u) => sum + u.estimatedDowntime,
+    0,
+  );
 
-  if (bulkForm.value.strategy === 'sequential') {
-    estimation.value.downloadTime = totalDownloadTime
-    estimation.value.updateTime = totalUpdateTime
-    estimation.value.totalTime = totalDownloadTime + totalUpdateTime
-  } else if (bulkForm.value.strategy === 'parallel') {
-    const concurrent = bulkForm.value.maxConcurrent
-    estimation.value.downloadTime = Math.ceil(totalDownloadTime / concurrent)
-    estimation.value.updateTime = Math.ceil(totalUpdateTime / concurrent)
-    estimation.value.totalTime = estimation.value.downloadTime + estimation.value.updateTime
+  if (bulkForm.value.strategy === "sequential") {
+    estimation.value.downloadTime = totalDownloadTime;
+    estimation.value.updateTime = totalUpdateTime;
+    estimation.value.totalTime = totalDownloadTime + totalUpdateTime;
+  } else if (bulkForm.value.strategy === "parallel") {
+    const concurrent = bulkForm.value.maxConcurrent;
+    estimation.value.downloadTime = Math.ceil(totalDownloadTime / concurrent);
+    estimation.value.updateTime = Math.ceil(totalUpdateTime / concurrent);
+    estimation.value.totalTime =
+      estimation.value.downloadTime + estimation.value.updateTime;
   } else {
     // Rolling update
-    estimation.value.downloadTime = totalDownloadTime * 0.8
-    estimation.value.updateTime = totalUpdateTime * 0.9
-    estimation.value.totalTime = estimation.value.downloadTime + estimation.value.updateTime
+    estimation.value.downloadTime = totalDownloadTime * 0.8;
+    estimation.value.updateTime = totalUpdateTime * 0.9;
+    estimation.value.totalTime =
+      estimation.value.downloadTime + estimation.value.updateTime;
   }
 
-  updateExecutionOrder()
-}
+  updateExecutionOrder();
+};
 
 const updateExecutionOrder = () => {
-  const updates = getSelectedUpdates()
+  const updates = getSelectedUpdates();
 
-  if (bulkForm.value.strategy === 'sequential') {
-    executionOrder.value = updates.map(u => [u.containerId])
-  } else if (bulkForm.value.strategy === 'parallel') {
-    const concurrent = bulkForm.value.maxConcurrent
-    const batches = []
+  if (bulkForm.value.strategy === "sequential") {
+    executionOrder.value = updates.map((u) => [u.containerId]);
+  } else if (bulkForm.value.strategy === "parallel") {
+    const concurrent = bulkForm.value.maxConcurrent;
+    const batches = [];
     for (let i = 0; i < updates.length; i += concurrent) {
-      batches.push(updates.slice(i, i + concurrent).map(u => u.containerId))
+      batches.push(updates.slice(i, i + concurrent).map((u) => u.containerId));
     }
-    executionOrder.value = batches
+    executionOrder.value = batches;
   } else {
     // Rolling update - create smaller batches
-    const batches = []
+    const batches = [];
     for (let i = 0; i < updates.length; i += 2) {
-      batches.push(updates.slice(i, i + 2).map(u => u.containerId))
+      batches.push(updates.slice(i, i + 2).map((u) => u.containerId));
     }
-    executionOrder.value = batches
+    executionOrder.value = batches;
   }
-}
+};
 
 const getCompletionTime = () => {
-  const completionDate = new Date(Date.now() + estimation.value.totalTime * 1000)
-  return completionDate.toLocaleString()
-}
+  const completionDate = new Date(
+    Date.now() + estimation.value.totalTime * 1000,
+  );
+  return completionDate.toLocaleString();
+};
 
 const handleStart = async () => {
   try {
     await ElMessageBox.confirm(
       `Are you sure you want to start bulk update for ${props.selectedUpdates.length} containers?`,
-      'Confirm Bulk Update',
+      "Confirm Bulk Update",
       {
-        confirmButtonText: 'Start Updates',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }
-    )
+        confirmButtonText: "Start Updates",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      },
+    );
 
-    starting.value = true
-
-    const operation: BulkUpdateOperation = {
-      updateIds: props.selectedUpdates,
-      strategy: bulkForm.value.strategy,
-      maxConcurrent: bulkForm.value.maxConcurrent,
-      continueOnError: bulkForm.value.continueOnError,
-      rollbackOnFailure: bulkForm.value.rollbackOnFailure,
-      runTests: bulkForm.value.runTests,
-      respectDependencies: bulkForm.value.respectDependencies,
-      dependencyStrategy: bulkForm.value.dependencyStrategy
-    }
+    starting.value = true;
 
     await updatesStore.startBulkUpdate(props.selectedUpdates, {
       strategy: bulkForm.value.strategy,
       maxConcurrent: bulkForm.value.maxConcurrent,
-      continueOnError: bulkForm.value.continueOnError
-    })
+      continueOnError: bulkForm.value.continueOnError,
+    });
 
-    isRunning.value = true
-    initializeProgress()
+    isRunning.value = true;
+    initializeProgress();
 
-    ElMessage.success('Bulk update started successfully')
-    $emit('bulk-update-started')
-
+    ElMessage.success("Bulk update started successfully");
+    emit("bulk-update-started");
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to start bulk update:', error)
-      ElMessage.error('Failed to start bulk update')
+    if (error !== "cancel") {
+      console.error("Failed to start bulk update:", error);
+      ElMessage.error("Failed to start bulk update");
     }
   } finally {
-    starting.value = false
+    starting.value = false;
   }
-}
+};
 
 const handleStop = async () => {
   try {
     await ElMessageBox.confirm(
-      'Are you sure you want to stop all running updates?',
-      'Stop Bulk Update',
+      "Are you sure you want to stop all running updates?",
+      "Stop Bulk Update",
       {
-        confirmButtonText: 'Stop All',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }
-    )
+        confirmButtonText: "Stop All",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      },
+    );
 
     // Stop all running updates
     // This would need to be implemented in the store
-    isRunning.value = false
-    ElMessage.success('All updates stopped')
-
+    isRunning.value = false;
+    ElMessage.success("All updates stopped");
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to stop updates:', error)
+    if (error !== "cancel") {
+      console.error("Failed to stop updates:", error);
     }
   }
-}
+};
 
 const initializeProgress = () => {
-  const updates = getSelectedUpdates()
-  containerProgress.value = updates.map(update => ({
+  const updates = getSelectedUpdates();
+  containerProgress.value = updates.map((update) => ({
     id: update.containerId,
     name: update.containerName,
     progress: 0,
-    status: 'pending' as const
-  }))
-}
+    status: "pending" as const,
+  }));
+};
 
 const handleClose = () => {
   if (isRunning.value) {
     ElMessageBox.confirm(
-      'Updates are still running. Are you sure you want to close this dialog?',
-      'Confirm Close',
+      "Updates are still running. Are you sure you want to close this dialog?",
+      "Confirm Close",
       {
-        confirmButtonText: 'Yes, Close',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }
-    ).then(() => {
-      visible.value = false
-    }).catch(() => {
-      // User cancelled
-    })
+        confirmButtonText: "Yes, Close",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      },
+    )
+      .then(() => {
+        visible.value = false;
+      })
+      .catch(() => {
+        // User cancelled
+      });
   } else {
-    visible.value = false
+    visible.value = false;
   }
-}
+};
 
 // Watch for changes and update estimation
-watch(() => [bulkForm.value.strategy, bulkForm.value.maxConcurrent], updateEstimation)
+watch(
+  () => [bulkForm.value.strategy, bulkForm.value.maxConcurrent],
+  updateEstimation,
+);
 
 // Initialize estimation
-updateEstimation()
+updateEstimation();
 </script>
 
 <style scoped lang="scss">

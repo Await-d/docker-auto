@@ -26,6 +26,16 @@ type ImageTag struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 }
 
+// ImageInfo represents complete image information including latest tag and metadata
+type ImageInfo struct {
+	Repository   string                 `json:"repository"`
+	LatestTag    string                 `json:"latest_tag"`
+	LatestDigest string                 `json:"latest_digest"`
+	Tags         []ImageTag             `json:"tags,omitempty"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	LastChecked  time.Time              `json:"last_checked"`
+}
+
 // ImageManifest represents image manifest information
 type ImageManifest struct {
 	Digest       string            `json:"digest"`

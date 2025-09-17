@@ -2,8 +2,12 @@
   <div class="key-value-editor">
     <div class="editor-header">
       <div class="header-info">
-        <h4 v-if="title" class="editor-title">{{ title }}</h4>
-        <p v-if="description" class="editor-description">{{ description }}</p>
+        <h4 v-if="title" class="editor-title">
+          {{ title }}
+        </h4>
+        <p v-if="description" class="editor-description">
+          {{ description }}
+        </p>
       </div>
       <div class="header-actions">
         <el-button
@@ -25,10 +29,9 @@
           :image-size="80"
         >
           <el-button
-            type="primary"
-            :disabled="disabled"
-            @click="addPair"
-          >
+type="primary" :disabled="disabled"
+@click="addPair"
+>
             Add First {{ itemName }}
           </el-button>
         </el-empty>
@@ -36,10 +39,9 @@
 
       <div v-else class="pairs-list">
         <div
-          v-for="(pair, index) in pairs"
-          :key="pair.id"
-          class="pair-item"
-        >
+v-for="(pair, index) in pairs" :key="pair.id"
+class="pair-item"
+>
           <div class="pair-inputs">
             <div class="input-group">
               <label class="input-label">{{ keyLabel }}</label>
@@ -48,9 +50,9 @@
                 :placeholder="keyPlaceholder"
                 :disabled="disabled"
                 :size="size"
+                :class="{ 'is-error': pair.keyError }"
                 @input="updatePair(index, 'key', pair.key)"
                 @blur="validatePair(index)"
-                :class="{ 'is-error': pair.keyError }"
               />
               <div v-if="pair.keyError" class="input-error">
                 {{ pair.keyError }}
@@ -69,9 +71,9 @@
                 :placeholder="valuePlaceholder"
                 :disabled="disabled"
                 :size="size"
+                :class="{ 'is-error': pair.valueError }"
                 @input="updatePair(index, 'value', pair.value)"
                 @blur="validatePair(index)"
-                :class="{ 'is-error': pair.valueError }"
               />
               <el-input
                 v-else-if="valueType === 'textarea'"
@@ -81,9 +83,9 @@
                 :disabled="disabled"
                 :size="size"
                 :rows="2"
+                :class="{ 'is-error': pair.valueError }"
                 @input="updatePair(index, 'value', pair.value)"
                 @blur="validatePair(index)"
-                :class="{ 'is-error': pair.valueError }"
               />
               <el-input-number
                 v-else-if="valueType === 'number'"
@@ -92,8 +94,8 @@
                 :size="size"
                 :min="valueMin"
                 :max="valueMax"
-                @change="updatePair(index, 'value', pair.value)"
                 :class="{ 'is-error': pair.valueError }"
+                @change="updatePair(index, 'value', pair.value)"
               />
               <el-switch
                 v-else-if="valueType === 'boolean'"
@@ -108,8 +110,8 @@
                 :placeholder="valuePlaceholder"
                 :disabled="disabled"
                 :size="size"
-                @change="updatePair(index, 'value', pair.value)"
                 :class="{ 'is-error': pair.valueError }"
+                @change="updatePair(index, 'value', pair.value)"
               >
                 <el-option
                   v-for="option in valueOptions"
@@ -141,14 +143,16 @@
                 type="text"
                 size="small"
                 :disabled="disabled"
-                @click="removePair(index)"
                 class="danger-button"
+                @click="removePair(index)"
               >
                 <el-icon><Delete /></el-icon>
               </el-button>
             </el-tooltip>
 
-            <div class="drag-handle" v-if="sortable && !disabled">
+            <div
+v-if="sortable && !disabled" class="drag-handle"
+>
               <el-icon><Operation /></el-icon>
             </div>
           </div>
@@ -166,8 +170,8 @@
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="clear">
-              Clear All
-            </el-dropdown-item>
+Clear All
+</el-dropdown-item>
             <el-dropdown-item command="export">
               Export as JSON
             </el-dropdown-item>
@@ -179,7 +183,8 @@
       </el-dropdown>
 
       <span class="pairs-count">
-        {{ pairs.length }} {{ itemName.toLowerCase() }}{{ pairs.length !== 1 ? 's' : '' }}
+        {{ pairs.length }} {{ itemName.toLowerCase()
+        }}{{ pairs.length !== 1 ? "s" : "" }}
       </span>
     </div>
 
@@ -191,12 +196,11 @@
     >
       <div class="import-content">
         <el-alert
-          type="info"
-          :closable="false"
-          show-icon
-          class="import-info"
-        >
-          Paste JSON data to import. This will replace all existing {{ itemName.toLowerCase() }}s.
+type="info" :closable="false"
+show-icon class="import-info"
+>
+          Paste JSON data to import. This will replace all existing
+          {{ itemName.toLowerCase() }}s.
         </el-alert>
 
         <el-input
@@ -214,7 +218,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="importDialogVisible = false">Cancel</el-button>
+          <el-button @click="importDialogVisible = false"> Cancel </el-button>
           <el-button
             type="primary"
             :disabled="!importData.trim()"
@@ -229,279 +233,295 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch } from "vue";
 import {
   Plus,
   Right,
   CopyDocument,
   Delete,
   Operation,
-  ArrowDown
-} from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+  ArrowDown,
+} from "@element-plus/icons-vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 
 interface KeyValuePair {
-  id: string
-  key: string
-  value: any
-  keyError?: string
-  valueError?: string
+  id: string;
+  key: string;
+  value: any;
+  keyError?: string;
+  valueError?: string;
 }
 
 interface Props {
-  modelValue: Record<string, any>
-  title?: string
-  description?: string
-  itemName?: string
-  keyLabel?: string
-  valueLabel?: string
-  keyPlaceholder?: string
-  valuePlaceholder?: string
-  valueType?: 'text' | 'textarea' | 'number' | 'boolean' | 'select'
-  valueOptions?: Array<{ label: string; value: any }>
-  valueMin?: number
-  valueMax?: number
-  disabled?: boolean
-  size?: 'large' | 'default' | 'small'
-  sortable?: boolean
-  showBulkActions?: boolean
-  keyPattern?: RegExp
-  valuePattern?: RegExp
-  requiredFields?: boolean
+  modelValue: Record<string, any>;
+  title?: string;
+  description?: string;
+  itemName?: string;
+  keyLabel?: string;
+  valueLabel?: string;
+  keyPlaceholder?: string;
+  valuePlaceholder?: string;
+  valueType?: "text" | "textarea" | "number" | "boolean" | "select";
+  valueOptions?: Array<{ label: string; value: any }>;
+  valueMin?: number;
+  valueMax?: number;
+  disabled?: boolean;
+  size?: "large" | "default" | "small";
+  sortable?: boolean;
+  showBulkActions?: boolean;
+  keyPattern?: RegExp;
+  valuePattern?: RegExp;
+  requiredFields?: boolean;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: Record<string, any>): void
-  (e: 'change', value: Record<string, any>): void
-  (e: 'add', key: string, value: any): void
-  (e: 'remove', key: string): void
-  (e: 'duplicate', originalKey: string, newKey: string): void
+  (e: "update:modelValue", value: Record<string, any>): void;
+  (e: "change", value: Record<string, any>): void;
+  (e: "add", key: string, value: any): void;
+  (e: "remove", key: string): void;
+  (e: "duplicate", originalKey: string, newKey: string): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  itemName: 'Item',
-  keyLabel: 'Key',
-  valueLabel: 'Value',
-  keyPlaceholder: 'Enter key',
-  valuePlaceholder: 'Enter value',
-  valueType: 'text',
+  itemName: "Item",
+  keyLabel: "Key",
+  valueLabel: "Value",
+  keyPlaceholder: "Enter key",
+  valuePlaceholder: "Enter value",
+  valueType: "text",
   disabled: false,
-  size: 'default',
+  size: "default",
   sortable: false,
   showBulkActions: true,
-  requiredFields: false
-})
+  requiredFields: false,
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const pairs = ref<KeyValuePair[]>([])
-const importDialogVisible = ref(false)
-const importData = ref('')
-const importError = ref('')
+const pairs = ref<KeyValuePair[]>([]);
+const importDialogVisible = ref(false);
+const importData = ref("");
+const importError = ref("");
 
 const currentValue = computed({
   get: () => props.modelValue,
   set: (value) => {
-    emit('update:modelValue', value)
-    emit('change', value)
-  }
-})
+    emit("update:modelValue", value);
+    emit("change", value);
+  },
+});
 
 // Convert object to pairs array
 const objectToPairs = (obj: Record<string, any>): KeyValuePair[] => {
   return Object.entries(obj || {}).map(([key, value]) => ({
     id: generateId(),
     key,
-    value
-  }))
-}
+    value,
+  }));
+};
 
 // Convert pairs array to object
 const pairsToObject = (pairsList: KeyValuePair[]): Record<string, any> => {
-  const obj: Record<string, any> = {}
-  pairsList.forEach(pair => {
+  const obj: Record<string, any> = {};
+  pairsList.forEach((pair) => {
     if (pair.key.trim()) {
-      obj[pair.key.trim()] = pair.value
+      obj[pair.key.trim()] = pair.value;
     }
-  })
-  return obj
-}
+  });
+  return obj;
+};
 
 const generateId = (): string => {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9)
-}
+  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+};
 
 const addPair = () => {
   const newPair: KeyValuePair = {
     id: generateId(),
-    key: '',
-    value: props.valueType === 'boolean' ? false :
-           props.valueType === 'number' ? 0 : ''
-  }
+    key: "",
+    value:
+      props.valueType === "boolean"
+        ? false
+        : props.valueType === "number"
+          ? 0
+          : "",
+  };
 
-  pairs.value.push(newPair)
-  updateValue()
-  emit('add', newPair.key, newPair.value)
-}
+  pairs.value.push(newPair);
+  updateValue();
+  emit("add", newPair.key, newPair.value);
+};
 
 const removePair = async (index: number) => {
-  const pair = pairs.value[index]
+  const pair = pairs.value[index];
 
   try {
     await ElMessageBox.confirm(
       `Remove ${props.itemName.toLowerCase()} "${pair.key}"?`,
-      'Confirm Removal',
+      "Confirm Removal",
       {
-        confirmButtonText: 'Remove',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }
-    )
+        confirmButtonText: "Remove",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      },
+    );
 
-    pairs.value.splice(index, 1)
-    updateValue()
-    emit('remove', pair.key)
+    pairs.value.splice(index, 1);
+    updateValue();
+    emit("remove", pair.key);
   } catch {
     // User cancelled
   }
-}
+};
 
 const duplicatePair = (index: number) => {
-  const originalPair = pairs.value[index]
+  const originalPair = pairs.value[index];
   const newPair: KeyValuePair = {
     id: generateId(),
     key: `${originalPair.key}_copy`,
-    value: originalPair.value
-  }
+    value: originalPair.value,
+  };
 
-  pairs.value.splice(index + 1, 0, newPair)
-  updateValue()
-  emit('duplicate', originalPair.key, newPair.key)
-}
+  pairs.value.splice(index + 1, 0, newPair);
+  updateValue();
+  emit("duplicate", originalPair.key, newPair.key);
+};
 
-const updatePair = (index: number, field: 'key' | 'value', value: any) => {
+const updatePair = (index: number, field: "key" | "value", value: any) => {
   if (pairs.value[index]) {
-    pairs.value[index][field] = value
-    updateValue()
+    pairs.value[index][field] = value;
+    updateValue();
   }
-}
+};
 
 const validatePair = (index: number) => {
-  const pair = pairs.value[index]
-  if (!pair) return
+  const pair = pairs.value[index];
+  if (!pair) return;
 
   // Clear previous errors
-  pair.keyError = undefined
-  pair.valueError = undefined
+  pair.keyError = undefined;
+  pair.valueError = undefined;
 
   // Validate key
   if (props.requiredFields && !pair.key.trim()) {
-    pair.keyError = 'Key is required'
+    pair.keyError = "Key is required";
   } else if (props.keyPattern && !props.keyPattern.test(pair.key)) {
-    pair.keyError = 'Invalid key format'
+    pair.keyError = "Invalid key format";
   } else {
     // Check for duplicate keys
-    const duplicateIndex = pairs.value.findIndex((p, i) =>
-      i !== index && p.key.trim() === pair.key.trim()
-    )
+    const duplicateIndex = pairs.value.findIndex(
+      (p, i) => i !== index && p.key.trim() === pair.key.trim(),
+    );
     if (duplicateIndex !== -1) {
-      pair.keyError = 'Duplicate key'
+      pair.keyError = "Duplicate key";
     }
   }
 
   // Validate value
-  if (props.requiredFields &&
-      props.valueType !== 'boolean' &&
-      (pair.value === '' || pair.value === null || pair.value === undefined)) {
-    pair.valueError = 'Value is required'
-  } else if (props.valuePattern &&
-             typeof pair.value === 'string' &&
-             !props.valuePattern.test(pair.value)) {
-    pair.valueError = 'Invalid value format'
+  if (
+    props.requiredFields &&
+    props.valueType !== "boolean" &&
+    (pair.value === "" || pair.value === null || pair.value === undefined)
+  ) {
+    pair.valueError = "Value is required";
+  } else if (
+    props.valuePattern &&
+    typeof pair.value === "string" &&
+    !props.valuePattern.test(pair.value)
+  ) {
+    pair.valueError = "Invalid value format";
   }
-}
+};
 
 const updateValue = () => {
-  currentValue.value = pairsToObject(pairs.value)
-}
+  currentValue.value = pairsToObject(pairs.value);
+};
 
 const handleBulkAction = async (command: string) => {
   switch (command) {
-    case 'clear':
-      await clearAll()
-      break
-    case 'export':
-      exportData()
-      break
-    case 'import':
-      importDialogVisible.value = true
-      break
+    case "clear":
+      await clearAll();
+      break;
+    case "export":
+      exportData();
+      break;
+    case "import":
+      importDialogVisible.value = true;
+      break;
   }
-}
+};
 
 const clearAll = async () => {
   try {
     await ElMessageBox.confirm(
       `Remove all ${props.itemName.toLowerCase()}s?`,
-      'Clear All',
+      "Clear All",
       {
-        confirmButtonText: 'Clear All',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }
-    )
+        confirmButtonText: "Clear All",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      },
+    );
 
-    pairs.value = []
-    updateValue()
+    pairs.value = [];
+    updateValue();
   } catch {
     // User cancelled
   }
-}
+};
 
 const exportData = () => {
-  const data = JSON.stringify(currentValue.value, null, 2)
-  const blob = new Blob([data], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${props.itemName.toLowerCase()}_export.json`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  const data = JSON.stringify(currentValue.value, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${props.itemName.toLowerCase()}_export.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 
-  ElMessage.success(`${props.itemName}s exported successfully`)
-}
+  ElMessage.success(`${props.itemName}s exported successfully`);
+};
 
 const confirmImport = () => {
   try {
-    importError.value = ''
-    const data = JSON.parse(importData.value)
+    importError.value = "";
+    const data = JSON.parse(importData.value);
 
-    if (typeof data !== 'object' || Array.isArray(data)) {
-      throw new Error('Data must be a JSON object')
+    if (typeof data !== "object" || Array.isArray(data)) {
+      throw new Error("Data must be a JSON object");
     }
 
-    pairs.value = objectToPairs(data)
-    updateValue()
-    importDialogVisible.value = false
-    importData.value = ''
+    pairs.value = objectToPairs(data);
+    updateValue();
+    importDialogVisible.value = false;
+    importData.value = "";
 
-    ElMessage.success(`${props.itemName}s imported successfully`)
+    ElMessage.success(`${props.itemName}s imported successfully`);
   } catch (error) {
-    importError.value = `Invalid JSON: ${(error as Error).message}`
+    importError.value = `Invalid JSON: ${(error as Error).message}`;
   }
-}
+};
 
 // Initialize pairs from modelValue
-watch(() => props.modelValue, (newValue) => {
-  pairs.value = objectToPairs(newValue)
-}, { immediate: true, deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    pairs.value = objectToPairs(newValue);
+  },
+  { immediate: true, deep: true },
+);
 
 // Validate all pairs when they change
-watch(pairs, () => {
-  pairs.value.forEach((_, index) => validatePair(index))
-}, { deep: true })
+watch(
+  pairs,
+  () => {
+    pairs.value.forEach((_, index) => validatePair(index));
+  },
+  { deep: true },
+);
 </script>
 
 <style scoped lang="scss">

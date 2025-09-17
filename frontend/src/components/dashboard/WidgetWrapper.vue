@@ -1,30 +1,41 @@
 <template>
-  <div class="widget-wrapper" :class="{ 'edit-mode': isEditMode, 'loading': isLoading, 'error': hasError }">
+  <div
+    class="widget-wrapper"
+    :class="{ 'edit-mode': isEditMode, loading: isLoading, error: hasError }"
+  >
     <!-- Widget Header -->
-    <div class="widget-header" v-if="showHeader">
+    <div
+v-if="showHeader" class="widget-header"
+>
       <div class="widget-title-section">
-        <div class="widget-icon" v-if="widgetIcon">
+        <div
+v-if="widgetIcon" class="widget-icon"
+>
           <el-icon :size="16">
             <component :is="widgetIcon" />
           </el-icon>
         </div>
-        <h3 class="widget-title">{{ widget.title }}</h3>
+        <h3 class="widget-title">
+          {{ widget.title }}
+        </h3>
         <div class="widget-status-indicator" :class="statusClass">
           <el-tooltip :content="statusTooltip" placement="top">
-            <div class="status-dot"></div>
+            <div class="status-dot" />
           </el-tooltip>
         </div>
       </div>
 
-      <div class="widget-actions" v-if="isEditMode || showActions">
+      <div
+v-if="isEditMode || showActions" class="widget-actions"
+>
         <!-- Refresh Button -->
         <el-button
           v-if="!isEditMode"
-          size="mini"
+          size="small"
           type="text"
-          @click="refreshWidget"
           :loading="isRefreshing"
           class="widget-action-btn"
+          @click="refreshWidget"
         >
           <el-icon><Refresh /></el-icon>
         </el-button>
@@ -32,17 +43,19 @@
         <!-- Configure Button -->
         <el-button
           v-if="widget.configurable !== false"
-          size="mini"
+          size="small"
           type="text"
-          @click="configureWidget"
           class="widget-action-btn"
+          @click="configureWidget"
         >
           <el-icon><Setting /></el-icon>
         </el-button>
 
         <!-- More Actions -->
-        <el-dropdown @command="handleAction" v-if="isEditMode">
-          <el-button size="mini" type="text" class="widget-action-btn">
+        <el-dropdown
+v-if="isEditMode" @command="handleAction"
+>
+          <el-button size="small" type="text" class="widget-action-btn">
             <el-icon><More /></el-icon>
           </el-button>
           <template #dropdown>
@@ -51,7 +64,10 @@
                 <el-icon><Refresh /></el-icon>
                 Refresh
               </el-dropdown-item>
-              <el-dropdown-item command="configure" v-if="widget.configurable !== false">
+              <el-dropdown-item
+                v-if="widget.configurable !== false"
+                command="configure"
+              >
                 <el-icon><Setting /></el-icon>
                 Configure
               </el-dropdown-item>
@@ -80,10 +96,22 @@
         <el-skeleton animated>
           <template #template>
             <div class="loading-content">
-              <el-skeleton-item variant="h3" style="width: 60%; margin-bottom: 12px;" />
-              <el-skeleton-item variant="text" style="width: 100%; margin-bottom: 8px;" />
-              <el-skeleton-item variant="text" style="width: 80%; margin-bottom: 8px;" />
-              <el-skeleton-item variant="rect" style="width: 100%; height: 120px;" />
+              <el-skeleton-item
+                variant="h3"
+                style="width: 60%; margin-bottom: 12px"
+              />
+              <el-skeleton-item
+                variant="text"
+                style="width: 100%; margin-bottom: 8px"
+              />
+              <el-skeleton-item
+                variant="text"
+                style="width: 80%; margin-bottom: 8px"
+              />
+              <el-skeleton-item
+                variant="rect"
+                style="width: 100%; height: 120px"
+              />
             </div>
           </template>
         </el-skeleton>
@@ -92,9 +120,13 @@
       <!-- Error State -->
       <div v-else-if="hasError" class="widget-error">
         <div class="error-content">
-          <el-icon class="error-icon" :size="32"><Warning /></el-icon>
+          <el-icon class="error-icon" :size="32">
+            <Warning />
+          </el-icon>
           <h4 class="error-title">Widget Error</h4>
-          <p class="error-message">{{ errorMessage }}</p>
+          <p class="error-message">
+            {{ errorMessage }}
+          </p>
           <div class="error-actions">
             <el-button size="small" @click="refreshWidget">
               <el-icon><Refresh /></el-icon>
@@ -110,31 +142,35 @@
       <!-- Offline State -->
       <div v-else-if="isOffline" class="widget-offline">
         <div class="offline-content">
-          <el-icon class="offline-icon" :size="32"><WifiOff /></el-icon>
+          <el-icon class="offline-icon" :size="32">
+            <Warning />
+          </el-icon>
           <h4 class="offline-title">Offline</h4>
-          <p class="offline-message">This widget requires an internet connection</p>
+          <p class="offline-message">
+            This widget requires an internet connection
+          </p>
         </div>
       </div>
 
       <!-- Widget Component -->
       <component
-        v-else
         :is="widgetComponent"
+        v-else
         v-bind="widgetProps"
         :widget-id="widget.id"
         :widget-config="widget.settings"
         :widget-data="widgetData"
+        class="widget-component"
         @data-updated="onDataUpdated"
         @error="onError"
         @loading="onLoading"
         @metrics-updated="onMetricsUpdated"
-        class="widget-component"
       />
 
       <!-- Edit Mode Overlay -->
       <div v-if="isEditMode" class="edit-overlay">
         <div class="edit-handles">
-          <div class="resize-handle resize-handle-se"></div>
+          <div class="resize-handle resize-handle-se" />
         </div>
         <div class="edit-info">
           <span class="widget-type">{{ widget.type }}</span>
@@ -144,17 +180,25 @@
     </div>
 
     <!-- Widget Footer -->
-    <div class="widget-footer" v-if="showFooter">
+    <div
+v-if="showFooter" class="widget-footer"
+>
       <div class="widget-meta">
-        <span class="last-updated" v-if="lastUpdated">
+        <span
+v-if="lastUpdated" class="last-updated"
+>
           Updated {{ formatRelativeTime(lastUpdated) }}
         </span>
-        <span class="refresh-interval" v-if="widget.refreshInterval > 0">
+        <span
+v-if="widget.refreshInterval > 0" class="refresh-interval"
+>
           Refreshes every {{ formatDuration(widget.refreshInterval) }}
         </span>
       </div>
 
-      <div class="widget-metrics" v-if="showMetrics && metrics">
+      <div
+v-if="showMetrics && metrics" class="widget-metrics"
+>
         <el-tooltip content="Load Time" placement="top">
           <span class="metric">
             <el-icon><Timer /></el-icon>
@@ -167,7 +211,11 @@
             {{ formatBytes(metrics.dataSize) }}
           </span>
         </el-tooltip>
-        <el-tooltip content="Error Count" placement="top" v-if="metrics.errorCount > 0">
+        <el-tooltip
+          v-if="metrics.errorCount > 0"
+          content="Error Count"
+          placement="top"
+        >
           <span class="metric error-metric">
             <el-icon><Warning /></el-icon>
             {{ metrics.errorCount }}
@@ -188,7 +236,9 @@
           <p>{{ errorMessage }}</p>
         </div>
 
-        <div class="error-stack" v-if="errorStack">
+        <div
+v-if="errorStack" class="error-stack"
+>
           <h4>Stack Trace</h4>
           <pre class="stack-trace">{{ errorStack }}</pre>
         </div>
@@ -210,13 +260,15 @@
             </div>
             <div class="context-item">
               <strong>Last Updated:</strong>
-              <span>{{ lastUpdated ? formatDate(lastUpdated) : 'Never' }}</span>
+              <span>{{ lastUpdated ? formatDate(lastUpdated) : "Never" }}</span>
             </div>
           </div>
         </div>
 
         <div class="error-actions-panel">
-          <el-button @click="refreshWidget" type="primary">
+          <el-button
+type="primary" @click="refreshWidget"
+>
             <el-icon><Refresh /></el-icon>
             Retry
           </el-button>
@@ -232,47 +284,55 @@
       </div>
 
       <template #footer>
-        <el-button @click="errorDetailsVisible = false">Close</el-button>
+        <el-button @click="errorDetailsVisible = false"> Close </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
-  Refresh, Setting, More, Warning, Timer, Document, Delete,
-  CopyDocument, Download, RefreshLeft, WifiOff
-} from '@element-plus/icons-vue'
+  Refresh,
+  Setting,
+  More,
+  Warning,
+  Timer,
+  Document,
+  Delete,
+  CopyDocument,
+  Download,
+  RefreshLeft,
+} from "@element-plus/icons-vue";
 
 // Types
-import type { DashboardWidget } from '@/store/dashboard'
-import type { WidgetMetrics } from '@/services/widgetManager'
-import { useWidgetManager, WidgetStatus } from '@/services/widgetManager'
+import type { DashboardWidget } from "@/store/dashboard";
+import type { WidgetMetrics } from "@/services/widgetManager";
+import { useWidgetManager, WidgetStatus } from "@/services/widgetManager";
 
 // Component imports - Dynamic loading for all widgets
 const widgetComponents = {
-  SystemOverview: () => import('./widgets/SystemOverview.vue'),
-  ContainerStats: () => import('./widgets/ContainerStats.vue'),
-  UpdateActivity: () => import('./widgets/UpdateActivity.vue'),
-  RealtimeMonitor: () => import('./widgets/RealtimeMonitor.vue'),
-  HealthMonitor: () => import('./widgets/HealthMonitor.vue'),
-  RecentActivities: () => import('./widgets/RecentActivities.vue'),
-  QuickActions: () => import('./widgets/QuickActions.vue'),
-  NotificationCenter: () => import('./widgets/NotificationCenter.vue'),
-  ResourceCharts: () => import('./widgets/ResourceCharts.vue'),
-  SecurityDashboard: () => import('./widgets/SecurityDashboard.vue')
-}
+  SystemOverview: () => import("./widgets/SystemOverview.vue"),
+  ContainerStats: () => import("./widgets/ContainerStats.vue"),
+  UpdateActivity: () => import("./widgets/UpdateActivity.vue"),
+  RealtimeMonitor: () => import("./widgets/RealtimeMonitor.vue"),
+  HealthMonitor: () => import("./widgets/HealthMonitor.vue"),
+  RecentActivities: () => import("./widgets/RecentActivities.vue"),
+  QuickActions: () => import("./widgets/QuickActions.vue"),
+  NotificationCenter: () => import("./widgets/NotificationCenter.vue"),
+  ResourceCharts: () => import("./widgets/ResourceCharts.vue"),
+  SecurityDashboard: () => import("./widgets/SecurityDashboard.vue"),
+};
 
 // Props
 interface Props {
-  widget: DashboardWidget
-  isEditMode?: boolean
-  showHeader?: boolean
-  showFooter?: boolean
-  showActions?: boolean
-  showMetrics?: boolean
+  widget: DashboardWidget;
+  isEditMode?: boolean;
+  showHeader?: boolean;
+  showFooter?: boolean;
+  showActions?: boolean;
+  showMetrics?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -280,171 +340,167 @@ const props = withDefaults(defineProps<Props>(), {
   showHeader: true,
   showFooter: false,
   showActions: true,
-  showMetrics: false
-})
+  showMetrics: false,
+});
 
 // Emits
 const emit = defineEmits<{
-  remove: [widgetId: string]
-  configure: [widget: DashboardWidget]
-  refresh: [widgetId: string]
-  duplicate: [widget: DashboardWidget]
-  export: [widget: DashboardWidget]
-}>()
+  remove: [widgetId: string];
+  configure: [widget: DashboardWidget];
+  refresh: [widgetId: string];
+  duplicate: [widget: DashboardWidget];
+  export: [widget: DashboardWidget];
+}>();
 
 // Widget manager
-const widgetManager = useWidgetManager()
+const widgetManager = useWidgetManager();
 
 // Reactive state
-const isRefreshing = ref(false)
-const errorDetailsVisible = ref(false)
-const errorMessage = ref('')
-const errorStack = ref('')
-const lastUpdated = ref<Date | null>(null)
+const isRefreshing = ref(false);
+const errorDetailsVisible = ref(false);
+const errorMessage = ref("");
+const errorStack = ref("");
+const lastUpdated = ref<Date | null>(null);
 
 // Computed properties
 const widgetComponent = computed(() => {
-  const componentName = props.widget.component
-  return widgetComponents[componentName as keyof typeof widgetComponents] || null
-})
+  const componentName = props.widget.component;
+  return (
+    widgetComponents[componentName as keyof typeof widgetComponents] || null
+  );
+});
 
 const widgetIcon = computed(() => {
   // Map widget types to icons
   const iconMap: Record<string, string> = {
-    'system-overview': 'Monitor',
-    'container-stats': 'Box',
-    'update-activity': 'Refresh',
-    'realtime-monitor': 'DataLine',
-    'health-monitor': 'CircleCheckFilled',
-    'recent-activities': 'Document',
-    'quick-actions': 'Lightning',
-    'notification-center': 'Bell',
-    'resource-charts': 'DataAnalysis',
-    'security-dashboard': 'Lock'
-  }
-  return iconMap[props.widget.type]
-})
+    "system-overview": "Monitor",
+    "container-stats": "Box",
+    "update-activity": "Refresh",
+    "realtime-monitor": "DataLine",
+    "health-monitor": "CircleCheckFilled",
+    "recent-activities": "Document",
+    "quick-actions": "Lightning",
+    "notification-center": "Bell",
+    "resource-charts": "DataAnalysis",
+    "security-dashboard": "Lock",
+  };
+  return iconMap[props.widget.type];
+});
 
 const widgetProps = computed(() => ({
   ...props.widget.settings,
-  isEditMode: props.isEditMode
-}))
+  isEditMode: props.isEditMode,
+}));
 
-const widgetData = computed(() =>
-  widgetManager.getWidgetData(props.widget.id)
-)
+const widgetData = computed(() => widgetManager.getWidgetData(props.widget.id));
 
 const widgetStatus = computed(() =>
-  widgetManager.getWidgetStatus(props.widget.id)
-)
+  widgetManager.getWidgetStatus(props.widget.id),
+);
 
-const metrics = computed(() =>
-  widgetManager.getWidgetMetrics(props.widget.id)
-)
+const metrics = computed(() => widgetManager.getWidgetMetrics(props.widget.id));
 
-const isLoading = computed(() =>
-  widgetStatus.value === WidgetStatus.LOADING
-)
+const isLoading = computed(() => widgetStatus.value === WidgetStatus.LOADING);
 
-const hasError = computed(() =>
-  widgetStatus.value === WidgetStatus.ERROR
-)
+const hasError = computed(() => widgetStatus.value === WidgetStatus.ERROR);
 
-const isOffline = computed(() =>
-  widgetStatus.value === WidgetStatus.OFFLINE
-)
+const isOffline = computed(() => widgetStatus.value === WidgetStatus.OFFLINE);
 
 const statusClass = computed(() => ({
-  'status-loading': isLoading.value,
-  'status-loaded': widgetStatus.value === WidgetStatus.LOADED,
-  'status-error': hasError.value,
-  'status-offline': isOffline.value
-}))
+  "status-loading": isLoading.value,
+  "status-loaded": widgetStatus.value === WidgetStatus.LOADED,
+  "status-error": hasError.value,
+  "status-offline": isOffline.value,
+}));
 
 const statusTooltip = computed(() => {
   switch (widgetStatus.value) {
     case WidgetStatus.LOADING:
-      return 'Loading...'
+      return "Loading...";
     case WidgetStatus.LOADED:
-      return 'Data loaded successfully'
+      return "Data loaded successfully";
     case WidgetStatus.ERROR:
-      return `Error: ${errorMessage.value}`
+      return `Error: ${errorMessage.value}`;
     case WidgetStatus.OFFLINE:
-      return 'Widget is offline'
+      return "Widget is offline";
     default:
-      return 'Unknown status'
+      return "Unknown status";
   }
-})
+});
 
 const contentStyle = computed(() => ({
-  minHeight: props.showHeader ? 'calc(100% - 40px)' : '100%',
-  maxHeight: props.showFooter ? 'calc(100% - 80px)' : (props.showHeader ? 'calc(100% - 40px)' : '100%')
-}))
+  minHeight: props.showHeader ? "calc(100% - 40px)" : "100%",
+  maxHeight: props.showFooter
+    ? "calc(100% - 80px)"
+    : props.showHeader
+      ? "calc(100% - 40px)"
+      : "100%",
+}));
 
 // Methods
 const refreshWidget = async () => {
   try {
-    isRefreshing.value = true
-    await widgetManager.refreshWidget(props.widget.id, true)
-    emit('refresh', props.widget.id)
+    isRefreshing.value = true;
+    await widgetManager.refreshWidget(props.widget.id, true);
+    emit("refresh", props.widget.id);
   } catch (error) {
-    console.error('Failed to refresh widget:', error)
-    ElMessage.error('Failed to refresh widget')
+    console.error("Failed to refresh widget:", error);
+    ElMessage.error("Failed to refresh widget");
   } finally {
-    isRefreshing.value = false
+    isRefreshing.value = false;
   }
-}
+};
 
 const configureWidget = () => {
-  emit('configure', props.widget)
-}
+  emit("configure", props.widget);
+};
 
 const handleAction = async (command: string) => {
   switch (command) {
-    case 'refresh':
-      await refreshWidget()
-      break
-    case 'configure':
-      configureWidget()
-      break
-    case 'duplicate':
-      emit('duplicate', props.widget)
-      break
-    case 'export':
-      emit('export', props.widget)
-      break
-    case 'remove':
-      emit('remove', props.widget.id)
-      break
+    case "refresh":
+      await refreshWidget();
+      break;
+    case "configure":
+      configureWidget();
+      break;
+    case "duplicate":
+      emit("duplicate", props.widget);
+      break;
+    case "export":
+      emit("export", props.widget);
+      break;
+    case "remove":
+      emit("remove", props.widget.id);
+      break;
   }
-}
+};
 
 const showErrorDetails = () => {
-  errorDetailsVisible.value = true
-}
+  errorDetailsVisible.value = true;
+};
 
 const resetWidget = async () => {
   try {
     await ElMessageBox.confirm(
-      'This will reset the widget to its default configuration. Continue?',
-      'Reset Widget',
+      "This will reset the widget to its default configuration. Continue?",
+      "Reset Widget",
       {
-        type: 'warning',
-        confirmButtonText: 'Reset',
-        cancelButtonText: 'Cancel'
-      }
-    )
+        type: "warning",
+        confirmButtonText: "Reset",
+        cancelButtonText: "Cancel",
+      },
+    );
 
     // Reset widget implementation
-    ElMessage.success('Widget reset successfully')
-    errorDetailsVisible.value = false
+    ElMessage.success("Widget reset successfully");
+    errorDetailsVisible.value = false;
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to reset widget:', error)
-      ElMessage.error('Failed to reset widget')
+    if (error !== "cancel") {
+      console.error("Failed to reset widget:", error);
+      ElMessage.error("Failed to reset widget");
     }
   }
-}
+};
 
 const copyErrorToClipboard = async () => {
   try {
@@ -454,103 +510,103 @@ const copyErrorToClipboard = async () => {
       widget: {
         id: props.widget.id,
         type: props.widget.type,
-        component: props.widget.component
+        component: props.widget.component,
       },
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    };
 
-    await navigator.clipboard.writeText(JSON.stringify(errorInfo, null, 2))
-    ElMessage.success('Error details copied to clipboard')
+    await navigator.clipboard.writeText(JSON.stringify(errorInfo, null, 2));
+    ElMessage.success("Error details copied to clipboard");
   } catch (error) {
-    console.error('Failed to copy to clipboard:', error)
-    ElMessage.error('Failed to copy error details')
+    console.error("Failed to copy to clipboard:", error);
+    ElMessage.error("Failed to copy error details");
   }
-}
+};
 
 // Event handlers
 const onDataUpdated = (data: any) => {
-  widgetManager.updateWidgetData(props.widget.id, data)
-  lastUpdated.value = new Date()
-}
+  widgetManager.updateWidgetData(props.widget.id, data);
+  lastUpdated.value = new Date();
+};
 
 const onError = (error: any) => {
-  errorMessage.value = error.message || error.toString()
-  errorStack.value = error.stack || ''
-  console.error(`Widget ${props.widget.id} error:`, error)
-}
+  errorMessage.value = error.message || error.toString();
+  errorStack.value = error.stack || "";
+  console.error(`Widget ${props.widget.id} error:`, error);
+};
 
-const onLoading = (loading: boolean) => {
+const onLoading = (_loading: boolean) => {
   // Handle loading state if needed
-}
+};
 
-const onMetricsUpdated = (newMetrics: Partial<WidgetMetrics>) => {
+const onMetricsUpdated = (_newMetrics: Partial<WidgetMetrics>) => {
   // Handle metrics updates if needed
-}
+};
 
 // Utility functions
 const formatRelativeTime = (date: Date): string => {
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const seconds = Math.floor(diff / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
 
-  if (seconds < 60) return 'just now'
-  if (minutes < 60) return `${minutes}m ago`
-  if (hours < 24) return `${hours}h ago`
-  return date.toLocaleDateString()
-}
+  if (seconds < 60) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return date.toLocaleDateString();
+};
 
 const formatDuration = (ms: number): string => {
-  if (ms < 1000) return `${ms}ms`
-  const seconds = Math.floor(ms / 1000)
-  if (seconds < 60) return `${seconds}s`
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  return `${hours}h`
-}
+  if (ms < 1000) return `${ms}ms`;
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h`;
+};
 
 const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
-}
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
 
 const formatDate = (date: Date): string => {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).format(date)
-}
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(date);
+};
 
 // Lifecycle hooks
 onMounted(() => {
   // Register widget with widget manager
-  widgetManager.registerWidget(props.widget)
-})
+  widgetManager.registerWidget(props.widget);
+});
 
 onUnmounted(() => {
   // Unregister widget from widget manager
-  widgetManager.unregisterWidget(props.widget.id)
-})
+  widgetManager.unregisterWidget(props.widget.id);
+});
 
 // Watch for widget data changes
 watch(
   () => widgetData.value,
   (newData) => {
     if (newData) {
-      lastUpdated.value = new Date()
+      lastUpdated.value = new Date();
     }
   },
-  { deep: true }
-)
+  { deep: true },
+);
 </script>
 
 <style scoped lang="scss">
@@ -753,7 +809,7 @@ watch(
         pointer-events: auto;
 
         &::before {
-          content: '';
+          content: "";
           position: absolute;
           bottom: 2px;
           right: 2px;
@@ -879,7 +935,8 @@ watch(
 
 // Animations
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

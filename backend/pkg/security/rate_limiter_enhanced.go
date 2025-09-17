@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -716,7 +717,7 @@ func (rl *EnhancedRateLimiter) GetStats() map[string]interface{} {
 		"global_stats": map[string]interface{}{
 			"total_requests":   rl.globalStats.TotalRequests,
 			"blocked_requests": rl.globalStats.BlockedRequests,
-			"block_rate":       float64(rl.globalStats.BlockedRequests) / float64(max(1, rl.globalStats.TotalRequests)),
+			"block_rate":       float64(rl.globalStats.BlockedRequests) / float64(max(1, int(rl.globalStats.TotalRequests))),
 		},
 		"active_entries": map[string]interface{}{
 			"total":     len(rl.entries),

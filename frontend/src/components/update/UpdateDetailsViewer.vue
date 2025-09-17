@@ -41,7 +41,9 @@
         </div>
         <div class="detail-item">
           <span class="label">Estimated:</span>
-          <span class="value">{{ formatDuration(update.estimatedDuration) }}</span>
+          <span class="value">{{
+            formatDuration(update.estimatedDuration)
+          }}</span>
         </div>
       </div>
     </div>
@@ -56,7 +58,7 @@
           :class="{
             current: index === update.currentStep,
             completed: step.status === 'completed',
-            failed: step.status === 'failed'
+            failed: step.status === 'failed',
           }"
         >
           <div class="step-info">
@@ -75,7 +77,9 @@
       <div class="metrics-grid">
         <div class="metric-item">
           <span class="metric-label">Download Speed:</span>
-          <span class="metric-value">{{ formatSpeed(update.metrics.downloadSpeed) }}</span>
+          <span class="metric-value">{{
+            formatSpeed(update.metrics.downloadSpeed)
+          }}</span>
         </div>
         <div class="metric-item">
           <span class="metric-label">CPU Usage:</span>
@@ -83,11 +87,15 @@
         </div>
         <div class="metric-item">
           <span class="metric-label">Memory Usage:</span>
-          <span class="metric-value">{{ formatBytes(update.metrics.memoryUsage) }}</span>
+          <span class="metric-value">{{
+            formatBytes(update.metrics.memoryUsage)
+          }}</span>
         </div>
         <div class="metric-item">
           <span class="metric-label">Network I/O:</span>
-          <span class="metric-value">{{ formatSpeed(update.metrics.networkIo) }}</span>
+          <span class="metric-value">{{
+            formatSpeed(update.metrics.networkIo)
+          }}</span>
         </div>
       </div>
     </div>
@@ -95,49 +103,54 @@
 </template>
 
 <script setup lang="ts">
-import type { RunningUpdate } from '@/types/updates'
+import type { RunningUpdate } from "@/types/updates";
 
 // Props
 interface Props {
-  update: RunningUpdate
+  update: RunningUpdate;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 
 // Methods
 const getStatusType = (status: string) => {
   switch (status) {
-    case 'running': return 'primary'
-    case 'paused': return 'warning'
-    case 'failed': return 'danger'
-    case 'completed': return 'success'
-    default: return 'info'
+    case "running":
+      return "primary";
+    case "paused":
+      return "warning";
+    case "failed":
+      return "danger";
+    case "completed":
+      return "success";
+    default:
+      return "info";
   }
-}
+};
 
 const formatDateTime = (dateString: string) => {
-  return new Date(dateString).toLocaleString()
-}
+  return new Date(dateString).toLocaleString();
+};
 
 const formatDuration = (seconds: number) => {
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
-}
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+};
 
 const formatSpeed = (bytesPerSecond: number) => {
-  const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s']
-  if (bytesPerSecond === 0) return '0 B/s'
-  const i = Math.floor(Math.log(bytesPerSecond) / Math.log(1024))
-  return `${(bytesPerSecond / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
-}
+  const sizes = ["B/s", "KB/s", "MB/s", "GB/s"];
+  if (bytesPerSecond === 0) return "0 B/s";
+  const i = Math.floor(Math.log(bytesPerSecond) / Math.log(1024));
+  return `${(bytesPerSecond / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+};
 
 const formatBytes = (bytes: number) => {
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  if (bytes === 0) return '0 B'
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
-}
+  const sizes = ["B", "KB", "MB", "GB"];
+  if (bytes === 0) return "0 B";
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+};
 </script>
 
 <style scoped lang="scss">

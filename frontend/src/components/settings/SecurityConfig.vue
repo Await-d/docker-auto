@@ -41,8 +41,8 @@
                 @change="updateAccessControl"
               />
               <div class="field-help">
-                Limit API requests per IP
-              </div>
+Limit API requests per IP
+</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -67,7 +67,10 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Retention Days" prop="auditSettings.retentionDays">
+            <el-form-item
+              label="Retention Days"
+              prop="auditSettings.retentionDays"
+            >
               <el-input-number
                 v-model="formData.auditSettings.retentionDays"
                 :min="1"
@@ -100,14 +103,21 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Encryption Algorithm" prop="encryption.algorithm" required>
+            <el-form-item
+              label="Encryption Algorithm"
+              prop="encryption.algorithm"
+              required
+            >
               <el-select
                 v-model="formData.encryption.algorithm"
                 placeholder="Select algorithm"
                 @change="updateEncryption"
               >
                 <el-option label="AES-256-GCM" value="AES-256-GCM" />
-                <el-option label="ChaCha20-Poly1305" value="ChaCha20-Poly1305" />
+                <el-option
+                  label="ChaCha20-Poly1305"
+                  value="ChaCha20-Poly1305"
+                />
               </el-select>
             </el-form-item>
           </el-col>
@@ -118,8 +128,8 @@
                 @change="updateEncryption"
               />
               <div class="field-help">
-                Automatically rotate encryption keys
-              </div>
+Automatically rotate encryption keys
+</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -166,26 +176,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { Lock, Document, Key, Connection } from '@element-plus/icons-vue'
-import ConfigForm from './forms/ConfigForm.vue'
-import KeyValueEditor from './forms/KeyValueEditor.vue'
-import type { SecuritySettings } from '@/store/settings'
+import { ref, computed, watch } from "vue";
+import { Lock, Document, Key, Connection } from "@element-plus/icons-vue";
+import ConfigForm from "./forms/ConfigForm.vue";
+import KeyValueEditor from "./forms/KeyValueEditor.vue";
+import type { SecuritySettings } from "@/store/settings";
 
 interface Props {
-  modelValue: SecuritySettings
-  loading?: boolean
-  validationErrors?: Record<string, string[]>
+  modelValue: SecuritySettings;
+  loading?: boolean;
+  validationErrors?: Record<string, string[]>;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: SecuritySettings): void
-  (e: 'field-change', field: string, value: any): void
-  (e: 'field-validate', field: string, value: any): void
+  (e: "update:modelValue", value: SecuritySettings): void;
+  (e: "field-change", field: string, value: any): void;
+  (e: "field-validate", field: string, value: any): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const formData = ref<SecuritySettings>({
   accessControl: {
@@ -193,97 +203,105 @@ const formData = ref<SecuritySettings>({
     ipBlacklist: [],
     corsPolicy: {
       enabled: true,
-      allowedOrigins: ['*'],
-      allowedMethods: ['GET', 'POST', 'PUT', 'DELETE'],
-      allowedHeaders: ['*'],
+      allowedOrigins: ["*"],
+      allowedMethods: ["GET", "POST", "PUT", "DELETE"],
+      allowedHeaders: ["*"],
       allowCredentials: false,
-      maxAge: 3600
+      maxAge: 3600,
     },
     rateLimiting: {
       enabled: true,
       maxPerMinute: 100,
       maxPerHour: 1000,
-      maxPerDay: 10000
-    }
+      maxPerDay: 10000,
+    },
   },
   auditSettings: {
     enabled: true,
     retentionDays: 90,
     eventFilters: [],
     exportEnabled: true,
-    complianceReporting: false
+    complianceReporting: false,
   },
   encryption: {
-    algorithm: 'AES-256-GCM',
+    algorithm: "AES-256-GCM",
     keyRotationEnabled: true,
     keyRotationInterval: 90,
-    certificateAutoRenewal: true
+    certificateAutoRenewal: true,
   },
   apiSecurity: {
     apiKeysEnabled: true,
     apiKeyExpiration: 365,
     requestSigning: false,
-    webhookVerification: true
-  }
-} as any)
+    webhookVerification: true,
+  },
+} as any);
 
-const ipWhitelistObject = ref<Record<string, string>>({})
+const ipWhitelistObject = ref<Record<string, string>>({});
 
 const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue)
-})
+  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
+});
 
 const formRules = computed(() => ({
-  'encryption.algorithm': [
-    { required: true, message: 'Encryption algorithm is required', trigger: 'change' }
-  ]
-}))
+  "encryption.algorithm": [
+    {
+      required: true,
+      message: "Encryption algorithm is required",
+      trigger: "change",
+    },
+  ],
+}));
 
 const updateIpWhitelist = (obj: Record<string, string>) => {
-  formData.value.accessControl.ipWhitelist = Object.values(obj)
-  updateAccessControl()
-}
+  formData.value.accessControl.ipWhitelist = Object.values(obj);
+  updateAccessControl();
+};
 
 const updateAccessControl = () => {
-  handleFieldChange('accessControl', formData.value.accessControl)
-}
+  handleFieldChange("accessControl", formData.value.accessControl);
+};
 
 const updateAuditSettings = () => {
-  handleFieldChange('auditSettings', formData.value.auditSettings)
-}
+  handleFieldChange("auditSettings", formData.value.auditSettings);
+};
 
 const updateEncryption = () => {
-  handleFieldChange('encryption', formData.value.encryption)
-}
+  handleFieldChange("encryption", formData.value.encryption);
+};
 
 const updateApiSecurity = () => {
-  handleFieldChange('apiSecurity', formData.value.apiSecurity)
-}
+  handleFieldChange("apiSecurity", formData.value.apiSecurity);
+};
 
 const handleSave = () => {
-  emit('update:modelValue', formData.value)
-}
+  emit("update:modelValue", formData.value);
+};
 
 const handleReset = () => {
-  formData.value = { ...props.modelValue }
-}
+  formData.value = { ...props.modelValue };
+};
 
 const handleFieldChange = (field: string, value: any) => {
-  emit('field-change', field, value)
-}
+  emit("field-change", field, value);
+};
 
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    formData.value = { ...newValue }
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = { ...newValue };
 
-    // Convert IP whitelist array to object for KeyValueEditor
-    const ipObj: Record<string, string> = {}
-    newValue.accessControl?.ipWhitelist?.forEach((ip, index) => {
-      ipObj[`ip_${index + 1}`] = ip
-    })
-    ipWhitelistObject.value = ipObj
-  }
-}, { immediate: true, deep: true })
+      // Convert IP whitelist array to object for KeyValueEditor
+      const ipObj: Record<string, string> = {};
+      newValue.accessControl?.ipWhitelist?.forEach((ip, index) => {
+        ipObj[`ip_${index + 1}`] = ip;
+      });
+      ipWhitelistObject.value = ipObj;
+    }
+  },
+  { immediate: true, deep: true },
+);
 </script>
 
 <style scoped lang="scss">

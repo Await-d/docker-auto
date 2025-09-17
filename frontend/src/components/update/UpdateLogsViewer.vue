@@ -3,11 +3,15 @@
     <div class="logs-header">
       <div class="logs-info">
         <span class="logs-count">{{ logs.length }} log entries</span>
-        <el-tag size="small" effect="plain">{{ updateId }}</el-tag>
+        <el-tag size="small" effect="plain">
+          {{ updateId }}
+        </el-tag>
       </div>
       <div class="logs-controls">
-        <el-checkbox v-model="autoScroll">Auto-scroll</el-checkbox>
-        <el-button size="small" :icon="Refresh" @click="refreshLogs">Refresh</el-button>
+        <el-checkbox v-model="autoScroll"> Auto-scroll </el-checkbox>
+        <el-button size="small" :icon="Refresh" @click="refreshLogs">
+          Refresh
+        </el-button>
       </div>
     </div>
 
@@ -35,46 +39,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import { Refresh } from '@element-plus/icons-vue'
-import type { UpdateLog } from '@/types/updates'
+import { ref, watch, nextTick } from "vue";
+import { Refresh } from "@element-plus/icons-vue";
+import type { UpdateLog } from "@/types/updates";
 
 // Props
 interface Props {
-  updateId: string
-  logs: UpdateLog[]
-  autoScroll?: boolean
+  updateId: string;
+  logs: UpdateLog[];
+  autoScroll?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  autoScroll: true
-})
+  autoScroll: true,
+});
 
 // Local state
-const autoScroll = ref(props.autoScroll)
-const logsContainer = ref<HTMLElement>()
+const autoScroll = ref(props.autoScroll);
+const logsContainer = ref<HTMLElement>();
 
 // Methods
 const formatTimestamp = (timestamp: string) => {
-  return new Date(timestamp).toLocaleTimeString()
-}
+  return new Date(timestamp).toLocaleTimeString();
+};
 
 const refreshLogs = () => {
   // Emit event to parent to refresh logs
-}
+};
 
 const scrollToBottom = () => {
   if (logsContainer.value && autoScroll.value) {
-    logsContainer.value.scrollTop = logsContainer.value.scrollHeight
+    logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
   }
-}
+};
 
 // Watch for new logs and auto-scroll
-watch(() => props.logs.length, () => {
-  nextTick(() => {
-    scrollToBottom()
-  })
-})
+watch(
+  () => props.logs.length,
+  () => {
+    nextTick(() => {
+      scrollToBottom();
+    });
+  },
+);
 </script>
 
 <style scoped lang="scss">

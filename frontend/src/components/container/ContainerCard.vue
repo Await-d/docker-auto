@@ -6,7 +6,7 @@
       'is-loading': loading,
       'is-running': container.status === 'running',
       'is-stopped': container.status === 'exited',
-      'is-unhealthy': container.health.status === 'unhealthy'
+      'is-unhealthy': container.health.status === 'unhealthy',
     }"
     @click="$emit('click')"
   >
@@ -14,9 +14,9 @@
     <div class="card-header">
       <el-checkbox
         :model-value="selected"
+        class="selection-checkbox"
         @change="$emit('select')"
         @click.stop
-        class="selection-checkbox"
       />
 
       <!-- Status Badge -->
@@ -34,11 +34,9 @@
 
       <!-- Update Available Badge -->
       <el-badge
-        v-if="hasUpdate"
-        is-dot
-        type="warning"
-        class="update-badge"
-      >
+v-if="hasUpdate" is-dot
+type="warning" class="update-badge"
+>
         <el-icon><Download /></el-icon>
       </el-badge>
     </div>
@@ -76,7 +74,10 @@
 
           <!-- Health Failing Streak -->
           <span
-            v-if="container.health.status === 'unhealthy' && container.health.failingStreak > 0"
+            v-if="
+              container.health.status === 'unhealthy' &&
+                container.health.failingStreak > 0
+            "
             class="failing-streak"
           >
             Failed {{ container.health.failingStreak }} times
@@ -89,7 +90,9 @@
         <div class="resource-item">
           <div class="resource-header">
             <span class="resource-label">CPU</span>
-            <span class="resource-value">{{ formatPercentage(container.resourceUsage.cpu.usage) }}</span>
+            <span class="resource-value">{{
+              formatPercentage(container.resourceUsage.cpu.usage)
+            }}</span>
           </div>
           <el-progress
             :percentage="container.resourceUsage.cpu.usage"
@@ -104,7 +107,9 @@
             <span class="resource-label">Memory</span>
             <span class="resource-value">
               {{ formatBytes(container.resourceUsage.memory.usage) }}
-              ({{ formatPercentage(container.resourceUsage.memory.percentage) }})
+              ({{
+                formatPercentage(container.resourceUsage.memory.percentage)
+              }})
             </span>
           </div>
           <el-progress
@@ -120,14 +125,22 @@
       <div class="network-section">
         <div class="network-stats">
           <div class="network-item">
-            <el-icon class="network-icon"><ArrowUp /></el-icon>
+            <el-icon class="network-icon">
+              <ArrowUp />
+            </el-icon>
             <span class="network-label">TX:</span>
-            <span class="network-value">{{ formatBytes(container.resourceUsage.network.txBytes) }}</span>
+            <span class="network-value">{{
+              formatBytes(container.resourceUsage.network.txBytes)
+            }}</span>
           </div>
           <div class="network-item">
-            <el-icon class="network-icon"><ArrowDown /></el-icon>
+            <el-icon class="network-icon">
+              <ArrowDown />
+            </el-icon>
             <span class="network-label">RX:</span>
-            <span class="network-value">{{ formatBytes(container.resourceUsage.network.rxBytes) }}</span>
+            <span class="network-value">{{
+              formatBytes(container.resourceUsage.network.rxBytes)
+            }}</span>
           </div>
         </div>
       </div>
@@ -185,13 +198,19 @@
       <div class="timestamps">
         <div class="timestamp-item">
           <span class="timestamp-label">Created:</span>
-          <span class="timestamp-value" :title="formatFullDate(container.createdAt)">
+          <span
+            class="timestamp-value"
+            :title="formatFullDate(container.createdAt)"
+          >
             {{ formatRelativeTime(container.createdAt) }}
           </span>
         </div>
         <div v-if="container.startedAt" class="timestamp-item">
           <span class="timestamp-label">Started:</span>
-          <span class="timestamp-value" :title="formatFullDate(container.startedAt)">
+          <span
+            class="timestamp-value"
+            :title="formatFullDate(container.startedAt)"
+          >
             {{ formatRelativeTime(container.startedAt) }}
           </span>
         </div>
@@ -205,8 +224,8 @@
           size="small"
           type="success"
           :loading="loading"
-          @click.stop="$emit('action', 'start', container.id)"
           :disabled="!canPerformAction('start')"
+          @click.stop="$emit('action', 'start', container.id)"
         >
           <el-icon><VideoPlay /></el-icon>
         </el-button>
@@ -216,8 +235,8 @@
           size="small"
           type="warning"
           :loading="loading"
-          @click.stop="$emit('action', 'stop', container.id)"
           :disabled="!canPerformAction('stop')"
+          @click.stop="$emit('action', 'stop', container.id)"
         >
           <el-icon><VideoPause /></el-icon>
         </el-button>
@@ -226,8 +245,8 @@
         <el-button
           size="small"
           :loading="loading"
-          @click.stop="$emit('action', 'restart', container.id)"
           :disabled="!canPerformAction('restart')"
+          @click.stop="$emit('action', 'restart', container.id)"
         >
           <el-icon><Refresh /></el-icon>
         </el-button>
@@ -238,17 +257,16 @@
           size="small"
           type="primary"
           :loading="loading"
-          @click.stop="$emit('action', 'update', container.id)"
           :disabled="!canPerformAction('update')"
+          @click.stop="$emit('action', 'update', container.id)"
         >
           <el-icon><Download /></el-icon>
         </el-button>
 
         <!-- More Actions -->
         <el-dropdown
-          @command="handleAction"
-          @click.stop
-        >
+@command="handleAction" @click.stop
+>
           <el-button size="small">
             <el-icon><MoreFilled /></el-icon>
           </el-button>
@@ -264,7 +282,10 @@
 
               <el-dropdown-item
                 command="terminal"
-                :disabled="!canPerformAction('terminal') || container.status !== 'running'"
+                :disabled="
+                  !canPerformAction('terminal') ||
+                    container.status !== 'running'
+                "
               >
                 <el-icon><Monitor /></el-icon>
                 Terminal
@@ -335,13 +356,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from "vue";
 import {
   Download,
   ArrowUp,
   ArrowDown,
   Connection,
-  CollectionTag,
   VideoPlay,
   VideoPause,
   Refresh,
@@ -360,56 +380,61 @@ import {
   Clock,
   Warning,
   CircleCheckFilled,
-  QuestionFilled
-} from '@element-plus/icons-vue'
+  QuestionFilled,
+} from "@element-plus/icons-vue";
 
-import { useAuthStore } from '@/store/auth'
-import type { Container } from '@/types/container'
+import { useAuthStore } from "@/store/auth";
+import type { Container } from "@/types/container";
 
 interface Props {
-  container: Container
-  selected?: boolean
-  loading?: boolean
-  hasUpdate?: boolean
+  container: Container;
+  selected?: boolean;
+  loading?: boolean;
+  hasUpdate?: boolean;
 }
 
 interface Emits {
-  (e: 'click'): void
-  (e: 'select'): void
-  (e: 'action', action: string, containerId: string): void
+  (e: "click"): void;
+  (e: "select"): void;
+  (e: "action", action: string, containerId: string): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   selected: false,
   loading: false,
-  hasUpdate: false
-})
+  hasUpdate: false,
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 
 // Computed
 const displayLabels = computed(() => {
   const labels = Object.entries(props.container.labels)
-    .filter(([key]) => !key.startsWith('com.docker.'))
+    .filter(([key]) => !key.startsWith("com.docker."))
     .slice(0, 3)
-    .map(([key, value]) => ({ key, value }))
-  return labels
-})
+    .map(([key, value]) => ({ key, value }));
+  return labels;
+});
 
 // Methods
-function getStatusType(status: string): string {
-  const types: Record<string, string> = {
-    running: 'success',
-    exited: 'info',
-    paused: 'warning',
-    restarting: 'warning',
-    removing: 'danger',
-    dead: 'danger',
-    created: 'info'
-  }
-  return types[status] || 'info'
+function getStatusType(
+  status: string,
+): "success" | "warning" | "info" | "primary" | "danger" {
+  const types: Record<
+    string,
+    "success" | "warning" | "info" | "primary" | "danger"
+  > = {
+    running: "success",
+    exited: "info",
+    paused: "warning",
+    restarting: "warning",
+    removing: "danger",
+    dead: "danger",
+    created: "info",
+  };
+  return types[status] || "info";
 }
 
 function getStatusIcon(status: string) {
@@ -420,19 +445,24 @@ function getStatusIcon(status: string) {
     restarting: Loading,
     removing: Delete,
     dead: CircleCloseFilled,
-    created: Clock
-  }
-  return icons[status] || QuestionFilled
+    created: Clock,
+  };
+  return icons[status] || QuestionFilled;
 }
 
-function getHealthType(health: string): string {
-  const types: Record<string, string> = {
-    healthy: 'success',
-    unhealthy: 'danger',
-    starting: 'warning',
-    none: 'info'
-  }
-  return types[health] || 'info'
+function getHealthType(
+  health: string,
+): "success" | "warning" | "info" | "primary" | "danger" {
+  const types: Record<
+    string,
+    "success" | "warning" | "info" | "primary" | "danger"
+  > = {
+    healthy: "success",
+    unhealthy: "danger",
+    starting: "warning",
+    none: "info",
+  };
+  return types[health] || "info";
 }
 
 function getHealthIcon(health: string) {
@@ -440,104 +470,104 @@ function getHealthIcon(health: string) {
     healthy: CircleCheckFilled,
     unhealthy: Warning,
     starting: Loading,
-    none: QuestionFilled
-  }
-  return icons[health] || QuestionFilled
+    none: QuestionFilled,
+  };
+  return icons[health] || QuestionFilled;
 }
 
 function formatHealthStatus(status: string): string {
   const statuses: Record<string, string> = {
-    healthy: 'Healthy',
-    unhealthy: 'Unhealthy',
-    starting: 'Starting',
-    none: 'No Check'
-  }
-  return statuses[status] || status
+    healthy: "Healthy",
+    unhealthy: "Unhealthy",
+    starting: "Starting",
+    none: "No Check",
+  };
+  return statuses[status] || status;
 }
 
 function formatImageName(image: string): string {
   // Truncate long image names
-  const maxLength = 30
-  if (image.length <= maxLength) return image
+  const maxLength = 30;
+  if (image.length <= maxLength) return image;
 
-  const parts = image.split('/')
-  const name = parts[parts.length - 1]
+  const parts = image.split("/");
+  const name = parts[parts.length - 1];
 
   if (name.length <= maxLength) {
-    return `.../${name}`
+    return `.../${name}`;
   }
 
-  return `${image.substring(0, maxLength - 3)}...`
+  return `${image.substring(0, maxLength - 3)}...`;
 }
 
 function formatPercentage(value: number): string {
-  return `${Math.round(value)}%`
+  return `${Math.round(value)}%`;
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
+  if (bytes === 0) return "0 B";
 
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
 
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
 }
 
 function formatLabelValue(value: string): string {
-  const maxLength = 20
-  if (value.length <= maxLength) return value
-  return `${value.substring(0, maxLength - 3)}...`
+  const maxLength = 20;
+  if (value.length <= maxLength) return value;
+  return `${value.substring(0, maxLength - 3)}...`;
 }
 
 function formatRelativeTime(date: Date | string): string {
-  const now = new Date()
-  const target = new Date(date)
-  const diffMs = now.getTime() - target.getTime()
+  const now = new Date();
+  const target = new Date(date);
+  const diffMs = now.getTime() - target.getTime();
 
-  const diffMinutes = Math.floor(diffMs / (1000 * 60))
-  const diffHours = Math.floor(diffMinutes / 60)
-  const diffDays = Math.floor(diffHours / 24)
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMinutes < 1) return 'Just now'
-  if (diffMinutes < 60) return `${diffMinutes}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
 
-  return target.toLocaleDateString()
+  return target.toLocaleDateString();
 }
 
 function formatFullDate(date: Date | string): string {
-  return new Date(date).toLocaleString()
+  return new Date(date).toLocaleString();
 }
 
 function getResourceColor(percentage: number): string {
-  if (percentage < 50) return '#67c23a' // Green
-  if (percentage < 80) return '#e6a23c' // Orange
-  return '#f56c6c' // Red
+  if (percentage < 50) return "#67c23a"; // Green
+  if (percentage < 80) return "#e6a23c"; // Orange
+  return "#f56c6c"; // Red
 }
 
 function canPerformAction(action: string): boolean {
   const permissions: Record<string, string> = {
-    start: 'container:start',
-    stop: 'container:stop',
-    restart: 'container:restart',
-    update: 'container:update',
-    logs: 'container:logs',
-    terminal: 'container:exec',
-    inspect: 'container:read',
-    edit: 'container:update',
-    clone: 'container:create',
-    backup: 'container:backup',
-    export: 'container:export',
-    delete: 'container:delete'
-  }
+    start: "container:start",
+    stop: "container:stop",
+    restart: "container:restart",
+    update: "container:update",
+    logs: "container:logs",
+    terminal: "container:exec",
+    inspect: "container:read",
+    edit: "container:update",
+    clone: "container:create",
+    backup: "container:backup",
+    export: "container:export",
+    delete: "container:delete",
+  };
 
-  const permission = permissions[action]
-  return permission ? authStore.hasPermission(permission) : false
+  const permission = permissions[action];
+  return permission ? authStore.hasPermission(permission) : false;
 }
 
 function handleAction(command: string) {
-  emit('action', command, props.container.id)
+  emit("action", command, props.container.id);
 }
 </script>
 
@@ -640,7 +670,7 @@ function handleAction(command: string) {
 }
 
 .image-name {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 12px;
   color: #606266;
   flex: 1;

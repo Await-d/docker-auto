@@ -1,7 +1,9 @@
 <template>
   <div class="update-activity-widget">
     <div class="widget-placeholder">
-      <el-icon :size="48"><Refresh /></el-icon>
+      <el-icon :size="48">
+        <Refresh />
+      </el-icon>
       <h3>Update Activity</h3>
       <p>Recent updates and update statistics will be displayed here.</p>
       <div class="mock-data">
@@ -19,13 +21,13 @@
 </template>
 
 <script setup lang="ts">
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh } from "@element-plus/icons-vue";
 
 defineProps<{
-  widgetId: string
-  widgetConfig: any
-  widgetData?: any
-}>()
+  widgetId: string;
+  widgetConfig: any;
+  widgetData?: any;
+}>();
 </script>
 
 <style scoped lang="scss">
@@ -64,8 +66,12 @@ defineProps<{
       font-size: 12px;
 
       .update-status {
-        &.success { color: var(--el-color-success); }
-        &.pending { color: var(--el-color-warning); }
+        &.success {
+          color: var(--el-color-success);
+        }
+        &.pending {
+          color: var(--el-color-warning);
+        }
       }
     }
   }

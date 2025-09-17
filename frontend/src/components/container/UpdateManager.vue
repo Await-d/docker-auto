@@ -15,9 +15,9 @@
         <div class="status-actions">
           <el-button
             v-if="!updateAvailable"
-            @click="checkForUpdates"
             :loading="checking"
             size="small"
+            @click="checkForUpdates"
           >
             <el-icon><Refresh /></el-icon>
             Check for Updates
@@ -33,25 +33,38 @@
               <span class="version-label">Current Version</span>
               <span class="version-value">{{ currentVersion }}</span>
             </div>
-            <el-icon class="arrow-icon"><ArrowRight /></el-icon>
+            <el-icon class="arrow-icon">
+              <ArrowRight />
+            </el-icon>
             <div class="version-item new">
               <span class="version-label">Available Version</span>
-              <span class="version-value">{{ availableUpdate.availableVersion }}</span>
+              <span class="version-value">{{
+                availableUpdate!.availableVersion
+              }}</span>
             </div>
           </div>
 
           <div class="update-details">
             <div class="detail-item">
               <span class="detail-label">Published:</span>
-              <span class="detail-value">{{ formatDate(availableUpdate.publishedAt) }}</span>
+              <span class="detail-value">{{
+                formatDate(availableUpdate!.publishedAt)
+              }}</span>
             </div>
-            <div class="detail-item" v-if="availableUpdate.size">
+            <div
+v-if="availableUpdate!.size" class="detail-item"
+>
               <span class="detail-label">Size:</span>
-              <span class="detail-value">{{ formatBytes(availableUpdate.size) }}</span>
+              <span class="detail-value">{{
+                formatBytes(availableUpdate!.size)
+              }}</span>
             </div>
-            <div class="detail-item" v-if="availableUpdate.critical">
+            <div
+v-if="availableUpdate!.critical" class="detail-item"
+>
               <span class="detail-label">Priority:</span>
-              <el-tag type="danger" size="small">Critical</el-tag>
+              <el-tag
+type="danger" size="small"> Critical </el-tag>
             </div>
           </div>
         </div>
@@ -60,16 +73,14 @@
         <div class="update-actions">
           <el-button
             type="primary"
-            @click="showUpdateDialog = true"
             :disabled="updating"
+            @click="showUpdateDialog = true"
           >
             <el-icon><Download /></el-icon>
             Update Now
           </el-button>
-          <el-button
-            @click="scheduleUpdate"
-            :disabled="updating"
-          >
+          <el-button :disabled="updating"
+@click="scheduleUpdate">
             <el-icon><Clock /></el-icon>
             Schedule Update
           </el-button>
@@ -106,7 +117,9 @@
 
       <div class="history-timeline">
         <div v-if="updateHistory.length === 0" class="no-history">
-          <el-icon class="no-history-icon"><DocumentRemove /></el-icon>
+          <el-icon class="no-history-icon">
+            <DocumentRemove />
+          </el-icon>
           <p>No update history available</p>
         </div>
 
@@ -117,7 +130,7 @@
           :class="{
             'timeline-success': entry.status === 'success',
             'timeline-failed': entry.status === 'failed',
-            'timeline-pending': entry.status === 'pending'
+            'timeline-pending': entry.status === 'pending',
           }"
         >
           <div class="timeline-dot">
@@ -137,9 +150,8 @@
             <div class="timeline-details">
               <div class="timeline-status">
                 <el-tag
-                  :type="getStatusTagType(entry.status)"
-                  size="small"
-                >
+:type="getStatusTagType(entry.status)" size="small"
+>
                   {{ formatStatus(entry.status) }}
                 </el-tag>
                 <span v-if="entry.duration" class="timeline-duration">
@@ -179,10 +191,12 @@
         <div class="setting-item">
           <span class="setting-label">Auto Update:</span>
           <el-tag :type="autoUpdateEnabled ? 'success' : 'info'">
-            {{ autoUpdateEnabled ? 'Enabled' : 'Disabled' }}
+            {{ autoUpdateEnabled ? "Enabled" : "Disabled" }}
           </el-tag>
         </div>
-        <div class="setting-item" v-if="updateSchedule">
+        <div
+v-if="updateSchedule" class="setting-item"
+>
           <span class="setting-label">Schedule:</span>
           <span class="setting-value">{{ updateSchedule }}</span>
         </div>
@@ -253,20 +267,24 @@
             :percentage="updateProgress"
             :status="updateStatus === 'failed' ? 'exception' : undefined"
           />
-          <p class="progress-text">{{ updateStatusText }}</p>
+          <p class="progress-text">
+            {{ updateStatusText }}
+          </p>
         </div>
       </div>
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showUpdateDialog = false" :disabled="updating">
+          <el-button
+:disabled="updating" @click="showUpdateDialog = false"
+>
             Cancel
           </el-button>
           <el-button
             type="primary"
-            @click="performUpdate"
             :loading="updating"
             :disabled="!availableUpdate"
+            @click="performUpdate"
           >
             <el-icon><Download /></el-icon>
             Update Container
@@ -294,7 +312,9 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Schedule" v-if="settings.autoUpdate">
+        <el-form-item
+v-if="settings.autoUpdate" label="Schedule"
+>
           <el-input
             v-model="settings.schedule"
             placeholder="0 2 * * 0 (Every Sunday at 2 AM)"
@@ -316,8 +336,10 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showSettingsDialog = false">Cancel</el-button>
-          <el-button type="primary" @click="saveSettings">Save Settings</el-button>
+          <el-button @click="showSettingsDialog = false"> Cancel </el-button>
+          <el-button type="primary" @click="saveSettings">
+            Save Settings
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -330,7 +352,10 @@
     >
       <div class="release-notes-content">
         <div v-if="availableUpdate?.releaseNotes">
-          <div class="release-notes" v-html="formatReleaseNotes(availableUpdate.releaseNotes)"></div>
+          <div
+            class="release-notes"
+            v-html="formatReleaseNotes(availableUpdate.releaseNotes)"
+          />
         </div>
         <div v-else class="no-release-notes">
           <p>No release notes available for this update.</p>
@@ -341,9 +366,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { storeToRefs } from 'pinia'
-import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
+import { ref, computed, onMounted, watch } from "vue";
+import { storeToRefs } from "pinia";
+import { ElMessage, ElMessageBox, ElNotification } from "element-plus";
 import {
   Refresh,
   ArrowRight,
@@ -357,361 +382,375 @@ import {
   SuccessFilled,
   CircleCloseFilled,
   Warning,
-  Loading
-} from '@element-plus/icons-vue'
+  Loading,
+} from "@element-plus/icons-vue";
 
-import { useContainerStore } from '@/store/containers'
-import type { UpdateAvailable } from '@/types/container'
+import { useContainerStore } from "@/store/containers";
 
 interface Props {
-  containerId: string
-  containerName?: string
-  currentVersion: string
+  containerId: string;
+  containerName?: string;
+  currentVersion: string;
 }
 
 interface UpdateHistoryEntry {
-  fromVersion: string
-  toVersion: string
-  timestamp: Date
-  status: 'success' | 'failed' | 'pending'
-  duration?: number
-  message?: string
+  fromVersion: string;
+  toVersion: string;
+  timestamp: Date;
+  status: "success" | "failed" | "pending";
+  duration?: number;
+  message?: string;
 }
 
 interface UpdateOptions {
-  strategy: 'recreate' | 'rolling' | 'blue-green'
-  pullPolicy: 'always' | 'missing' | 'never'
-  preserveVolumes: boolean
-  recreate: boolean
+  strategy: "recreate" | "rolling" | "blue-green";
+  pullPolicy: "always" | "missing" | "never";
+  preserveVolumes: boolean;
+  recreate: boolean;
 }
 
 interface UpdateSettings {
-  autoUpdate: boolean
-  strategy: 'recreate' | 'rolling' | 'blue-green'
-  schedule?: string
-  notifyOnUpdate: boolean
-  rollbackOnFailure: boolean
+  autoUpdate: boolean;
+  strategy: "recreate" | "rolling" | "blue-green";
+  schedule?: string;
+  notifyOnUpdate: boolean;
+  rollbackOnFailure: boolean;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const containerStore = useContainerStore()
-const { availableUpdates } = storeToRefs(containerStore)
+const containerStore = useContainerStore();
+const { availableUpdates } = storeToRefs(containerStore);
 
 // Local state
-const checking = ref(false)
-const updating = ref(false)
-const updateProgress = ref(0)
-const updateStatus = ref<'pending' | 'success' | 'failed'>('pending')
-const updateStatusText = ref('')
-const showUpdateDialog = ref(false)
-const showSettingsDialog = ref(false)
-const showReleaseNotesDialog = ref(false)
+const checking = ref(false);
+const updating = ref(false);
+const updateProgress = ref(0);
+const updateStatus = ref<"pending" | "success" | "failed">("pending");
+const updateStatusText = ref("");
+const showUpdateDialog = ref(false);
+const showSettingsDialog = ref(false);
+const showReleaseNotesDialog = ref(false);
 
 // Mock data for demonstration
 const updateHistory = ref<UpdateHistoryEntry[]>([
   {
-    fromVersion: '1.0.0',
-    toVersion: '1.1.0',
+    fromVersion: "1.0.0",
+    toVersion: "1.1.0",
     timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    status: 'success',
+    status: "success",
     duration: 120,
-    message: 'Update completed successfully'
+    message: "Update completed successfully",
   },
   {
-    fromVersion: '0.9.5',
-    toVersion: '1.0.0',
+    fromVersion: "0.9.5",
+    toVersion: "1.0.0",
     timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    status: 'success',
-    duration: 180
-  }
-])
+    status: "success",
+    duration: 180,
+  },
+]);
 
 const updateOptions = ref<UpdateOptions>({
-  strategy: 'recreate',
-  pullPolicy: 'always',
+  strategy: "recreate",
+  pullPolicy: "always",
   preserveVolumes: true,
-  recreate: false
-})
+  recreate: false,
+});
 
 const settings = ref<UpdateSettings>({
   autoUpdate: false,
-  strategy: 'recreate',
-  schedule: '0 2 * * 0',
+  strategy: "recreate",
+  schedule: "0 2 * * 0",
   notifyOnUpdate: true,
-  rollbackOnFailure: true
-})
+  rollbackOnFailure: true,
+});
 
 // Computed
 const availableUpdate = computed(() => {
-  return availableUpdates.value.find(update => update.container === props.containerId)
-})
+  return availableUpdates.value.find(
+    (update) => update.container === props.containerId,
+  );
+});
 
-const updateAvailable = computed(() => !!availableUpdate.value)
+const updateAvailable = computed(() => !!availableUpdate.value);
 
 const statusIcon = computed(() => {
   if (updateAvailable.value && availableUpdate.value) {
-    return availableUpdate.value.critical ? Warning : Download
+    return availableUpdate.value.critical ? Warning : Download;
   }
-  return SuccessFilled
-})
+  return SuccessFilled;
+});
 
 const statusIconClass = computed(() => {
   if (updateAvailable.value && availableUpdate.value) {
-    return availableUpdate.value.critical ? 'status-critical' : 'status-update'
+    return availableUpdate.value.critical ? "status-critical" : "status-update";
   }
-  return 'status-up-to-date'
-})
+  return "status-up-to-date";
+});
 
 const statusTitle = computed(() => {
   if (updateAvailable.value && availableUpdate.value) {
-    return availableUpdate.value.critical ? 'Critical Update Available' : 'Update Available'
+    return availableUpdate.value.critical
+      ? "Critical Update Available"
+      : "Update Available";
   }
-  return 'Up to Date'
-})
+  return "Up to Date";
+});
 
 const statusDescription = computed(() => {
   if (updateAvailable.value && availableUpdate.value) {
-    return `Version ${availableUpdate.value.availableVersion} is available`
+    return `Version ${availableUpdate.value.availableVersion} is available`;
   }
-  return 'Container is running the latest version'
-})
+  return "Container is running the latest version";
+});
 
-const autoUpdateEnabled = computed(() => settings.value.autoUpdate)
-const updateSchedule = computed(() => settings.value.schedule)
-const updateStrategy = computed(() => settings.value.strategy)
+const autoUpdateEnabled = computed(() => settings.value.autoUpdate);
+const updateSchedule = computed(() => settings.value.schedule);
+const updateStrategy = computed(() => settings.value.strategy);
 
 // Methods
 function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString()
+  return new Date(date).toLocaleDateString();
 }
 
 function formatDateTime(date: Date | string): string {
-  return new Date(date).toLocaleString()
+  return new Date(date).toLocaleString();
 }
 
 function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return `${minutes}m ${remainingSeconds}s`
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}m ${remainingSeconds}s`;
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
+  if (bytes === 0) return "0 B";
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
 }
 
 function formatStatus(status: string): string {
   const statusMap: Record<string, string> = {
-    success: 'Success',
-    failed: 'Failed',
-    pending: 'In Progress'
-  }
-  return statusMap[status] || status
+    success: "Success",
+    failed: "Failed",
+    pending: "In Progress",
+  };
+  return statusMap[status] || status;
 }
 
-function getStatusTagType(status: string): string {
-  const typeMap: Record<string, string> = {
-    success: 'success',
-    failed: 'danger',
-    pending: 'warning'
-  }
-  return typeMap[status] || 'info'
+function getStatusTagType(
+  status: string,
+): "success" | "info" | "warning" | "danger" {
+  const typeMap: Record<string, "success" | "info" | "warning" | "danger"> = {
+    success: "success",
+    failed: "danger",
+    pending: "warning",
+  };
+  return typeMap[status] || "info";
 }
 
 function getHistoryIcon(status: string) {
   const iconMap: Record<string, any> = {
     success: SuccessFilled,
     failed: CircleCloseFilled,
-    pending: Loading
-  }
-  return iconMap[status] || Warning
+    pending: Loading,
+  };
+  return iconMap[status] || Warning;
 }
 
 async function checkForUpdates() {
-  checking.value = true
+  checking.value = true;
   try {
-    await containerStore.checkUpdates(props.containerId)
-    ElMessage.success('Update check completed')
+    await containerStore.checkUpdates(props.containerId);
+    ElMessage.success("Update check completed");
   } catch (error) {
-    console.error('Failed to check for updates:', error)
-    ElMessage.error('Failed to check for updates')
+    console.error("Failed to check for updates:", error);
+    ElMessage.error("Failed to check for updates");
   } finally {
-    checking.value = false
+    checking.value = false;
   }
 }
 
 async function performUpdate() {
-  if (!availableUpdate.value) return
+  if (!availableUpdate.value) return;
 
-  updating.value = true
-  updateProgress.value = 0
-  updateStatus.value = 'pending'
-  updateStatusText.value = 'Starting update...'
+  updating.value = true;
+  updateProgress.value = 0;
+  updateStatus.value = "pending";
+  updateStatusText.value = "Starting update...";
 
   try {
     // Simulate update progress
     const progressSteps = [
-      { progress: 10, text: 'Pulling new image...' },
-      { progress: 30, text: 'Stopping container...' },
-      { progress: 50, text: 'Creating new container...' },
-      { progress: 70, text: 'Starting container...' },
-      { progress: 90, text: 'Verifying update...' },
-      { progress: 100, text: 'Update completed!' }
-    ]
+      { progress: 10, text: "Pulling new image..." },
+      { progress: 30, text: "Stopping container..." },
+      { progress: 50, text: "Creating new container..." },
+      { progress: 70, text: "Starting container..." },
+      { progress: 90, text: "Verifying update..." },
+      { progress: 100, text: "Update completed!" },
+    ];
 
     for (const step of progressSteps) {
-      updateProgress.value = step.progress
-      updateStatusText.value = step.text
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      updateProgress.value = step.progress;
+      updateStatusText.value = step.text;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    await containerStore.updateContainerImage(props.containerId, updateOptions.value)
+    await containerStore.updateContainerImage(
+      props.containerId,
+      updateOptions.value,
+    );
 
-    updateStatus.value = 'success'
-    updateStatusText.value = 'Update completed successfully!'
+    updateStatus.value = "success";
+    updateStatusText.value = "Update completed successfully!";
 
     // Add to history
     updateHistory.value.unshift({
       fromVersion: props.currentVersion,
       toVersion: availableUpdate.value.availableVersion,
       timestamp: new Date(),
-      status: 'success',
+      status: "success",
       duration: 6,
-      message: 'Update completed successfully'
-    })
+      message: "Update completed successfully",
+    });
 
     ElNotification({
-      title: 'Update Complete',
+      title: "Update Complete",
       message: `Container has been updated to ${availableUpdate.value.availableVersion}`,
-      type: 'success'
-    })
+      type: "success",
+    });
 
     // Close dialog after success
     setTimeout(() => {
-      showUpdateDialog.value = false
-    }, 2000)
-
+      showUpdateDialog.value = false;
+    }, 2000);
   } catch (error) {
-    console.error('Update failed:', error)
-    updateStatus.value = 'failed'
-    updateStatusText.value = 'Update failed!'
+    console.error("Update failed:", error);
+    updateStatus.value = "failed";
+    updateStatusText.value = "Update failed!";
 
     updateHistory.value.unshift({
       fromVersion: props.currentVersion,
       toVersion: availableUpdate.value.availableVersion,
       timestamp: new Date(),
-      status: 'failed',
-      message: 'Update failed: ' + (error as any).message
-    })
+      status: "failed",
+      message: "Update failed: " + (error as any).message,
+    });
 
-    ElMessage.error('Update failed')
+    ElMessage.error("Update failed");
   } finally {
-    updating.value = false
+    updating.value = false;
   }
 }
 
 function scheduleUpdate() {
   ElNotification({
-    title: 'Update Scheduled',
-    message: 'Update has been scheduled for the next maintenance window',
-    type: 'info'
-  })
+    title: "Update Scheduled",
+    message: "Update has been scheduled for the next maintenance window",
+    type: "info",
+  });
 }
 
 function handleMoreAction(command: string) {
   switch (command) {
-    case 'release-notes':
-      showReleaseNotesDialog.value = true
-      break
-    case 'ignore':
-      ignoreUpdate()
-      break
+    case "release-notes":
+      showReleaseNotesDialog.value = true;
+      break;
+    case "ignore":
+      ignoreUpdate();
+      break;
   }
 }
 
 function ignoreUpdate() {
   ElMessageBox.confirm(
-    'Are you sure you want to ignore this update? You will not be notified about it again.',
-    'Ignore Update',
+    "Are you sure you want to ignore this update? You will not be notified about it again.",
+    "Ignore Update",
     {
-      type: 'warning',
-      confirmButtonText: 'Ignore',
-      cancelButtonText: 'Cancel'
-    }
+      type: "warning",
+      confirmButtonText: "Ignore",
+      cancelButtonText: "Cancel",
+    },
   ).then(() => {
     // Remove from available updates
-    const index = availableUpdates.value.findIndex(u => u.container === props.containerId)
+    const index = availableUpdates.value.findIndex(
+      (u) => u.container === props.containerId,
+    );
     if (index !== -1) {
-      availableUpdates.value.splice(index, 1)
+      availableUpdates.value.splice(index, 1);
     }
-    ElMessage.success('Update ignored')
-  })
+    ElMessage.success("Update ignored");
+  });
 }
 
 function retryUpdate(entry: UpdateHistoryEntry) {
   ElMessageBox.confirm(
     `Retry updating from ${entry.fromVersion} to ${entry.toVersion}?`,
-    'Retry Update',
+    "Retry Update",
     {
-      type: 'info',
-      confirmButtonText: 'Retry',
-      cancelButtonText: 'Cancel'
-    }
+      type: "info",
+      confirmButtonText: "Retry",
+      cancelButtonText: "Cancel",
+    },
   ).then(() => {
-    showUpdateDialog.value = true
-  })
+    showUpdateDialog.value = true;
+  });
 }
 
-function viewLogs(entry: UpdateHistoryEntry) {
+function viewLogs(_entry: UpdateHistoryEntry) {
   ElNotification({
-    title: 'View Logs',
-    message: 'Update logs functionality will be implemented here',
-    type: 'info'
-  })
+    title: "View Logs",
+    message: "Update logs functionality will be implemented here",
+    type: "info",
+  });
 }
 
 function refreshHistory() {
-  ElMessage.success('Update history refreshed')
+  ElMessage.success("Update history refreshed");
 }
 
 function saveSettings() {
   // Save settings logic would go here
-  ElMessage.success('Settings saved successfully')
-  showSettingsDialog.value = false
+  ElMessage.success("Settings saved successfully");
+  showSettingsDialog.value = false;
 }
 
 function formatReleaseNotes(notes: string): string {
   // Convert markdown-like text to HTML
   return notes
-    .replace(/## (.*)/g, '<h3>$1</h3>')
-    .replace(/### (.*)/g, '<h4>$1</h4>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>')
+    .replace(/## (.*)/g, "<h3>$1</h3>")
+    .replace(/### (.*)/g, "<h4>$1</h4>")
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/\n/g, "<br>");
 }
 
 function handleUpdateDialogClose(done: () => void) {
   if (updating.value) {
-    ElMessageBox.confirm('Update is in progress. Are you sure you want to close?')
+    ElMessageBox.confirm(
+      "Update is in progress. Are you sure you want to close?",
+    )
       .then(() => done())
-      .catch(() => {})
+      .catch(() => {});
   } else {
-    done()
+    done();
   }
 }
 
 // Lifecycle
 onMounted(() => {
-  checkForUpdates()
-})
+  checkForUpdates();
+});
 
 // Watch for container changes
-watch(() => props.containerId, () => {
-  checkForUpdates()
-})
+watch(
+  () => props.containerId,
+  () => {
+    checkForUpdates();
+  },
+);
 </script>
 
 <style scoped>
@@ -882,7 +921,7 @@ watch(() => props.containerId, () => {
 }
 
 .timeline-item:before {
-  content: '';
+  content: "";
   position: absolute;
   left: 15px;
   top: 30px;

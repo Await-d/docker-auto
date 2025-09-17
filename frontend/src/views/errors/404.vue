@@ -9,7 +9,8 @@
       <h1 class="error-title">404</h1>
       <h2 class="error-subtitle">Page Not Found</h2>
       <p class="error-description">
-        The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+        The page you are looking for might have been removed, had its name
+        changed, or is temporarily unavailable.
       </p>
       <div class="error-actions">
         <el-button type="primary" @click="goHome">
@@ -26,22 +27,22 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { Search, House, ArrowLeft } from '@element-plus/icons-vue'
+import { useRouter } from "vue-router";
+import { Search, House, ArrowLeft } from "@element-plus/icons-vue";
 
-const router = useRouter()
+const router = useRouter();
 
 const goHome = () => {
-  router.push('/')
-}
+  router.push("/");
+};
 
 const goBack = () => {
-  router.go(-1)
-}
+  router.go(-1);
+};
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/variables' as *;
+@use "@/styles/variables" as *;
 
 .error-page {
   min-height: 100vh;

@@ -1,11 +1,11 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    @update:model-value="$emit('update:modelValue', $event)"
     title="Widget Configuration"
     width="800px"
     :modal="true"
     class="widget-config-dialog"
+    @update:model-value="$emit('update:modelValue', $event)"
   >
     <div v-if="widget" class="config-container">
       <!-- Widget Info -->
@@ -28,7 +28,12 @@
         <!-- General Settings -->
         <el-tab-pane label="General" name="general">
           <div class="config-section">
-            <el-form ref="generalFormRef" :model="generalConfig" :rules="generalRules" label-width="140px">
+            <el-form
+              ref="generalFormRef"
+              :model="generalConfig"
+              :rules="generalRules"
+              label-width="140px"
+            >
               <el-form-item label="Widget Title" prop="title">
                 <el-input
                   v-model="generalConfig.title"
@@ -38,7 +43,10 @@
               </el-form-item>
 
               <el-form-item label="Refresh Interval" prop="refreshInterval">
-                <el-select v-model="generalConfig.refreshInterval" placeholder="Select refresh interval">
+                <el-select
+                  v-model="generalConfig.refreshInterval"
+                  placeholder="Select refresh interval"
+                >
                   <el-option label="Never" :value="0" />
                   <el-option label="5 seconds" :value="5000" />
                   <el-option label="10 seconds" :value="10000" />
@@ -81,17 +89,24 @@
         <!-- Appearance Settings -->
         <el-tab-pane label="Appearance" name="appearance">
           <div class="config-section">
-            <el-form ref="appearanceFormRef" :model="appearanceConfig" label-width="140px">
+            <el-form
+              ref="appearanceFormRef"
+              :model="appearanceConfig"
+              label-width="140px"
+            >
               <el-form-item label="Theme">
                 <el-radio-group v-model="appearanceConfig.theme">
-                  <el-radio label="auto">Auto</el-radio>
-                  <el-radio label="light">Light</el-radio>
-                  <el-radio label="dark">Dark</el-radio>
+                  <el-radio label="auto"> Auto </el-radio>
+                  <el-radio label="light"> Light </el-radio>
+                  <el-radio label="dark"> Dark </el-radio>
                 </el-radio-group>
               </el-form-item>
 
               <el-form-item label="Display Mode">
-                <el-select v-model="appearanceConfig.displayMode" placeholder="Select display mode">
+                <el-select
+                  v-model="appearanceConfig.displayMode"
+                  placeholder="Select display mode"
+                >
                   <el-option label="Default" value="default" />
                   <el-option label="Compact" value="compact" />
                   <el-option label="Detailed" value="detailed" />
@@ -127,7 +142,11 @@
         </el-tab-pane>
 
         <!-- Widget-Specific Settings -->
-        <el-tab-pane :label="specificTabLabel" name="specific" v-if="hasSpecificSettings">
+        <el-tab-pane
+          v-if="hasSpecificSettings"
+          :label="specificTabLabel"
+          name="specific"
+        >
           <div class="config-section">
             <component
               :is="specificConfigComponent"
@@ -142,7 +161,10 @@
           <div class="config-section">
             <el-form ref="dataFormRef" :model="dataConfig" label-width="140px">
               <el-form-item label="Data Source">
-                <el-select v-model="dataConfig.dataSource" placeholder="Select data source">
+                <el-select
+                  v-model="dataConfig.dataSource"
+                  placeholder="Select data source"
+                >
                   <el-option label="API" value="api" />
                   <el-option label="WebSocket" value="websocket" />
                   <el-option label="Local Storage" value="localStorage" />
@@ -172,7 +194,10 @@
               </el-form-item>
 
               <el-form-item label="Date Range">
-                <el-select v-model="dataConfig.dateRange" placeholder="Select date range">
+                <el-select
+                  v-model="dataConfig.dateRange"
+                  placeholder="Select date range"
+                >
                   <el-option label="Last Hour" value="1h" />
                   <el-option label="Last 6 Hours" value="6h" />
                   <el-option label="Last 24 Hours" value="24h" />
@@ -196,12 +221,16 @@
         <!-- Advanced Settings -->
         <el-tab-pane label="Advanced" name="advanced">
           <div class="config-section">
-            <el-form ref="advancedFormRef" :model="advancedConfig" label-width="140px">
+            <el-form
+              ref="advancedFormRef"
+              :model="advancedConfig"
+              label-width="140px"
+            >
               <el-form-item label="Error Handling">
                 <el-radio-group v-model="advancedConfig.errorHandling">
-                  <el-radio label="retry">Retry on Error</el-radio>
-                  <el-radio label="fallback">Show Fallback</el-radio>
-                  <el-radio label="hide">Hide Widget</el-radio>
+                  <el-radio label="retry"> Retry on Error </el-radio>
+                  <el-radio label="fallback"> Show Fallback </el-radio>
+                  <el-radio label="hide"> Hide Widget </el-radio>
                 </el-radio-group>
               </el-form-item>
 
@@ -245,7 +274,7 @@
                 <el-input
                   v-model="advancedConfig.customCSS"
                   type="textarea"
-                  rows="4"
+                  :rows="4"
                   placeholder="Enter custom CSS rules"
                 />
               </el-form-item>
@@ -264,24 +293,39 @@
         <!-- Permissions -->
         <el-tab-pane label="Permissions" name="permissions">
           <div class="config-section">
-            <el-form ref="permissionsFormRef" :model="permissionsConfig" label-width="140px">
+            <el-form
+              ref="permissionsFormRef"
+              :model="permissionsConfig"
+              label-width="140px"
+            >
               <el-form-item label="Required Permissions">
                 <el-checkbox-group v-model="permissionsConfig.permissions">
-                  <el-checkbox label="dashboard:read">Dashboard Read</el-checkbox>
-                  <el-checkbox label="container:read">Container Read</el-checkbox>
-                  <el-checkbox label="container:write">Container Write</el-checkbox>
-                  <el-checkbox label="image:read">Image Read</el-checkbox>
-                  <el-checkbox label="update:read">Update Read</el-checkbox>
-                  <el-checkbox label="update:write">Update Write</el-checkbox>
-                  <el-checkbox label="monitor:read">Monitor Read</el-checkbox>
-                  <el-checkbox label="log:read">Log Read</el-checkbox>
-                  <el-checkbox label="security:read">Security Read</el-checkbox>
-                  <el-checkbox label="admin">Admin Access</el-checkbox>
+                  <el-checkbox label="dashboard:read">
+                    Dashboard Read
+                  </el-checkbox>
+                  <el-checkbox label="container:read">
+                    Container Read
+                  </el-checkbox>
+                  <el-checkbox label="container:write">
+                    Container Write
+                  </el-checkbox>
+                  <el-checkbox label="image:read"> Image Read </el-checkbox>
+                  <el-checkbox label="update:read"> Update Read </el-checkbox>
+                  <el-checkbox label="update:write"> Update Write </el-checkbox>
+                  <el-checkbox label="monitor:read"> Monitor Read </el-checkbox>
+                  <el-checkbox label="log:read"> Log Read </el-checkbox>
+                  <el-checkbox label="security:read">
+                    Security Read
+                  </el-checkbox>
+                  <el-checkbox label="admin"> Admin Access </el-checkbox>
                 </el-checkbox-group>
               </el-form-item>
 
               <el-form-item label="Minimum Role">
-                <el-select v-model="permissionsConfig.minimumRole" placeholder="Select minimum role">
+                <el-select
+                  v-model="permissionsConfig.minimumRole"
+                  placeholder="Select minimum role"
+                >
                   <el-option label="User" value="user" />
                   <el-option label="Operator" value="operator" />
                   <el-option label="Admin" value="admin" />
@@ -301,13 +345,17 @@
       </el-tabs>
 
       <!-- Preview Section -->
-      <div class="preview-section" v-if="showPreview">
+      <div
+v-if="showPreview" class="preview-section"
+>
         <el-divider>Preview</el-divider>
         <div class="preview-container">
           <div class="preview-widget">
             <!-- Preview implementation would go here -->
             <div class="preview-placeholder">
-              <el-icon :size="32"><View /></el-icon>
+              <el-icon :size="32">
+                <View />
+              </el-icon>
               <p>Widget preview will be shown here</p>
             </div>
           </div>
@@ -318,16 +366,22 @@
     <template #footer>
       <div class="dialog-footer">
         <div class="footer-left">
-          <el-button @click="resetToDefaults" type="text">
+          <el-button
+type="text" @click="resetToDefaults"
+>
             Reset to Defaults
           </el-button>
-          <el-button @click="loadPreset" type="text">
-            Load Preset
-          </el-button>
+          <el-button type="text"
+@click="loadPreset"
+>
+Load Preset
+</el-button>
         </div>
         <div class="footer-right">
-          <el-button @click="closeDialog">Cancel</el-button>
-          <el-button @click="saveAndClose" type="primary">
+          <el-button @click="closeDialog"> Cancel </el-button>
+          <el-button
+type="primary" @click="saveAndClose"
+>
             Save Changes
           </el-button>
         </div>
@@ -337,165 +391,175 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { View } from '@element-plus/icons-vue'
+import { ref, computed, watch } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { View } from "@element-plus/icons-vue";
 
 // Component imports
-import KeyValueEditor from '@/components/settings/forms/KeyValueEditor.vue'
+import KeyValueEditor from "@/components/settings/forms/KeyValueEditor.vue";
 
 // Types
-import type { DashboardWidget } from '@/store/dashboard'
+import type { DashboardWidget } from "@/store/dashboard";
 
 // Props
 interface Props {
-  modelValue: boolean
-  widget: DashboardWidget | null
+  modelValue: boolean;
+  widget: DashboardWidget | null;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // Emits
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean]
-  save: [widgetId: string, config: any]
-}>()
+  "update:modelValue": [value: boolean];
+  save: [widgetId: string, config: any];
+}>();
 
 // Reactive state
-const activeTab = ref('general')
-const showPreview = ref(false)
+const activeTab = ref("general");
+const showPreview = ref(false);
 
 // Form refs
-const generalFormRef = ref()
-const appearanceFormRef = ref()
-const dataFormRef = ref()
-const advancedFormRef = ref()
-const permissionsFormRef = ref()
+const generalFormRef = ref();
+const appearanceFormRef = ref();
+const dataFormRef = ref();
+const advancedFormRef = ref();
+const permissionsFormRef = ref();
 
 // Configuration objects
 const generalConfig = ref({
-  title: '',
+  title: "",
   refreshInterval: 30000,
   enabled: true,
   draggable: true,
-  resizable: true
-})
+  resizable: true,
+});
 
 const appearanceConfig = ref({
-  theme: 'auto',
-  displayMode: 'default',
+  theme: "auto",
+  displayMode: "default",
   showHeader: true,
   showFooter: false,
-  animations: true
-})
+  animations: true,
+});
 
-const specificConfig = ref({})
+const specificConfig = ref({});
 
 const dataConfig = ref({
-  dataSource: 'api',
+  dataSource: "api",
   cacheDuration: 30000,
   maxDataPoints: 100,
-  dateRange: '24h',
-  filters: {}
-})
+  dateRange: "24h",
+  filters: {},
+});
 
 const advancedConfig = ref({
-  errorHandling: 'retry',
+  errorHandling: "retry",
   retryAttempts: 3,
   retryDelay: 5000,
   debugMode: false,
   performanceMonitoring: true,
-  customCSS: '',
-  customProperties: {}
-})
+  customCSS: "",
+  customProperties: {},
+});
 
 const permissionsConfig = ref({
   permissions: [] as string[],
-  minimumRole: 'user',
-  hideIfNoAccess: false
-})
+  minimumRole: "user",
+  hideIfNoAccess: false,
+});
 
 // Validation rules
 const generalRules = {
   title: [
-    { required: true, message: 'Widget title is required', trigger: 'blur' },
-    { min: 1, max: 50, message: 'Title must be between 1 and 50 characters', trigger: 'blur' }
+    { required: true, message: "Widget title is required", trigger: "blur" },
+    {
+      min: 1,
+      max: 50,
+      message: "Title must be between 1 and 50 characters",
+      trigger: "blur",
+    },
   ],
   refreshInterval: [
-    { required: true, message: 'Refresh interval is required', trigger: 'change' }
-  ]
-}
+    {
+      required: true,
+      message: "Refresh interval is required",
+      trigger: "change",
+    },
+  ],
+};
 
 // Computed properties
 const widgetIcon = computed(() => {
-  if (!props.widget) return 'Box'
+  if (!props.widget) return "Box";
 
   const iconMap: Record<string, string> = {
-    'system-overview': 'Monitor',
-    'container-stats': 'Box',
-    'update-activity': 'Refresh',
-    'realtime-monitor': 'DataLine',
-    'health-monitor': 'CircleCheckFilled',
-    'recent-activities': 'Document',
-    'quick-actions': 'Lightning',
-    'notification-center': 'Bell',
-    'resource-charts': 'DataAnalysis',
-    'security-dashboard': 'Lock'
-  }
-  return iconMap[props.widget.type] || 'Box'
-})
+    "system-overview": "Monitor",
+    "container-stats": "Box",
+    "update-activity": "Refresh",
+    "realtime-monitor": "DataLine",
+    "health-monitor": "CircleCheckFilled",
+    "recent-activities": "Document",
+    "quick-actions": "Lightning",
+    "notification-center": "Bell",
+    "resource-charts": "DataAnalysis",
+    "security-dashboard": "Lock",
+  };
+  return iconMap[props.widget.type] || "Box";
+});
 
 const widgetDescription = computed(() => {
-  if (!props.widget) return ''
+  if (!props.widget) return "";
 
   const descriptionMap: Record<string, string> = {
-    'system-overview': 'Displays overall system health and key metrics',
-    'container-stats': 'Shows container statistics and status distribution',
-    'update-activity': 'Tracks recent updates and update statistics',
-    'realtime-monitor': 'Provides live system activity and performance metrics',
-    'health-monitor': 'Monitors service health and availability',
-    'recent-activities': 'Shows timeline of recent system activities',
-    'quick-actions': 'Provides quick access to common operations',
-    'notification-center': 'Displays live notifications and alerts',
-    'resource-charts': 'Shows historical resource usage charts',
-    'security-dashboard': 'Monitors security status and vulnerabilities'
-  }
-  return descriptionMap[props.widget.type] || 'Widget configuration'
-})
+    "system-overview": "Displays overall system health and key metrics",
+    "container-stats": "Shows container statistics and status distribution",
+    "update-activity": "Tracks recent updates and update statistics",
+    "realtime-monitor": "Provides live system activity and performance metrics",
+    "health-monitor": "Monitors service health and availability",
+    "recent-activities": "Shows timeline of recent system activities",
+    "quick-actions": "Provides quick access to common operations",
+    "notification-center": "Displays live notifications and alerts",
+    "resource-charts": "Shows historical resource usage charts",
+    "security-dashboard": "Monitors security status and vulnerabilities",
+  };
+  return descriptionMap[props.widget.type] || "Widget configuration";
+});
 
 const hasSpecificSettings = computed(() => {
-  return props.widget?.type && specificConfigComponents[props.widget.type]
-})
+  return props.widget?.type && specificConfigComponents[props.widget.type];
+});
 
 const specificTabLabel = computed(() => {
-  if (!props.widget) return 'Specific'
-  return `${props.widget.type.split('-').map(word =>
-    word.charAt(0).toUpperCase() + word.slice(1)
-  ).join(' ')} Settings`
-})
+  if (!props.widget) return "Specific";
+  return `${props.widget.type
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")} Settings`;
+});
 
 const specificConfigComponent = computed(() => {
-  if (!props.widget?.type) return null
-  return specificConfigComponents[props.widget.type] || null
-})
+  if (!props.widget?.type) return null;
+  return specificConfigComponents[props.widget.type] || null;
+});
 
 // Widget-specific configuration components
 const specificConfigComponents: Record<string, any> = {
-  'system-overview': () => import('./config/SystemOverviewConfig.vue'),
-  'container-stats': () => import('./config/ContainerStatsConfig.vue'),
-  'update-activity': () => import('./config/UpdateActivityConfig.vue'),
-  'realtime-monitor': () => import('./config/RealtimeMonitorConfig.vue'),
-  'health-monitor': () => import('./config/HealthMonitorConfig.vue'),
-  'recent-activities': () => import('./config/RecentActivitiesConfig.vue'),
-  'quick-actions': () => import('./config/QuickActionsConfig.vue'),
-  'notification-center': () => import('./config/NotificationCenterConfig.vue'),
-  'resource-charts': () => import('./config/ResourceChartsConfig.vue'),
-  'security-dashboard': () => import('./config/SecurityDashboardConfig.vue')
-}
+  "system-overview": () => import("./config/SystemOverviewConfig.vue"),
+  "container-stats": () => import("./config/ContainerStatsConfig.vue"),
+  "update-activity": () => import("./config/UpdateActivityConfig.vue"),
+  "realtime-monitor": () => import("./config/RealtimeMonitorConfig.vue"),
+  "health-monitor": () => import("./config/HealthMonitorConfig.vue"),
+  "recent-activities": () => import("./config/RecentActivitiesConfig.vue"),
+  "quick-actions": () => import("./config/QuickActionsConfig.vue"),
+  "notification-center": () => import("./config/NotificationCenterConfig.vue"),
+  "resource-charts": () => import("./config/ResourceChartsConfig.vue"),
+  "security-dashboard": () => import("./config/SecurityDashboardConfig.vue"),
+};
 
 // Methods
 const loadWidgetConfig = () => {
-  if (!props.widget) return
+  if (!props.widget) return;
 
   // Load general config
   generalConfig.value = {
@@ -503,48 +567,49 @@ const loadWidgetConfig = () => {
     refreshInterval: props.widget.refreshInterval,
     enabled: props.widget.enabled,
     draggable: props.widget.draggable,
-    resizable: props.widget.resizable
-  }
+    resizable: props.widget.resizable,
+  };
 
   // Load appearance config
   appearanceConfig.value = {
-    theme: props.widget.settings.theme || 'auto',
-    displayMode: props.widget.settings.displayMode || 'default',
+    theme: props.widget.settings.theme || "auto",
+    displayMode: props.widget.settings.displayMode || "default",
     showHeader: props.widget.settings.showHeader !== false,
     showFooter: props.widget.settings.showFooter || false,
-    animations: props.widget.settings.animations !== false
-  }
+    animations: props.widget.settings.animations !== false,
+  };
 
   // Load data config
   dataConfig.value = {
-    dataSource: props.widget.settings.dataSource || 'api',
+    dataSource: props.widget.settings.dataSource || "api",
     cacheDuration: props.widget.settings.cacheDuration || 30000,
     maxDataPoints: props.widget.settings.maxDataPoints || 100,
-    dateRange: props.widget.settings.dateRange || '24h',
-    filters: props.widget.settings.filters || {}
-  }
+    dateRange: props.widget.settings.dateRange || "24h",
+    filters: props.widget.settings.filters || {},
+  };
 
   // Load advanced config
   advancedConfig.value = {
-    errorHandling: props.widget.settings.errorHandling || 'retry',
+    errorHandling: props.widget.settings.errorHandling || "retry",
     retryAttempts: props.widget.settings.retryAttempts || 3,
     retryDelay: props.widget.settings.retryDelay || 5000,
     debugMode: props.widget.settings.debugMode || false,
-    performanceMonitoring: props.widget.settings.performanceMonitoring !== false,
-    customCSS: props.widget.settings.customCSS || '',
-    customProperties: props.widget.settings.customProperties || {}
-  }
+    performanceMonitoring:
+      props.widget.settings.performanceMonitoring !== false,
+    customCSS: props.widget.settings.customCSS || "",
+    customProperties: props.widget.settings.customProperties || {},
+  };
 
   // Load permissions config
   permissionsConfig.value = {
     permissions: [...(props.widget.permissions || [])],
-    minimumRole: props.widget.settings.minimumRole || 'user',
-    hideIfNoAccess: props.widget.settings.hideIfNoAccess || false
-  }
+    minimumRole: props.widget.settings.minimumRole || "user",
+    hideIfNoAccess: props.widget.settings.hideIfNoAccess || false,
+  };
 
   // Load widget-specific config
-  specificConfig.value = { ...props.widget.settings }
-}
+  specificConfig.value = { ...props.widget.settings };
+};
 
 const validateAllForms = async (): Promise<boolean> => {
   const forms = [
@@ -552,25 +617,25 @@ const validateAllForms = async (): Promise<boolean> => {
     appearanceFormRef.value,
     dataFormRef.value,
     advancedFormRef.value,
-    permissionsFormRef.value
-  ].filter(Boolean)
+    permissionsFormRef.value,
+  ].filter(Boolean);
 
   try {
-    await Promise.all(forms.map(form => form.validate()))
-    return true
+    await Promise.all(forms.map((form) => form.validate()));
+    return true;
   } catch (error) {
-    console.error('Form validation failed:', error)
-    return false
+    console.error("Form validation failed:", error);
+    return false;
   }
-}
+};
 
 const saveAndClose = async () => {
-  if (!props.widget) return
+  if (!props.widget) return;
 
-  const isValid = await validateAllForms()
+  const isValid = await validateAllForms();
   if (!isValid) {
-    ElMessage.error('Please fix validation errors before saving')
-    return
+    ElMessage.error("Please fix validation errors before saving");
+    return;
   }
 
   try {
@@ -587,88 +652,93 @@ const saveAndClose = async () => {
         ...advancedConfig.value,
         ...specificConfig.value,
         minimumRole: permissionsConfig.value.minimumRole,
-        hideIfNoAccess: permissionsConfig.value.hideIfNoAccess
-      }
-    }
+        hideIfNoAccess: permissionsConfig.value.hideIfNoAccess,
+      },
+    };
 
-    emit('save', props.widget.id, updatedConfig)
-    ElMessage.success('Widget configuration saved')
+    emit("save", props.widget.id, updatedConfig);
+    ElMessage.success("Widget configuration saved");
   } catch (error) {
-    console.error('Failed to save widget config:', error)
-    ElMessage.error('Failed to save configuration')
+    console.error("Failed to save widget config:", error);
+    ElMessage.error("Failed to save configuration");
   }
-}
+};
 
 const closeDialog = () => {
-  emit('update:modelValue', false)
-}
+  emit("update:modelValue", false);
+};
 
 const resetToDefaults = async () => {
   try {
     await ElMessageBox.confirm(
-      'This will reset all settings to their default values. Continue?',
-      'Reset to Defaults',
+      "This will reset all settings to their default values. Continue?",
+      "Reset to Defaults",
       {
-        type: 'warning',
-        confirmButtonText: 'Reset',
-        cancelButtonText: 'Cancel'
-      }
-    )
+        type: "warning",
+        confirmButtonText: "Reset",
+        cancelButtonText: "Cancel",
+      },
+    );
 
-    loadWidgetConfig()
-    ElMessage.success('Settings reset to defaults')
+    loadWidgetConfig();
+    ElMessage.success("Settings reset to defaults");
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to reset settings:', error)
+    if (error !== "cancel") {
+      console.error("Failed to reset settings:", error);
     }
   }
-}
+};
 
 const loadPreset = async () => {
   try {
-    const presets = ['Performance Optimized', 'Detailed View', 'Minimal View', 'Admin View']
+    const presets = [
+      "Performance Optimized",
+      "Detailed View",
+      "Minimal View",
+      "Admin View",
+    ];
 
     const { value: preset } = await ElMessageBox.prompt(
-      'Select a preset configuration',
-      'Load Preset',
+      "Enter preset name:\n" +
+        presets.map((p, i) => `${i + 1}. ${p}`).join("\n"),
+      "Load Preset",
       {
-        inputType: 'select',
-        inputOptions: presets.map(p => ({ value: p, label: p })),
-        confirmButtonText: 'Load',
-        cancelButtonText: 'Cancel'
-      }
-    )
+        inputValue: presets[0],
+        confirmButtonText: "Load",
+        cancelButtonText: "Cancel",
+      },
+    );
 
     // Implementation for loading presets would go here
-    ElMessage.success(`${preset} preset loaded`)
+    ElMessage.success(`${preset} preset loaded`);
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to load preset:', error)
+    if (error !== "cancel") {
+      console.error("Failed to load preset:", error);
     }
   }
-}
+};
 
 // Watch for widget changes
 watch(
   () => props.widget,
   (newWidget) => {
     if (newWidget) {
-      loadWidgetConfig()
+      loadWidgetConfig();
     }
   },
-  { immediate: true, deep: true }
-)
+  { immediate: true, deep: true },
+);
 
 // Watch for dialog open/close
 watch(
   () => props.modelValue,
   (isOpen) => {
     if (isOpen && props.widget) {
-      activeTab.value = 'general'
-      loadWidgetConfig()
+      activeTab.value = "general";
+      loadWidgetConfig();
     }
-  }
-)
+  },
+);
 </script>
 
 <style scoped lang="scss">

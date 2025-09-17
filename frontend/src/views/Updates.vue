@@ -23,29 +23,27 @@
               Check Updates
             </el-button>
             <el-button
-              :icon="Calendar"
-              @click="showScheduler = true"
-            >
+:icon="Calendar" @click="showScheduler = true"
+>
               Schedule
             </el-button>
             <el-button
-              :icon="Setting"
-              @click="showPolicies = true"
-            >
+:icon="Setting" @click="showPolicies = true"
+>
               Policies
             </el-button>
           </el-button-group>
 
           <el-dropdown
-            trigger="click"
-            @command="handleBulkAction"
-          >
+trigger="click" @command="handleBulkAction"
+>
             <el-button
-              type="primary"
-              :disabled="!hasSelection"
-            >
+type="primary" :disabled="!hasSelection"
+>
               Bulk Actions
-              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              <el-icon class="el-icon--right">
+                <ArrowDown />
+              </el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -78,7 +76,9 @@
             <el-icon><Refresh /></el-icon>
           </div>
           <div class="stat-content">
-            <span class="stat-value">{{ updateAnalytics.totalUpdatesAvailable }}</span>
+            <span class="stat-value">{{
+              updateAnalytics.totalUpdatesAvailable
+            }}</span>
             <span class="stat-label">Available Updates</span>
           </div>
         </div>
@@ -88,7 +88,9 @@
             <el-icon><Warning /></el-icon>
           </div>
           <div class="stat-content">
-            <span class="stat-value">{{ updateAnalytics.securityUpdates }}</span>
+            <span class="stat-value">{{
+              updateAnalytics.securityUpdates
+            }}</span>
             <span class="stat-label">Security Updates</span>
           </div>
         </div>
@@ -98,7 +100,9 @@
             <el-icon><CircleClose /></el-icon>
           </div>
           <div class="stat-content">
-            <span class="stat-value">{{ updateAnalytics.criticalUpdates }}</span>
+            <span class="stat-value">{{
+              updateAnalytics.criticalUpdates
+            }}</span>
             <span class="stat-label">Critical Updates</span>
           </div>
         </div>
@@ -137,7 +141,7 @@
           type="primary"
           @click="showAllRunningUpdates = !showAllRunningUpdates"
         >
-          {{ showAllRunningUpdates ? 'Show Less' : 'Show All' }}
+          {{ showAllRunningUpdates ? "Show Less" : "Show All" }}
         </el-button>
       </div>
 
@@ -155,9 +159,8 @@
     <div class="updates-controls">
       <div class="filters-section">
         <el-button
-          :icon="Filter"
-          @click="showFilters = !showFilters"
-        >
+:icon="Filter" @click="showFilters = !showFilters"
+>
           Filters
           <el-badge
             v-if="activeFiltersCount > 0"
@@ -220,9 +223,8 @@
         />
 
         <el-checkbox
-          v-model="autoRefresh"
-          @change="setAutoRefresh"
-        >
+v-model="autoRefresh" @change="setAutoRefresh"
+>
           Auto Refresh
         </el-checkbox>
       </div>
@@ -235,21 +237,21 @@
           <div class="filter-group">
             <label>Update Type</label>
             <el-checkbox-group v-model="filters.updateType">
-              <el-checkbox label="major">Major</el-checkbox>
-              <el-checkbox label="minor">Minor</el-checkbox>
-              <el-checkbox label="patch">Patch</el-checkbox>
-              <el-checkbox label="security">Security</el-checkbox>
-              <el-checkbox label="hotfix">Hotfix</el-checkbox>
+              <el-checkbox label="major"> Major </el-checkbox>
+              <el-checkbox label="minor"> Minor </el-checkbox>
+              <el-checkbox label="patch"> Patch </el-checkbox>
+              <el-checkbox label="security"> Security </el-checkbox>
+              <el-checkbox label="hotfix"> Hotfix </el-checkbox>
             </el-checkbox-group>
           </div>
 
           <div class="filter-group">
             <label>Risk Level</label>
             <el-checkbox-group v-model="filters.riskLevel">
-              <el-checkbox label="low">Low</el-checkbox>
-              <el-checkbox label="medium">Medium</el-checkbox>
-              <el-checkbox label="high">High</el-checkbox>
-              <el-checkbox label="critical">Critical</el-checkbox>
+              <el-checkbox label="low"> Low </el-checkbox>
+              <el-checkbox label="medium"> Medium </el-checkbox>
+              <el-checkbox label="high"> High </el-checkbox>
+              <el-checkbox label="critical"> Critical </el-checkbox>
             </el-checkbox-group>
           </div>
 
@@ -268,16 +270,18 @@
           <div class="filter-group">
             <label>Status</label>
             <el-checkbox-group v-model="statusFilters">
-              <el-checkbox label="available">Available</el-checkbox>
-              <el-checkbox label="ignored">Ignored</el-checkbox>
-              <el-checkbox label="scheduled">Scheduled</el-checkbox>
+              <el-checkbox label="available"> Available </el-checkbox>
+              <el-checkbox label="ignored"> Ignored </el-checkbox>
+              <el-checkbox label="scheduled"> Scheduled </el-checkbox>
             </el-checkbox-group>
           </div>
         </div>
 
         <div class="filter-actions">
-          <el-button @click="clearAllFilters">Clear All</el-button>
-          <el-button type="primary" @click="applyFilters">Apply Filters</el-button>
+          <el-button @click="clearAllFilters"> Clear All </el-button>
+          <el-button type="primary" @click="applyFilters">
+            Apply Filters
+          </el-button>
         </div>
       </div>
     </el-collapse-transition>
@@ -290,26 +294,24 @@
           :indeterminate="hasSelection && !isAllSelected"
           @change="selectAll"
         />
-        <span>{{ selectedUpdates.size }} of {{ filteredUpdates.length }} updates selected</span>
+        <span>{{ selectedUpdates.size }} of {{ filteredUpdates.length }} updates
+          selected</span>
       </div>
 
       <div class="selection-actions">
         <el-button
-          size="small"
-          @click="selectByType('security')"
-        >
+size="small" @click="selectByType('security')"
+>
           Select Security
         </el-button>
         <el-button
-          size="small"
-          @click="selectByType('critical')"
-        >
+size="small" @click="selectByType('critical')"
+>
           Select Critical
         </el-button>
         <el-button
-          size="small"
-          @click="clearSelection"
-        >
+size="small" @click="clearSelection"
+>
           Clear Selection
         </el-button>
       </div>
@@ -323,9 +325,8 @@
 
       <div v-else-if="filteredUpdates.length === 0" class="empty-state">
         <el-empty
-          :image-size="200"
-          description="No updates available"
-        >
+:image-size="200" description="No updates available"
+>
           <el-button type="primary" @click="checkForUpdates(true)">
             Check for Updates
           </el-button>
@@ -413,8 +414,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Refresh,
   Calendar,
@@ -428,28 +429,31 @@ import {
   Filter,
   Search,
   List,
-  Grid
-} from '@element-plus/icons-vue'
+  Grid,
+} from "@element-plus/icons-vue";
 
 // Components
-import UpdateCard from '@/components/update/UpdateCard.vue'
-import UpdateProgress from '@/components/update/UpdateProgress.vue'
-import UpdateScheduler from '@/components/update/UpdateScheduler.vue'
-import UpdatePolicies from '@/components/update/UpdatePolicies.vue'
-import BulkUpdateManager from '@/components/update/BulkUpdateManager.vue'
-import VersionComparison from '@/components/update/VersionComparison.vue'
+import UpdateCard from "@/components/update/UpdateCard.vue";
+import UpdateProgress from "@/components/update/UpdateProgress.vue";
+import UpdateScheduler from "@/components/update/UpdateScheduler.vue";
+import UpdatePolicies from "@/components/update/UpdatePoliciesDialog.vue";
+import BulkUpdateManager from "@/components/update/BulkUpdateManager.vue";
+import VersionComparison from "@/components/update/VersionComparison.vue";
 
 // Store
-import { useUpdatesStore } from '@/store/updates'
-import { storeToRefs } from 'pinia'
-import { useUpdateWebSocket } from '@/services/updateWebSocket'
+import { useUpdatesStore } from "@/store/updates";
+import { storeToRefs } from "pinia";
+import { useUpdateWebSocket } from "@/services/updateWebSocket";
 
 // Types
-import type { UpdateFilter, VersionComparison as VersionComparisonData } from '@/types/updates'
+import type {
+  UpdateFilter,
+  VersionComparison as VersionComparisonData,
+} from "@/types/updates";
 
 // Store instance
-const updatesStore = useUpdatesStore()
-const { updateWebSocket } = useUpdateWebSocket()
+const updatesStore = useUpdatesStore();
+const { updateWebSocket } = useUpdateWebSocket();
 
 // Reactive state from store
 const {
@@ -471,189 +475,195 @@ const {
   isAllSelected,
   filteredUpdates,
   scheduledUpdatesCount,
-  runningUpdatesCount
-} = storeToRefs(updatesStore)
+  runningUpdatesCount,
+} = storeToRefs(updatesStore);
 
 // Local reactive state
-const searchQuery = ref('')
-const quickFilter = ref('all')
-const sizeRange = ref([0, 1000])
-const statusFilters = ref(['available'])
-const showScheduler = ref(false)
-const showPolicies = ref(false)
-const showBulkManager = ref(false)
-const showVersionComparison = ref(false)
-const showAllRunningUpdates = ref(false)
-const versionComparisonData = ref<VersionComparisonData | null>(null)
+const searchQuery = ref("");
+const quickFilter = ref("all");
+const sizeRange = ref([0, 1000]);
+const statusFilters = ref(["available"]);
+const showScheduler = ref(false);
+const showPolicies = ref(false);
+const showBulkManager = ref(false);
+const showVersionComparison = ref(false);
+const showAllRunningUpdates = ref(false);
+const versionComparisonData = ref<VersionComparisonData | null>(null);
 
 // Methods
 const isUpdateLoading = (containerId: string): boolean => {
-  return runningUpdates.value.some(update => update.containerId === containerId)
-}
+  return runningUpdates.value.some(
+    (update) => update.containerId === containerId,
+  );
+};
 
 // Computed properties
 const activeFiltersCount = computed(() => {
-  let count = 0
-  if (filters.value.updateType?.length) count++
-  if (filters.value.riskLevel?.length) count++
-  if (filters.value.size?.min !== undefined || filters.value.size?.max !== undefined) count++
-  if (searchQuery.value) count++
-  if (quickFilter.value !== 'all') count++
-  return count
-})
+  let count = 0;
+  if (filters.value.updateType?.length) count++;
+  if (filters.value.riskLevel?.length) count++;
+  if (
+    filters.value.size?.min !== undefined ||
+    filters.value.size?.max !== undefined
+  )
+    count++;
+  if (searchQuery.value) count++;
+  if (quickFilter.value !== "all") count++;
+  return count;
+});
 
 const paginatedUpdates = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredUpdates.value.slice(start, end)
-})
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredUpdates.value.slice(start, end);
+});
 
 const displayedRunningUpdates = computed(() => {
   return showAllRunningUpdates.value
     ? runningUpdates.value
-    : runningUpdates.value.slice(0, 3)
-})
+    : runningUpdates.value.slice(0, 3);
+});
 
 // Methods
 const checkForUpdates = async (force = false) => {
   try {
-    await updatesStore.checkForUpdates(undefined, force)
+    await updatesStore.checkForUpdates(undefined, force);
   } catch (error) {
-    console.error('Failed to check for updates:', error)
+    console.error("Failed to check for updates:", error);
   }
-}
+};
 
 const handleSelectUpdate = (updateId: string) => {
-  updatesStore.toggleSelection(updateId)
-}
+  updatesStore.toggleSelection(updateId);
+};
 
 const selectAll = () => {
-  updatesStore.selectAll()
-}
+  updatesStore.selectAll();
+};
 
 const clearSelection = () => {
-  updatesStore.clearSelection()
-}
+  updatesStore.clearSelection();
+};
 
-const selectByType = (type: 'security' | 'critical' | 'all') => {
-  updatesStore.selectByType(type)
-}
+const selectByType = (type: "security" | "critical" | "all") => {
+  updatesStore.selectByType(type);
+};
 
 const handleUpdateContainer = async (updateId: string) => {
   try {
-    await updatesStore.startUpdate(updateId)
+    await updatesStore.startUpdate(updateId);
   } catch (error) {
-    console.error('Failed to start update:', error)
+    console.error("Failed to start update:", error);
   }
-}
+};
 
 const handleScheduleUpdate = (updateId: string) => {
-  selectedUpdates.value.clear()
-  selectedUpdates.value.add(updateId)
-  showScheduler.value = true
-}
+  selectedUpdates.value.clear();
+  selectedUpdates.value.add(updateId);
+  showScheduler.value = true;
+};
 
 const handleIgnoreUpdate = async (updateId: string) => {
   try {
     const result = await ElMessageBox.prompt(
-      'Please provide a reason for ignoring this update:',
-      'Ignore Update',
+      "Please provide a reason for ignoring this update:",
+      "Ignore Update",
       {
-        confirmButtonText: 'Ignore',
-        cancelButtonText: 'Cancel',
-        inputType: 'textarea',
-        inputPlaceholder: 'Reason for ignoring this update...'
-      }
-    )
+        confirmButtonText: "Ignore",
+        cancelButtonText: "Cancel",
+        inputType: "textarea",
+        inputPlaceholder: "Reason for ignoring this update...",
+      },
+    );
 
-    await updatesStore.ignoreUpdate(updateId, result.value)
+    await updatesStore.ignoreUpdate(updateId, result.value);
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to ignore update:', error)
+    if (error !== "cancel") {
+      console.error("Failed to ignore update:", error);
     }
   }
-}
+};
 
 const handleCompareVersions = async (updateId: string) => {
   try {
-    const comparison = await updatesStore.compareVersions(updateId)
+    const comparison = await updatesStore.compareVersions(updateId);
     if (comparison) {
-      versionComparisonData.value = comparison
-      showVersionComparison.value = true
+      versionComparisonData.value = comparison;
+      showVersionComparison.value = true;
     }
   } catch (error) {
-    console.error('Failed to compare versions:', error)
+    console.error("Failed to compare versions:", error);
   }
-}
+};
 
 const handleShowDetails = (updateId: string) => {
-  const update = availableUpdates.value.find(u => u.id === updateId)
+  const update = availableUpdates.value.find((u) => u.id === updateId);
   if (update) {
-    updatesStore.toggleExpanded(updateId)
+    updatesStore.toggleExpanded(updateId);
   }
-}
+};
 
 const handleCancelUpdate = async (runningUpdateId: string) => {
   try {
     await ElMessageBox.confirm(
-      'Are you sure you want to cancel this update? This may leave the container in an inconsistent state.',
-      'Cancel Update',
+      "Are you sure you want to cancel this update? This may leave the container in an inconsistent state.",
+      "Cancel Update",
       {
-        confirmButtonText: 'Yes, Cancel',
-        cancelButtonText: 'No',
-        type: 'warning'
-      }
-    )
+        confirmButtonText: "Yes, Cancel",
+        cancelButtonText: "No",
+        type: "warning",
+      },
+    );
 
-    await updatesStore.cancelUpdate(runningUpdateId)
+    await updatesStore.cancelUpdate(runningUpdateId);
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to cancel update:', error)
+    if (error !== "cancel") {
+      console.error("Failed to cancel update:", error);
     }
   }
-}
+};
 
 const handleBulkAction = (command: string) => {
   switch (command) {
-    case 'update-all':
-      showBulkManager.value = true
-      break
-    case 'schedule-all':
-      showScheduler.value = true
-      break
-    case 'ignore-all':
-      handleBulkIgnore()
-      break
-    case 'export-selected':
-      handleExportSelected()
-      break
+    case "update-all":
+      showBulkManager.value = true;
+      break;
+    case "schedule-all":
+      showScheduler.value = true;
+      break;
+    case "ignore-all":
+      handleBulkIgnore();
+      break;
+    case "export-selected":
+      handleExportSelected();
+      break;
   }
-}
+};
 
 const handleBulkIgnore = async () => {
   try {
     await ElMessageBox.confirm(
       `Are you sure you want to ignore ${selectedUpdates.value.size} selected updates?`,
-      'Bulk Ignore Updates',
+      "Bulk Ignore Updates",
       {
-        confirmButtonText: 'Yes, Ignore All',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }
-    )
+        confirmButtonText: "Yes, Ignore All",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      },
+    );
 
-    const promises = Array.from(selectedUpdates.value).map(updateId =>
-      updatesStore.ignoreUpdate(updateId, 'Bulk ignore operation')
-    )
+    const promises = Array.from(selectedUpdates.value).map((updateId) =>
+      updatesStore.ignoreUpdate(updateId, "Bulk ignore operation"),
+    );
 
-    await Promise.all(promises)
-    clearSelection()
+    await Promise.all(promises);
+    clearSelection();
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to bulk ignore updates:', error)
+    if (error !== "cancel") {
+      console.error("Failed to bulk ignore updates:", error);
     }
   }
-}
+};
 
 const handleExportSelected = async () => {
   try {
@@ -661,116 +671,117 @@ const handleExportSelected = async () => {
     const exportFilters: UpdateFilter = {
       // Filter to only selected updates
       // This would need to be implemented in the API
-    }
+    };
 
-    await updatesStore.exportUpdateHistory('csv', exportFilters)
+    await updatesStore.exportUpdateHistory("csv", exportFilters);
   } catch (error) {
-    console.error('Failed to export selected updates:', error)
+    console.error("Failed to export selected updates:", error);
   }
-}
+};
 
 const handleUpdateScheduled = () => {
-  showScheduler.value = false
-  clearSelection()
-  ElMessage.success('Updates scheduled successfully')
-}
+  showScheduler.value = false;
+  clearSelection();
+  ElMessage.success("Updates scheduled successfully");
+};
 
 const handlePolicyApplied = () => {
-  showPolicies.value = false
-  checkForUpdates()
-}
+  showPolicies.value = false;
+  checkForUpdates();
+};
 
 const handleBulkUpdateStarted = () => {
-  showBulkManager.value = false
-  clearSelection()
-}
+  showBulkManager.value = false;
+  clearSelection();
+};
 
 const applyQuickFilter = () => {
-  const newFilters: UpdateFilter = {}
+  const newFilters: UpdateFilter = {};
 
   switch (quickFilter.value) {
-    case 'security':
-      newFilters.securityOnly = true
-      break
-    case 'critical':
-      newFilters.riskLevel = ['critical']
-      break
-    case 'pending':
-      newFilters.ignored = false
-      newFilters.scheduled = false
-      break
-    case 'ignored':
-      newFilters.ignored = true
-      break
-    case 'scheduled':
-      newFilters.scheduled = true
-      break
+    case "security":
+      newFilters.securityOnly = true;
+      break;
+    case "critical":
+      newFilters.riskLevel = ["critical"];
+      break;
+    case "pending":
+      newFilters.ignored = false;
+      newFilters.scheduled = false;
+      break;
+    case "ignored":
+      newFilters.ignored = true;
+      break;
+    case "scheduled":
+      newFilters.scheduled = true;
+      break;
   }
 
-  updatesStore.setFilters(newFilters)
-}
+  updatesStore.setFilters(newFilters);
+};
 
 const handleSearch = () => {
   if (searchQuery.value) {
     updatesStore.setFilters({
       ...filters.value,
-      containerName: searchQuery.value
-    })
+      containerName: searchQuery.value,
+    });
   } else {
-    const newFilters = { ...filters.value }
-    delete newFilters.containerName
-    updatesStore.setFilters(newFilters)
+    const newFilters = { ...filters.value };
+    delete newFilters.containerName;
+    updatesStore.setFilters(newFilters);
   }
-}
+};
 
 const handleSort = () => {
-  updatesStore.setSorting(sortConfig.value.field)
-}
+  updatesStore.setSorting(sortConfig.value.field);
+};
 
 const toggleSortDirection = () => {
-  updatesStore.setSorting(sortConfig.value.field,
-    sortConfig.value.direction === 'asc' ? 'desc' : 'asc'
-  )
-}
+  updatesStore.setSorting(
+    sortConfig.value.field,
+    sortConfig.value.direction === "asc" ? "desc" : "asc",
+  );
+};
 
 const handleSizeFilter = () => {
   updatesStore.setFilters({
     ...filters.value,
     size: {
       min: sizeRange.value[0] * 1024 * 1024, // Convert MB to bytes
-      max: sizeRange.value[1] * 1024 * 1024
-    }
-  })
-}
+      max: sizeRange.value[1] * 1024 * 1024,
+    },
+  });
+};
 
 const applyFilters = () => {
-  updatesStore.setFilters(filters.value)
-  showFilters.value = false
-}
+  updatesStore.setFilters(filters.value);
+  showFilters.value = false;
+};
 
 const clearAllFilters = () => {
-  updatesStore.clearFilters()
-  searchQuery.value = ''
-  quickFilter.value = 'all'
-  sizeRange.value = [0, 1000]
-  statusFilters.value = ['available']
-}
+  updatesStore.clearFilters();
+  searchQuery.value = "";
+  quickFilter.value = "all";
+  sizeRange.value = [0, 1000];
+  statusFilters.value = ["available"];
+};
 
 const handlePageSizeChange = (newSize: number) => {
-  pageSize.value = newSize
-}
+  pageSize.value = newSize;
+};
 
 const handlePageChange = (newPage: number) => {
-  currentPage.value = newPage
-}
+  currentPage.value = newPage;
+};
 
 const formatSize = (value: number) => {
-  return `${value} MB`
-}
+  return `${value} MB`;
+};
 
-const setAutoRefresh = (enabled: boolean) => {
-  updatesStore.setAutoRefresh(enabled)
-}
+const setAutoRefresh = (enabled: string | number | boolean) => {
+  updatesStore.setAutoRefresh(Boolean(enabled));
+};
 
 // Lifecycle hooks
 onMounted(async () => {
@@ -778,8 +789,8 @@ onMounted(async () => {
   await Promise.all([
     updatesStore.checkForUpdates(),
     updatesStore.fetchRunningUpdates(),
-    updatesStore.getUpdateAnalytics()
-  ])
+    updatesStore.getUpdateAnalytics(),
+  ]);
 
   // Setup WebSocket connection
   try {
@@ -790,38 +801,41 @@ onMounted(async () => {
       onUpdateAvailable: updatesStore.handleWebSocketMessage,
       onUpdateNotification: updatesStore.handleWebSocketMessage,
       onConnected: () => {
-        updatesStore.setWebSocketConnected(true)
-        updateWebSocket.subscribeToAllUpdates()
-        updateWebSocket.subscribeToNotifications()
+        updatesStore.setWebSocketConnected(true);
+        updateWebSocket.subscribeToAllUpdates();
+        updateWebSocket.subscribeToNotifications();
       },
       onDisconnected: () => {
-        updatesStore.setWebSocketConnected(false)
-      }
-    })
+        updatesStore.setWebSocketConnected(false);
+      },
+    });
   } catch (error) {
-    console.error('Failed to connect to WebSocket:', error)
+    console.error("Failed to connect to WebSocket:", error);
   }
 
   // Start auto-refresh if enabled
   if (autoRefresh) {
-    updatesStore.startAutoRefresh()
+    updatesStore.startAutoRefresh();
   }
-})
+});
 
 onUnmounted(() => {
   // Clean up
-  updatesStore.stopAutoRefresh()
-  updateWebSocket.disconnect()
-})
+  updatesStore.stopAutoRefresh();
+  updateWebSocket.disconnect();
+});
 
 // Watch for auto-refresh changes
-watch(() => autoRefresh, (enabled) => {
-  if (enabled) {
-    updatesStore.startAutoRefresh()
-  } else {
-    updatesStore.stopAutoRefresh()
-  }
-})
+watch(
+  () => autoRefresh,
+  (enabled) => {
+    if (enabled) {
+      updatesStore.startAutoRefresh();
+    } else {
+      updatesStore.stopAutoRefresh();
+    }
+  },
+);
 </script>
 
 <style scoped lang="scss">
@@ -899,23 +913,23 @@ watch(() => autoRefresh, (enabled) => {
   color: white;
 
   &.total {
-    background: linear-gradient(45deg, #409EFF, #337ECC);
+    background: linear-gradient(45deg, #409eff, #337ecc);
   }
 
   &.security {
-    background: linear-gradient(45deg, #F56C6C, #E6A23C);
+    background: linear-gradient(45deg, #f56c6c, #e6a23c);
   }
 
   &.critical {
-    background: linear-gradient(45deg, #F56C6C, #C73E1D);
+    background: linear-gradient(45deg, #f56c6c, #c73e1d);
   }
 
   &.running {
-    background: linear-gradient(45deg, #67C23A, #529B2E);
+    background: linear-gradient(45deg, #67c23a, #529b2e);
   }
 
   &.scheduled {
-    background: linear-gradient(45deg, #909399, #73767A);
+    background: linear-gradient(45deg, #909399, #73767a);
   }
 }
 

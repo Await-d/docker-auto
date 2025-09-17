@@ -13,6 +13,8 @@ import (
 	"docker-auto/pkg/docker"
 	"docker-auto/pkg/scheduler"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/sirupsen/logrus"
 )
 
@@ -628,7 +630,7 @@ func (t *CleanupTask) cleanupDockerImages(ctx context.Context, params *CleanupPa
 	}
 
 	// Get all images
-	images, err := t.dockerClient.ListImages(ctx, docker.ImageListOptions{
+	images, err := t.dockerClient.ListImages(ctx, types.ImageListOptions{
 		All: true,
 	})
 	if err != nil {
@@ -646,15 +648,23 @@ func (t *CleanupTask) cleanupDockerImages(ctx context.Context, params *CleanupPa
 			continue
 		}
 
+		// Convert types.ImageSummary to docker.Image for compatibility
+		dockerImage := docker.Image{
+			ID:       image.ID,
+			RepoTags: image.RepoTags,
+			Size:     image.Size,
+			Created:  time.Unix(image.Created, 0),
+		}
+
 		// Skip excluded images
-		if t.isImageExcluded(image, params.ExcludeImages) {
+		if t.isImageExcluded(dockerImage, params.ExcludeImages) {
 			continue
 		}
 
 		// Check if image is old enough
 		if params.ImageRetentionDays > 0 {
 			cutoffDate := time.Now().AddDate(0, 0, -params.ImageRetentionDays)
-			if image.Created.After(cutoffDate) {
+			if dockerImage.Created.After(cutoffDate) {
 				continue
 			}
 		}
@@ -677,10 +687,11 @@ func (t *CleanupTask) cleanupDockerImages(ctx context.Context, params *CleanupPa
 	var actualSpaceFreed int64
 
 	for _, imageID := range imagesToRemove {
-		if err := t.dockerClient.RemoveImage(ctx, imageID, docker.ImageRemoveOptions{
+		_, err := t.dockerClient.RemoveImage(ctx, imageID, types.ImageRemoveOptions{
 			Force:         params.ForceRemoveImages,
 			PruneChildren: true,
-		}); err != nil {
+		})
+		if err != nil {
 			logrus.WithError(err).WithField("image_id", imageID).Warn("Failed to remove image")
 		} else {
 			removedCount++
@@ -721,11 +732,12 @@ func (t *CleanupTask) cleanupStoppedContainers(ctx context.Context, params *Clea
 	}
 
 	// Get all stopped containers
-	containers, err := t.dockerClient.ListContainers(ctx, docker.ContainerListOptions{
-		All: true,
-		Filters: map[string][]string{
-			"status": {"exited", "dead"},
-		},
+	filterArgs := filters.NewArgs()
+	filterArgs.Add("status", "exited")
+
+	containers, err := t.dockerClient.ListContainers(ctx, types.ContainerListOptions{
+		All:     true,
+		Filters: filterArgs,
 	})
 	if err != nil {
 		operation.Error = fmt.Sprintf("Failed to list containers: %v", err)
@@ -736,15 +748,25 @@ func (t *CleanupTask) cleanupStoppedContainers(ctx context.Context, params *Clea
 	var containersToRemove []string
 
 	for _, container := range containers {
+		// Convert types.Container to docker.Container for compatibility
+		dockerContainer := docker.Container{
+			ID:      container.ID,
+			Name:    strings.TrimPrefix(container.Names[0], "/"), // Remove leading slash
+			Image:   container.Image,
+			Status:  container.Status,
+			State:   container.State,
+			Created: time.Unix(container.Created, 0),
+		}
+
 		// Skip excluded containers
-		if t.isContainerExcluded(container, params.ExcludeContainers) {
+		if t.isContainerExcluded(dockerContainer, params.ExcludeContainers) {
 			continue
 		}
 
 		// Check if container is old enough
 		if params.ContainerRetentionDays > 0 {
 			cutoffDate := time.Now().AddDate(0, 0, -params.ContainerRetentionDays)
-			if container.Created.After(cutoffDate) {
+			if dockerContainer.Created.After(cutoffDate) {
 				continue
 			}
 		}
@@ -764,7 +786,11 @@ func (t *CleanupTask) cleanupStoppedContainers(ctx context.Context, params *Clea
 	var removedCount int
 
 	for _, containerID := range containersToRemove {
-		if err := t.dockerClient.RemoveContainer(ctx, containerID, true, true); err != nil {
+		err := t.dockerClient.RemoveContainer(ctx, containerID, types.ContainerRemoveOptions{
+			RemoveVolumes: true,
+			Force:         true,
+		})
+		if err != nil {
 			logrus.WithError(err).WithField("container_id", containerID).Warn("Failed to remove container")
 		} else {
 			removedCount++
@@ -898,7 +924,7 @@ func (t *CleanupTask) isImageExcluded(image docker.Image, excludePatterns []stri
 
 func (t *CleanupTask) isContainerExcluded(container docker.Container, excludePatterns []string) bool {
 	for _, pattern := range excludePatterns {
-		if strings.Contains(container.Names[0], pattern) {
+		if strings.Contains(container.Name, pattern) {
 			return true
 		}
 	}

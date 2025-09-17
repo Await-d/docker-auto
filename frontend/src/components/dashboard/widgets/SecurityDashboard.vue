@@ -1,9 +1,13 @@
 <template>
   <div class="security-dashboard-widget">
     <div class="widget-placeholder">
-      <el-icon :size="48"><Lock /></el-icon>
+      <el-icon :size="48">
+        <Lock />
+      </el-icon>
       <h3>Security Dashboard</h3>
-      <p>Security status and vulnerability monitoring will be displayed here.</p>
+      <p>
+        Security status and vulnerability monitoring will be displayed here.
+      </p>
       <div class="mock-data">
         <div class="security-metric">
           <span class="metric-label">Security Score</span>
@@ -33,13 +37,13 @@
 </template>
 
 <script setup lang="ts">
-import { Lock, SuccessFilled, Warning } from '@element-plus/icons-vue'
+import { Lock, SuccessFilled, Warning } from "@element-plus/icons-vue";
 
 defineProps<{
-  widgetId: string
-  widgetConfig: any
-  widgetData?: any
-}>()
+  widgetId: string;
+  widgetConfig: any;
+  widgetData?: any;
+}>();
 </script>
 
 <style scoped lang="scss">
@@ -85,9 +89,15 @@ defineProps<{
       .metric-value {
         font-weight: 600;
 
-        &.good { color: var(--el-color-success); }
-        &.warning { color: var(--el-color-warning); }
-        &.danger { color: var(--el-color-danger); }
+        &.good {
+          color: var(--el-color-success);
+        }
+        &.warning {
+          color: var(--el-color-warning);
+        }
+        &.danger {
+          color: var(--el-color-danger);
+        }
       }
     }
 

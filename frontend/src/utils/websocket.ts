@@ -1,25 +1,41 @@
 // WebSocket client for real-time communication
-import { ref, readonly, computed, onMounted, onUnmounted } from 'vue';
+import { ref, readonly, computed, onMounted, onUnmounted } from "vue";
 
 export interface ClientMessage {
-  type: 'subscribe' | 'unsubscribe' | 'ping' | 'ack';
+  type: "subscribe" | "unsubscribe" | "ping" | "ack" | "batch";
   topic?: string;
   data?: any;
   messageId?: string;
+  timestamp?: number;
 }
 
 export interface ServerMessage {
-  type: 'notification' | 'event' | 'pong' | 'error' | 'subscription_confirmed' | 'unsubscription_confirmed';
+  type:
+    | "notification"
+    | "event"
+    | "pong"
+    | "error"
+    | "subscription_confirmed"
+    | "unsubscription_confirmed"
+    | "batch";
   topic: string;
   data: any;
   timestamp: number;
   messageId?: string;
 }
 
+export interface PerformanceMetrics {
+  totalMessages: number;
+  batchedMessages: number;
+  compressedMessages: number;
+  averageLatency: number;
+  lastMessageTime: number;
+}
+
 export interface EventData {
   id: string;
   type: string;
-  severity: 'info' | 'warning' | 'error' | 'success' | 'debug';
+  severity: "info" | "warning" | "error" | "success" | "debug";
   source: string;
   title: string;
   message: string;
@@ -30,7 +46,12 @@ export interface EventData {
   resource_type?: string;
 }
 
-export type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'error' | 'reconnecting';
+export type ConnectionState =
+  | "connecting"
+  | "connected"
+  | "disconnected"
+  | "error"
+  | "reconnecting";
 
 export type EventCallback = (data: EventData) => void;
 export type ErrorCallback = (error: string) => void;
@@ -53,13 +74,20 @@ export class WebSocketClient {
   private ws: WebSocket | null = null;
   private token: string;
   private baseUrl: string;
-  private state: ConnectionState = 'disconnected';
+  private state: ConnectionState = "disconnected";
   private subscriptions = new Map<string, Set<EventCallback>>();
   private messageQueue: ClientMessage[] = [];
   private reconnectAttempts = 0;
   private heartbeatTimer: NodeJS.Timeout | null = null;
   private reconnectTimer: NodeJS.Timeout | null = null;
-  private pendingMessages = new Map<string, { resolve: Function; reject: Function; timeout: NodeJS.Timeout }>();
+  private pendingMessages = new Map<
+    string,
+    {
+      resolve: (value: any) => void;
+      reject: (error: any) => void;
+      timeout: NodeJS.Timeout;
+    }
+  >();
 
   // Event listeners
   private stateChangeListeners = new Set<StateChangeCallback>();
@@ -73,7 +101,7 @@ export class WebSocketClient {
     batchedMessages: 0,
     compressedMessages: 0,
     averageLatency: 0,
-    lastMessageTime: 0
+    lastMessageTime: 0,
   };
 
   // Configuration
@@ -87,7 +115,7 @@ export class WebSocketClient {
     batchSize: 10,
     batchTimeout: 100,
     enableCompression: true,
-    compressionThreshold: 1024
+    compressionThreshold: 1024,
   };
 
   constructor(baseUrl: string, token: string, options?: WebSocketOptions) {
@@ -104,21 +132,21 @@ export class WebSocketClient {
    */
   async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.state === 'connected' || this.state === 'connecting') {
+      if (this.state === "connected" || this.state === "connecting") {
         resolve();
         return;
       }
 
-      this.setState('connecting');
+      this.setState("connecting");
 
-      const wsUrl = `${this.baseUrl.replace('http', 'ws')}/api/ws?token=${encodeURIComponent(this.token)}`;
+      const wsUrl = `${this.baseUrl.replace("http", "ws")}/api/ws?token=${encodeURIComponent(this.token)}`;
 
       try {
         this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
-          console.log('WebSocket connected');
-          this.setState('connected');
+          console.log("WebSocket connected");
+          this.setState("connected");
           this.reconnectAttempts = 0;
           this.startHeartbeat();
           this.processMessageQueue();
@@ -130,25 +158,24 @@ export class WebSocketClient {
         };
 
         this.ws.onclose = (event) => {
-          console.log('WebSocket closed:', event.code, event.reason);
+          console.log("WebSocket closed:", event.code, event.reason);
           this.cleanup();
 
           if (event.code !== 1000 && this.options.autoReconnect) {
             this.scheduleReconnect();
           } else {
-            this.setState('disconnected');
+            this.setState("disconnected");
           }
         };
 
         this.ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          this.setState('error');
-          this.notifyError('WebSocket connection error');
-          reject(new Error('WebSocket connection failed'));
+          console.error("WebSocket error:", error);
+          this.setState("error");
+          this.notifyError("WebSocket connection error");
+          reject(new Error("WebSocket connection failed"));
         };
-
       } catch (error) {
-        this.setState('error');
+        this.setState("error");
         reject(error);
       }
     });
@@ -166,11 +193,11 @@ export class WebSocketClient {
     }
 
     if (this.ws) {
-      this.ws.close(1000, 'Client disconnect');
+      this.ws.close(1000, "Client disconnect");
     }
 
     this.cleanup();
-    this.setState('disconnected');
+    this.setState("disconnected");
   }
 
   /**
@@ -182,7 +209,7 @@ export class WebSocketClient {
 
       // Send subscription message to server
       this.sendMessage({
-        type: 'subscribe',
+        type: "subscribe",
         topic,
         messageId: this.generateMessageId(),
       });
@@ -205,7 +232,7 @@ export class WebSocketClient {
       if (callbacks.size === 0) {
         this.subscriptions.delete(topic);
         this.sendMessage({
-          type: 'unsubscribe',
+          type: "unsubscribe",
           topic,
           messageId: this.generateMessageId(),
         });
@@ -214,7 +241,7 @@ export class WebSocketClient {
       // Unsubscribe all callbacks for this topic
       this.subscriptions.delete(topic);
       this.sendMessage({
-        type: 'unsubscribe',
+        type: "unsubscribe",
         topic,
         messageId: this.generateMessageId(),
       });
@@ -226,7 +253,7 @@ export class WebSocketClient {
    */
   ping(): Promise<void> {
     return this.sendMessageWithResponse({
-      type: 'ping',
+      type: "ping",
       messageId: this.generateMessageId(),
     });
   }
@@ -258,7 +285,7 @@ export class WebSocketClient {
    * Check if the client is connected
    */
   isConnected(): boolean {
-    return this.state === 'connected';
+    return this.state === "connected";
   }
 
   /**
@@ -281,7 +308,7 @@ export class WebSocketClient {
     subscriptions: number;
     queuedMessages: number;
     reconnectAttempts: number;
-    performance: typeof this.performanceMetrics;
+    performance: PerformanceMetrics;
     bufferSize: number;
   } {
     return {
@@ -289,7 +316,7 @@ export class WebSocketClient {
       queuedMessages: this.messageQueue.length,
       reconnectAttempts: this.reconnectAttempts,
       performance: { ...this.performanceMetrics },
-      bufferSize: this.messageBuffer.length
+      bufferSize: this.messageBuffer.length,
     };
   }
 
@@ -300,19 +327,24 @@ export class WebSocketClient {
     return {
       ...this.performanceMetrics,
       messagesPerSecond: this.calculateMessagesPerSecond(),
-      compressionRatio: this.performanceMetrics.totalMessages > 0
-        ? this.performanceMetrics.compressedMessages / this.performanceMetrics.totalMessages
-        : 0,
-      batchingRatio: this.performanceMetrics.totalMessages > 0
-        ? this.performanceMetrics.batchedMessages / this.performanceMetrics.totalMessages
-        : 0
+      compressionRatio:
+        this.performanceMetrics.totalMessages > 0
+          ? this.performanceMetrics.compressedMessages /
+            this.performanceMetrics.totalMessages
+          : 0,
+      batchingRatio:
+        this.performanceMetrics.totalMessages > 0
+          ? this.performanceMetrics.batchedMessages /
+            this.performanceMetrics.totalMessages
+          : 0,
     };
   }
 
   private calculateMessagesPerSecond(): number {
     if (this.performanceMetrics.lastMessageTime === 0) return 0;
 
-    const timeDiff = (Date.now() - this.performanceMetrics.lastMessageTime) / 1000;
+    const timeDiff =
+      (Date.now() - this.performanceMetrics.lastMessageTime) / 1000;
     return timeDiff > 0 ? this.performanceMetrics.totalMessages / timeDiff : 0;
   }
 
@@ -321,12 +353,12 @@ export class WebSocketClient {
   private setState(state: ConnectionState): void {
     if (this.state !== state) {
       this.state = state;
-      this.stateChangeListeners.forEach(callback => callback(state));
+      this.stateChangeListeners.forEach((callback) => callback(state));
     }
   }
 
   private notifyError(error: string): void {
-    this.errorListeners.forEach(callback => callback(error));
+    this.errorListeners.forEach((callback) => callback(error));
   }
 
   private handleMessage(data: string | ArrayBuffer): void {
@@ -350,9 +382,9 @@ export class WebSocketClient {
       }
 
       // Handle batched messages
-      if (message.type === 'batch' && message.data?.messages) {
+      if (message.type === "batch" && message.data?.messages) {
         const batchedMessages = message.data.messages as ServerMessage[];
-        batchedMessages.forEach(batchedMessage => {
+        batchedMessages.forEach((batchedMessage) => {
           this.processMessage(batchedMessage);
         });
       } else {
@@ -361,28 +393,31 @@ export class WebSocketClient {
 
       this.performanceMetrics.totalMessages++;
     } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
-      this.notifyError('Failed to parse server message');
+      console.error("Failed to parse WebSocket message:", error);
+      this.notifyError("Failed to parse server message");
     }
   }
 
   private processMessage(message: ServerMessage): void {
     switch (message.type) {
-      case 'event':
+      case "event":
         this.handleEvent(message);
         break;
-      case 'pong':
+      case "pong":
         this.handlePong(message);
         break;
-      case 'error':
+      case "error":
         this.handleError(message);
         break;
-      case 'subscription_confirmed':
-      case 'unsubscription_confirmed':
+      case "subscription_confirmed":
+      case "unsubscription_confirmed":
         this.handleConfirmation(message);
         break;
+      case "batch":
+        // Batch messages are handled in handleMessage before reaching here
+        break;
       default:
-        console.warn('Unknown message type:', message.type);
+        console.warn("Unknown message type:", message.type);
     }
   }
 
@@ -408,23 +443,23 @@ export class WebSocketClient {
 
     const callbacks = this.subscriptions.get(topic);
     if (callbacks) {
-      callbacks.forEach(callback => {
+      callbacks.forEach((callback) => {
         try {
           callback(eventData);
         } catch (error) {
-          console.error('Error in event callback:', error);
+          console.error("Error in event callback:", error);
         }
       });
     }
 
     // Also notify 'all' subscribers
-    const allCallbacks = this.subscriptions.get('all');
+    const allCallbacks = this.subscriptions.get("all");
     if (allCallbacks) {
-      allCallbacks.forEach(callback => {
+      allCallbacks.forEach((callback) => {
         try {
           callback(eventData);
         } catch (error) {
-          console.error('Error in event callback:', error);
+          console.error("Error in event callback:", error);
         }
       });
     }
@@ -437,8 +472,8 @@ export class WebSocketClient {
   }
 
   private handleError(message: ServerMessage): void {
-    const error = message.data?.error || 'Server error';
-    console.error('Server error:', error);
+    const error = message.data?.error || "Server error";
+    console.error("Server error:", error);
     this.notifyError(error);
 
     if (message.messageId) {
@@ -456,7 +491,10 @@ export class WebSocketClient {
     // Add performance tracking
     message.timestamp = Date.now();
 
-    if (this.options.enableMessageBatching && this.shouldBatchMessage(message)) {
+    if (
+      this.options.enableMessageBatching &&
+      this.shouldBatchMessage(message)
+    ) {
       this.addToBatch(message);
     } else {
       this.sendImmediately(message);
@@ -470,7 +508,10 @@ export class WebSocketClient {
         let data: string | ArrayBuffer = messageStr;
 
         // Apply compression if enabled and message is large enough
-        if (this.options.enableCompression && messageStr.length > this.options.compressionThreshold) {
+        if (
+          this.options.enableCompression &&
+          messageStr.length > this.options.compressionThreshold
+        ) {
           data = this.compressMessage(messageStr);
           this.performanceMetrics.compressedMessages++;
         }
@@ -479,7 +520,7 @@ export class WebSocketClient {
         this.performanceMetrics.totalMessages++;
         this.performanceMetrics.lastMessageTime = Date.now();
       } catch (error) {
-        console.error('Failed to send message:', error);
+        console.error("Failed to send message:", error);
         this.queueMessage(message);
       }
     } else {
@@ -489,7 +530,7 @@ export class WebSocketClient {
 
   private shouldBatchMessage(message: ClientMessage): boolean {
     // Don't batch critical messages like ping/pong
-    return message.type !== 'ping' && message.type !== 'ack';
+    return message.type !== "ping" && message.type !== "ack";
   }
 
   private addToBatch(message: ClientMessage): void {
@@ -510,16 +551,17 @@ export class WebSocketClient {
     if (this.messageBuffer.length === 0) return;
 
     const batchMessage: ClientMessage = {
-      type: 'batch',
+      type: "batch",
       data: {
         messages: this.messageBuffer.splice(0, this.options.batchSize),
-        timestamp: Date.now()
+        timestamp: Date.now(),
       },
-      messageId: this.generateMessageId()
+      messageId: this.generateMessageId(),
     };
 
     this.sendImmediately(batchMessage);
-    this.performanceMetrics.batchedMessages += batchMessage.data.messages.length;
+    this.performanceMetrics.batchedMessages +=
+      batchMessage.data.messages.length;
 
     // Clear batch timer
     if (this.batchTimer) {
@@ -551,7 +593,7 @@ export class WebSocketClient {
 
       const timeout = setTimeout(() => {
         this.pendingMessages.delete(message.messageId!);
-        reject(new Error('Message timeout'));
+        reject(new Error("Message timeout"));
       }, this.options.messageTimeout);
 
       this.pendingMessages.set(message.messageId, { resolve, reject, timeout });
@@ -574,7 +616,7 @@ export class WebSocketClient {
     const pending = this.pendingMessages.get(messageId);
     if (pending) {
       clearTimeout(pending.timeout);
-      pending.resolve();
+      pending.resolve(undefined);
       this.pendingMessages.delete(messageId);
     }
   }
@@ -595,9 +637,9 @@ export class WebSocketClient {
 
     this.heartbeatTimer = setInterval(() => {
       if (this.isConnected()) {
-        this.ping().catch(error => {
-          console.error('Heartbeat failed:', error);
-          this.setState('error');
+        this.ping().catch((error) => {
+          console.error("Heartbeat failed:", error);
+          this.setState("error");
         });
       }
     }, this.options.heartbeatInterval);
@@ -605,24 +647,24 @@ export class WebSocketClient {
 
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.options.maxReconnectAttempts) {
-      console.log('Max reconnect attempts reached');
-      this.setState('disconnected');
+      console.log("Max reconnect attempts reached");
+      this.setState("disconnected");
       return;
     }
 
-    this.setState('reconnecting');
+    this.setState("reconnecting");
 
     const delay = Math.min(
       this.options.reconnectInterval * Math.pow(2, this.reconnectAttempts),
-      30000
+      30000,
     );
 
     this.reconnectTimer = setTimeout(() => {
       this.reconnectAttempts++;
       console.log(`Reconnecting... (attempt ${this.reconnectAttempts})`);
 
-      this.connect().catch(error => {
-        console.error('Reconnect failed:', error);
+      this.connect().catch((error) => {
+        console.error("Reconnect failed:", error);
         this.scheduleReconnect();
       });
     }, delay);
@@ -655,7 +697,7 @@ export class WebSocketClient {
     // Reject all pending messages
     this.pendingMessages.forEach(({ reject, timeout }) => {
       clearTimeout(timeout);
-      reject(new Error('Connection closed'));
+      reject(new Error("Connection closed"));
     });
     this.pendingMessages.clear();
   }
@@ -666,10 +708,14 @@ export class WebSocketClient {
 }
 
 // Vue 3 composable for WebSocket
-export function useWebSocket(baseUrl: string, token: string, options?: WebSocketOptions) {
+export function useWebSocket(
+  baseUrl: string,
+  token: string,
+  options?: WebSocketOptions,
+) {
   const client = new WebSocketClient(baseUrl, token, options);
 
-  const state = ref<ConnectionState>('disconnected');
+  const state = ref<ConnectionState>("disconnected");
   const error = ref<string | null>(null);
 
   // Update reactive state
@@ -683,8 +729,8 @@ export function useWebSocket(baseUrl: string, token: string, options?: WebSocket
 
   // Connect on mount
   onMounted(() => {
-    client.connect().catch(err => {
-      console.error('Failed to connect WebSocket:', err);
+    client.connect().catch((err) => {
+      console.error("Failed to connect WebSocket:", err);
     });
   });
 
@@ -697,7 +743,7 @@ export function useWebSocket(baseUrl: string, token: string, options?: WebSocket
     client,
     state: readonly(state),
     error: readonly(error),
-    isConnected: computed(() => state.value === 'connected'),
+    isConnected: computed(() => state.value === "connected"),
     subscribe: client.subscribe.bind(client),
     unsubscribe: client.unsubscribe.bind(client),
     ping: client.ping.bind(client),
@@ -708,7 +754,7 @@ export function useWebSocket(baseUrl: string, token: string, options?: WebSocket
 export function createEventSubscription<T = any>(
   client: WebSocketClient,
   topic: string,
-  callback: (data: T) => void
+  callback: (data: T) => void,
 ): () => void {
   client.subscribe(topic, callback as EventCallback);
   return () => client.unsubscribe(topic, callback as EventCallback);

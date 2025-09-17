@@ -28,7 +28,10 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="Webhook Notifications">
-              <el-switch v-model="webhookEnabled" @change="toggleWebhookChannel" />
+              <el-switch
+                v-model="webhookEnabled"
+                @change="toggleWebhookChannel"
+              />
               <div class="field-help">Send notifications via webhooks</div>
             </el-form-item>
           </el-col>
@@ -39,12 +42,19 @@
           <el-row :gutter="16">
             <el-col :span="12">
               <el-form-item label="SMTP Server">
-                <el-input v-model="emailConfig.smtpServer" placeholder="smtp.example.com" />
+                <el-input
+                  v-model="emailConfig.smtpServer"
+                  placeholder="smtp.example.com"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="Port">
-                <el-input-number v-model="emailConfig.port" :min="25" :max="65535" />
+                <el-input-number
+                  v-model="emailConfig.port"
+                  :min="25"
+                  :max="65535"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="6">
@@ -60,7 +70,10 @@
           <el-row :gutter="16">
             <el-col :span="24">
               <el-form-item label="Webhook URL">
-                <el-input v-model="webhookConfig.url" placeholder="https://api.example.com/webhook" />
+                <el-input
+                  v-model="webhookConfig.url"
+                  placeholder="https://api.example.com/webhook"
+                />
               </el-form-item>
             </el-col>
           </el-row>
@@ -157,25 +170,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { Bell, Timer, MoonNight } from '@element-plus/icons-vue'
-import ConfigForm from './forms/ConfigForm.vue'
-import type { NotificationSettings } from '@/store/settings'
+import { ref, computed, watch } from "vue";
+import { Bell, Timer, MoonNight } from "@element-plus/icons-vue";
+import ConfigForm from "./forms/ConfigForm.vue";
+import type { NotificationSettings } from "@/store/settings";
 
 interface Props {
-  modelValue: NotificationSettings
-  loading?: boolean
-  validationErrors?: Record<string, string[]>
+  modelValue: NotificationSettings;
+  loading?: boolean;
+  validationErrors?: Record<string, string[]>;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: NotificationSettings): void
-  (e: 'field-change', field: string, value: any): void
-  (e: 'field-validate', field: string, value: any): void
+  (e: "update:modelValue", value: NotificationSettings): void;
+  (e: "field-change", field: string, value: any): void;
+  (e: "field-validate", field: string, value: any): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const formData = ref<NotificationSettings>({
   channels: [],
@@ -185,67 +198,71 @@ const formData = ref<NotificationSettings>({
     enabled: true,
     maxPerMinute: 10,
     maxPerHour: 100,
-    maxPerDay: 1000
+    maxPerDay: 1000,
   },
   quietHours: {
     enabled: false,
-    startTime: '22:00',
-    endTime: '08:00',
-    timezone: 'UTC',
-    days: [0, 1, 2, 3, 4, 5, 6]
-  }
-} as any)
+    startTime: "22:00",
+    endTime: "08:00",
+    timezone: "UTC",
+    days: [0, 1, 2, 3, 4, 5, 6],
+  },
+} as any);
 
-const emailEnabled = ref(false)
-const webhookEnabled = ref(false)
+const emailEnabled = ref(false);
+const webhookEnabled = ref(false);
 const emailConfig = ref({
-  smtpServer: '',
+  smtpServer: "",
   port: 587,
-  useTLS: true
-})
+  useTLS: true,
+});
 const webhookConfig = ref({
-  url: ''
-})
+  url: "",
+});
 
 const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue)
-})
+  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
+});
 
-const formRules = computed(() => ({}))
+const formRules = computed(() => ({}));
 
-const toggleEmailChannel = (enabled: boolean) => {
+const toggleEmailChannel = (_enabled: string | number | boolean) => {
   // Implementation for toggling email channel
-}
+};
 
-const toggleWebhookChannel = (enabled: boolean) => {
+const toggleWebhookChannel = (_enabled: string | number | boolean) => {
   // Implementation for toggling webhook channel
-}
+};
 
 const updateRateLimiting = () => {
-  handleFieldChange('rateLimiting', formData.value.rateLimiting)
-}
+  handleFieldChange("rateLimiting", formData.value.rateLimiting);
+};
 
 const updateQuietHours = () => {
-  handleFieldChange('quietHours', formData.value.quietHours)
-}
+  handleFieldChange("quietHours", formData.value.quietHours);
+};
 
 const handleSave = () => {
-  emit('update:modelValue', formData.value)
-}
+  emit("update:modelValue", formData.value);
+};
 
 const handleReset = () => {
-  formData.value = { ...props.modelValue }
-}
+  formData.value = { ...props.modelValue };
+};
 
 const handleFieldChange = (field: string, value: any) => {
-  emit('field-change', field, value)
-}
+  emit("field-change", field, value);
+};
 
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    formData.value = { ...newValue }
-  }
-}, { immediate: true, deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = { ...newValue };
+    }
+  },
+  { immediate: true, deep: true },
+);
 </script>
 
 <style scoped lang="scss">

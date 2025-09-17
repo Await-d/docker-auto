@@ -1,10 +1,10 @@
 /**
  * Authentication utilities
  */
-import { jwtDecode } from 'jwt-decode'
-import Cookies from 'js-cookie'
-import { STORAGE_KEYS, TOKEN_REFRESH_THRESHOLD } from './constants'
-import type { UserInfo, TokenPayload } from '@/types/auth'
+import { jwtDecode } from "jwt-decode";
+import Cookies from "js-cookie";
+import { STORAGE_KEYS, TOKEN_REFRESH_THRESHOLD } from "./constants";
+import type { UserInfo, TokenPayload } from "@/types/auth";
 
 /**
  * JWT token management class
@@ -14,44 +14,55 @@ export class TokenManager {
    * Store access token
    */
   static setAccessToken(token: string): void {
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token)
-    Cookies.set(STORAGE_KEYS.ACCESS_TOKEN, token, { secure: true, sameSite: 'strict' })
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+    Cookies.set(STORAGE_KEYS.ACCESS_TOKEN, token, {
+      secure: true,
+      sameSite: "strict",
+    });
   }
 
   /**
    * Get access token
    */
   static getAccessToken(): string | null {
-    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || Cookies.get(STORAGE_KEYS.ACCESS_TOKEN) || null
+    return (
+      localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) ||
+      Cookies.get(STORAGE_KEYS.ACCESS_TOKEN) ||
+      null
+    );
   }
 
   /**
    * Store refresh token
    */
   static setRefreshToken(token: string): void {
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token)
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
     Cookies.set(STORAGE_KEYS.REFRESH_TOKEN, token, {
       secure: true,
-      sameSite: 'strict',
-      httpOnly: false // Allow JavaScript access for refresh functionality
-    })
+      sameSite: "strict",
+      httpOnly: false, // Allow JavaScript access for refresh functionality
+    });
   }
 
   /**
    * Get refresh token
    */
   static getRefreshToken(): string | null {
-    return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN) || Cookies.get(STORAGE_KEYS.REFRESH_TOKEN) || null
+    return (
+      localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN) ||
+      Cookies.get(STORAGE_KEYS.REFRESH_TOKEN) ||
+      null
+    );
   }
 
   /**
    * Clear all tokens
    */
   static clearTokens(): void {
-    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
-    Cookies.remove(STORAGE_KEYS.ACCESS_TOKEN)
-    Cookies.remove(STORAGE_KEYS.REFRESH_TOKEN)
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    Cookies.remove(STORAGE_KEYS.ACCESS_TOKEN);
+    Cookies.remove(STORAGE_KEYS.REFRESH_TOKEN);
   }
 
   /**
@@ -59,10 +70,10 @@ export class TokenManager {
    */
   static decodeToken(token: string): TokenPayload | null {
     try {
-      return jwtDecode<TokenPayload>(token)
+      return jwtDecode<TokenPayload>(token);
     } catch (error) {
-      console.error('Failed to decode token:', error)
-      return null
+      console.error("Failed to decode token:", error);
+      return null;
     }
   }
 
@@ -71,15 +82,15 @@ export class TokenManager {
    */
   static isTokenValid(token: string): boolean {
     try {
-      const decoded = this.decodeToken(token)
+      const decoded = this.decodeToken(token);
       if (!decoded || !decoded.exp) {
-        return false
+        return false;
       }
 
-      const currentTime = Math.floor(Date.now() / 1000)
-      return decoded.exp > currentTime
+      const currentTime = Math.floor(Date.now() / 1000);
+      return decoded.exp > currentTime;
     } catch (error) {
-      return false
+      return false;
     }
   }
 
@@ -88,17 +99,17 @@ export class TokenManager {
    */
   static needsRefresh(token: string): boolean {
     try {
-      const decoded = this.decodeToken(token)
+      const decoded = this.decodeToken(token);
       if (!decoded || !decoded.exp) {
-        return true
+        return true;
       }
 
-      const currentTime = Math.floor(Date.now() / 1000)
-      const thresholdTime = TOKEN_REFRESH_THRESHOLD * 60 // Convert minutes to seconds
+      const currentTime = Math.floor(Date.now() / 1000);
+      const thresholdTime = TOKEN_REFRESH_THRESHOLD * 60; // Convert minutes to seconds
 
-      return decoded.exp - currentTime < thresholdTime
+      return decoded.exp - currentTime < thresholdTime;
     } catch (error) {
-      return true
+      return true;
     }
   }
 
@@ -107,14 +118,14 @@ export class TokenManager {
    */
   static getTokenExpiration(token: string): Date | null {
     try {
-      const decoded = this.decodeToken(token)
+      const decoded = this.decodeToken(token);
       if (!decoded || !decoded.exp) {
-        return null
+        return null;
       }
 
-      return new Date(decoded.exp * 1000)
+      return new Date(decoded.exp * 1000);
     } catch (error) {
-      return null
+      return null;
     }
   }
 
@@ -123,9 +134,9 @@ export class TokenManager {
    */
   static getUserInfoFromToken(token: string): Partial<UserInfo> | null {
     try {
-      const decoded = this.decodeToken(token)
+      const decoded = this.decodeToken(token);
       if (!decoded) {
-        return null
+        return null;
       }
 
       return {
@@ -133,10 +144,10 @@ export class TokenManager {
         username: decoded.username,
         email: decoded.email,
         role: decoded.role,
-        permissions: decoded.permissions
-      }
+        permissions: decoded.permissions,
+      };
     } catch (error) {
-      return null
+      return null;
     }
   }
 }
@@ -149,7 +160,7 @@ export class UserManager {
    * Store user information
    */
   static setUserInfo(userInfo: UserInfo): void {
-    localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo))
+    localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
   }
 
   /**
@@ -157,11 +168,11 @@ export class UserManager {
    */
   static getUserInfo(): UserInfo | null {
     try {
-      const userInfoStr = localStorage.getItem(STORAGE_KEYS.USER_INFO)
-      return userInfoStr ? JSON.parse(userInfoStr) : null
+      const userInfoStr = localStorage.getItem(STORAGE_KEYS.USER_INFO);
+      return userInfoStr ? JSON.parse(userInfoStr) : null;
     } catch (error) {
-      console.error('Failed to parse user info:', error)
-      return null
+      console.error("Failed to parse user info:", error);
+      return null;
     }
   }
 
@@ -169,60 +180,69 @@ export class UserManager {
    * Clear user information
    */
   static clearUserInfo(): void {
-    localStorage.removeItem(STORAGE_KEYS.USER_INFO)
+    localStorage.removeItem(STORAGE_KEYS.USER_INFO);
   }
 
   /**
    * Check if user has permission
    */
-  static hasPermission(permission: string, userInfo?: UserInfo | null): boolean {
-    const user = userInfo || this.getUserInfo()
+  static hasPermission(
+    permission: string,
+    userInfo?: UserInfo | null,
+  ): boolean {
+    const user = userInfo || this.getUserInfo();
     if (!user || !user.permissions) {
-      return false
+      return false;
     }
 
-    return user.permissions.includes(permission)
+    return user.permissions.includes(permission);
   }
 
   /**
    * Check if user has role
    */
   static hasRole(role: string, userInfo?: UserInfo | null): boolean {
-    const user = userInfo || this.getUserInfo()
+    const user = userInfo || this.getUserInfo();
     if (!user) {
-      return false
+      return false;
     }
 
-    return user.role === role
+    return user.role === role;
   }
 
   /**
    * Check if user is admin
    */
   static isAdmin(userInfo?: UserInfo | null): boolean {
-    return this.hasRole('admin', userInfo)
+    return this.hasRole("admin", userInfo);
   }
 
   /**
    * Check if user can perform action
    */
-  static canPerformAction(requiredRole?: string, requiredPermission?: string): boolean {
-    const userInfo = this.getUserInfo()
+  static canPerformAction(
+    requiredRole?: string,
+    requiredPermission?: string,
+  ): boolean {
+    const userInfo = this.getUserInfo();
     if (!userInfo) {
-      return false
+      return false;
     }
 
     // Check role if required
     if (requiredRole && !this.hasRole(requiredRole, userInfo)) {
-      return false
+      return false;
     }
 
     // Check permission if required
-    if (requiredPermission && !this.hasPermission(requiredPermission, userInfo)) {
-      return false
+    if (
+      requiredPermission &&
+      !this.hasPermission(requiredPermission, userInfo)
+    ) {
+      return false;
     }
 
-    return true
+    return true;
   }
 }
 
@@ -234,93 +254,97 @@ export class AuthUtils {
    * Check if user is authenticated
    */
   static isAuthenticated(): boolean {
-    const token = TokenManager.getAccessToken()
-    return token !== null && TokenManager.isTokenValid(token)
+    const token = TokenManager.getAccessToken();
+    return token !== null && TokenManager.isTokenValid(token);
   }
 
   /**
    * Perform logout cleanup
    */
   static logout(): void {
-    TokenManager.clearTokens()
-    UserManager.clearUserInfo()
+    TokenManager.clearTokens();
+    UserManager.clearUserInfo();
 
     // Clear any other auth-related data
-    localStorage.removeItem(STORAGE_KEYS.THEME)
-    localStorage.removeItem(STORAGE_KEYS.LANGUAGE)
+    localStorage.removeItem(STORAGE_KEYS.THEME);
+    localStorage.removeItem(STORAGE_KEYS.LANGUAGE);
 
     // Redirect to login page
-    window.location.href = '/login'
+    window.location.href = "/login";
   }
 
   /**
    * Redirect to login page
    */
   static redirectToLogin(returnUrl?: string): void {
-    const loginUrl = '/login'
-    const url = returnUrl ? `${loginUrl}?redirect=${encodeURIComponent(returnUrl)}` : loginUrl
-    window.location.href = url
+    const loginUrl = "/login";
+    const url = returnUrl
+      ? `${loginUrl}?redirect=${encodeURIComponent(returnUrl)}`
+      : loginUrl;
+    window.location.href = url;
   }
 
   /**
    * Get redirect URL from query params
    */
   static getRedirectUrl(): string {
-    const urlParams = new URLSearchParams(window.location.search)
-    return urlParams.get('redirect') || '/'
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("redirect") || "/";
   }
 
   /**
    * Generate CSRF token
    */
   static generateCSRFToken(): string {
-    const array = new Uint8Array(32)
-    crypto.getRandomValues(array)
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
+      "",
+    );
   }
 
   /**
    * Sanitize input to prevent XSS
    */
   static sanitizeInput(input: string): string {
-    const div = document.createElement('div')
-    div.textContent = input
-    return div.innerHTML
+    const div = document.createElement("div");
+    div.textContent = input;
+    return div.innerHTML;
   }
 
   /**
    * Validate password strength
    */
   static validatePassword(password: string): {
-    isValid: boolean
-    errors: string[]
+    isValid: boolean;
+    errors: string[];
   } {
-    const errors: string[] = []
+    const errors: string[] = [];
 
     if (password.length < 8) {
-      errors.push('Password must be at least 8 characters long')
+      errors.push("Password must be at least 8 characters long");
     }
 
     if (!/[A-Z]/.test(password)) {
-      errors.push('Password must contain at least one uppercase letter')
+      errors.push("Password must contain at least one uppercase letter");
     }
 
     if (!/[a-z]/.test(password)) {
-      errors.push('Password must contain at least one lowercase letter')
+      errors.push("Password must contain at least one lowercase letter");
     }
 
     if (!/\d/.test(password)) {
-      errors.push('Password must contain at least one number')
+      errors.push("Password must contain at least one number");
     }
 
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-      errors.push('Password must contain at least one special character')
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+      errors.push("Password must contain at least one special character");
     }
 
     return {
       isValid: errors.length === 0,
-      errors
-    }
+      errors,
+    };
   }
 
   /**
@@ -328,18 +352,18 @@ export class AuthUtils {
    */
   static formatUserDisplayName(userInfo: UserInfo): string {
     if (userInfo.firstName && userInfo.lastName) {
-      return `${userInfo.firstName} ${userInfo.lastName}`
+      return `${userInfo.firstName} ${userInfo.lastName}`;
     }
 
     if (userInfo.firstName) {
-      return userInfo.firstName
+      return userInfo.firstName;
     }
 
     if (userInfo.email) {
-      return userInfo.email
+      return userInfo.email;
     }
 
-    return userInfo.username
+    return userInfo.username;
   }
 
   /**
@@ -347,37 +371,37 @@ export class AuthUtils {
    */
   static getUserAvatar(userInfo: UserInfo): string {
     if (userInfo.avatar) {
-      return userInfo.avatar
+      return userInfo.avatar;
     }
 
     // Generate initials-based avatar
-    const displayName = this.formatUserDisplayName(userInfo)
+    const displayName = this.formatUserDisplayName(userInfo);
     const initials = displayName
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase())
-      .join('')
-      .substring(0, 2)
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase())
+      .join("")
+      .substring(0, 2);
 
     // Return a data URL for a simple avatar with initials
-    const canvas = document.createElement('canvas')
-    canvas.width = 40
-    canvas.height = 40
-    const ctx = canvas.getContext('2d')
+    const canvas = document.createElement("canvas");
+    canvas.width = 40;
+    canvas.height = 40;
+    const ctx = canvas.getContext("2d");
 
     if (ctx) {
       // Background
-      ctx.fillStyle = '#409EFF'
-      ctx.fillRect(0, 0, 40, 40)
+      ctx.fillStyle = "#409EFF";
+      ctx.fillRect(0, 0, 40, 40);
 
       // Text
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = '16px Arial'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(initials, 20, 20)
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "16px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(initials, 20, 20);
     }
 
-    return canvas.toDataURL()
+    return canvas.toDataURL();
   }
 }
 
@@ -389,27 +413,28 @@ export class SecurityUtils {
    * Generate secure random string
    */
   static generateRandomString(length: number = 32): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    let result = ''
-    const array = new Uint8Array(length)
-    crypto.getRandomValues(array)
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
 
     for (let i = 0; i < length; i++) {
-      result += chars[array[i] % chars.length]
+      result += chars[array[i] % chars.length];
     }
 
-    return result
+    return result;
   }
 
   /**
    * Hash string using Web Crypto API
    */
   static async hashString(str: string): Promise<string> {
-    const encoder = new TextEncoder()
-    const data = encoder.encode(str)
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-    const hashArray = Array.from(new Uint8Array(hashBuffer))
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
   /**
@@ -417,14 +442,14 @@ export class SecurityUtils {
    */
   static constantTimeEquals(a: string, b: string): boolean {
     if (a.length !== b.length) {
-      return false
+      return false;
     }
 
-    let result = 0
+    let result = 0;
     for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ b.charCodeAt(i)
+      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
     }
 
-    return result === 0
+    return result === 0;
   }
 }

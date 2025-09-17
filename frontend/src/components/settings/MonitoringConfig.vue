@@ -21,7 +21,11 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Health Check Interval" prop="systemMonitoring.healthCheckInterval" required>
+            <el-form-item
+              label="Health Check Interval"
+              prop="systemMonitoring.healthCheckInterval"
+              required
+            >
               <div class="timeout-input">
                 <el-input-number
                   v-model="formData.systemMonitoring.healthCheckInterval"
@@ -49,10 +53,15 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="CPU Warning Threshold" prop="systemMonitoring.resourceThresholds.cpuWarning">
+            <el-form-item
+              label="CPU Warning Threshold"
+              prop="systemMonitoring.resourceThresholds.cpuWarning"
+            >
               <div class="percentage-input">
                 <el-input-number
-                  v-model="formData.systemMonitoring.resourceThresholds.cpuWarning"
+                  v-model="
+                    formData.systemMonitoring.resourceThresholds.cpuWarning
+                  "
                   :min="10"
                   :max="95"
                   :step="5"
@@ -63,10 +72,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Memory Warning Threshold" prop="systemMonitoring.resourceThresholds.memoryWarning">
+            <el-form-item
+              label="Memory Warning Threshold"
+              prop="systemMonitoring.resourceThresholds.memoryWarning"
+            >
               <div class="percentage-input">
                 <el-input-number
-                  v-model="formData.systemMonitoring.resourceThresholds.memoryWarning"
+                  v-model="
+                    formData.systemMonitoring.resourceThresholds.memoryWarning
+                  "
                   :min="10"
                   :max="95"
                   :step="5"
@@ -110,8 +124,8 @@
                 @change="updateLogging"
               />
               <div class="field-help">
-                Use structured JSON logging format
-              </div>
+Use structured JSON logging format
+</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -169,7 +183,10 @@
           </div>
         </template>
 
-        <div v-if="formData.externalIntegrations.length === 0" class="empty-state">
+        <div
+          v-if="formData.externalIntegrations.length === 0"
+          class="empty-state"
+        >
           <el-empty description="No integrations configured">
             <el-button type="primary" @click="addIntegration">
               Add First Integration
@@ -207,8 +224,8 @@
               <el-button
                 type="text"
                 size="small"
-                @click="removeIntegration(index)"
                 class="danger-button"
+                @click="removeIntegration(index)"
               >
                 <el-icon><Delete /></el-icon>
               </el-button>
@@ -221,31 +238,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch } from "vue";
 import {
   Monitor,
   Document,
   Connection,
   Plus,
-  Delete
-} from '@element-plus/icons-vue'
-import ConfigForm from './forms/ConfigForm.vue'
-import type { MonitoringSettings, ExternalIntegration } from '@/store/settings'
+  Delete,
+} from "@element-plus/icons-vue";
+import ConfigForm from "./forms/ConfigForm.vue";
+import type { MonitoringSettings, ExternalIntegration } from "@/store/settings";
 
 interface Props {
-  modelValue: MonitoringSettings
-  loading?: boolean
-  validationErrors?: Record<string, string[]>
+  modelValue: MonitoringSettings;
+  loading?: boolean;
+  validationErrors?: Record<string, string[]>;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: MonitoringSettings): void
-  (e: 'field-change', field: string, value: any): void
-  (e: 'field-validate', field: string, value: any): void
+  (e: "update:modelValue", value: MonitoringSettings): void;
+  (e: "field-change", field: string, value: any): void;
+  (e: "field-validate", field: string, value: any): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const formData = ref<MonitoringSettings>({
   systemMonitoring: {
@@ -257,7 +274,7 @@ const formData = ref<MonitoringSettings>({
       diskWarning: 80,
       diskCritical: 90,
       networkWarning: 80,
-      networkCritical: 90
+      networkCritical: 90,
     },
     healthCheckInterval: 60,
     alertingEnabled: true,
@@ -265,94 +282,118 @@ const formData = ref<MonitoringSettings>({
       enabled: true,
       interval: 30,
       retention: 30,
-      aggregation: ['avg', 'max', 'min']
-    }
+      aggregation: ["avg", "max", "min"],
+    },
   },
   logging: {
-    level: 'info',
+    level: "info",
     components: {},
     rotation: {
       maxSize: 100,
       maxFiles: 10,
       maxAge: 30,
-      compress: true
+      compress: true,
     },
     export: {
       enabled: false,
-      destination: '',
-      format: 'json',
-      filters: []
+      destination: "",
+      format: "json",
+      filters: [],
     },
-    structured: true
+    structured: true,
   },
-  externalIntegrations: []
-} as any)
+  externalIntegrations: [],
+} as any);
 
 const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue)
-})
+  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
+});
 
 const formRules = computed(() => ({
-  'systemMonitoring.healthCheckInterval': [
-    { required: true, message: 'Health check interval is required', trigger: 'blur' },
-    { type: 'number', min: 30, max: 3600, message: 'Must be between 30 and 3600 seconds', trigger: 'blur' }
+  "systemMonitoring.healthCheckInterval": [
+    {
+      required: true,
+      message: "Health check interval is required",
+      trigger: "blur",
+    },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 30 || value > 3600) {
+          callback(new Error("Must be between 30 and 3600 seconds"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
-  'logging.level': [
-    { required: true, message: 'Log level is required', trigger: 'change' }
-  ]
-}))
+  "logging.level": [
+    { required: true, message: "Log level is required", trigger: "change" },
+  ],
+}));
 
 const generateId = (): string => {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9)
-}
+  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+};
 
 const addIntegration = () => {
   const newIntegration: ExternalIntegration = {
     id: generateId(),
-    type: 'prometheus',
+    type: "prometheus",
     name: `Integration ${formData.value.externalIntegrations.length + 1}`,
     config: {},
-    enabled: true
-  }
+    enabled: true,
+  };
 
-  formData.value.externalIntegrations.push(newIntegration)
-  updateIntegrations()
-}
+  formData.value.externalIntegrations.push(newIntegration);
+  updateIntegrations();
+};
 
 const removeIntegration = (index: number) => {
-  formData.value.externalIntegrations.splice(index, 1)
-  updateIntegrations()
-}
+  formData.value.externalIntegrations.splice(index, 1);
+  updateIntegrations();
+};
 
 const updateSystemMonitoring = () => {
-  handleFieldChange('systemMonitoring', formData.value.systemMonitoring)
-}
+  handleFieldChange("systemMonitoring", formData.value.systemMonitoring);
+};
 
 const updateLogging = () => {
-  handleFieldChange('logging', formData.value.logging)
-}
+  handleFieldChange("logging", formData.value.logging);
+};
 
 const updateIntegrations = () => {
-  handleFieldChange('externalIntegrations', formData.value.externalIntegrations)
-}
+  handleFieldChange(
+    "externalIntegrations",
+    formData.value.externalIntegrations,
+  );
+};
 
 const handleSave = () => {
-  emit('update:modelValue', formData.value)
-}
+  emit("update:modelValue", formData.value);
+};
 
 const handleReset = () => {
-  formData.value = { ...props.modelValue }
-}
+  formData.value = { ...props.modelValue };
+};
 
 const handleFieldChange = (field: string, value: any) => {
-  emit('field-change', field, value)
-}
+  emit("field-change", field, value);
+};
 
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    formData.value = { ...newValue }
-  }
-}, { immediate: true, deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = { ...newValue };
+    }
+  },
+  { immediate: true, deep: true },
+);
 </script>
 
 <style scoped lang="scss">

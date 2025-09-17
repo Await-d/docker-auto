@@ -16,7 +16,8 @@
 
       <div class="policies-placeholder">
         <el-empty description="Update Policies feature coming soon">
-          <el-button type="primary" @click="handleClose">Close</el-button>
+          <el-button
+type="primary" @click="handleClose"> Close </el-button>
         </el-empty>
       </div>
     </div>
@@ -24,31 +25,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from "vue";
 
 // Props
 interface Props {
-  modelValue: boolean
+  modelValue: boolean;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // Emits
-defineEmits<{
-  'update:modelValue': [value: boolean]
-  'policy-applied': []
-}>()
+const emit = defineEmits<{
+  "update:modelValue": [value: boolean];
+  "policy-applied": [];
+}>();
 
 // Computed
 const visible = computed({
   get: () => props.modelValue,
-  set: (value) => $emit('update:modelValue', value)
-})
+  set: (value) => emit("update:modelValue", value),
+});
 
 // Methods
 const handleClose = () => {
-  visible.value = false
-}
+  visible.value = false;
+};
 </script>
 
 <style scoped lang="scss">

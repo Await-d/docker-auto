@@ -15,9 +15,9 @@
 
         <div class="header-actions">
           <el-button
+            v-if="hasPermission('container:create')"
             type="primary"
             @click="showCreateDialog = true"
-            v-if="$auth.hasPermission('container:create')"
           >
             <el-icon><Plus /></el-icon>
             New Container
@@ -58,7 +58,9 @@
             <el-icon><SuccessFilled /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ runningContainers.length }}</div>
+            <div class="stat-value">
+              {{ runningContainers.length }}
+            </div>
             <div class="stat-label">Running</div>
           </div>
         </div>
@@ -68,7 +70,9 @@
             <el-icon><CircleCloseFilled /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ stoppedContainers.length }}</div>
+            <div class="stat-value">
+              {{ stoppedContainers.length }}
+            </div>
             <div class="stat-label">Stopped</div>
           </div>
         </div>
@@ -78,7 +82,9 @@
             <el-icon><Download /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ containersWithUpdates.length }}</div>
+            <div class="stat-value">
+              {{ containersWithUpdates.length }}
+            </div>
             <div class="stat-label">Updates Available</div>
           </div>
         </div>
@@ -88,7 +94,9 @@
             <el-icon><WarningFilled /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ unhealthyContainers.length }}</div>
+            <div class="stat-value">
+              {{ unhealthyContainers.length }}
+            </div>
             <div class="stat-label">Unhealthy</div>
           </div>
         </div>
@@ -126,8 +134,8 @@
 
           <!-- Advanced Filters Toggle -->
           <el-button
-            @click="showFilters = !showFilters"
             :type="showFilters ? 'primary' : 'default'"
+            @click="showFilters = !showFilters"
           >
             <el-icon><Filter /></el-icon>
             Filters
@@ -147,9 +155,8 @@
 
           <!-- Bulk Actions -->
           <el-dropdown
-            v-if="hasSelection"
-            @command="handleBulkAction"
-          >
+v-if="hasSelection" @command="handleBulkAction"
+>
             <el-button type="warning">
               <el-icon><Operation /></el-icon>
               Bulk Actions ({{ selectedContainers.size }})
@@ -235,12 +242,14 @@
           </div>
 
           <div class="filters-actions">
-            <el-button @click="applyFilters" type="primary">
+            <el-button
+type="primary" @click="applyFilters"
+>
               Apply Filters
             </el-button>
             <el-button @click="clearAllFilters">
-              Clear All
-            </el-button>
+Clear All
+</el-button>
           </div>
         </div>
       </el-collapse-transition>
@@ -253,8 +262,8 @@
         <div v-if="containers.length > 0" class="selection-header">
           <el-checkbox
             v-model="isAllSelected"
-            @change="selectAll"
             :indeterminate="hasSelection && !isAllSelected"
+            @change="selectAll"
           >
             Select All ({{ containers.length }})
           </el-checkbox>
@@ -263,8 +272,8 @@
             <span>Sort by:</span>
             <el-select
               :model-value="sortConfig.field"
-              @update:model-value="handleSortChange"
               size="small"
+              @update:model-value="handleSortChange"
             >
               <el-option label="Name" value="name" />
               <el-option label="Status" value="status" />
@@ -275,11 +284,12 @@
             </el-select>
 
             <el-button
-              size="small"
-              @click="toggleSortDirection"
-            >
+size="small" @click="toggleSortDirection"
+>
               <el-icon>
-                <component :is="sortConfig.direction === 'asc' ? 'SortUp' : 'SortDown'" />
+                <component
+                  :is="sortConfig.direction === 'asc' ? 'SortUp' : 'SortDown'"
+                />
               </el-icon>
             </el-button>
           </div>
@@ -303,9 +313,9 @@
         <div v-if="viewMode === 'list'" class="containers-list">
           <el-table
             :data="filteredContainers"
-            @selection-change="handleSelectionChange"
             row-key="id"
             stripe
+            @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="55" />
 
@@ -321,9 +331,8 @@
                     {{ row.status }}
                   </el-tag>
                   <span
-                    class="name-link"
-                    @click="goToContainer(row.id)"
-                  >
+class="name-link" @click="goToContainer(row.id)"
+>
                     {{ row.name }}
                   </span>
                 </div>
@@ -334,7 +343,9 @@
               <template #default="{ row }">
                 <div class="image-info">
                   <span class="image-name">{{ row.image }}</span>
-                  <el-tag size="small" class="tag-badge">{{ row.tag }}</el-tag>
+                  <el-tag size="small" class="tag-badge">
+                    {{ row.tag }}
+                  </el-tag>
                 </div>
               </template>
             </el-table-column>
@@ -344,11 +355,15 @@
                 <div class="resource-info">
                   <div class="resource-item">
                     <span class="resource-label">CPU:</span>
-                    <span class="resource-value">{{ formatPercentage(row.resourceUsage.cpu.usage) }}</span>
+                    <span class="resource-value">{{
+                      formatPercentage(row.resourceUsage.cpu.usage)
+                    }}</span>
                   </div>
                   <div class="resource-item">
                     <span class="resource-label">Memory:</span>
-                    <span class="resource-value">{{ formatPercentage(row.resourceUsage.memory.percentage) }}</span>
+                    <span class="resource-value">{{
+                      formatPercentage(row.resourceUsage.memory.percentage)
+                    }}</span>
                   </div>
                 </div>
               </template>
@@ -357,9 +372,8 @@
             <el-table-column label="Health" width="100">
               <template #default="{ row }">
                 <el-tag
-                  :type="getHealthType(row.health.status)"
-                  size="small"
-                >
+:type="getHealthType(row.health.status)" size="small"
+>
                   {{ row.health.status }}
                 </el-tag>
               </template>
@@ -389,31 +403,35 @@
                   <el-button-group size="small">
                     <el-button
                       v-if="row.status === 'exited'"
-                      @click="handleContainerAction('start', row.id)"
                       :loading="isOperationLoading(row.id)"
                       type="success"
+                      @click="handleContainerAction('start', row.id)"
                     >
                       <el-icon><VideoPlay /></el-icon>
                     </el-button>
 
                     <el-button
                       v-if="row.status === 'running'"
-                      @click="handleContainerAction('stop', row.id)"
                       :loading="isOperationLoading(row.id)"
                       type="warning"
+                      @click="handleContainerAction('stop', row.id)"
                     >
                       <el-icon><VideoPause /></el-icon>
                     </el-button>
 
                     <el-button
-                      @click="handleContainerAction('restart', row.id)"
                       :loading="isOperationLoading(row.id)"
+                      @click="handleContainerAction('restart', row.id)"
                     >
                       <el-icon><Refresh /></el-icon>
                     </el-button>
                   </el-button-group>
 
-                  <el-dropdown @command="(cmd) => handleContainerAction(cmd, row.id)">
+                  <el-dropdown
+                    @command="
+                      (cmd: string) => handleContainerAction(cmd, row.id)
+                    "
+                  >
                     <el-button size="small">
                       <el-icon><MoreFilled /></el-icon>
                     </el-button>
@@ -456,9 +474,9 @@
           <h3>No containers found</h3>
           <p>Create your first container to get started</p>
           <el-button
+            v-if="hasPermission('container:create')"
             type="primary"
             @click="showCreateDialog = true"
-            v-if="$auth.hasPermission('container:create')"
           >
             <el-icon><Plus /></el-icon>
             Create Container
@@ -526,10 +544,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Box,
   Plus,
@@ -551,21 +569,19 @@ import {
   Delete,
   Edit,
   Monitor,
-  SortUp,
-  SortDown
-} from '@element-plus/icons-vue'
+} from "@element-plus/icons-vue";
 
-import { useContainerStore } from '@/store/containers'
-import { useAuthStore } from '@/store/auth'
-import ContainerCard from '@/components/container/ContainerCard.vue'
-import ContainerForm from '@/components/container/ContainerForm.vue'
-import LogViewer from '@/components/container/LogViewer.vue'
+import { useContainerStore } from "@/store/containers";
+import { useAuth } from "@/store/auth";
+import ContainerCard from "@/components/container/ContainerCard.vue";
+import ContainerForm from "@/components/container/ContainerForm.vue";
+import LogViewer from "@/components/container/LogViewer.vue";
 
-import type { Container, ContainerFormData } from '@/types/container'
+import type { Container, ContainerFormData } from "@/types/container";
 
-const router = useRouter()
-const containerStore = useContainerStore()
-const authStore = useAuthStore()
+const router = useRouter();
+const containerStore = useContainerStore();
+const { hasPermission } = useAuth();
 
 // Store refs
 const {
@@ -578,7 +594,6 @@ const {
   pageSize,
   totalContainers,
   totalPages,
-  filters,
   sortConfig,
   runningContainers,
   stoppedContainers,
@@ -586,263 +601,281 @@ const {
   containersWithUpdates,
   isAllSelected,
   hasSelection,
-  filteredContainers
-} = storeToRefs(containerStore)
+  filteredContainers,
+} = storeToRefs(containerStore);
 
 // Local state
-const searchQuery = ref('')
-const statusFilter = ref<string[]>([])
-const imageFilter = ref('')
-const registryFilter = ref('')
-const labelFilter = ref('')
-const updatePolicyFilter = ref('')
-const showCreateDialog = ref(false)
-const showEditDialog = ref(false)
-const showLogsDialog = ref(false)
-const editingContainer = ref<Container | null>(null)
-const logsContainer = ref<Container | null>(null)
-const registries = ref<string[]>([])
+const searchQuery = ref("");
+const statusFilter = ref<string[]>([]);
+const imageFilter = ref("");
+const registryFilter = ref("");
+const labelFilter = ref("");
+const updatePolicyFilter = ref("");
+const showCreateDialog = ref(false);
+const showEditDialog = ref(false);
+const showLogsDialog = ref(false);
+const editingContainer = ref<Container | null>(null);
+const logsContainer = ref<Container | null>(null);
+const registries = ref<string[]>([]);
 
 // Auto-refresh
-let autoRefreshInterval: NodeJS.Timeout | null = null
+let autoRefreshInterval: NodeJS.Timeout | null = null;
 
 // Computed
 const hasAvailableUpdate = computed(() => (containerId: string) => {
-  return containersWithUpdates.value.some(c => c.id === containerId)
-})
+  return containersWithUpdates.value.some((c) => c.id === containerId);
+});
 
 // Methods
-function getStatusType(status: string) {
-  const types: Record<string, string> = {
-    running: 'success',
-    exited: 'info',
-    paused: 'warning',
-    restarting: 'warning',
-    removing: 'danger',
-    dead: 'danger'
-  }
-  return types[status] || 'info'
+function getStatusType(
+  status: string,
+): "success" | "info" | "warning" | "primary" | "danger" {
+  const types: Record<
+    string,
+    "success" | "info" | "warning" | "primary" | "danger"
+  > = {
+    running: "success",
+    exited: "info",
+    paused: "warning",
+    restarting: "warning",
+    removing: "danger",
+    dead: "danger",
+  };
+  return types[status] || "info";
 }
 
-function getHealthType(health: string) {
-  const types: Record<string, string> = {
-    healthy: 'success',
-    unhealthy: 'danger',
-    starting: 'warning',
-    none: 'info'
-  }
-  return types[health] || 'info'
+function getHealthType(
+  health: string,
+): "success" | "info" | "warning" | "primary" | "danger" {
+  const types: Record<
+    string,
+    "success" | "info" | "warning" | "primary" | "danger"
+  > = {
+    healthy: "success",
+    unhealthy: "danger",
+    starting: "warning",
+    none: "info",
+  };
+  return types[health] || "info";
 }
 
 function formatPercentage(value: number) {
-  return `${Math.round(value)}%`
+  return `${Math.round(value)}%`;
 }
 
 function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString()
+  return new Date(date).toLocaleDateString();
 }
 
 function handleHeaderAction(command: string) {
   switch (command) {
-    case 'refresh':
-      containerStore.refreshData()
-      break
-    case 'check-updates':
-      containerStore.checkUpdates()
-      break
-    case 'templates':
+    case "refresh":
+      containerStore.refreshData();
+      break;
+    case "check-updates":
+      containerStore.checkUpdates();
+      break;
+    case "templates":
       // Navigate to templates
-      break
-    case 'export':
+      break;
+    case "export":
       // Handle export
-      break
+      break;
   }
 }
 
 function handleBulkAction(command: string) {
-  const selectedIds = Array.from(selectedContainers.value)
+  const selectedIds = Array.from(selectedContainers.value);
 
   if (selectedIds.length === 0) {
-    ElMessage.warning('No containers selected')
-    return
+    ElMessage.warning("No containers selected");
+    return;
   }
 
   const confirmAction = async () => {
     try {
       await containerStore.performBulkOperation({
         action: command as any,
-        containers: selectedIds
-      })
+        containers: selectedIds,
+      });
     } catch (error) {
-      console.error('Bulk operation failed:', error)
+      console.error("Bulk operation failed:", error);
     }
-  }
+  };
 
-  if (command === 'delete') {
+  if (command === "delete") {
     ElMessageBox.confirm(
       `Are you sure you want to delete ${selectedIds.length} container(s)?`,
-      'Confirm Deletion',
+      "Confirm Deletion",
       {
-        type: 'warning',
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel'
-      }
-    ).then(confirmAction)
+        type: "warning",
+        confirmButtonText: "Delete",
+        cancelButtonText: "Cancel",
+      },
+    ).then(confirmAction);
   } else {
-    confirmAction()
+    confirmAction();
   }
 }
 
 function handleContainerAction(action: string, containerId: string) {
-  const container = containers.value.find(c => c.id === containerId)
-  if (!container) return
+  const container = containers.value.find((c) => c.id === containerId);
+  if (!container) return;
 
   switch (action) {
-    case 'start':
-    case 'stop':
-    case 'restart':
-    case 'pause':
-    case 'unpause':
-      containerStore.performOperation(containerId, action)
-      break
-    case 'logs':
-      logsContainer.value = container
-      showLogsDialog.value = true
-      break
-    case 'terminal':
+    case "start":
+    case "stop":
+    case "restart":
+    case "pause":
+    case "unpause":
+      containerStore.performOperation(containerId, action);
+      break;
+    case "logs":
+      logsContainer.value = container;
+      showLogsDialog.value = true;
+      break;
+    case "terminal":
       // Handle terminal access
-      break
-    case 'update':
-      containerStore.updateContainerImage(containerId)
-      break
-    case 'edit':
-      editingContainer.value = container
-      showEditDialog.value = true
-      break
-    case 'delete':
+      break;
+    case "update":
+      containerStore.updateContainerImage(containerId);
+      break;
+    case "edit":
+      editingContainer.value = container;
+      showEditDialog.value = true;
+      break;
+    case "delete":
       ElMessageBox.confirm(
         `Are you sure you want to delete container "${container.name}"?`,
-        'Confirm Deletion',
+        "Confirm Deletion",
         {
-          type: 'warning',
-          confirmButtonText: 'Delete',
-          cancelButtonText: 'Cancel'
-        }
+          type: "warning",
+          confirmButtonText: "Delete",
+          cancelButtonText: "Cancel",
+        },
       ).then(() => {
-        containerStore.deleteContainer(containerId)
-      })
-      break
+        containerStore.deleteContainer(containerId);
+      });
+      break;
   }
 }
 
 function handleSelectionChange(selection: Container[]) {
-  containerStore.clearSelection()
-  selection.forEach(container => {
-    containerStore.toggleSelection(container.id)
-  })
+  containerStore.clearSelection();
+  selection.forEach((container) => {
+    containerStore.toggleSelection(container.id);
+  });
 }
 
 function selectAll() {
-  containerStore.selectAll()
+  containerStore.selectAll();
 }
 
 function toggleSelection(id: string) {
-  containerStore.toggleSelection(id)
+  containerStore.toggleSelection(id);
 }
 
 function isOperationLoading(id: string) {
-  return containerStore.isOperationLoading(id)
+  return containerStore.isOperationLoading(id);
 }
 
 function goToContainer(id: string) {
-  router.push(`/containers/${id}`)
+  router.push(`/containers/${id}`);
 }
 
 function handleSortChange(field: string) {
-  containerStore.setSorting(field as any)
+  containerStore.setSorting(field as any);
 }
 
 function toggleSortDirection() {
   containerStore.setSorting(
     sortConfig.value.field,
-    sortConfig.value.direction === 'asc' ? 'desc' : 'asc'
-  )
+    sortConfig.value.direction === "asc" ? "desc" : "asc",
+  );
 }
 
 function applyFilters() {
   const newFilters = {
     search: searchQuery.value,
-    status: statusFilter.value.length > 0 ? statusFilter.value as any : undefined,
+    status:
+      statusFilter.value.length > 0 ? (statusFilter.value as any) : undefined,
     image: imageFilter.value || undefined,
     registry: registryFilter.value || undefined,
-    updatePolicy: updatePolicyFilter.value || undefined
-  }
+    updatePolicy: updatePolicyFilter.value || undefined,
+  };
 
-  containerStore.setFilters(newFilters)
+  containerStore.setFilters(newFilters);
 }
 
 function clearAllFilters() {
-  searchQuery.value = ''
-  statusFilter.value = []
-  imageFilter.value = ''
-  registryFilter.value = ''
-  labelFilter.value = ''
-  updatePolicyFilter.value = ''
-  containerStore.clearFilters()
+  searchQuery.value = "";
+  statusFilter.value = [];
+  imageFilter.value = "";
+  registryFilter.value = "";
+  labelFilter.value = "";
+  updatePolicyFilter.value = "";
+  containerStore.clearFilters();
 }
 
 function handlePageChange(page: number) {
-  containerStore.fetchContainers(page)
+  containerStore.fetchContainers(page);
 }
 
 function handlePageSizeChange(size: number) {
-  pageSize.value = size
-  containerStore.fetchContainers(1)
+  pageSize.value = size;
+  containerStore.fetchContainers(1);
 }
 
-function handleCreateContainer(data: ContainerFormData) {
-  containerStore.createContainer(data).then(() => {
-    showCreateDialog.value = false
-  })
+function handleCreateContainer(
+  data: ContainerFormData | Partial<ContainerFormData>,
+) {
+  // Ensure we have complete data for creation
+  if (!data.name || !data.image) {
+    throw new Error("Container name and image are required");
+  }
+
+  containerStore.createContainer(data as ContainerFormData).then(() => {
+    showCreateDialog.value = false;
+  });
 }
 
 function handleEditContainer(data: Partial<ContainerFormData>) {
-  if (!editingContainer.value) return
+  if (!editingContainer.value) return;
 
   containerStore.updateContainer(editingContainer.value.id, data).then(() => {
-    showEditDialog.value = false
-    editingContainer.value = null
-  })
+    showEditDialog.value = false;
+    editingContainer.value = null;
+  });
 }
 
 function handleCreateDialogClose(done: () => void) {
-  ElMessageBox.confirm('Discard changes and close?')
+  ElMessageBox.confirm("Discard changes and close?")
     .then(() => done())
-    .catch(() => {})
+    .catch(() => {});
 }
 
 function handleEditDialogClose(done: () => void) {
-  ElMessageBox.confirm('Discard changes and close?')
+  ElMessageBox.confirm("Discard changes and close?")
     .then(() => done())
-    .catch(() => {})
+    .catch(() => {});
 }
 
 function startAutoRefresh() {
   if (autoRefreshInterval) {
-    clearInterval(autoRefreshInterval)
+    clearInterval(autoRefreshInterval);
   }
 
   autoRefreshInterval = setInterval(() => {
     if (!loading.value) {
-      containerStore.refreshData()
+      containerStore.refreshData();
     }
-  }, 30000) // Refresh every 30 seconds
+  }, 30000); // Refresh every 30 seconds
 }
 
 function stopAutoRefresh() {
   if (autoRefreshInterval) {
-    clearInterval(autoRefreshInterval)
-    autoRefreshInterval = null
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
   }
 }
 
@@ -851,22 +884,22 @@ watch(searchQuery, (newValue) => {
   // Debounce search
   setTimeout(() => {
     if (searchQuery.value === newValue) {
-      applyFilters()
+      applyFilters();
     }
-  }, 500)
-})
+  }, 500);
+});
 
 // Lifecycle
 onMounted(() => {
-  containerStore.fetchContainers()
-  containerStore.fetchTemplates()
-  containerStore.checkUpdates()
-  startAutoRefresh()
-})
+  containerStore.fetchContainers();
+  containerStore.fetchTemplates();
+  containerStore.checkUpdates();
+  startAutoRefresh();
+});
 
 onUnmounted(() => {
-  stopAutoRefresh()
-})
+  stopAutoRefresh();
+});
 </script>
 
 <style scoped>

@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"docker-auto/internal/model"
 	"docker-auto/pkg/events"
 
 	"github.com/sirupsen/logrus"
@@ -237,6 +236,8 @@ func (rs *RealtimeService) NotifyContainerUpdate(containerID int64, containerNam
 		notificationType = NotificationTypeError
 		templateID = "container_update_failed"
 	}
+
+	_ = templateID // Use templateID to avoid unused variable error
 
 	// Publish event
 	data := map[string]interface{}{

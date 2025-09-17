@@ -6,7 +6,7 @@
           <h2>Forgot Password</h2>
         </template>
         <p>Password reset functionality coming soon...</p>
-        <el-button @click="$router.push('/login')">Back to Login</el-button>
+        <el-button @click="$router.push('/login')"> Back to Login </el-button>
       </el-card>
     </div>
   </div>

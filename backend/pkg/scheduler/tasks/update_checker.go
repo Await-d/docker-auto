@@ -232,10 +232,12 @@ func (t *UpdateCheckerTask) getContainersToCheck(ctx context.Context, targetCont
 		}
 	} else {
 		// Check all active containers with automatic update policy
+		runningStatus := model.ContainerStatusRunning
+		autoPolicy := model.UpdatePolicyAuto
 		filter := &model.ContainerFilter{
-			Status: &model.ContainerStatusRunning,
+			Status: runningStatus,
 			// Only check containers with automatic update policies
-			UpdatePolicy: &model.UpdatePolicyAutomatic,
+			UpdatePolicy: autoPolicy,
 			Limit:        1000, // Reasonable limit
 		}
 
@@ -322,15 +324,9 @@ func (t *UpdateCheckerTask) checkContainerUpdate(ctx context.Context, container 
 	checkCtx, cancel := context.WithTimeout(ctx, params.RegistryTimeout)
 	defer cancel()
 
-	// Check for latest version
-	latestInfo, err := t.registryChecker.GetLatestImageInfo(checkCtx, &registry.ImageRequest{
-		Registry:    container.RegistryURL,
-		Image:       container.Image,
-		CurrentTag:  container.Tag,
-		Auth:        t.parseRegistryAuth(container.RegistryAuth),
-		CheckTags:   params.CheckTags,
-		IgnoreArchs: params.IgnoreArchs,
-	})
+	// Check for latest version using image checker
+	image := container.GetFullImageName()
+	updateResult, err := (*t.registryChecker).CheckImageUpdate(checkCtx, image, "", container.RegistryURL)
 
 	if err != nil {
 		result.Error = err.Error()
@@ -338,15 +334,14 @@ func (t *UpdateCheckerTask) checkContainerUpdate(ctx context.Context, container 
 		return result
 	}
 
-	result.LatestVersion = latestInfo.LatestTag
-	result.RegistryMetadata = latestInfo.Metadata
+	result.LatestVersion = updateResult.LatestTag
+	result.UpdateAvailable = updateResult.UpdateAvailable
+	result.UpdateType = updateResult.UpdateType
 
 	// Determine if update is available
-	if latestInfo.LatestTag != container.Tag {
-		result.UpdateAvailable = true
-		result.UpdateType = t.determineUpdateType(container.Tag, latestInfo.LatestTag)
+	if updateResult.UpdateAvailable {
 		result.IsMajorUpdate = result.UpdateType == "major"
-		result.IsSecurityUpdate = t.isSecurityUpdate(latestInfo)
+		result.IsSecurityUpdate = len(updateResult.SecurityIssues) > 0
 
 		// Apply filtering based on parameters
 		if params.OnlyMajorUpdates && !result.IsMajorUpdate {
@@ -408,11 +403,9 @@ func (t *UpdateCheckerTask) saveImageVersion(ctx context.Context, result *Contai
 	}
 
 	imageVersion := &model.ImageVersion{
-		Image:       result.Container.Image,
+		ImageName:   result.Container.Image,
 		Tag:         result.LatestVersion,
 		RegistryURL: result.Container.RegistryURL,
-		Metadata:    t.serializeMetadata(result.RegistryMetadata),
-		IsLatest:    true,
 		CheckedAt:   result.CheckedAt,
 	}
 

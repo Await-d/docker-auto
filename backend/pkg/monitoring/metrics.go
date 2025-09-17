@@ -1,10 +1,8 @@
 package monitoring
 
 import (
-	"fmt"
 	"math"
 	"sort"
-	"sync"
 	"time"
 )
 

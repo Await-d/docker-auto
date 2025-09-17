@@ -1,7 +1,9 @@
 <template>
   <div class="notification-center-widget">
     <div class="widget-placeholder">
-      <el-icon :size="48"><Bell /></el-icon>
+      <el-icon :size="48">
+        <Bell />
+      </el-icon>
       <h3>Notification Center</h3>
       <p>Live notifications and alerts will be displayed here.</p>
       <div class="mock-data">
@@ -23,13 +25,18 @@
 </template>
 
 <script setup lang="ts">
-import { Bell, Warning, InfoFilled, SuccessFilled } from '@element-plus/icons-vue'
+import {
+  Bell,
+  Warning,
+  InfoFilled,
+  SuccessFilled,
+} from "@element-plus/icons-vue";
 
 defineProps<{
-  widgetId: string
-  widgetConfig: any
-  widgetData?: any
-}>()
+  widgetId: string;
+  widgetConfig: any;
+  widgetData?: any;
+}>();
 </script>
 
 <style scoped lang="scss">

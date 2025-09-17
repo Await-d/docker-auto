@@ -8,9 +8,13 @@
     <!-- Container Not Found -->
     <div v-else-if="!currentContainer" class="not-found">
       <div class="not-found-content">
-        <el-icon class="not-found-icon"><Warning /></el-icon>
+        <el-icon class="not-found-icon">
+          <Warning />
+        </el-icon>
         <h2>Container Not Found</h2>
-        <p>The container you're looking for doesn't exist or has been removed.</p>
+        <p>
+          The container you're looking for doesn't exist or has been removed.
+        </p>
         <el-button type="primary" @click="$router.push('/containers')">
           Back to Containers
         </el-button>
@@ -56,8 +60,8 @@
                   v-if="currentContainer.status === 'exited'"
                   type="success"
                   :loading="isOperationLoading(currentContainer.id)"
-                  @click="performOperation('start')"
                   :disabled="!canPerformAction('start')"
+                  @click="performOperation('start')"
                 >
                   <el-icon><VideoPlay /></el-icon>
                   Start
@@ -67,8 +71,8 @@
                   v-else-if="currentContainer.status === 'running'"
                   type="warning"
                   :loading="isOperationLoading(currentContainer.id)"
-                  @click="performOperation('stop')"
                   :disabled="!canPerformAction('stop')"
+                  @click="performOperation('stop')"
                 >
                   <el-icon><VideoPause /></el-icon>
                   Stop
@@ -76,8 +80,8 @@
 
                 <el-button
                   :loading="isOperationLoading(currentContainer.id)"
-                  @click="performOperation('restart')"
                   :disabled="!canPerformAction('restart')"
+                  @click="performOperation('restart')"
                 >
                   <el-icon><Refresh /></el-icon>
                   Restart
@@ -92,27 +96,46 @@
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="update" :disabled="!canPerformAction('update')">
+                    <el-dropdown-item
+                      command="update"
+                      :disabled="!canPerformAction('update')"
+                    >
                       <el-icon><Download /></el-icon>
                       Update Container
                     </el-dropdown-item>
-                    <el-dropdown-item command="edit" :disabled="!canPerformAction('edit')">
+                    <el-dropdown-item
+                      command="edit"
+                      :disabled="!canPerformAction('edit')"
+                    >
                       <el-icon><Edit /></el-icon>
                       Edit Configuration
                     </el-dropdown-item>
-                    <el-dropdown-item command="clone" :disabled="!canPerformAction('clone')">
+                    <el-dropdown-item
+                      command="clone"
+                      :disabled="!canPerformAction('clone')"
+                    >
                       <el-icon><CopyDocument /></el-icon>
                       Clone Container
                     </el-dropdown-item>
-                    <el-dropdown-item command="backup" :disabled="!canPerformAction('backup')">
+                    <el-dropdown-item
+                      command="backup"
+                      :disabled="!canPerformAction('backup')"
+                    >
                       <el-icon><Upload /></el-icon>
                       Create Backup
                     </el-dropdown-item>
-                    <el-dropdown-item command="export" :disabled="!canPerformAction('export')">
+                    <el-dropdown-item
+                      command="export"
+                      :disabled="!canPerformAction('export')"
+                    >
                       <el-icon><Download /></el-icon>
                       Export Configuration
                     </el-dropdown-item>
-                    <el-dropdown-item command="delete" :disabled="!canPerformAction('delete')" divided>
+                    <el-dropdown-item
+                      command="delete"
+                      :disabled="!canPerformAction('delete')"
+                      divided
+                    >
                       <el-icon><Delete /></el-icon>
                       Delete Container
                     </el-dropdown-item>
@@ -131,7 +154,11 @@
 
       <!-- Content Tabs -->
       <div class="detail-content">
-        <el-tabs v-model="activeTab" type="border-card" @tab-change="handleTabChange">
+        <el-tabs
+          v-model="activeTab"
+          type="border-card"
+          @tab-change="handleTabChange"
+        >
           <!-- Overview Tab -->
           <el-tab-pane label="Overview" name="overview">
             <div class="overview-content">
@@ -148,7 +175,9 @@
                   </div>
                   <div class="info-item">
                     <span class="info-label">Image:</span>
-                    <span class="info-value">{{ currentContainer.image }}:{{ currentContainer.tag }}</span>
+                    <span class="info-value">{{ currentContainer.image }}:{{
+                      currentContainer.tag
+                    }}</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Status:</span>
@@ -158,23 +187,37 @@
                   </div>
                   <div class="info-item">
                     <span class="info-label">Health:</span>
-                    <el-tag :type="getHealthType(currentContainer.health.status)">
+                    <el-tag
+                      :type="getHealthType(currentContainer.health.status)"
+                    >
                       {{ formatHealthStatus(currentContainer.health.status) }}
                     </el-tag>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Created:</span>
-                    <span class="info-value">{{ formatFullDate(currentContainer.createdAt) }}</span>
+                    <span class="info-value">{{
+                      formatFullDate(currentContainer.createdAt)
+                    }}</span>
                   </div>
-                  <div class="info-item" v-if="currentContainer.startedAt">
+                  <div
+v-if="currentContainer.startedAt" class="info-item"
+>
                     <span class="info-label">Started:</span>
-                    <span class="info-value">{{ formatFullDate(currentContainer.startedAt) }}</span>
+                    <span class="info-value">{{
+                      formatFullDate(currentContainer.startedAt)
+                    }}</span>
                   </div>
-                  <div class="info-item" v-if="currentContainer.workingDir">
+                  <div
+v-if="currentContainer.workingDir" class="info-item"
+>
                     <span class="info-label">Working Directory:</span>
-                    <span class="info-value">{{ currentContainer.workingDir }}</span>
+                    <span class="info-value">{{
+                      currentContainer.workingDir
+                    }}</span>
                   </div>
-                  <div class="info-item" v-if="currentContainer.user">
+                  <div
+v-if="currentContainer.user" class="info-item"
+>
                     <span class="info-label">User:</span>
                     <span class="info-value">{{ currentContainer.user }}</span>
                   </div>
@@ -195,7 +238,10 @@
               </div>
 
               <!-- Health Status -->
-              <div class="info-section" v-if="currentContainer.health.status !== 'none'">
+              <div
+                v-if="currentContainer.health.status !== 'none'"
+                class="info-section"
+              >
                 <h3 class="section-title">
                   <el-icon><CircleCheckFilled /></el-icon>
                   Health Status
@@ -204,37 +250,59 @@
                   <div class="health-summary">
                     <div class="health-item">
                       <span class="health-label">Status:</span>
-                      <el-tag :type="getHealthType(currentContainer.health.status)">
+                      <el-tag
+                        :type="getHealthType(currentContainer.health.status)"
+                      >
                         {{ formatHealthStatus(currentContainer.health.status) }}
                       </el-tag>
                     </div>
-                    <div class="health-item" v-if="currentContainer.health.failingStreak > 0">
+                    <div
+                      v-if="currentContainer.health.failingStreak > 0"
+                      class="health-item"
+                    >
                       <span class="health-label">Failing Streak:</span>
-                      <span class="health-value">{{ currentContainer.health.failingStreak }}</span>
+                      <span class="health-value">{{
+                        currentContainer.health.failingStreak
+                      }}</span>
                     </div>
                   </div>
 
                   <!-- Health Check History -->
-                  <div v-if="currentContainer.health.log.length > 0" class="health-history">
+                  <div
+                    v-if="currentContainer.health.log.length > 0"
+                    class="health-history"
+                  >
                     <h4>Recent Health Checks</h4>
                     <div class="health-log">
                       <div
-                        v-for="(entry, index) in currentContainer.health.log.slice(0, 5)"
+                        v-for="(
+                          entry, index
+                        ) in currentContainer.health.log.slice(0, 5)"
                         :key="index"
                         class="health-entry"
                         :class="{
                           'health-success': entry.exitCode === 0,
-                          'health-failure': entry.exitCode !== 0
+                          'health-failure': entry.exitCode !== 0,
                         }"
                       >
-                        <div class="health-time">{{ formatFullDate(entry.start) }}</div>
+                        <div class="health-time">
+                          {{ formatFullDate(entry.start) }}
+                        </div>
                         <div class="health-status">
                           <el-icon>
-                            <component :is="entry.exitCode === 0 ? 'SuccessFilled' : 'CircleCloseFilled'" />
+                            <component
+                              :is="
+                                entry.exitCode === 0
+                                  ? 'SuccessFilled'
+                                  : 'CircleCloseFilled'
+                              "
+                            />
                           </el-icon>
-                          {{ entry.exitCode === 0 ? 'Passed' : 'Failed' }}
+                          {{ entry.exitCode === 0 ? "Passed" : "Failed" }}
                         </div>
-                        <div class="health-output" v-if="entry.output">
+                        <div
+v-if="entry.output" class="health-output"
+>
                           {{ entry.output }}
                         </div>
                       </div>
@@ -244,7 +312,9 @@
               </div>
 
               <!-- Update Status -->
-              <div class="info-section" v-if="hasAvailableUpdate">
+              <div
+v-if="hasAvailableUpdate" class="info-section"
+>
                 <h3 class="section-title">
                   <el-icon><Download /></el-icon>
                   Update Available
@@ -261,7 +331,10 @@
           <el-tab-pane label="Configuration" name="configuration">
             <div class="configuration-content">
               <!-- Environment Variables -->
-              <div class="config-section" v-if="Object.keys(currentContainer.environment).length > 0">
+              <div
+                v-if="Object.keys(currentContainer.environment).length > 0"
+                class="config-section"
+              >
                 <h3 class="section-title">
                   <el-icon><Setting /></el-icon>
                   Environment Variables
@@ -279,17 +352,30 @@
               </div>
 
               <!-- Port Mappings -->
-              <div class="config-section" v-if="currentContainer.ports.length > 0">
+              <div
+                v-if="currentContainer.ports.length > 0"
+                class="config-section"
+              >
                 <h3 class="section-title">
                   <el-icon><Connection /></el-icon>
                   Port Mappings
                 </h3>
                 <el-table :data="currentContainer.ports" stripe>
-                  <el-table-column prop="hostPort" label="Host Port" width="120" />
-                  <el-table-column prop="containerPort" label="Container Port" width="140" />
+                  <el-table-column
+                    prop="hostPort"
+                    label="Host Port"
+                    width="120"
+                  />
+                  <el-table-column
+                    prop="containerPort"
+                    label="Container Port"
+                    width="140"
+                  />
                   <el-table-column prop="protocol" label="Protocol" width="100">
                     <template #default="{ row }">
-                      <el-tag size="small">{{ row.protocol.toUpperCase() }}</el-tag>
+                      <el-tag size="small">
+                        {{ row.protocol.toUpperCase() }}
+                      </el-tag>
                     </template>
                   </el-table-column>
                   <el-table-column prop="hostIp" label="Host IP" />
@@ -297,14 +383,25 @@
               </div>
 
               <!-- Volume Mounts -->
-              <div class="config-section" v-if="currentContainer.volumes.length > 0">
+              <div
+                v-if="currentContainer.volumes.length > 0"
+                class="config-section"
+              >
                 <h3 class="section-title">
                   <el-icon><FolderOpened /></el-icon>
                   Volume Mounts
                 </h3>
                 <el-table :data="currentContainer.volumes" stripe>
-                  <el-table-column prop="source" label="Source" min-width="200" />
-                  <el-table-column prop="target" label="Target" min-width="200" />
+                  <el-table-column
+                    prop="source"
+                    label="Source"
+                    min-width="200"
+                  />
+                  <el-table-column
+                    prop="target"
+                    label="Target"
+                    min-width="200"
+                  />
                   <el-table-column prop="type" label="Type" width="100">
                     <template #default="{ row }">
                       <el-tag size="small" :type="getVolumeTypeColor(row.type)">
@@ -312,17 +409,28 @@
                       </el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="readOnly" label="Read Only" width="100">
+                  <el-table-column
+                    prop="readOnly"
+                    label="Read Only"
+                    width="100"
+                  >
                     <template #default="{ row }">
-                      <el-icon v-if="row.readOnly" color="#67c23a"><Check /></el-icon>
-                      <el-icon v-else color="#f56c6c"><Close /></el-icon>
+                      <el-icon v-if="row.readOnly" color="#67c23a">
+                        <Check />
+                      </el-icon>
+                      <el-icon v-else color="#f56c6c">
+                        <Close />
+                      </el-icon>
                     </template>
                   </el-table-column>
                 </el-table>
               </div>
 
               <!-- Networks -->
-              <div class="config-section" v-if="currentContainer.networks.length > 0">
+              <div
+                v-if="currentContainer.networks.length > 0"
+                class="config-section"
+              >
                 <h3 class="section-title">
                   <el-icon><Share /></el-icon>
                   Networks
@@ -336,7 +444,10 @@
               </div>
 
               <!-- Labels -->
-              <div class="config-section" v-if="Object.keys(currentContainer.labels).length > 0">
+              <div
+                v-if="Object.keys(currentContainer.labels).length > 0"
+                class="config-section"
+              >
                 <h3 class="section-title">
                   <el-icon><CollectionTag /></el-icon>
                   Labels
@@ -362,22 +473,49 @@
                 <div class="update-policy">
                   <div class="policy-item">
                     <span class="policy-label">Auto Update:</span>
-                    <el-tag :type="currentContainer.updatePolicy.autoUpdate ? 'success' : 'info'">
-                      {{ currentContainer.updatePolicy.autoUpdate ? 'Enabled' : 'Disabled' }}
+                    <el-tag
+                      :type="
+                        currentContainer.updatePolicy.autoUpdate
+                          ? 'success'
+                          : 'info'
+                      "
+                    >
+                      {{
+                        currentContainer.updatePolicy.autoUpdate
+                          ? "Enabled"
+                          : "Disabled"
+                      }}
                     </el-tag>
                   </div>
                   <div class="policy-item">
                     <span class="policy-label">Strategy:</span>
-                    <el-tag>{{ currentContainer.updatePolicy.strategy }}</el-tag>
+                    <el-tag>
+                      {{ currentContainer.updatePolicy.strategy }}
+                    </el-tag>
                   </div>
-                  <div class="policy-item" v-if="currentContainer.updatePolicy.schedule">
+                  <div
+                    v-if="currentContainer.updatePolicy.schedule"
+                    class="policy-item"
+                  >
                     <span class="policy-label">Schedule:</span>
-                    <span class="policy-value">{{ currentContainer.updatePolicy.schedule }}</span>
+                    <span class="policy-value">{{
+                      currentContainer.updatePolicy.schedule
+                    }}</span>
                   </div>
                   <div class="policy-item">
                     <span class="policy-label">Rollback on Failure:</span>
-                    <el-tag :type="currentContainer.updatePolicy.rollbackOnFailure ? 'success' : 'info'">
-                      {{ currentContainer.updatePolicy.rollbackOnFailure ? 'Enabled' : 'Disabled' }}
+                    <el-tag
+                      :type="
+                        currentContainer.updatePolicy.rollbackOnFailure
+                          ? 'success'
+                          : 'info'
+                      "
+                    >
+                      {{
+                        currentContainer.updatePolicy.rollbackOnFailure
+                          ? "Enabled"
+                          : "Disabled"
+                      }}
                     </el-tag>
                   </div>
                 </div>
@@ -410,7 +548,10 @@
             name="terminal"
             :disabled="currentContainer.status !== 'running'"
           >
-            <div v-if="currentContainer.status !== 'running'" class="terminal-disabled">
+            <div
+              v-if="currentContainer.status !== 'running'"
+              class="terminal-disabled"
+            >
               <el-alert
                 title="Terminal Unavailable"
                 description="Terminal access is only available for running containers."
@@ -422,7 +563,9 @@
               <!-- Terminal component would go here -->
               <div class="terminal-placeholder">
                 <p>Terminal functionality will be implemented here.</p>
-                <p>This would provide web-based terminal access to the container.</p>
+                <p>
+                  This would provide web-based terminal access to the container.
+                </p>
               </div>
             </div>
           </el-tab-pane>
@@ -432,7 +575,9 @@
             <div class="events-content">
               <div class="events-header">
                 <h3>Container Events</h3>
-                <el-button @click="refreshEvents" size="small">
+                <el-button
+size="small" @click="refreshEvents"
+>
                   <el-icon><Refresh /></el-icon>
                   Refresh
                 </el-button>
@@ -441,8 +586,14 @@
               <div class="events-list">
                 <!-- Events timeline would go here -->
                 <div class="events-placeholder">
-                  <p>Container events and activity timeline will be displayed here.</p>
-                  <p>This includes start/stop events, configuration changes, and errors.</p>
+                  <p>
+                    Container events and activity timeline will be displayed
+                    here.
+                  </p>
+                  <p>
+                    This includes start/stop events, configuration changes, and
+                    errors.
+                  </p>
                 </div>
               </div>
             </div>
@@ -459,7 +610,7 @@
       :before-close="handleEditDialogClose"
     >
       <ContainerForm
-        v-if="showEditDialog"
+        v-if="showEditDialog && currentContainer"
         :container="currentContainer"
         @submit="handleEditContainer"
         @cancel="showEditDialog = false"
@@ -469,10 +620,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Warning,
   VideoPlay,
@@ -495,52 +646,56 @@ import {
   Check,
   Close,
   SuccessFilled,
-  CircleCloseFilled
-} from '@element-plus/icons-vue'
+  CircleCloseFilled,
+} from "@element-plus/icons-vue";
 
-import { useContainerStore } from '@/store/containers'
-import { useAuthStore } from '@/store/auth'
-import ResourceMonitor from '@/components/container/ResourceMonitor.vue'
-import LogViewer from '@/components/container/LogViewer.vue'
-import UpdateManager from '@/components/container/UpdateManager.vue'
-import ContainerForm from '@/components/container/ContainerForm.vue'
+import { useContainerStore } from "@/store/containers";
+import { useAuthStore } from "@/store/auth";
+import ResourceMonitor from "@/components/container/ResourceMonitor.vue";
+import LogViewer from "@/components/container/LogViewer.vue";
+import UpdateManager from "@/components/container/UpdateManager.vue";
+import ContainerForm from "@/components/container/ContainerForm.vue";
 
-import type { ContainerFormData } from '@/types/container'
+import type { ContainerFormData } from "@/types/container";
 
-const route = useRoute()
-const router = useRouter()
-const containerStore = useContainerStore()
-const authStore = useAuthStore()
+const route = useRoute();
+const router = useRouter();
+const containerStore = useContainerStore();
+const authStore = useAuthStore();
 
 // Store refs
-const {
-  currentContainer,
-  loadingDetails,
-  availableUpdates
-} = storeToRefs(containerStore)
+const { currentContainer, loadingDetails, availableUpdates } =
+  storeToRefs(containerStore);
 
 // Local state
-const activeTab = ref('overview')
-const showEditDialog = ref(false)
+const activeTab = ref("overview");
+const showEditDialog = ref(false);
 
 // Computed
-const containerId = computed(() => route.params.id as string)
+const containerId = computed(() => route.params.id as string);
 
 const hasAvailableUpdate = computed(() => {
-  return availableUpdates.value.some(update => update.container === containerId.value)
-})
+  return availableUpdates.value.some(
+    (update) => update.container === containerId.value,
+  );
+});
 
 // Methods
-function getStatusType(status: string): string {
-  const types: Record<string, string> = {
-    running: 'success',
-    exited: 'info',
-    paused: 'warning',
-    restarting: 'warning',
-    removing: 'danger',
-    dead: 'danger'
-  }
-  return types[status] || 'info'
+function getStatusType(
+  status: string,
+): "success" | "info" | "warning" | "primary" | "danger" {
+  const types: Record<
+    string,
+    "success" | "info" | "warning" | "primary" | "danger"
+  > = {
+    running: "success",
+    exited: "info",
+    paused: "warning",
+    restarting: "warning",
+    removing: "danger",
+    dead: "danger",
+  };
+  return types[status] || "info";
 }
 
 function getStatusIcon(status: string) {
@@ -550,155 +705,168 @@ function getStatusIcon(status: string) {
     paused: Warning,
     restarting: Refresh,
     removing: Delete,
-    dead: CircleCloseFilled
-  }
-  return icons[status] || Warning
+    dead: CircleCloseFilled,
+  };
+  return icons[status] || Warning;
 }
 
-function getHealthType(health: string): string {
-  const types: Record<string, string> = {
-    healthy: 'success',
-    unhealthy: 'danger',
-    starting: 'warning',
-    none: 'info'
-  }
-  return types[health] || 'info'
+function getHealthType(
+  health: string,
+): "success" | "info" | "warning" | "primary" | "danger" {
+  const types: Record<
+    string,
+    "success" | "info" | "warning" | "primary" | "danger"
+  > = {
+    healthy: "success",
+    unhealthy: "danger",
+    starting: "warning",
+    none: "info",
+  };
+  return types[health] || "info";
 }
 
 function formatHealthStatus(status: string): string {
   const statuses: Record<string, string> = {
-    healthy: 'Healthy',
-    unhealthy: 'Unhealthy',
-    starting: 'Starting',
-    none: 'No Health Check'
-  }
-  return statuses[status] || status
+    healthy: "Healthy",
+    unhealthy: "Unhealthy",
+    starting: "Starting",
+    none: "No Health Check",
+  };
+  return statuses[status] || status;
 }
 
 function formatFullDate(date: Date | string): string {
-  return new Date(date).toLocaleString()
+  return new Date(date).toLocaleString();
 }
 
 function formatEnvValue(value: string): string {
   // Hide sensitive values
-  if (value.toLowerCase().includes('password') ||
-      value.toLowerCase().includes('secret') ||
-      value.toLowerCase().includes('key')) {
-    return '••••••••'
+  if (
+    value.toLowerCase().includes("password") ||
+    value.toLowerCase().includes("secret") ||
+    value.toLowerCase().includes("key")
+  ) {
+    return "••••••••";
   }
-  return value
+  return value;
 }
 
-function getVolumeTypeColor(type: string): string {
-  const colors: Record<string, string> = {
-    bind: 'primary',
-    volume: 'success',
-    tmpfs: 'warning'
-  }
-  return colors[type] || ''
+function getVolumeTypeColor(
+  type: string,
+): "success" | "info" | "warning" | "primary" | "danger" {
+  const colors: Record<
+    string,
+    "success" | "info" | "warning" | "primary" | "danger"
+  > = {
+    bind: "primary",
+    volume: "success",
+    tmpfs: "warning",
+  };
+  return colors[type] || "info";
 }
 
 function canPerformAction(action: string): boolean {
   const permissions: Record<string, string> = {
-    start: 'container:start',
-    stop: 'container:stop',
-    restart: 'container:restart',
-    update: 'container:update',
-    edit: 'container:update',
-    clone: 'container:create',
-    backup: 'container:backup',
-    export: 'container:export',
-    delete: 'container:delete'
-  }
+    start: "container:start",
+    stop: "container:stop",
+    restart: "container:restart",
+    update: "container:update",
+    edit: "container:update",
+    clone: "container:create",
+    backup: "container:backup",
+    export: "container:export",
+    delete: "container:delete",
+  };
 
-  const permission = permissions[action]
-  return permission ? authStore.hasPermission(permission) : false
+  const permission = permissions[action];
+  return permission ? authStore.hasPermission(permission) : false;
 }
 
 function isOperationLoading(id: string): boolean {
-  return containerStore.isOperationLoading(id)
+  return containerStore.isOperationLoading(id);
 }
 
-async function performOperation(operation: 'start' | 'stop' | 'restart') {
-  if (!currentContainer.value) return
+async function performOperation(operation: "start" | "stop" | "restart") {
+  if (!currentContainer.value) return;
 
   try {
-    await containerStore.performOperation(currentContainer.value.id, operation)
+    await containerStore.performOperation(currentContainer.value.id, operation);
   } catch (error) {
-    console.error('Operation failed:', error)
+    console.error("Operation failed:", error);
   }
 }
 
 function handleAction(command: string) {
-  if (!currentContainer.value) return
+  if (!currentContainer.value) return;
 
   switch (command) {
-    case 'update':
-      containerStore.updateContainerImage(currentContainer.value.id)
-      break
-    case 'edit':
-      showEditDialog.value = true
-      break
-    case 'clone':
+    case "update":
+      containerStore.updateContainerImage(currentContainer.value.id);
+      break;
+    case "edit":
+      showEditDialog.value = true;
+      break;
+    case "clone":
       // Handle clone
-      break
-    case 'backup':
+      break;
+    case "backup":
       // Handle backup
-      break
-    case 'export':
+      break;
+    case "export":
       // Handle export
-      break
-    case 'delete':
+      break;
+    case "delete":
       ElMessageBox.confirm(
         `Are you sure you want to delete container "${currentContainer.value.name}"?`,
-        'Confirm Deletion',
+        "Confirm Deletion",
         {
-          type: 'warning',
-          confirmButtonText: 'Delete',
-          cancelButtonText: 'Cancel'
-        }
+          type: "warning",
+          confirmButtonText: "Delete",
+          cancelButtonText: "Cancel",
+        },
       ).then(() => {
         if (currentContainer.value) {
           containerStore.deleteContainer(currentContainer.value.id).then(() => {
-            router.push('/containers')
-          })
+            router.push("/containers");
+          });
         }
-      })
-      break
+      });
+      break;
   }
 }
 
-function handleTabChange(tabName: string) {
+function handleTabChange(tabName: string | number) {
   // Load data specific to the tab
-  if (tabName === 'monitoring' && currentContainer.value) {
-    containerStore.fetchStats(currentContainer.value.id)
-    containerStore.fetchHistoricalStats(currentContainer.value.id)
+  const tabNameString = tabName.toString();
+  if (tabNameString === "monitoring" && currentContainer.value) {
+    containerStore.fetchStats(currentContainer.value.id);
+    containerStore.fetchHistoricalStats(currentContainer.value.id);
   }
 }
 
 function refreshContainer() {
   if (containerId.value) {
-    containerStore.fetchContainer(containerId.value)
+    containerStore.fetchContainer(containerId.value);
   }
 }
 
 function refreshEvents() {
   // Refresh events data
-  ElMessage.success('Events refreshed')
+  ElMessage.success("Events refreshed");
 }
 
 function handleEditContainer(data: Partial<ContainerFormData>) {
-  if (!currentContainer.value) return
+  if (!currentContainer.value) return;
 
   containerStore.updateContainer(currentContainer.value.id, data).then(() => {
-    showEditDialog.value = false
-  })
+    showEditDialog.value = false;
+  });
 }
 
 function handleEditDialogClose(done: () => void) {
-  ElMessageBox.confirm('Discard changes and close?')
+  ElMessageBox.confirm("Discard changes and close?")
     .then(() => done())
-    .catch(() => {})
+    .catch(() => {});
 }
 
 // Watch for route changes
@@ -706,23 +874,23 @@ watch(
   () => route.params.id,
   (newId) => {
     if (newId) {
-      containerStore.fetchContainer(newId as string)
+      containerStore.fetchContainer(newId as string);
     }
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 
 // Lifecycle
 onMounted(() => {
   if (containerId.value) {
-    containerStore.fetchContainer(containerId.value)
-    containerStore.checkUpdates(containerId.value)
+    containerStore.fetchContainer(containerId.value);
+    containerStore.checkUpdates(containerId.value);
   }
-})
+});
 
 onUnmounted(() => {
   // Cleanup if needed
-})
+});
 </script>
 
 <style scoped>
@@ -964,7 +1132,7 @@ onUnmounted(() => {
   background: #f8f9fa;
   border-radius: 4px;
   border: 1px solid #e4e7ed;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 12px;
 }
 
@@ -1039,7 +1207,7 @@ onUnmounted(() => {
   height: 500px;
   background: #000;
   color: #fff;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .terminal-placeholder {

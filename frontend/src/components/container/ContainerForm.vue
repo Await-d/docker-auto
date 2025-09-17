@@ -20,7 +20,8 @@
                 :disabled="isEditMode"
               />
               <div class="form-help">
-                Must be unique and contain only alphanumeric characters, hyphens, and underscores
+                Must be unique and contain only alphanumeric characters,
+                hyphens, and underscores
               </div>
             </el-form-item>
 
@@ -88,7 +89,10 @@
               <el-select v-model="formData.restartPolicy">
                 <el-option label="No restart" value="no" />
                 <el-option label="Always restart" value="always" />
-                <el-option label="Restart unless stopped" value="unless-stopped" />
+                <el-option
+                  label="Restart unless stopped"
+                  value="unless-stopped"
+                />
                 <el-option label="Restart on failure" value="on-failure" />
               </el-select>
             </el-form-item>
@@ -101,19 +105,22 @@
             <div class="section-header">
               <h3 class="section-title">Port Mappings</h3>
               <el-button
-                type="primary"
-                size="small"
-                @click="addPort"
-              >
+type="primary" size="small"
+@click="addPort"
+>
                 <el-icon><Plus /></el-icon>
                 Add Port
               </el-button>
             </div>
 
             <div v-if="formData.ports.length === 0" class="empty-state">
-              <el-icon class="empty-icon"><Connection /></el-icon>
+              <el-icon class="empty-icon">
+                <Connection />
+              </el-icon>
               <p>No port mappings configured</p>
-              <el-button type="primary" @click="addPort">Add First Port</el-button>
+              <el-button type="primary" @click="addPort">
+                Add First Port
+              </el-button>
             </div>
 
             <div v-else class="ports-list">
@@ -127,7 +134,7 @@
                   :rules="portRules.hostPort"
                   class="port-field"
                 >
-                  <template #label>Host Port</template>
+                  <template #label> Host Port </template>
                   <el-input-number
                     v-model="port.hostPort"
                     :min="1"
@@ -141,7 +148,7 @@
                   :rules="portRules.containerPort"
                   class="port-field"
                 >
-                  <template #label>Container Port</template>
+                  <template #label> Container Port </template>
                   <el-input-number
                     v-model="port.containerPort"
                     :min="1"
@@ -151,7 +158,7 @@
                 </el-form-item>
 
                 <el-form-item class="port-field">
-                  <template #label>Protocol</template>
+                  <template #label> Protocol </template>
                   <el-select v-model="port.protocol">
                     <el-option label="TCP" value="tcp" />
                     <el-option label="UDP" value="udp" />
@@ -159,7 +166,7 @@
                 </el-form-item>
 
                 <el-form-item class="port-field">
-                  <template #label>Host IP</template>
+                  <template #label> Host IP </template>
                   <el-input
                     v-model="port.hostIp"
                     placeholder="0.0.0.0 (optional)"
@@ -204,19 +211,22 @@
             <div class="section-header">
               <h3 class="section-title">Volume Mounts</h3>
               <el-button
-                type="primary"
-                size="small"
-                @click="addVolume"
-              >
+type="primary" size="small"
+@click="addVolume"
+>
                 <el-icon><Plus /></el-icon>
                 Add Volume
               </el-button>
             </div>
 
             <div v-if="formData.volumes.length === 0" class="empty-state">
-              <el-icon class="empty-icon"><FolderOpened /></el-icon>
+              <el-icon class="empty-icon">
+                <FolderOpened />
+              </el-icon>
               <p>No volume mounts configured</p>
-              <el-button type="primary" @click="addVolume">Add First Volume</el-button>
+              <el-button type="primary" @click="addVolume">
+                Add First Volume
+              </el-button>
             </div>
 
             <div v-else class="volumes-list">
@@ -230,7 +240,7 @@
                   :rules="volumeRules.source"
                   class="volume-field"
                 >
-                  <template #label>Source</template>
+                  <template #label> Source </template>
                   <el-input
                     v-model="volume.source"
                     placeholder="/host/path or volume-name"
@@ -242,7 +252,7 @@
                   :rules="volumeRules.target"
                   class="volume-field"
                 >
-                  <template #label>Target</template>
+                  <template #label> Target </template>
                   <el-input
                     v-model="volume.target"
                     placeholder="/container/path"
@@ -250,7 +260,7 @@
                 </el-form-item>
 
                 <el-form-item class="volume-field">
-                  <template #label>Type</template>
+                  <template #label> Type </template>
                   <el-select v-model="volume.type">
                     <el-option label="Bind Mount" value="bind" />
                     <el-option label="Named Volume" value="volume" />
@@ -259,7 +269,7 @@
                 </el-form-item>
 
                 <el-form-item class="volume-field">
-                  <template #label>Options</template>
+                  <template #label> Options </template>
                   <el-checkbox v-model="volume.readOnly">
                     Read Only
                   </el-checkbox>
@@ -295,7 +305,9 @@
             </div>
 
             <div v-if="environmentVariables.length === 0" class="empty-state">
-              <el-icon class="empty-icon"><Setting /></el-icon>
+              <el-icon class="empty-icon">
+                <Setting />
+              </el-icon>
               <p>No environment variables configured</p>
               <el-button type="primary" @click="addEnvironmentVariable">
                 Add First Variable
@@ -309,15 +321,14 @@
                 class="env-item"
               >
                 <el-form-item class="env-field">
-                  <template #label>Key</template>
+                  <template #label> Key </template>
                   <el-input
-                    v-model="env.key"
-                    placeholder="VARIABLE_NAME"
-                  />
+v-model="env.key" placeholder="VARIABLE_NAME"
+/>
                 </el-form-item>
 
                 <el-form-item class="env-field">
-                  <template #label>Value</template>
+                  <template #label> Value </template>
                   <el-input
                     v-model="env.value"
                     :type="env.sensitive ? 'password' : 'text'"
@@ -326,10 +337,10 @@
                 </el-form-item>
 
                 <el-form-item class="env-field">
-                  <template #label>Options</template>
+                  <template #label> Options </template>
                   <el-checkbox v-model="env.sensitive">
-                    Sensitive
-                  </el-checkbox>
+Sensitive
+</el-checkbox>
                 </el-form-item>
 
                 <div class="env-actions">
@@ -370,19 +381,22 @@
             <div class="section-header">
               <h3 class="section-title">Container Labels</h3>
               <el-button
-                type="primary"
-                size="small"
-                @click="addLabel"
-              >
+type="primary" size="small"
+@click="addLabel"
+>
                 <el-icon><Plus /></el-icon>
                 Add Label
               </el-button>
             </div>
 
             <div v-if="labels.length === 0" class="empty-state">
-              <el-icon class="empty-icon"><Tag /></el-icon>
+              <el-icon class="empty-icon">
+                <Tag />
+              </el-icon>
               <p>No labels configured</p>
-              <el-button type="primary" @click="addLabel">Add First Label</el-button>
+              <el-button type="primary" @click="addLabel">
+                Add First Label
+              </el-button>
             </div>
 
             <div v-else class="labels-list">
@@ -392,19 +406,17 @@
                 class="label-item"
               >
                 <el-form-item class="label-field">
-                  <template #label>Key</template>
+                  <template #label> Key </template>
                   <el-input
-                    v-model="label.key"
-                    placeholder="app.name"
-                  />
+v-model="label.key" placeholder="app.name"
+/>
                 </el-form-item>
 
                 <el-form-item class="label-field">
-                  <template #label>Value</template>
+                  <template #label> Value </template>
                   <el-input
-                    v-model="label.value"
-                    placeholder="my-app"
-                  />
+v-model="label.value" placeholder="my-app"
+/>
                 </el-form-item>
 
                 <div class="label-actions">
@@ -447,8 +459,8 @@
                 placeholder="512"
               />
               <div class="form-help">
-                Memory limit in MB
-              </div>
+Memory limit in MB
+</div>
             </el-form-item>
 
             <el-form-item label="Swap Limit">
@@ -459,8 +471,8 @@
                 placeholder="1024"
               />
               <div class="form-help">
-                Swap limit in MB (optional)
-              </div>
+Swap limit in MB (optional)
+</div>
             </el-form-item>
 
             <h3 class="section-title">Security Options</h3>
@@ -530,7 +542,7 @@
 
               <el-form-item label="Interval (seconds)">
                 <el-input-number
-                  v-model="formData.healthCheck.interval"
+                  v-model="formData.healthCheck!.interval"
                   :min="1"
                   placeholder="30"
                 />
@@ -538,7 +550,7 @@
 
               <el-form-item label="Timeout (seconds)">
                 <el-input-number
-                  v-model="formData.healthCheck.timeout"
+                  v-model="formData.healthCheck!.timeout"
                   :min="1"
                   placeholder="10"
                 />
@@ -546,7 +558,7 @@
 
               <el-form-item label="Retries">
                 <el-input-number
-                  v-model="formData.healthCheck.retries"
+                  v-model="formData.healthCheck!.retries"
                   :min="1"
                   placeholder="3"
                 />
@@ -554,7 +566,7 @@
 
               <el-form-item label="Start Period (seconds)">
                 <el-input-number
-                  v-model="formData.healthCheck.startPeriod"
+                  v-model="formData.healthCheck!.startPeriod"
                   :min="0"
                   placeholder="60"
                 />
@@ -592,7 +604,10 @@
                 </el-checkbox>
               </el-form-item>
 
-              <el-form-item label="Schedule" v-if="formData.updatePolicy.autoUpdate">
+              <el-form-item
+                v-if="formData.updatePolicy.autoUpdate"
+                label="Schedule"
+              >
                 <el-input
                   v-model="formData.updatePolicy.schedule"
                   placeholder="0 2 * * 0 (Every Sunday at 2 AM)"
@@ -637,17 +652,16 @@
       <!-- Form Actions -->
       <div class="form-actions">
         <el-button @click="$emit('cancel')">
-          Cancel
-        </el-button>
+Cancel
+</el-button>
         <el-button @click="resetForm">
-          Reset
-        </el-button>
+Reset
+</el-button>
         <el-button
-          type="primary"
-          @click="handleSubmit"
-          :loading="submitting"
-        >
-          {{ isEditMode ? 'Update' : 'Create' }} Container
+type="primary" @click="handleSubmit"
+:loading="submitting"
+>
+          {{ isEditMode ? "Update" : "Create" }} Container
         </el-button>
       </div>
     </el-form>
@@ -655,41 +669,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted, watch } from "vue";
+import { ElMessage } from "element-plus";
 import {
   Plus,
   Delete,
   Connection,
   FolderOpened,
   Setting,
-  CollectionTag
-} from '@element-plus/icons-vue'
+} from "@element-plus/icons-vue";
 
-import type { Container, ContainerFormData, PortMapping, VolumeMount } from '@/types/container'
+import type {
+  Container,
+  ContainerFormData,
+  PortMapping,
+} from "@/types/container";
 
 interface Props {
-  container?: Container
+  container?: Container;
 }
 
 interface Emits {
-  (e: 'submit', data: ContainerFormData | Partial<ContainerFormData>): void
-  (e: 'cancel'): void
+  (e: "submit", data: ContainerFormData | Partial<ContainerFormData>): void;
+  (e: "cancel"): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 // Local state
-const formRef = ref()
-const activeTab = ref('basic')
-const submitting = ref(false)
+const formRef = ref();
+const activeTab = ref("basic");
+const submitting = ref(false);
 
 // Form data
 const formData = ref<ContainerFormData>({
-  name: '',
-  image: '',
-  tag: 'latest',
+  name: "",
+  image: "",
+  tag: "latest",
   ports: [],
   volumes: [],
   environment: {},
@@ -697,26 +714,26 @@ const formData = ref<ContainerFormData>({
   networks: [],
   updatePolicy: {
     enabled: false,
-    strategy: 'recreate',
+    strategy: "recreate",
     autoUpdate: false,
     notifyOnUpdate: true,
     rollbackOnFailure: true,
     maxUpdateRetries: 3,
-    updateTimeout: 30
+    updateTimeout: 30,
   },
-  restartPolicy: 'unless-stopped',
+  restartPolicy: "unless-stopped",
   resourceLimits: {
     cpuLimit: undefined,
     memoryLimit: undefined,
     swapLimit: undefined,
-    ioLimit: undefined
+    ioLimit: undefined,
   },
   healthCheck: {
     command: [],
     interval: 30,
     timeout: 10,
     retries: 3,
-    startPeriod: 60
+    startPeriod: 60,
   },
   securityOptions: {
     user: undefined,
@@ -724,193 +741,235 @@ const formData = ref<ContainerFormData>({
     readOnly: false,
     privileged: false,
     capAdd: [],
-    capDrop: []
+    capDrop: [],
   },
   command: undefined,
-  entrypoint: undefined
-})
+  entrypoint: undefined,
+});
 
 // Helper arrays for reactive form fields
-const environmentVariables = ref<Array<{ key: string; value: string; sensitive: boolean }>>([])
-const labels = ref<Array<{ key: string; value: string }>>([])
-const commandString = ref('')
-const healthCheckEnabled = ref(false)
-const healthCheckCommand = ref('')
+const environmentVariables = ref<
+  Array<{ key: string; value: string; sensitive: boolean }>
+>([]);
+const labels = ref<Array<{ key: string; value: string }>>([]);
+const commandString = ref("");
+const healthCheckEnabled = ref(false);
+const healthCheckCommand = ref("");
 
 // Mock data
 const registries = ref([
-  { name: 'Docker Hub', url: 'https://registry-1.docker.io' },
-  { name: 'GitHub Container Registry', url: 'https://ghcr.io' },
-  { name: 'GitLab Registry', url: 'https://registry.gitlab.com' }
-])
+  { name: "Docker Hub", url: "https://registry-1.docker.io" },
+  { name: "GitHub Container Registry", url: "https://ghcr.io" },
+  { name: "GitLab Registry", url: "https://registry.gitlab.com" },
+]);
 
 const commonImages = [
-  'nginx', 'apache', 'node', 'python', 'postgres', 'mysql', 'redis',
-  'mongo', 'rabbitmq', 'elasticsearch', 'ubuntu', 'alpine', 'debian'
-]
+  "nginx",
+  "apache",
+  "node",
+  "python",
+  "postgres",
+  "mysql",
+  "redis",
+  "mongo",
+  "rabbitmq",
+  "elasticsearch",
+  "ubuntu",
+  "alpine",
+  "debian",
+];
 
 // Computed
-const isEditMode = computed(() => !!props.container)
+const isEditMode = computed(() => !!props.container);
 
 // Form validation rules
 const formRules = {
   name: [
-    { required: true, message: 'Container name is required', trigger: 'blur' },
-    { min: 1, max: 63, message: 'Name must be 1-63 characters', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/, message: 'Invalid container name format', trigger: 'blur' }
+    { required: true, message: "Container name is required", trigger: "blur" },
+    {
+      min: 1,
+      max: 63,
+      message: "Name must be 1-63 characters",
+      trigger: "blur",
+    },
+    {
+      pattern: /^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/,
+      message: "Invalid container name format",
+      trigger: "blur",
+    },
   ],
-  image: [
-    { required: true, message: 'Image is required', trigger: 'blur' }
-  ]
-}
+  image: [{ required: true, message: "Image is required", trigger: "blur" }],
+};
 
 const portRules = {
   hostPort: [
-    { required: true, message: 'Host port is required', trigger: 'blur' },
-    { type: 'number', min: 1, max: 65535, message: 'Port must be between 1-65535', trigger: 'blur' }
+    { required: true, message: "Host port is required", trigger: "blur" },
+    {
+      type: "number" as const,
+      min: 1,
+      max: 65535,
+      message: "Port must be between 1-65535",
+      trigger: "blur",
+    },
   ],
   containerPort: [
-    { required: true, message: 'Container port is required', trigger: 'blur' },
-    { type: 'number', min: 1, max: 65535, message: 'Port must be between 1-65535', trigger: 'blur' }
-  ]
-}
+    { required: true, message: "Container port is required", trigger: "blur" },
+    {
+      type: "number" as const,
+      min: 1,
+      max: 65535,
+      message: "Port must be between 1-65535",
+      trigger: "blur",
+    },
+  ],
+};
 
 const volumeRules = {
   source: [
-    { required: true, message: 'Source path is required', trigger: 'blur' }
+    { required: true, message: "Source path is required", trigger: "blur" },
   ],
   target: [
-    { required: true, message: 'Target path is required', trigger: 'blur' }
-  ]
-}
+    { required: true, message: "Target path is required", trigger: "blur" },
+  ],
+};
 
 // Methods
-function searchImages(queryString: string, callback: (suggestions: any[]) => void) {
+function searchImages(
+  queryString: string,
+  callback: (suggestions: any[]) => void,
+) {
   const suggestions = commonImages
-    .filter(image => image.includes(queryString.toLowerCase()))
-    .map(image => ({ value: image }))
-  callback(suggestions)
+    .filter((image) => image.includes(queryString.toLowerCase()))
+    .map((image) => ({ value: image }));
+  callback(suggestions);
 }
 
 function addPort() {
   formData.value.ports.push({
     hostPort: 8080,
     containerPort: 80,
-    protocol: 'tcp',
-    hostIp: ''
-  })
+    protocol: "tcp",
+    hostIp: "",
+  });
 }
 
 function removePort(index: number) {
-  formData.value.ports.splice(index, 1)
+  formData.value.ports.splice(index, 1);
 }
 
 function addPortTemplate(type: string) {
   const templates: Record<string, PortMapping> = {
-    web: { hostPort: 80, containerPort: 80, protocol: 'tcp', hostIp: '' },
-    https: { hostPort: 443, containerPort: 443, protocol: 'tcp', hostIp: '' },
-    ssh: { hostPort: 22, containerPort: 22, protocol: 'tcp', hostIp: '' },
-    db: { hostPort: 5432, containerPort: 5432, protocol: 'tcp', hostIp: '' }
-  }
+    web: { hostPort: 80, containerPort: 80, protocol: "tcp", hostIp: "" },
+    https: { hostPort: 443, containerPort: 443, protocol: "tcp", hostIp: "" },
+    ssh: { hostPort: 22, containerPort: 22, protocol: "tcp", hostIp: "" },
+    db: { hostPort: 5432, containerPort: 5432, protocol: "tcp", hostIp: "" },
+  };
 
   if (templates[type]) {
-    formData.value.ports.push({ ...templates[type] })
+    formData.value.ports.push({ ...templates[type] });
   }
 }
 
 function addVolume() {
   formData.value.volumes.push({
-    source: '',
-    target: '',
-    type: 'bind',
-    readOnly: false
-  })
+    source: "",
+    target: "",
+    type: "bind",
+    readOnly: false,
+  });
 }
 
 function removeVolume(index: number) {
-  formData.value.volumes.splice(index, 1)
+  formData.value.volumes.splice(index, 1);
 }
 
 function addEnvironmentVariable() {
   environmentVariables.value.push({
-    key: '',
-    value: '',
-    sensitive: false
-  })
+    key: "",
+    value: "",
+    sensitive: false,
+  });
 }
 
 function removeEnvironmentVariable(index: number) {
-  environmentVariables.value.splice(index, 1)
+  environmentVariables.value.splice(index, 1);
 }
 
 function addEnvTemplate(type: string) {
-  const templates: Record<string, Array<{ key: string; value: string; sensitive: boolean }>> = {
+  const templates: Record<
+    string,
+    Array<{ key: string; value: string; sensitive: boolean }>
+  > = {
     node: [
-      { key: 'NODE_ENV', value: 'production', sensitive: false },
-      { key: 'PORT', value: '3000', sensitive: false }
+      { key: "NODE_ENV", value: "production", sensitive: false },
+      { key: "PORT", value: "3000", sensitive: false },
     ],
     python: [
-      { key: 'PYTHONPATH', value: '/app', sensitive: false },
-      { key: 'PYTHONUNBUFFERED', value: '1', sensitive: false }
+      { key: "PYTHONPATH", value: "/app", sensitive: false },
+      { key: "PYTHONUNBUFFERED", value: "1", sensitive: false },
     ],
     postgres: [
-      { key: 'POSTGRES_DB', value: 'myapp', sensitive: false },
-      { key: 'POSTGRES_USER', value: 'user', sensitive: false },
-      { key: 'POSTGRES_PASSWORD', value: 'password', sensitive: true }
+      { key: "POSTGRES_DB", value: "myapp", sensitive: false },
+      { key: "POSTGRES_USER", value: "user", sensitive: false },
+      { key: "POSTGRES_PASSWORD", value: "password", sensitive: true },
     ],
     mysql: [
-      { key: 'MYSQL_DATABASE', value: 'myapp', sensitive: false },
-      { key: 'MYSQL_USER', value: 'user', sensitive: false },
-      { key: 'MYSQL_PASSWORD', value: 'password', sensitive: true },
-      { key: 'MYSQL_ROOT_PASSWORD', value: 'rootpassword', sensitive: true }
-    ]
-  }
+      { key: "MYSQL_DATABASE", value: "myapp", sensitive: false },
+      { key: "MYSQL_USER", value: "user", sensitive: false },
+      { key: "MYSQL_PASSWORD", value: "password", sensitive: true },
+      { key: "MYSQL_ROOT_PASSWORD", value: "rootpassword", sensitive: true },
+    ],
+  };
 
   if (templates[type]) {
-    environmentVariables.value.push(...templates[type])
+    environmentVariables.value.push(...templates[type]);
   }
 }
 
 function addLabel() {
   labels.value.push({
-    key: '',
-    value: ''
-  })
+    key: "",
+    value: "",
+  });
 }
 
 function removeLabel(index: number) {
-  labels.value.splice(index, 1)
+  labels.value.splice(index, 1);
 }
 
 function syncFormData() {
   // Sync environment variables
-  formData.value.environment = {}
-  environmentVariables.value.forEach(env => {
+  formData.value.environment = {};
+  environmentVariables.value.forEach((env) => {
     if (env.key) {
-      formData.value.environment[env.key] = env.value
+      formData.value.environment[env.key] = env.value;
     }
-  })
+  });
 
   // Sync labels
-  formData.value.labels = {}
-  labels.value.forEach(label => {
+  formData.value.labels = {};
+  labels.value.forEach((label) => {
     if (label.key) {
-      formData.value.labels[label.key] = label.value
+      formData.value.labels[label.key] = label.value;
     }
-  })
+  });
 
   // Sync command
   if (commandString.value) {
-    formData.value.command = commandString.value.split('\n').filter(line => line.trim())
+    formData.value.command = commandString.value
+      .split("\n")
+      .filter((line) => line.trim());
   } else {
-    formData.value.command = undefined
+    formData.value.command = undefined;
   }
 
   // Sync health check
   if (healthCheckEnabled.value) {
-    formData.value.healthCheck!.command = healthCheckCommand.value.split('\n').filter(line => line.trim())
+    formData.value.healthCheck!.command = healthCheckCommand.value
+      .split("\n")
+      .filter((line) => line.trim());
   } else {
-    formData.value.healthCheck = undefined
+    formData.value.healthCheck = undefined;
   }
 }
 
@@ -926,25 +985,31 @@ function loadFormData() {
       environment: { ...props.container.environment },
       labels: { ...props.container.labels },
       updatePolicy: { ...props.container.updatePolicy },
-      restartPolicy: props.container.restartPolicy
-    })
+      restartPolicy: props.container.restartPolicy,
+    });
 
     // Load environment variables
-    environmentVariables.value = Object.entries(props.container.environment).map(([key, value]) => ({
+    environmentVariables.value = Object.entries(
+      props.container.environment,
+    ).map(([key, value]) => ({
       key,
       value,
-      sensitive: key.toLowerCase().includes('password') || key.toLowerCase().includes('secret')
-    }))
+      sensitive:
+        key.toLowerCase().includes("password") ||
+        key.toLowerCase().includes("secret"),
+    }));
 
     // Load labels
-    labels.value = Object.entries(props.container.labels).map(([key, value]) => ({
-      key,
-      value
-    }))
+    labels.value = Object.entries(props.container.labels).map(
+      ([key, value]) => ({
+        key,
+        value,
+      }),
+    );
 
     // Load command
     if (props.container.command) {
-      commandString.value = props.container.command.join('\n')
+      commandString.value = props.container.command.join("\n");
     }
 
     // Load health check
@@ -954,42 +1019,46 @@ function loadFormData() {
 
 async function handleSubmit() {
   try {
-    await formRef.value.validate()
-    syncFormData()
+    await formRef.value.validate();
+    syncFormData();
 
-    submitting.value = true
+    submitting.value = true;
 
     if (isEditMode.value) {
-      emit('submit', formData.value as Partial<ContainerFormData>)
+      emit("submit", formData.value as Partial<ContainerFormData>);
     } else {
-      emit('submit', formData.value)
+      emit("submit", formData.value);
     }
   } catch (error) {
-    console.error('Form validation failed:', error)
-    ElMessage.error('Please fix the form errors before submitting')
+    console.error("Form validation failed:", error);
+    ElMessage.error("Please fix the form errors before submitting");
   } finally {
-    submitting.value = false
+    submitting.value = false;
   }
 }
 
 function resetForm() {
-  formRef.value.resetFields()
-  environmentVariables.value = []
-  labels.value = []
-  commandString.value = ''
-  healthCheckEnabled.value = false
-  healthCheckCommand.value = ''
+  formRef.value.resetFields();
+  environmentVariables.value = [];
+  labels.value = [];
+  commandString.value = "";
+  healthCheckEnabled.value = false;
+  healthCheckCommand.value = "";
 }
 
 // Lifecycle
 onMounted(() => {
-  loadFormData()
-})
+  loadFormData();
+});
 
 // Watch for prop changes
-watch(() => props.container, () => {
-  loadFormData()
-}, { deep: true })
+watch(
+  () => props.container,
+  () => {
+    loadFormData();
+  },
+  { deep: true },
+);
 </script>
 
 <style scoped>

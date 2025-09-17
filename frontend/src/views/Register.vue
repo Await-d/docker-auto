@@ -6,7 +6,7 @@
           <h2>Register</h2>
         </template>
         <p>Registration functionality coming soon...</p>
-        <el-button @click="$router.push('/login')">Back to Login</el-button>
+        <el-button @click="$router.push('/login')"> Back to Login </el-button>
       </el-card>
     </div>
   </div>

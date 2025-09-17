@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"docker-auto/internal/model"
-	"docker-auto/pkg/docker"
 )
 
 // Container service request types
@@ -57,7 +56,7 @@ type RegistryAuth struct {
 // ContainerDetail represents detailed container information
 type ContainerDetail struct {
 	*model.Container
-	DockerStatus *docker.ContainerStatus `json:"docker_status,omitempty"`
+	DockerStatus *model.ContainerStatus `json:"docker_status,omitempty"`
 	Metrics      *ContainerMetrics       `json:"metrics,omitempty"`
 	UpdateInfo   *UpdateInfo             `json:"update_info,omitempty"`
 	LogsSample   []string                `json:"logs_sample,omitempty"`
@@ -122,7 +121,7 @@ type ContainerStatus struct {
 	ID           int64                   `json:"id"`
 	Name         string                  `json:"name"`
 	Status       model.ContainerStatus   `json:"status"`
-	DockerStatus *docker.ContainerStatus `json:"docker_status,omitempty"`
+	DockerStatus *model.ContainerStatus `json:"docker_status,omitempty"`
 	Health       string                  `json:"health,omitempty"`
 	Uptime       time.Duration           `json:"uptime"`
 	RestartCount int                     `json:"restart_count"`

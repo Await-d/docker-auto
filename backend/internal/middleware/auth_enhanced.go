@@ -46,7 +46,7 @@ func EnhancedAuthMiddleware(config *AuthConfig) gin.HandlerFunc {
 			if err := validateSecurityHeaders(c, config); err != nil {
 				logrus.WithError(err).Warn("Security headers validation failed")
 				if !config.AllowInsecureLocal || !isLocalRequest(c) {
-					c.JSON(http.StatusBadRequest, utils.ErrorResponse("Security requirements not met"))
+					c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Security requirements not met"))
 					c.Abort()
 					return
 				}
@@ -56,7 +56,7 @@ func EnhancedAuthMiddleware(config *AuthConfig) gin.HandlerFunc {
 		// Extract token from header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authorization header is required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authorization header is required"))
 			c.Abort()
 			return
 		}
@@ -64,7 +64,7 @@ func EnhancedAuthMiddleware(config *AuthConfig) gin.HandlerFunc {
 		token, err := extractBearerToken(authHeader)
 		if err != nil {
 			logrus.WithError(err).Warn("Failed to extract bearer token")
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Invalid authorization header format"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Invalid authorization header format"))
 			c.Abort()
 			return
 		}
@@ -84,11 +84,11 @@ func EnhancedAuthMiddleware(config *AuthConfig) gin.HandlerFunc {
 
 			// Determine appropriate error response
 			if strings.Contains(err.Error(), "blacklisted") {
-				c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Token has been revoked"))
+				c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Token has been revoked"))
 			} else if strings.Contains(err.Error(), "session") {
-				c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Session invalid or expired"))
+				c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Session invalid or expired"))
 			} else {
-				c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Invalid or expired token"))
+				c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Invalid or expired token"))
 			}
 			c.Abort()
 			return
@@ -97,7 +97,7 @@ func EnhancedAuthMiddleware(config *AuthConfig) gin.HandlerFunc {
 		// Additional security validations
 		if err := performSecurityValidations(c, claims, config); err != nil {
 			logrus.WithError(err).WithField("user_id", claims.UserID).Warn("Security validation failed")
-			c.JSON(http.StatusForbidden, utils.ErrorResponse(err.Error()))
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, err.Error()))
 			c.Abort()
 			return
 		}
@@ -172,7 +172,7 @@ func RequireRole(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := GetEnhancedUserFromContext(c)
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authentication required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authentication required"))
 			c.Abort()
 			return
 		}
@@ -191,7 +191,7 @@ func RequireRole(allowedRoles ...string) gin.HandlerFunc {
 				"user_role":     user.Role,
 				"required_roles": allowedRoles,
 			}).Warn("Insufficient role permissions")
-			c.JSON(http.StatusForbidden, utils.ErrorResponse("Insufficient permissions"))
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "Insufficient permissions"))
 			c.Abort()
 			return
 		}
@@ -205,7 +205,7 @@ func RequireSecurityLevel(minLevel int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := GetEnhancedUserFromContext(c)
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authentication required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authentication required"))
 			c.Abort()
 			return
 		}
@@ -216,7 +216,7 @@ func RequireSecurityLevel(minLevel int) gin.HandlerFunc {
 				"current_level":        user.SecurityLevel,
 				"required_level":       minLevel,
 			}).Warn("Insufficient security level")
-			c.JSON(http.StatusForbidden, utils.ErrorResponse("Higher security level required"))
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "Higher security level required"))
 			c.Abort()
 			return
 		}
@@ -230,7 +230,7 @@ func RequireActiveStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := GetEnhancedUserFromContext(c)
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authentication required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authentication required"))
 			c.Abort()
 			return
 		}
@@ -240,7 +240,7 @@ func RequireActiveStatus() gin.HandlerFunc {
 				"user_id": user.UserID,
 				"status":  user.Status,
 			}).Warn("Inactive user attempted access")
-			c.JSON(http.StatusForbidden, utils.ErrorResponse("Account is not active"))
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "Account is not active"))
 			c.Abort()
 			return
 		}
@@ -254,7 +254,7 @@ func TokenRefreshMiddleware(config *AuthConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		refreshToken := c.GetHeader("X-Refresh-Token")
 		if refreshToken == "" {
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse("Refresh token required"))
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Refresh token required"))
 			c.Abort()
 			return
 		}
@@ -268,17 +268,17 @@ func TokenRefreshMiddleware(config *AuthConfig) gin.HandlerFunc {
 				"client_ip":  clientIP,
 				"user_agent": userAgent[:min(len(userAgent), 50)],
 			}).Warn("Token refresh failed")
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Token refresh failed"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Token refresh failed"))
 			c.Abort()
 			return
 		}
 
 		// Return new tokens
-		c.JSON(http.StatusOK, utils.SuccessResponse("Tokens refreshed", map[string]interface{}{
+		c.JSON(http.StatusOK, utils.SuccessResponseWithMessage(map[string]interface{}{
 			"access_token":  newAccessToken,
 			"refresh_token": newRefreshToken,
 			"token_type":    "Bearer",
-		}))
+		}, "Tokens refreshed"))
 	}
 }
 
@@ -287,13 +287,13 @@ func LogoutMiddleware(config *AuthConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusOK, utils.SuccessResponse("Logged out", nil))
+			c.JSON(http.StatusOK, utils.SuccessResponseWithMessage(nil, "Logged out"))
 			return
 		}
 
 		token, err := extractBearerToken(authHeader)
 		if err != nil {
-			c.JSON(http.StatusOK, utils.SuccessResponse("Logged out", nil))
+			c.JSON(http.StatusOK, utils.SuccessResponseWithMessage(nil, "Logged out"))
 			return
 		}
 
@@ -304,7 +304,7 @@ func LogoutMiddleware(config *AuthConfig) gin.HandlerFunc {
 		}
 
 		logrus.Info("User logged out successfully")
-		c.JSON(http.StatusOK, utils.SuccessResponse("Logged out successfully", nil))
+		c.JSON(http.StatusOK, utils.SuccessResponseWithMessage(nil, "Logged out successfully"))
 	}
 }
 

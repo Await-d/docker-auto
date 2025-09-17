@@ -28,7 +28,8 @@
                 class="readonly-input"
               >
                 <template #suffix>
-                  <el-tag type="success" size="small">Current</el-tag>
+                  <el-tag
+type="success" size="small"> Current </el-tag>
                 </template>
               </el-input>
             </el-form-item>
@@ -239,8 +240,8 @@
                 @change="handleFieldChange('autoLogoutWarning', $event)"
               />
               <div class="field-help">
-                Show warning before session expires
-              </div>
+Show warning before session expires
+</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -290,16 +291,15 @@
                 <span class="timeout-unit">seconds</span>
               </div>
               <div class="field-help">
-                Timeout for API requests
-              </div>
+Timeout for API requests
+</div>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item
-              label="Cache TTL"
-              prop="cacheTtl"
-              required
-            >
+label="Cache TTL" prop="cacheTtl"
+required
+>
               <div class="timeout-input">
                 <el-input-number
                   v-model="formData.cacheTtl"
@@ -310,8 +310,8 @@
                 <span class="timeout-unit">minutes</span>
               </div>
               <div class="field-help">
-                Time to live for cached data
-              </div>
+Time to live for cached data
+</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -319,14 +319,13 @@
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Resource Usage Limits"
-              prop="resourceLimits"
-            >
+label="Resource Usage Limits" prop="resourceLimits"
+>
               <div class="resource-limits">
                 <div class="limit-item">
                   <label>CPU Limit (%)</label>
                   <el-slider
-                    v-model="formData.resourceLimits.cpu"
+                    v-model="resourceLimitsCpu"
                     :min="10"
                     :max="100"
                     :step="5"
@@ -337,7 +336,7 @@
                 <div class="limit-item">
                   <label>Memory Limit (%)</label>
                   <el-slider
-                    v-model="formData.resourceLimits.memory"
+                    v-model="resourceLimitsMemory"
                     :min="10"
                     :max="100"
                     :step="5"
@@ -350,10 +349,9 @@
           </el-col>
           <el-col :span="12">
             <el-form-item
-              label="Log Retention"
-              prop="logRetention"
-              required
-            >
+label="Log Retention" prop="logRetention"
+required
+>
               <div class="timeout-input">
                 <el-input-number
                   v-model="formData.logRetention"
@@ -364,8 +362,8 @@
                 <span class="timeout-unit">days</span>
               </div>
               <div class="field-help">
-                How long to keep system logs
-              </div>
+How long to keep system logs
+</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -408,14 +406,13 @@
         <el-row :gutter="24">
           <el-col :span="24">
             <el-form-item
-              label="Maintenance Window"
-              prop="maintenanceWindow"
-            >
+label="Maintenance Window" prop="maintenanceWindow"
+>
               <div class="maintenance-window">
                 <div class="window-item">
                   <label>Start Time</label>
                   <el-time-picker
-                    v-model="formData.maintenanceWindow.start"
+                    v-model="maintenanceWindowStart"
                     format="HH:mm"
                     value-format="HH:mm"
                     @change="handleMaintenanceWindowChange"
@@ -424,7 +421,7 @@
                 <div class="window-item">
                   <label>End Time</label>
                   <el-time-picker
-                    v-model="formData.maintenanceWindow.end"
+                    v-model="maintenanceWindowEnd"
                     format="HH:mm"
                     value-format="HH:mm"
                     @change="handleMaintenanceWindowChange"
@@ -433,16 +430,16 @@
                 <div class="window-item">
                   <label>Days</label>
                   <el-checkbox-group
-                    v-model="formData.maintenanceWindow.days"
+                    v-model="maintenanceWindowDays"
                     @change="handleMaintenanceWindowChange"
                   >
-                    <el-checkbox :label="0">Sun</el-checkbox>
-                    <el-checkbox :label="1">Mon</el-checkbox>
-                    <el-checkbox :label="2">Tue</el-checkbox>
-                    <el-checkbox :label="3">Wed</el-checkbox>
-                    <el-checkbox :label="4">Thu</el-checkbox>
-                    <el-checkbox :label="5">Fri</el-checkbox>
-                    <el-checkbox :label="6">Sat</el-checkbox>
+                    <el-checkbox :label="0"> Sun </el-checkbox>
+                    <el-checkbox :label="1"> Mon </el-checkbox>
+                    <el-checkbox :label="2"> Tue </el-checkbox>
+                    <el-checkbox :label="3"> Wed </el-checkbox>
+                    <el-checkbox :label="4"> Thu </el-checkbox>
+                    <el-checkbox :label="5"> Fri </el-checkbox>
+                    <el-checkbox :label="6"> Sat </el-checkbox>
                   </el-checkbox-group>
                 </div>
               </div>
@@ -455,42 +452,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted, watch } from "vue";
 import {
   InfoFilled,
   Setting,
   Clock,
   Monitor,
-  Tools
-} from '@element-plus/icons-vue'
-import dayjs from 'dayjs'
-import ConfigForm from './forms/ConfigForm.vue'
-import type { GeneralSettings } from '@/store/settings'
+  Tools,
+} from "@element-plus/icons-vue";
+import dayjs from "dayjs";
+import ConfigForm from "./forms/ConfigForm.vue";
+import type { GeneralSettings } from "@/store/settings";
 
 interface Props {
-  modelValue: GeneralSettings
-  loading?: boolean
-  validationErrors?: Record<string, string[]>
+  modelValue: GeneralSettings;
+  loading?: boolean;
+  validationErrors?: Record<string, string[]>;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: GeneralSettings): void
-  (e: 'field-change', field: string, value: any): void
-  (e: 'field-validate', field: string, value: any): void
-  (e: 'test-configuration', config: GeneralSettings): void
+  (e: "update:modelValue", value: GeneralSettings): void;
+  (e: "field-change", field: string, value: any): void;
+  (e: "field-validate", field: string, value: any): void;
+  (e: "test-configuration", config: GeneralSettings): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const formData = ref<GeneralSettings>({
-  systemName: '',
-  systemDescription: '',
-  timezone: 'UTC',
-  language: 'en',
-  dateFormat: 'YYYY-MM-DD',
-  timeFormat: '24',
+  systemName: "",
+  systemDescription: "",
+  timezone: "UTC",
+  language: "en",
+  dateFormat: "YYYY-MM-DD",
+  timeFormat: "24",
   sessionTimeout: 30,
   autoLogoutWarning: true,
   maxConcurrentOperations: 10,
@@ -498,140 +494,312 @@ const formData = ref<GeneralSettings>({
   cacheTtl: 60,
   resourceLimits: {
     cpu: 80,
-    memory: 80
+    memory: 80,
   },
   logRetention: 30,
   autoCleanup: true,
   autoUpdates: false,
   maintenanceWindow: {
-    start: '02:00',
-    end: '04:00',
-    days: [0] // Sunday
-  }
-} as any)
+    start: "02:00",
+    end: "04:00",
+    days: [0], // Sunday
+  },
+} as any);
 
 const systemInfo = ref({
-  version: '2.1.0',
+  version: "2.1.0",
   buildDate: new Date().toISOString(),
-  runtime: 'Node.js 20.x',
-  platform: 'Linux x64',
-  installPath: '/opt/docker-auto'
-})
+  runtime: "Node.js 20.x",
+  platform: "Linux x64",
+  installPath: "/opt/docker-auto",
+});
 
 const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue)
-})
+  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
+});
+
+const resourceLimitsCpu = computed({
+  get: () => formData.value.resourceLimits?.cpu || 80,
+  set: (value: number) => {
+    if (!formData.value.resourceLimits) {
+      formData.value.resourceLimits = {
+        maxMemoryUsage: 80,
+        maxCpuUsage: 80,
+        maxDiskUsage: 80,
+        cpu: 80,
+        memory: 80,
+      };
+    }
+    formData.value.resourceLimits!.cpu = value;
+  },
+});
+
+const resourceLimitsMemory = computed({
+  get: () => formData.value.resourceLimits?.memory || 80,
+  set: (value: number) => {
+    if (!formData.value.resourceLimits) {
+      formData.value.resourceLimits = {
+        maxMemoryUsage: 80,
+        maxCpuUsage: 80,
+        maxDiskUsage: 80,
+        cpu: 80,
+        memory: 80,
+      };
+    }
+    formData.value.resourceLimits!.memory = value;
+  },
+});
+
+const maintenanceWindowStart = computed({
+  get: () => formData.value.maintenanceWindow?.start || "02:00",
+  set: (value: string) => {
+    if (!formData.value.maintenanceWindow) {
+      formData.value.maintenanceWindow = {
+        enabled: true,
+        startTime: "02:00",
+        endTime: "04:00",
+        daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+        start: "02:00",
+        end: "04:00",
+        days: [0, 1, 2, 3, 4, 5, 6],
+      };
+    }
+    formData.value.maintenanceWindow!.start = value;
+  },
+});
+
+const maintenanceWindowEnd = computed({
+  get: () => formData.value.maintenanceWindow?.end || "04:00",
+  set: (value: string) => {
+    if (!formData.value.maintenanceWindow) {
+      formData.value.maintenanceWindow = {
+        enabled: true,
+        startTime: "02:00",
+        endTime: "04:00",
+        daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+        start: "02:00",
+        end: "04:00",
+        days: [0, 1, 2, 3, 4, 5, 6],
+      };
+    }
+    formData.value.maintenanceWindow!.end = value;
+  },
+});
+
+const maintenanceWindowDays = computed({
+  get: () => formData.value.maintenanceWindow?.days || [0, 1, 2, 3, 4, 5, 6],
+  set: (value: number[]) => {
+    if (!formData.value.maintenanceWindow) {
+      formData.value.maintenanceWindow = {
+        enabled: true,
+        startTime: "02:00",
+        endTime: "04:00",
+        daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+        start: "02:00",
+        end: "04:00",
+        days: [0, 1, 2, 3, 4, 5, 6],
+      };
+    }
+    formData.value.maintenanceWindow!.days = value;
+  },
+});
 
 const timezones = ref([
-  { label: 'UTC', value: 'UTC' },
-  { label: 'America/New_York (EST/EDT)', value: 'America/New_York' },
-  { label: 'America/Chicago (CST/CDT)', value: 'America/Chicago' },
-  { label: 'America/Denver (MST/MDT)', value: 'America/Denver' },
-  { label: 'America/Los_Angeles (PST/PDT)', value: 'America/Los_Angeles' },
-  { label: 'Europe/London (GMT/BST)', value: 'Europe/London' },
-  { label: 'Europe/Paris (CET/CEST)', value: 'Europe/Paris' },
-  { label: 'Asia/Tokyo (JST)', value: 'Asia/Tokyo' },
-  { label: 'Asia/Shanghai (CST)', value: 'Asia/Shanghai' },
-  { label: 'Australia/Sydney (AEST/AEDT)', value: 'Australia/Sydney' }
-])
+  { label: "UTC", value: "UTC" },
+  { label: "America/New_York (EST/EDT)", value: "America/New_York" },
+  { label: "America/Chicago (CST/CDT)", value: "America/Chicago" },
+  { label: "America/Denver (MST/MDT)", value: "America/Denver" },
+  { label: "America/Los_Angeles (PST/PDT)", value: "America/Los_Angeles" },
+  { label: "Europe/London (GMT/BST)", value: "Europe/London" },
+  { label: "Europe/Paris (CET/CEST)", value: "Europe/Paris" },
+  { label: "Asia/Tokyo (JST)", value: "Asia/Tokyo" },
+  { label: "Asia/Shanghai (CST)", value: "Asia/Shanghai" },
+  { label: "Australia/Sydney (AEST/AEDT)", value: "Australia/Sydney" },
+]);
 
 const languages = ref([
-  { label: 'English', value: 'en', flag: '🇺🇸' },
-  { label: 'Español', value: 'es', flag: '🇪🇸' },
-  { label: 'Français', value: 'fr', flag: '🇫🇷' },
-  { label: 'Deutsch', value: 'de', flag: '🇩🇪' },
-  { label: '中文', value: 'zh', flag: '🇨🇳' },
-  { label: '日本語', value: 'ja', flag: '🇯🇵' }
-])
+  { label: "English", value: "en", flag: "🇺🇸" },
+  { label: "Español", value: "es", flag: "🇪🇸" },
+  { label: "Français", value: "fr", flag: "🇫🇷" },
+  { label: "Deutsch", value: "de", flag: "🇩🇪" },
+  { label: "中文", value: "zh", flag: "🇨🇳" },
+  { label: "日本語", value: "ja", flag: "🇯🇵" },
+]);
 
 const dateFormats = ref([
-  { label: 'YYYY-MM-DD', value: 'YYYY-MM-DD', example: '2024-01-15' },
-  { label: 'MM/DD/YYYY', value: 'MM/DD/YYYY', example: '01/15/2024' },
-  { label: 'DD/MM/YYYY', value: 'DD/MM/YYYY', example: '15/01/2024' },
-  { label: 'DD.MM.YYYY', value: 'DD.MM.YYYY', example: '15.01.2024' },
-  { label: 'MMM DD, YYYY', value: 'MMM DD, YYYY', example: 'Jan 15, 2024' }
-])
+  { label: "YYYY-MM-DD", value: "YYYY-MM-DD", example: "2024-01-15" },
+  { label: "MM/DD/YYYY", value: "MM/DD/YYYY", example: "01/15/2024" },
+  { label: "DD/MM/YYYY", value: "DD/MM/YYYY", example: "15/01/2024" },
+  { label: "DD.MM.YYYY", value: "DD.MM.YYYY", example: "15.01.2024" },
+  { label: "MMM DD, YYYY", value: "MMM DD, YYYY", example: "Jan 15, 2024" },
+]);
 
 const timeFormats = ref([
-  { label: '24-hour', value: '24', example: '14:30' },
-  { label: '12-hour', value: '12', example: '2:30 PM' }
-])
+  { label: "24-hour", value: "24", example: "14:30" },
+  { label: "12-hour", value: "12", example: "2:30 PM" },
+]);
 
 const formRules = computed(() => ({
   systemName: [
-    { required: true, message: 'System name is required', trigger: 'blur' },
-    { min: 3, max: 100, message: 'Length should be 3 to 100 characters', trigger: 'blur' }
+    { required: true, message: "System name is required", trigger: "blur" },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value.length < 3 || value.length > 100) {
+          callback(new Error("Length should be 3 to 100 characters"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   timezone: [
-    { required: true, message: 'Timezone is required', trigger: 'change' }
+    { required: true, message: "Timezone is required", trigger: "change" },
   ],
   language: [
-    { required: true, message: 'Language is required', trigger: 'change' }
+    { required: true, message: "Language is required", trigger: "change" },
   ],
   dateFormat: [
-    { required: true, message: 'Date format is required', trigger: 'change' }
+    { required: true, message: "Date format is required", trigger: "change" },
   ],
   timeFormat: [
-    { required: true, message: 'Time format is required', trigger: 'change' }
+    { required: true, message: "Time format is required", trigger: "change" },
   ],
   sessionTimeout: [
-    { required: true, message: 'Session timeout is required', trigger: 'blur' },
-    { type: 'number', min: 5, max: 1440, message: 'Must be between 5 and 1440 minutes', trigger: 'blur' }
+    { required: true, message: "Session timeout is required", trigger: "blur" },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 5 || value > 1440) {
+          callback(new Error("Must be between 5 and 1440 minutes"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   maxConcurrentOperations: [
-    { required: true, message: 'Max concurrent operations is required', trigger: 'blur' },
-    { type: 'number', min: 1, max: 100, message: 'Must be between 1 and 100', trigger: 'blur' }
+    {
+      required: true,
+      message: "Max concurrent operations is required",
+      trigger: "blur",
+    },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 1 || value > 100) {
+          callback(new Error("Must be between 1 and 100"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   requestTimeout: [
-    { required: true, message: 'Request timeout is required', trigger: 'blur' },
-    { type: 'number', min: 5, max: 300, message: 'Must be between 5 and 300 seconds', trigger: 'blur' }
+    { required: true, message: "Request timeout is required", trigger: "blur" },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 5 || value > 300) {
+          callback(new Error("Must be between 5 and 300 seconds"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   cacheTtl: [
-    { required: true, message: 'Cache TTL is required', trigger: 'blur' },
-    { type: 'number', min: 1, max: 1440, message: 'Must be between 1 and 1440 minutes', trigger: 'blur' }
+    { required: true, message: "Cache TTL is required", trigger: "blur" },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 1 || value > 1440) {
+          callback(new Error("Must be between 1 and 1440 minutes"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   logRetention: [
-    { required: true, message: 'Log retention is required', trigger: 'blur' },
-    { type: 'number', min: 1, max: 365, message: 'Must be between 1 and 365 days', trigger: 'blur' }
-  ]
-}))
+    { required: true, message: "Log retention is required", trigger: "blur" },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 1 || value > 365) {
+          callback(new Error("Must be between 1 and 365 days"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+}));
 
 const formatDate = (dateString: string): string => {
-  return dayjs(dateString).format('YYYY-MM-DD HH:mm:ss')
-}
+  return dayjs(dateString).format("YYYY-MM-DD HH:mm:ss");
+};
 
 const handleSave = () => {
-  emit('update:modelValue', formData.value)
-}
+  emit("update:modelValue", formData.value);
+};
 
 const handleReset = () => {
-  formData.value = { ...props.modelValue }
-}
+  formData.value = { ...props.modelValue };
+};
 
 const handleFieldChange = (field: string, value: any) => {
-  emit('field-change', field, value)
-}
+  emit("field-change", field, value);
+};
 
 const handleResourceLimitChange = () => {
-  emit('field-change', 'resourceLimits', formData.value.resourceLimits)
-}
+  emit("field-change", "resourceLimits", formData.value.resourceLimits);
+};
 
 const handleMaintenanceWindowChange = () => {
-  emit('field-change', 'maintenanceWindow', formData.value.maintenanceWindow)
-}
+  emit("field-change", "maintenanceWindow", formData.value.maintenanceWindow);
+};
 
 // Initialize form data from props
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    formData.value = { ...newValue }
-  }
-}, { immediate: true, deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = { ...newValue };
+    }
+  },
+  { immediate: true, deep: true },
+);
 
 onMounted(() => {
   // Load system info
   // This would typically come from an API call
-  console.log('SystemConfig mounted')
-})
+  console.log("SystemConfig mounted");
+});
 </script>
 
 <style scoped lang="scss">

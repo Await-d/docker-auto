@@ -6,13 +6,36 @@ import (
 	"docker-auto/pkg/alerting"
 	"docker-auto/pkg/health"
 	"docker-auto/pkg/logging"
-	"docker-auto/pkg/monitoring"
 )
+
+// MetricsConfig represents metrics collection configuration
+type MetricsConfig struct {
+	Enabled            bool          `yaml:"enabled" json:"enabled"`
+	CollectionInterval time.Duration `yaml:"collection_interval" json:"collection_interval"`
+	RetentionPeriod    time.Duration `yaml:"retention_period" json:"retention_period"`
+	MaxMetrics         int           `yaml:"max_metrics" json:"max_metrics"`
+	BufferSize         int           `yaml:"buffer_size" json:"buffer_size"`
+	Storage            StorageConfig `yaml:"storage" json:"storage"`
+	Export             ExportConfig  `yaml:"export" json:"export"`
+}
+
+// StorageConfig represents storage configuration for metrics
+type StorageConfig struct {
+	Type string `yaml:"type" json:"type"`
+}
+
+// ExportConfig represents export configuration for metrics
+type ExportConfig struct {
+	Enabled   bool          `yaml:"enabled" json:"enabled"`
+	Format    string        `yaml:"format" json:"format"`
+	Interval  time.Duration `yaml:"interval" json:"interval"`
+	BatchSize int           `yaml:"batch_size" json:"batch_size"`
+}
 
 // MonitoringConfig represents the complete monitoring configuration
 type MonitoringConfig struct {
 	Logging           logging.LogConfig                        `yaml:"logging" json:"logging"`
-	Monitoring        monitoring.MetricsConfig                 `yaml:"monitoring" json:"monitoring"`
+	Monitoring        MetricsConfig                            `yaml:"monitoring" json:"monitoring"`
 	HealthChecks      health.HealthConfig                      `yaml:"health_checks" json:"health_checks"`
 	HealthCheckConfigs HealthCheckConfigs                      `yaml:"health_check_configs" json:"health_check_configs"`
 	Alerting          alerting.AlertingConfig                  `yaml:"alerting" json:"alerting"`
@@ -44,7 +67,7 @@ type DevelopmentConfig struct {
 // ProductionConfig contains production-specific configuration overrides
 type ProductionConfig struct {
 	Logging      logging.LogConfig        `yaml:"logging" json:"logging"`
-	Monitoring   monitoring.MetricsConfig `yaml:"monitoring" json:"monitoring"`
+	Monitoring   MetricsConfig            `yaml:"monitoring" json:"monitoring"`
 	HealthChecks health.HealthConfig      `yaml:"health_checks" json:"health_checks"`
 	Alerting     alerting.AlertingConfig  `yaml:"alerting" json:"alerting"`
 }
@@ -59,16 +82,16 @@ func DefaultMonitoringConfig() *MonitoringConfig {
 			Rotation:   false,
 			BufferSize: 1000,
 		},
-		Monitoring: monitoring.MetricsConfig{
+		Monitoring: MetricsConfig{
 			Enabled:            true,
 			CollectionInterval: 30 * time.Second,
 			RetentionPeriod:    7 * 24 * time.Hour,
 			MaxMetrics:         10000,
 			BufferSize:         1000,
-			Storage: monitoring.StorageConfig{
+			Storage: StorageConfig{
 				Type: "memory",
 			},
-			Export: monitoring.ExportConfig{
+			Export: ExportConfig{
 				Enabled:   true,
 				Format:    "prometheus",
 				Interval:  60 * time.Second,

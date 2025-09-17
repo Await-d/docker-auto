@@ -123,8 +123,9 @@ func RateLimitMiddlewareWithConfig(limiter *RateLimiter, config *RateLimitConfig
 			}
 
 			c.JSON(http.StatusTooManyRequests, utils.ErrorResponseWithDetails(
+				http.StatusTooManyRequests,
 				message,
-				fmt.Sprintf("Rate limit: %d requests per %v", limiter.limit, limiter.window),
+				[]utils.ErrorDetail{{Message: fmt.Sprintf("Rate limit: %d requests per %v", limiter.limit, limiter.window)}},
 			))
 			c.Abort()
 			return

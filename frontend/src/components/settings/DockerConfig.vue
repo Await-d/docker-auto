@@ -59,8 +59,8 @@
                 </template>
               </el-input>
               <div class="field-help">
-                Connection string to Docker daemon
-              </div>
+Connection string to Docker daemon
+</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -83,8 +83,8 @@
                 <span class="timeout-unit">seconds</span>
               </div>
               <div class="field-help">
-                Timeout for Docker API calls
-              </div>
+Timeout for Docker API calls
+</div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -109,8 +109,8 @@
             <span>TLS Configuration</span>
             <el-switch
               v-model="formData.tlsEnabled"
-              @change="handleFieldChange('tlsEnabled', $event)"
               class="header-switch"
+              @change="handleFieldChange('tlsEnabled', $event)"
             />
           </div>
         </template>
@@ -124,8 +124,8 @@
                   @change="handleFieldChange('tlsVerify', $event)"
                 />
                 <div class="field-help">
-                  Verify TLS certificates
-                </div>
+Verify TLS certificates
+</div>
               </el-form-item>
             </el-col>
             <el-col :span="8">
@@ -143,7 +143,9 @@
               <el-form-item label="Skip Hostname Verification">
                 <el-switch
                   v-model="formData.skipHostnameVerification"
-                  @change="handleFieldChange('skipHostnameVerification', $event)"
+                  @change="
+                    handleFieldChange('skipHostnameVerification', $event)
+                  "
                 />
                 <div class="field-help">
                   Skip hostname verification (insecure)
@@ -156,7 +158,7 @@
             <el-col :span="8">
               <el-form-item label="CA Certificate" prop="tlsCa">
                 <FileUpload
-                  v-model="formData.tlsCa"
+                  v-model="tlsCaValue"
                   accept=".pem,.crt,.cer"
                   placeholder="Upload CA certificate"
                   @change="handleFieldChange('tlsCa', $event)"
@@ -170,7 +172,7 @@
                 prop="tlsCert"
               >
                 <FileUpload
-                  v-model="formData.tlsCert"
+                  v-model="tlsCertValue"
                   accept=".pem,.crt,.cer"
                   placeholder="Upload client certificate"
                   @change="handleFieldChange('tlsCert', $event)"
@@ -184,7 +186,7 @@
                 prop="tlsKey"
               >
                 <FileUpload
-                  v-model="formData.tlsKey"
+                  v-model="tlsKeyValue"
                   accept=".pem,.key"
                   placeholder="Upload client private key"
                   @change="handleFieldChange('tlsKey', $event)"
@@ -196,14 +198,14 @@
 
         <div v-else class="tls-disabled">
           <el-alert
-            type="warning"
-            :closable="false"
-            show-icon
-          >
+type="warning" :closable="false"
+show-icon
+>
             <template #title>
-              TLS is disabled
-            </template>
-            Connection to Docker daemon will not be encrypted. Enable TLS for secure communication.
+TLS is disabled
+</template>
+            Connection to Docker daemon will not be encrypted. Enable TLS for
+            secure communication.
           </el-alert>
         </div>
       </el-card>
@@ -237,7 +239,9 @@
                 >
                   <div class="policy-option">
                     <span class="policy-name">{{ policy.label }}</span>
-                    <span class="policy-description">{{ policy.description }}</span>
+                    <span class="policy-description">{{
+                      policy.description
+                    }}</span>
                   </div>
                 </el-option>
               </el-select>
@@ -312,7 +316,7 @@
           <el-col :span="24">
             <el-form-item label="Default Volume Mounts">
               <KeyValueEditor
-                v-model="formData.defaultVolumeMounts"
+                v-model="defaultVolumeMountsValue"
                 title="Volume Mounts"
                 item-name="Mount"
                 key-label="Host Path"
@@ -355,7 +359,9 @@
                 >
                   <div class="policy-option">
                     <span class="policy-name">{{ policy.label }}</span>
-                    <span class="policy-description">{{ policy.description }}</span>
+                    <span class="policy-description">{{
+                      policy.description
+                    }}</span>
                   </div>
                 </el-option>
               </el-select>
@@ -382,8 +388,8 @@
                 @change="handleFieldChange('autoRemoveDanglingImages', $event)"
               />
               <div class="field-help">
-                Automatically remove untagged images
-              </div>
+Automatically remove untagged images
+</div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -445,7 +451,9 @@
                 >
                   <div class="driver-option">
                     <span class="driver-name">{{ driver.label }}</span>
-                    <span class="driver-description">{{ driver.description }}</span>
+                    <span class="driver-description">{{
+                      driver.description
+                    }}</span>
                   </div>
                 </el-option>
               </el-select>
@@ -468,7 +476,7 @@
           <el-col :span="24">
             <el-form-item label="Docker CLI Options">
               <KeyValueEditor
-                v-model="formData.dockerCliOptions"
+                v-model="dockerCliOptionsValue"
                 title="Docker CLI Options"
                 item-name="Option"
                 key-label="Option"
@@ -486,8 +494,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, watch } from "vue";
+import { ElMessage } from "element-plus";
 import {
   Connection,
   Lock,
@@ -496,283 +504,361 @@ import {
   Tools,
   CircleCheck,
   CircleClose,
-  Warning
-} from '@element-plus/icons-vue'
-import ConfigForm from './forms/ConfigForm.vue'
-import CronEditor from './forms/CronEditor.vue'
-import KeyValueEditor from './forms/KeyValueEditor.vue'
-import FileUpload from './forms/FileUpload.vue'
-import type { DockerSettings } from '@/store/settings'
+  Warning,
+} from "@element-plus/icons-vue";
+import ConfigForm from "./forms/ConfigForm.vue";
+import CronEditor from "./forms/CronEditor.vue";
+import KeyValueEditor from "./forms/KeyValueEditor.vue";
+import FileUpload from "./forms/FileUpload.vue";
+import type { DockerSettings } from "@/store/settings";
 
 interface Props {
-  modelValue: DockerSettings
-  loading?: boolean
-  validationErrors?: Record<string, string[]>
+  modelValue: DockerSettings;
+  loading?: boolean;
+  validationErrors?: Record<string, string[]>;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: DockerSettings): void
-  (e: 'field-change', field: string, value: any): void
-  (e: 'field-validate', field: string, value: any): void
-  (e: 'test-configuration', config: DockerSettings): void
+  (e: "update:modelValue", value: DockerSettings): void;
+  (e: "field-change", field: string, value: any): void;
+  (e: "field-validate", field: string, value: any): void;
+  (e: "test-configuration", config: DockerSettings): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const formData = ref<DockerSettings>({
-  socketPath: 'unix:///var/run/docker.sock',
+  socketPath: "unix:///var/run/docker.sock",
   connectionTimeout: 30,
   autoReconnect: true,
   tlsEnabled: false,
   tlsVerify: true,
   clientCertAuth: false,
   skipHostnameVerification: false,
-  tlsCa: '',
-  tlsCert: '',
-  tlsKey: '',
-  defaultRestartPolicy: 'unless-stopped',
-  defaultNetworkMode: 'bridge',
+  tlsCa: "",
+  tlsCert: "",
+  tlsKey: "",
+  defaultRestartPolicy: "unless-stopped",
+  defaultNetworkMode: "bridge",
   defaultCpuLimit: 0,
   defaultMemoryLimit: 0,
   defaultVolumeMounts: {},
-  imagePullPolicy: 'missing',
-  imageCleanupSchedule: '0 2 * * 0',
+  imagePullPolicy: "missing",
+  imageCleanupSchedule: "0 2 * * 0",
   autoRemoveDanglingImages: true,
   imageVerification: false,
   registryTimeout: 60,
-  logDriver: 'json-file',
+  logDriver: "json-file",
   enableBuildKit: true,
-  dockerCliOptions: {}
-} as any)
+  dockerCliOptions: {},
+} as any);
 
-const testing = ref(false)
-const connectionType = ref('unix')
-const lastConnectionTest = ref<Date | null>(null)
-const connectionTestResult = ref<'success' | 'error' | null>(null)
+const testing = ref(false);
+const connectionType = ref("unix");
+const lastConnectionTest = ref<Date | null>(null);
+const connectionTestResult = ref<"success" | "error" | null>(null);
 
 const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue)
-})
+  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
+});
 
-const connectionStatus = computed(() => {
-  if (testing.value) {
-    return {
-      type: 'info',
-      icon: 'Loading',
-      text: 'Testing...'
+const connectionStatus = computed(
+  (): {
+    type: "success" | "warning" | "info" | "danger";
+    icon: any;
+    text: string;
+  } => {
+    if (testing.value) {
+      return {
+        type: "info",
+        icon: "Loading",
+        text: "Testing...",
+      };
     }
-  }
 
-  if (connectionTestResult.value === 'success') {
-    return {
-      type: 'success',
-      icon: CircleCheck,
-      text: 'Connected'
+    if (connectionTestResult.value === "success") {
+      return {
+        type: "success",
+        icon: CircleCheck,
+        text: "Connected",
+      };
     }
-  }
 
-  if (connectionTestResult.value === 'error') {
-    return {
-      type: 'danger',
-      icon: CircleClose,
-      text: 'Connection Failed'
+    if (connectionTestResult.value === "error") {
+      return {
+        type: "danger",
+        icon: CircleClose,
+        text: "Connection Failed",
+      };
     }
-  }
 
-  return {
-    type: 'warning',
-    icon: Warning,
-    text: 'Not Tested'
-  }
-})
+    return {
+      type: "warning",
+      icon: Warning,
+      text: "Not Tested",
+    };
+  },
+);
+
+const tlsCaValue = computed({
+  get: () => formData.value.tlsCa || "",
+  set: (value: string) => {
+    formData.value.tlsCa = value;
+  },
+});
+
+const tlsCertValue = computed({
+  get: () => formData.value.tlsCert || "",
+  set: (value: string) => {
+    formData.value.tlsCert = value;
+  },
+});
+
+const tlsKeyValue = computed({
+  get: () => formData.value.tlsKey || "",
+  set: (value: string) => {
+    formData.value.tlsKey = value;
+  },
+});
+
+const defaultVolumeMountsValue = computed({
+  get: () => formData.value.defaultVolumeMounts || [],
+  set: (value: any[]) => {
+    formData.value.defaultVolumeMounts = value;
+  },
+});
+
+const dockerCliOptionsValue = computed({
+  get: () => formData.value.dockerCliOptions || {},
+  set: (value: Record<string, any>) => {
+    formData.value.dockerCliOptions = value;
+  },
+});
 
 const restartPolicies = ref([
   {
-    label: 'No',
-    value: 'no',
-    description: 'Do not restart container'
+    label: "No",
+    value: "no",
+    description: "Do not restart container",
   },
   {
-    label: 'Always',
-    value: 'always',
-    description: 'Always restart container'
+    label: "Always",
+    value: "always",
+    description: "Always restart container",
   },
   {
-    label: 'Unless Stopped',
-    value: 'unless-stopped',
-    description: 'Restart unless manually stopped'
+    label: "Unless Stopped",
+    value: "unless-stopped",
+    description: "Restart unless manually stopped",
   },
   {
-    label: 'On Failure',
-    value: 'on-failure',
-    description: 'Restart only on failure'
-  }
-])
+    label: "On Failure",
+    value: "on-failure",
+    description: "Restart only on failure",
+  },
+]);
 
 const networkModes = ref([
   {
-    label: 'Bridge',
-    value: 'bridge',
-    description: 'Default bridge network'
+    label: "Bridge",
+    value: "bridge",
+    description: "Default bridge network",
   },
   {
-    label: 'Host',
-    value: 'host',
-    description: 'Use host network'
+    label: "Host",
+    value: "host",
+    description: "Use host network",
   },
   {
-    label: 'None',
-    value: 'none',
-    description: 'No networking'
+    label: "None",
+    value: "none",
+    description: "No networking",
   },
   {
-    label: 'Container',
-    value: 'container',
-    description: 'Share another container network'
-  }
-])
+    label: "Container",
+    value: "container",
+    description: "Share another container network",
+  },
+]);
 
 const pullPolicies = ref([
   {
-    label: 'Always',
-    value: 'always',
-    description: 'Always pull latest image'
+    label: "Always",
+    value: "always",
+    description: "Always pull latest image",
   },
   {
-    label: 'Missing',
-    value: 'missing',
-    description: 'Pull only if image missing'
+    label: "Missing",
+    value: "missing",
+    description: "Pull only if image missing",
   },
   {
-    label: 'Never',
-    value: 'never',
-    description: 'Never pull images'
-  }
-])
+    label: "Never",
+    value: "never",
+    description: "Never pull images",
+  },
+]);
 
 const logDrivers = ref([
   {
-    label: 'JSON File',
-    value: 'json-file',
-    description: 'Default JSON logging'
+    label: "JSON File",
+    value: "json-file",
+    description: "Default JSON logging",
   },
   {
-    label: 'Syslog',
-    value: 'syslog',
-    description: 'Syslog daemon'
+    label: "Syslog",
+    value: "syslog",
+    description: "Syslog daemon",
   },
   {
-    label: 'Journald',
-    value: 'journald',
-    description: 'Systemd journal'
+    label: "Journald",
+    value: "journald",
+    description: "Systemd journal",
   },
   {
-    label: 'None',
-    value: 'none',
-    description: 'Disable logging'
-  }
-])
+    label: "None",
+    value: "none",
+    description: "Disable logging",
+  },
+]);
 
 const formRules = computed(() => ({
   socketPath: [
-    { required: true, message: 'Docker socket path is required', trigger: 'blur' }
+    {
+      required: true,
+      message: "Docker socket path is required",
+      trigger: "blur",
+    },
   ],
   connectionTimeout: [
-    { required: true, message: 'Connection timeout is required', trigger: 'blur' },
-    { type: 'number', min: 5, max: 300, message: 'Must be between 5 and 300 seconds', trigger: 'blur' }
+    {
+      required: true,
+      message: "Connection timeout is required",
+      trigger: "blur",
+    },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 5 || value > 300) {
+          callback(new Error("Must be between 5 and 300 seconds"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   defaultRestartPolicy: [
-    { required: true, message: 'Default restart policy is required', trigger: 'change' }
+    {
+      required: true,
+      message: "Default restart policy is required",
+      trigger: "change",
+    },
   ],
   defaultNetworkMode: [
-    { required: true, message: 'Default network mode is required', trigger: 'change' }
+    {
+      required: true,
+      message: "Default network mode is required",
+      trigger: "change",
+    },
   ],
   imagePullPolicy: [
-    { required: true, message: 'Image pull policy is required', trigger: 'change' }
-  ]
-}))
+    {
+      required: true,
+      message: "Image pull policy is required",
+      trigger: "change",
+    },
+  ],
+}));
 
-const handleSave = () => {
-  emit('update:modelValue', formData.value)
-}
+const handleSave = (config: Record<string, any>) => {
+  emit("update:modelValue", config as DockerSettings);
+};
 
 const handleReset = () => {
-  formData.value = { ...props.modelValue }
-}
+  formData.value = { ...props.modelValue };
+};
 
 const handleFieldChange = (field: string, value: any) => {
-  emit('field-change', field, value)
-}
+  emit("field-change", field, value);
+};
 
 const handleConnectionTypeChange = (type: string) => {
-  connectionType.value = type
+  connectionType.value = type;
 
   switch (type) {
-    case 'unix':
-      formData.value.socketPath = 'unix:///var/run/docker.sock'
-      break
-    case 'tcp':
-      formData.value.socketPath = 'tcp://localhost:2376'
-      break
-    case 'ssh':
-      formData.value.socketPath = 'ssh://user@host'
-      break
+    case "unix":
+      formData.value.socketPath = "unix:///var/run/docker.sock";
+      break;
+    case "tcp":
+      formData.value.socketPath = "tcp://localhost:2376";
+      break;
+    case "ssh":
+      formData.value.socketPath = "ssh://user@host";
+      break;
   }
 
-  handleFieldChange('socketPath', formData.value.socketPath)
-}
+  handleFieldChange("socketPath", formData.value.socketPath);
+};
 
 const testConnection = async () => {
-  testing.value = true
-  connectionTestResult.value = null
+  testing.value = true;
+  connectionTestResult.value = null;
 
   try {
     // Simulate connection test
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // For demo purposes, randomly succeed or fail
-    const success = Math.random() > 0.3
+    const success = Math.random() > 0.3;
 
     if (success) {
-      connectionTestResult.value = 'success'
-      ElMessage.success('Docker connection successful')
+      connectionTestResult.value = "success";
+      ElMessage.success("Docker connection successful");
     } else {
-      connectionTestResult.value = 'error'
-      ElMessage.error('Failed to connect to Docker daemon')
+      connectionTestResult.value = "error";
+      ElMessage.error("Failed to connect to Docker daemon");
     }
 
-    lastConnectionTest.value = new Date()
+    lastConnectionTest.value = new Date();
   } catch (error) {
-    connectionTestResult.value = 'error'
-    ElMessage.error('Connection test failed')
+    connectionTestResult.value = "error";
+    ElMessage.error("Connection test failed");
   } finally {
-    testing.value = false
+    testing.value = false;
   }
-}
+};
 
-const handleTestConnection = async (config: DockerSettings) => {
-  emit('test-configuration', config)
-  await testConnection()
-}
+const handleTestConnection = async (config: Record<string, any>) => {
+  emit("test-configuration", config as DockerSettings);
+  await testConnection();
+};
 
 // Initialize form data from props
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    formData.value = { ...newValue }
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = { ...newValue };
 
-    // Determine connection type from socket path
-    if (newValue.socketPath) {
-      if (newValue.socketPath.startsWith('unix:')) {
-        connectionType.value = 'unix'
-      } else if (newValue.socketPath.startsWith('tcp:')) {
-        connectionType.value = 'tcp'
-      } else if (newValue.socketPath.startsWith('ssh:')) {
-        connectionType.value = 'ssh'
+      // Determine connection type from socket path
+      if (newValue.socketPath) {
+        if (newValue.socketPath.startsWith("unix:")) {
+          connectionType.value = "unix";
+        } else if (newValue.socketPath.startsWith("tcp:")) {
+          connectionType.value = "tcp";
+        } else if (newValue.socketPath.startsWith("ssh:")) {
+          connectionType.value = "ssh";
+        }
       }
     }
-  }
-}, { immediate: true, deep: true })
+  },
+  { immediate: true, deep: true },
+);
 </script>
 
 <style scoped lang="scss">

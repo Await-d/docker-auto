@@ -8,10 +8,10 @@
       :size="size"
       :clearable="clearable"
       show-password
+      class="password-input"
       @input="handleInput"
       @blur="handleBlur"
       @focus="handleFocus"
-      class="password-input"
     >
       <template v-if="showStrengthMeter" #suffix>
         <div class="password-actions">
@@ -23,8 +23,8 @@
             <el-button
               type="text"
               size="small"
-              @click="generatePassword"
               :disabled="disabled"
+              @click="generatePassword"
             >
               <el-icon><Key /></el-icon>
             </el-button>
@@ -37,18 +37,12 @@
     <div v-if="showStrengthMeter && inputValue" class="password-strength">
       <div class="strength-meter">
         <div
-          :class="[
-            'strength-bar',
-            `strength-${strengthLevel}`
-          ]"
+          :class="['strength-bar', `strength-${strengthLevel}`]"
           :style="{ width: `${strengthPercentage}%` }"
         />
       </div>
       <div class="strength-info">
-        <span :class="[
-          'strength-text',
-          `strength-${strengthLevel}`
-        ]">
+        <span :class="['strength-text', `strength-${strengthLevel}`]">
           {{ strengthText }}
         </span>
         <span class="strength-score">{{ strengthScore }}/4</span>
@@ -62,10 +56,7 @@
         <div
           v-for="requirement in requirements"
           :key="requirement.key"
-          :class="[
-            'requirement-item',
-            { 'met': requirement.met }
-          ]"
+          :class="['requirement-item', { met: requirement.met }]"
         >
           <el-icon>
             <Check v-if="requirement.met" />
@@ -85,54 +76,57 @@
       :disabled="disabled"
       :size="size"
       show-password
-      @input="handleConfirmInput"
       class="password-confirm"
       :class="{ 'is-error': confirmValue && !passwordsMatch }"
+      @input="handleConfirmInput"
     />
 
-    <div v-if="requireConfirmation && confirmValue && !passwordsMatch" class="confirm-error">
+    <div
+      v-if="requireConfirmation && confirmValue && !passwordsMatch"
+      class="confirm-error"
+    >
       Passwords do not match
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { Key, Check, Close } from '@element-plus/icons-vue'
+import { ref, computed, watch } from "vue";
+import { Key, Check, Close } from "@element-plus/icons-vue";
 
 interface PasswordPolicy {
-  minLength: number
-  requireUppercase: boolean
-  requireLowercase: boolean
-  requireNumbers: boolean
-  requireSpecialChars: boolean
+  minLength: number;
+  requireUppercase: boolean;
+  requireLowercase: boolean;
+  requireNumbers: boolean;
+  requireSpecialChars: boolean;
 }
 
 interface Props {
-  modelValue: string
-  placeholder?: string
-  confirmPlaceholder?: string
-  disabled?: boolean
-  size?: 'large' | 'default' | 'small'
-  clearable?: boolean
-  showStrengthMeter?: boolean
-  showRequirements?: boolean
-  showGenerator?: boolean
-  requireConfirmation?: boolean
-  policy?: PasswordPolicy
+  modelValue: string;
+  placeholder?: string;
+  confirmPlaceholder?: string;
+  disabled?: boolean;
+  size?: "large" | "default" | "small";
+  clearable?: boolean;
+  showStrengthMeter?: boolean;
+  showRequirements?: boolean;
+  showGenerator?: boolean;
+  requireConfirmation?: boolean;
+  policy?: PasswordPolicy;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: string): void
-  (e: 'strength-change', score: number, level: string): void
-  (e: 'confirmation-change', matches: boolean): void
+  (e: "update:modelValue", value: string): void;
+  (e: "strength-change", score: number, level: string): void;
+  (e: "confirmation-change", matches: boolean): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: 'Enter password',
-  confirmPlaceholder: 'Confirm password',
+  placeholder: "Enter password",
+  confirmPlaceholder: "Confirm password",
   disabled: false,
-  size: 'default',
+  size: "default",
   clearable: true,
   showStrengthMeter: true,
   showRequirements: true,
@@ -143,176 +137,203 @@ const props = withDefaults(defineProps<Props>(), {
     requireUppercase: true,
     requireLowercase: true,
     requireNumbers: true,
-    requireSpecialChars: true
-  })
-})
+    requireSpecialChars: true,
+  }),
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const inputValue = ref(props.modelValue)
-const confirmValue = ref('')
-const showPassword = ref(false)
-const focused = ref(false)
+const inputValue = ref(props.modelValue);
+const confirmValue = ref("");
+const showPassword = ref(false);
+const focused = ref(false);
 
 const strengthScore = computed(() => {
-  let score = 0
-  const password = inputValue.value
+  let score = 0;
+  const password = inputValue.value;
 
-  if (!password) return 0
+  if (!password) return 0;
 
   // Length check
-  if (password.length >= props.policy.minLength) score++
+  if (password.length >= props.policy.minLength) score++;
 
   // Character type checks
-  if (props.policy.requireUppercase && /[A-Z]/.test(password)) score++
-  if (props.policy.requireLowercase && /[a-z]/.test(password)) score++
-  if (props.policy.requireNumbers && /\d/.test(password)) score++
-  if (props.policy.requireSpecialChars && /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++
+  if (props.policy.requireUppercase && /[A-Z]/.test(password)) score++;
+  if (props.policy.requireLowercase && /[a-z]/.test(password)) score++;
+  if (props.policy.requireNumbers && /\d/.test(password)) score++;
+  if (
+    props.policy.requireSpecialChars &&
+    /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)
+  )
+    score++;
 
-  return Math.min(score, 4)
-})
+  return Math.min(score, 4);
+});
 
 const strengthLevel = computed(() => {
-  const score = strengthScore.value
-  if (score === 0) return 'none'
-  if (score === 1) return 'weak'
-  if (score === 2) return 'fair'
-  if (score === 3) return 'good'
-  return 'strong'
-})
+  const score = strengthScore.value;
+  if (score === 0) return "none";
+  if (score === 1) return "weak";
+  if (score === 2) return "fair";
+  if (score === 3) return "good";
+  return "strong";
+});
 
 const strengthText = computed(() => {
-  const level = strengthLevel.value
+  const level = strengthLevel.value;
   const texts = {
-    none: 'No password',
-    weak: 'Weak',
-    fair: 'Fair',
-    good: 'Good',
-    strong: 'Strong'
-  }
-  return texts[level] || ''
-})
+    none: "No password",
+    weak: "Weak",
+    fair: "Fair",
+    good: "Good",
+    strong: "Strong",
+  };
+  return texts[level] || "";
+});
 
 const strengthPercentage = computed(() => {
-  return (strengthScore.value / 4) * 100
-})
+  return (strengthScore.value / 4) * 100;
+});
 
-const requirements = computed(() => [
-  {
-    key: 'length',
-    text: `At least ${props.policy.minLength} characters`,
-    met: inputValue.value.length >= props.policy.minLength
-  },
-  {
-    key: 'uppercase',
-    text: 'At least one uppercase letter',
-    met: !props.policy.requireUppercase || /[A-Z]/.test(inputValue.value)
-  },
-  {
-    key: 'lowercase',
-    text: 'At least one lowercase letter',
-    met: !props.policy.requireLowercase || /[a-z]/.test(inputValue.value)
-  },
-  {
-    key: 'numbers',
-    text: 'At least one number',
-    met: !props.policy.requireNumbers || /\d/.test(inputValue.value)
-  },
-  {
-    key: 'special',
-    text: 'At least one special character',
-    met: !props.policy.requireSpecialChars || /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(inputValue.value)
-  }
-].filter(req =>
-  req.key === 'length' ||
-  props.policy[`require${req.key.charAt(0).toUpperCase() + req.key.slice(1)}` as keyof PasswordPolicy]
-))
+const requirements = computed(() =>
+  [
+    {
+      key: "length",
+      text: `At least ${props.policy.minLength} characters`,
+      met: inputValue.value.length >= props.policy.minLength,
+    },
+    {
+      key: "uppercase",
+      text: "At least one uppercase letter",
+      met: !props.policy.requireUppercase || /[A-Z]/.test(inputValue.value),
+    },
+    {
+      key: "lowercase",
+      text: "At least one lowercase letter",
+      met: !props.policy.requireLowercase || /[a-z]/.test(inputValue.value),
+    },
+    {
+      key: "numbers",
+      text: "At least one number",
+      met: !props.policy.requireNumbers || /\d/.test(inputValue.value),
+    },
+    {
+      key: "special",
+      text: "At least one special character",
+      met:
+        !props.policy.requireSpecialChars ||
+        /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(inputValue.value),
+    },
+  ].filter(
+    (req) =>
+      req.key === "length" ||
+      props.policy[
+        `require${req.key.charAt(0).toUpperCase() + req.key.slice(1)}` as keyof PasswordPolicy
+      ],
+  ),
+);
 
 const passwordsMatch = computed(() => {
-  if (!props.requireConfirmation) return true
-  return inputValue.value === confirmValue.value
-})
+  if (!props.requireConfirmation) return true;
+  return inputValue.value === confirmValue.value;
+});
 
 const handleInput = (value: string) => {
-  inputValue.value = value
-  emit('update:modelValue', value)
-}
+  inputValue.value = value;
+  emit("update:modelValue", value);
+};
 
 const handleConfirmInput = (value: string) => {
-  confirmValue.value = value
-  emit('confirmation-change', inputValue.value === value)
-}
+  confirmValue.value = value;
+  emit("confirmation-change", inputValue.value === value);
+};
 
 const handleFocus = () => {
-  focused.value = true
-}
+  focused.value = true;
+};
 
 const handleBlur = () => {
   setTimeout(() => {
-    focused.value = false
-  }, 150)
-}
+    focused.value = false;
+  }, 150);
+};
 
 const generatePassword = () => {
   const charset = {
-    lowercase: 'abcdefghijklmnopqrstuvwxyz',
-    uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-    numbers: '0123456789',
-    special: '!@#$%^&*()_+-=[]{}|;:,.<>?'
-  }
+    lowercase: "abcdefghijklmnopqrstuvwxyz",
+    uppercase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    numbers: "0123456789",
+    special: "!@#$%^&*()_+-=[]{}|;:,.<>?",
+  };
 
-  let password = ''
-  let availableChars = ''
+  let password = "";
+  let availableChars = "";
 
   // Ensure required character types are included
   if (props.policy.requireLowercase) {
-    password += charset.lowercase.charAt(Math.floor(Math.random() * charset.lowercase.length))
-    availableChars += charset.lowercase
+    password += charset.lowercase.charAt(
+      Math.floor(Math.random() * charset.lowercase.length),
+    );
+    availableChars += charset.lowercase;
   }
   if (props.policy.requireUppercase) {
-    password += charset.uppercase.charAt(Math.floor(Math.random() * charset.uppercase.length))
-    availableChars += charset.uppercase
+    password += charset.uppercase.charAt(
+      Math.floor(Math.random() * charset.uppercase.length),
+    );
+    availableChars += charset.uppercase;
   }
   if (props.policy.requireNumbers) {
-    password += charset.numbers.charAt(Math.floor(Math.random() * charset.numbers.length))
-    availableChars += charset.numbers
+    password += charset.numbers.charAt(
+      Math.floor(Math.random() * charset.numbers.length),
+    );
+    availableChars += charset.numbers;
   }
   if (props.policy.requireSpecialChars) {
-    password += charset.special.charAt(Math.floor(Math.random() * charset.special.length))
-    availableChars += charset.special
+    password += charset.special.charAt(
+      Math.floor(Math.random() * charset.special.length),
+    );
+    availableChars += charset.special;
   }
 
   // If no specific requirements, use all character types
   if (!availableChars) {
-    availableChars = Object.values(charset).join('')
+    availableChars = Object.values(charset).join("");
   }
 
   // Fill remaining length with random characters
-  const remainingLength = Math.max(props.policy.minLength - password.length, 0)
+  const remainingLength = Math.max(props.policy.minLength - password.length, 0);
   for (let i = 0; i < remainingLength; i++) {
-    password += availableChars.charAt(Math.floor(Math.random() * availableChars.length))
+    password += availableChars.charAt(
+      Math.floor(Math.random() * availableChars.length),
+    );
   }
 
   // Shuffle the password
-  password = password.split('').sort(() => Math.random() - 0.5).join('')
+  password = password
+    .split("")
+    .sort(() => Math.random() - 0.5)
+    .join("");
 
-  inputValue.value = password
-  emit('update:modelValue', password)
-}
+  inputValue.value = password;
+  emit("update:modelValue", password);
+};
 
-watch(() => props.modelValue, (newValue) => {
-  inputValue.value = newValue
-})
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    inputValue.value = newValue;
+  },
+);
 
 watch([strengthScore, strengthLevel], () => {
-  emit('strength-change', strengthScore.value, strengthLevel.value)
-})
+  emit("strength-change", strengthScore.value, strengthLevel.value);
+});
 
 watch(passwordsMatch, (matches) => {
   if (props.requireConfirmation) {
-    emit('confirmation-change', matches)
+    emit("confirmation-change", matches);
   }
-})
+});
 </script>
 
 <style scoped lang="scss">

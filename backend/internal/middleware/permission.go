@@ -121,7 +121,7 @@ func PermissionMiddlewareWithConfig(requiredPermission Permission, config *Permi
 				"permission": requiredPermission,
 			}).Warn("Permission check failed: no authenticated user")
 
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authentication required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authentication required"))
 			c.Abort()
 			return
 		}
@@ -148,8 +148,9 @@ func PermissionMiddlewareWithConfig(requiredPermission Permission, config *Permi
 			}
 
 			c.JSON(http.StatusForbidden, utils.ErrorResponseWithDetails(
+				http.StatusForbidden,
 				"Insufficient permissions",
-				fmt.Sprintf("Required permission: %s", requiredPermission),
+				[]utils.ErrorDetail{{Message: fmt.Sprintf("Required permission: %s", requiredPermission)}},
 			))
 			c.Abort()
 			return
@@ -251,35 +252,6 @@ func checkSelfAccess(c *gin.Context, user *utils.Claims) bool {
 	return false
 }
 
-// RequireRole creates a middleware that requires a specific role
-func RequireRole(role model.UserRole) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		user := GetUserFromContext(c)
-		if user == nil {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authentication required"))
-			c.Abort()
-			return
-		}
-
-		if user.Role != role {
-			logrus.WithFields(logrus.Fields{
-				"user_id":       user.UserID,
-				"user_role":     user.Role,
-				"required_role": role,
-				"path":          c.Request.URL.Path,
-			}).Warn("Role requirement not met")
-
-			c.JSON(http.StatusForbidden, utils.ErrorResponseWithDetails(
-				"Insufficient role",
-				fmt.Sprintf("Required role: %s", role),
-			))
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
-}
 
 // RequireMinRole creates a middleware that requires a minimum role level
 func RequireMinRole(minRole model.UserRole) gin.HandlerFunc {
@@ -292,7 +264,7 @@ func RequireMinRole(minRole model.UserRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := GetUserFromContext(c)
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authentication required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authentication required"))
 			c.Abort()
 			return
 		}
@@ -309,8 +281,9 @@ func RequireMinRole(minRole model.UserRole) gin.HandlerFunc {
 			}).Warn("Minimum role requirement not met")
 
 			c.JSON(http.StatusForbidden, utils.ErrorResponseWithDetails(
+				http.StatusForbidden,
 				"Insufficient role level",
-				fmt.Sprintf("Minimum required role: %s", minRole),
+				[]utils.ErrorDetail{{Message: fmt.Sprintf("Minimum required role: %s", minRole)}},
 			))
 			c.Abort()
 			return
@@ -325,7 +298,7 @@ func RequireAnyRole(roles ...model.UserRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := GetUserFromContext(c)
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authentication required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authentication required"))
 			c.Abort()
 			return
 		}
@@ -347,8 +320,9 @@ func RequireAnyRole(roles ...model.UserRole) gin.HandlerFunc {
 			}).Warn("Role requirement not met")
 
 			c.JSON(http.StatusForbidden, utils.ErrorResponseWithDetails(
+				http.StatusForbidden,
 				"Insufficient role",
-				fmt.Sprintf("Required one of roles: %v", roles),
+				[]utils.ErrorDetail{{Message: fmt.Sprintf("Required one of roles: %v", roles)}},
 			))
 			c.Abort()
 			return
@@ -363,7 +337,7 @@ func ResourceOwnershipMiddleware(resourceParam string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := GetUserFromContext(c)
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authentication required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authentication required"))
 			c.Abort()
 			return
 		}
@@ -377,7 +351,7 @@ func ResourceOwnershipMiddleware(resourceParam string) gin.HandlerFunc {
 		// Check resource ownership
 		resourceID := c.Param(resourceParam)
 		if resourceID == "" {
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse("Resource ID required"))
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Resource ID required"))
 			c.Abort()
 			return
 		}
@@ -392,7 +366,7 @@ func ResourceOwnershipMiddleware(resourceParam string) gin.HandlerFunc {
 				"path":        c.Request.URL.Path,
 			}).Warn("Resource ownership check failed")
 
-			c.JSON(http.StatusForbidden, utils.ErrorResponse("You can only access your own resources"))
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "You can only access your own resources"))
 			c.Abort()
 			return
 		}
@@ -405,7 +379,7 @@ func ResourceOwnershipMiddleware(resourceParam string) gin.HandlerFunc {
 
 // RequireAdmin requires admin role
 func RequireAdmin() gin.HandlerFunc {
-	return RequireRole(model.UserRoleAdmin)
+	return RequireRole(string(model.UserRoleAdmin))
 }
 
 // RequireOperator requires operator role or higher

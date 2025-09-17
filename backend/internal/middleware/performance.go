@@ -3,7 +3,6 @@ package middleware
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"fmt"
 	"io"
 	"net/http"

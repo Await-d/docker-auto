@@ -2,11 +2,9 @@
   <div class="settings-drawer">
     <!-- Settings drawer placeholder -->
     <el-drawer
-      v-model="visible"
-      title="Settings"
-      direction="rtl"
-      size="320px"
-    >
+v-model="visible" title="Settings"
+direction="rtl" size="320px"
+>
       <div class="settings-content">
         <p>Settings panel coming soon...</p>
       </div>
@@ -15,9 +13,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
 
-const visible = ref(false)
+const visible = ref(false);
 </script>
 
 <style scoped lang="scss">

@@ -16,6 +16,71 @@ import (
 	"github.com/docker/go-units"
 )
 
+// Container represents a Docker container
+type Container struct {
+	ID      string            `json:"id"`
+	Name    string            `json:"name"`
+	Image   string            `json:"image"`
+	ImageID string            `json:"image_id"`
+	Status  string            `json:"status"`
+	State   string            `json:"state"`
+	Created time.Time         `json:"created"`
+	Labels  map[string]string `json:"labels,omitempty"`
+	Ports   []PortBinding     `json:"ports,omitempty"`
+	Mounts  []MountPoint      `json:"mounts,omitempty"`
+}
+
+// Image represents a Docker image
+type Image struct {
+	ID          string            `json:"id"`
+	Repository  string            `json:"repository"`
+	Tag         string            `json:"tag"`
+	Digest      string            `json:"digest"`
+	Size        int64             `json:"size"`
+	Created     time.Time         `json:"created"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	RepoTags    []string          `json:"repo_tags,omitempty"`
+	RepoDigests []string          `json:"repo_digests,omitempty"`
+}
+
+// PortBinding represents port binding information
+type PortBinding struct {
+	PrivatePort int    `json:"private_port"`
+	PublicPort  int    `json:"public_port,omitempty"`
+	Type        string `json:"type"`
+	IP          string `json:"ip,omitempty"`
+}
+
+// MountPoint represents mount point information
+type MountPoint struct {
+	Type        string `json:"type"`
+	Source      string `json:"source"`
+	Destination string `json:"destination"`
+	Mode        string `json:"mode"`
+	RW          bool   `json:"rw"`
+	Propagation string `json:"propagation"`
+}
+
+// ImageListOptions represents options for listing images
+type ImageListOptions struct {
+	All     bool              `json:"all"`
+	Filters map[string]string `json:"filters,omitempty"`
+}
+
+// ImageRemoveOptions represents options for removing images
+type ImageRemoveOptions struct {
+	Force         bool `json:"force"`
+	PruneChildren bool `json:"prune_children"`
+}
+
+// ContainerListOptions represents options for listing containers
+type ContainerListOptions struct {
+	All     bool              `json:"all"`
+	Latest  bool              `json:"latest"`
+	Size    bool              `json:"size"`
+	Filters map[string]string `json:"filters,omitempty"`
+}
+
 // ContainerCreateConfig represents configuration for creating a container
 type ContainerCreateConfig struct {
 	Name          string                 `json:"name"`

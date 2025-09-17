@@ -4,71 +4,86 @@
       <el-icon class="is-loading" :size="size">
         <Loading />
       </el-icon>
-      <p v-if="text" class="loading-text">{{ text }}</p>
+      <p v-if="text" class="loading-text">
+        {{ text }}
+      </p>
     </div>
 
     <div v-else-if="type === 'dots'" class="loading-dots">
-      <div class="dot"></div>
-      <div class="dot"></div>
-      <div class="dot"></div>
-      <p v-if="text" class="loading-text">{{ text }}</p>
+      <div class="dot" />
+      <div class="dot" />
+      <div class="dot" />
+      <p v-if="text" class="loading-text">
+        {{ text }}
+      </p>
     </div>
 
     <div v-else-if="type === 'bar'" class="loading-bar">
-      <div class="loading-bar-fill" :style="{ width: `${progress}%` }"></div>
-      <p v-if="text" class="loading-text">{{ text }}</p>
-      <p v-if="showProgress" class="loading-progress">{{ progress }}%</p>
+      <div
+class="loading-bar-fill" :style="{ width: `${progress}%` }" />
+      <p v-if="text" class="loading-text">
+        {{ text }}
+      </p>
+      <p
+v-if="showProgress" class="loading-progress">{{ progress }}%</p>
     </div>
 
     <div v-else-if="type === 'skeleton'" class="loading-skeleton">
-      <div v-for="line in skeletonLines" :key="line" class="skeleton-line" :style="{ width: `${Math.random() * 40 + 60}%` }"></div>
+      <div
+        v-for="line in skeletonLines"
+        :key="line"
+        class="skeleton-line"
+        :style="{ width: `${Math.random() * 40 + 60}%` }"
+      />
     </div>
 
     <div v-else class="loading-overlay">
       <el-icon class="is-loading" :size="size">
         <Loading />
       </el-icon>
-      <p v-if="text" class="loading-text">{{ text }}</p>
+      <p v-if="text" class="loading-text">
+        {{ text }}
+      </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Loading } from '@element-plus/icons-vue'
+import { computed } from "vue";
+import { Loading } from "@element-plus/icons-vue";
 
 interface Props {
-  type?: 'spinner' | 'dots' | 'bar' | 'skeleton' | 'overlay'
-  size?: number
-  text?: string
-  fullscreen?: boolean
-  overlay?: boolean
-  progress?: number
-  showProgress?: boolean
-  skeletonLines?: number
-  background?: string
+  type?: "spinner" | "dots" | "bar" | "skeleton" | "overlay";
+  size?: number;
+  text?: string;
+  fullscreen?: boolean;
+  overlay?: boolean;
+  progress?: number;
+  showProgress?: boolean;
+  skeletonLines?: number;
+  background?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  type: 'spinner',
+  type: "spinner",
   size: 24,
-  text: '',
+  text: "",
   fullscreen: false,
   overlay: false,
   progress: 0,
   showProgress: false,
   skeletonLines: 3,
-  background: ''
-})
+  background: "",
+});
 
 const loadingClass = computed(() => [
-  'loading-component',
+  "loading-component",
   `loading-${props.type}`,
   {
-    'loading-fullscreen': props.fullscreen,
-    'loading-overlay-mode': props.overlay
-  }
-])
+    "loading-fullscreen": props.fullscreen,
+    "loading-overlay-mode": props.overlay,
+  },
+]);
 </script>
 
 <style scoped lang="scss">
@@ -134,9 +149,15 @@ const loadingClass = computed(() => [
     animation: dot-flashing 1.4s infinite ease-in-out;
     display: inline-block;
 
-    &:nth-child(1) { animation-delay: -0.32s; }
-    &:nth-child(2) { animation-delay: -0.16s; }
-    &:nth-child(3) { animation-delay: 0s; }
+    &:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+    &:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+    &:nth-child(3) {
+      animation-delay: 0s;
+    }
   }
 }
 
@@ -158,13 +179,18 @@ const loadingClass = computed(() => [
     overflow: hidden;
 
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent
+      );
       animation: shimmer 1.5s infinite;
     }
   }
@@ -206,7 +232,9 @@ const loadingClass = computed(() => [
 
 // Animations
 @keyframes dot-flashing {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     opacity: 0.3;
     transform: scale(0.8);
   }

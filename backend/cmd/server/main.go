@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -58,7 +57,7 @@ func main() {
 	logger.Info("Starting Docker Auto Update System...")
 
 	// Initialize database
-	db, err := setupDatabase(cfg, logger)
+	_, err = setupDatabase(cfg, logger)
 	if err != nil {
 		logger.Fatalf("Failed to setup database: %v", err)
 	}

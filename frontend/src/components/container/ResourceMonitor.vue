@@ -10,7 +10,9 @@
               <el-icon><Monitor /></el-icon>
               CPU Usage
             </div>
-            <div class="stat-value">{{ formatPercentage(currentStats?.cpu.usage || 0) }}</div>
+            <div class="stat-value">
+              {{ formatPercentage(currentStats?.cpu.usage || 0) }}
+            </div>
           </div>
           <div class="stat-content">
             <el-progress
@@ -37,7 +39,9 @@
               <el-icon><Cpu /></el-icon>
               Memory Usage
             </div>
-            <div class="stat-value">{{ formatBytes(currentStats?.memory.usage || 0) }}</div>
+            <div class="stat-value">
+              {{ formatBytes(currentStats?.memory.usage || 0) }}
+            </div>
           </div>
           <div class="stat-content">
             <el-progress
@@ -47,7 +51,9 @@
               :color="getResourceColor(currentStats?.memory.percentage || 0)"
             />
             <div class="stat-details">
-              <span>{{ formatPercentage(currentStats?.memory.percentage || 0) }}</span>
+              <span>{{
+                formatPercentage(currentStats?.memory.percentage || 0)
+              }}</span>
               <span v-if="currentStats?.memory.limit">
                 / {{ formatBytes(currentStats.memory.limit) }}
               </span>
@@ -67,14 +73,22 @@
           <div class="stat-content">
             <div class="network-details">
               <div class="network-item">
-                <el-icon class="network-icon tx"><ArrowUp /></el-icon>
+                <el-icon class="network-icon tx">
+                  <ArrowUp />
+                </el-icon>
                 <span class="network-label">TX:</span>
-                <span class="network-value">{{ formatBytes(currentStats?.network.txBytes || 0) }}</span>
+                <span class="network-value">{{
+                  formatBytes(currentStats?.network.txBytes || 0)
+                }}</span>
               </div>
               <div class="network-item">
-                <el-icon class="network-icon rx"><ArrowDown /></el-icon>
+                <el-icon class="network-icon rx">
+                  <ArrowDown />
+                </el-icon>
                 <span class="network-label">RX:</span>
-                <span class="network-value">{{ formatBytes(currentStats?.network.rxBytes || 0) }}</span>
+                <span class="network-value">{{
+                  formatBytes(currentStats?.network.rxBytes || 0)
+                }}</span>
               </div>
             </div>
           </div>
@@ -84,7 +98,7 @@
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-title">
-              <el-icon><HardDisk /></el-icon>
+              <el-icon><Folder /></el-icon>
               Disk I/O
             </div>
             <div class="stat-value">{{ formatBytes(diskTotal) }}/s</div>
@@ -92,14 +106,22 @@
           <div class="stat-content">
             <div class="disk-details">
               <div class="disk-item">
-                <el-icon class="disk-icon write"><Edit /></el-icon>
+                <el-icon class="disk-icon write">
+                  <Edit />
+                </el-icon>
                 <span class="disk-label">Write:</span>
-                <span class="disk-value">{{ formatBytes(currentStats?.disk.writeBytes || 0) }}</span>
+                <span class="disk-value">{{
+                  formatBytes(currentStats?.disk.writeBytes || 0)
+                }}</span>
               </div>
               <div class="disk-item">
-                <el-icon class="disk-icon read"><View /></el-icon>
+                <el-icon class="disk-icon read">
+                  <View />
+                </el-icon>
                 <span class="disk-label">Read:</span>
-                <span class="disk-value">{{ formatBytes(currentStats?.disk.readBytes || 0) }}</span>
+                <span class="disk-value">{{
+                  formatBytes(currentStats?.disk.readBytes || 0)
+                }}</span>
               </div>
             </div>
           </div>
@@ -114,10 +136,9 @@
         </div>
         <div class="update-controls">
           <el-button
-            size="small"
-            @click="refreshStats"
-            :loading="loading"
-          >
+size="small" @click="refreshStats"
+:loading="loading"
+>
             <el-icon><Refresh /></el-icon>
             Refresh
           </el-button>
@@ -138,7 +159,11 @@
       <div class="charts-header">
         <h3>Historical Data</h3>
         <div class="time-range-selector">
-          <el-select v-model="timeRange" @change="fetchHistoricalData" size="small">
+          <el-select
+            v-model="timeRange"
+            size="small"
+            @change="fetchHistoricalData"
+          >
             <el-option label="Last Hour" value="1h" />
             <el-option label="Last 6 Hours" value="6h" />
             <el-option label="Last 24 Hours" value="24h" />
@@ -151,25 +176,29 @@
         <!-- CPU Chart -->
         <div class="chart-container">
           <h4>CPU Usage Over Time</h4>
-          <div ref="cpuChartRef" class="chart"></div>
+          <div
+ref="cpuChartRef" class="chart" />
         </div>
 
         <!-- Memory Chart -->
         <div class="chart-container">
           <h4>Memory Usage Over Time</h4>
-          <div ref="memoryChartRef" class="chart"></div>
+          <div
+ref="memoryChartRef" class="chart" />
         </div>
 
         <!-- Network Chart -->
         <div class="chart-container">
           <h4>Network I/O Over Time</h4>
-          <div ref="networkChartRef" class="chart"></div>
+          <div
+ref="networkChartRef" class="chart" />
         </div>
 
         <!-- Disk Chart -->
         <div class="chart-container">
           <h4>Disk I/O Over Time</h4>
-          <div ref="diskChartRef" class="chart"></div>
+          <div
+ref="diskChartRef" class="chart" />
         </div>
       </div>
     </div>
@@ -238,14 +267,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { storeToRefs } from 'pinia'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { storeToRefs } from "pinia";
+import { ElMessage } from "element-plus";
 import {
   Monitor,
   Cpu,
   Connection,
-  HardDisk,
+  Folder,
   ArrowUp,
   ArrowDown,
   Edit,
@@ -253,251 +282,252 @@ import {
   Clock,
   Refresh,
   Timer,
-  Download
-} from '@element-plus/icons-vue'
+  Download,
+} from "@element-plus/icons-vue";
 
-import { useContainerStore } from '@/store/containers'
-import type { ResourceMetrics, ContainerStats } from '@/types/container'
+import { useContainerStore } from "@/store/containers";
 
 interface Props {
-  containerId: string
-  containerName: string
-  showHistorical?: boolean
-  detailedView?: boolean
-  autoStart?: boolean
+  containerId: string;
+  containerName: string;
+  showHistorical?: boolean;
+  detailedView?: boolean;
+  autoStart?: boolean;
 }
 
 interface Alert {
-  id: string
-  type: 'success' | 'warning' | 'error' | 'info'
-  title: string
-  message: string
+  id: string;
+  type: "success" | "warning" | "error" | "info";
+  title: string;
+  message: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showHistorical: false,
   detailedView: false,
-  autoStart: true
-})
+  autoStart: true,
+});
 
-const containerStore = useContainerStore()
-const { stats, historicalStats } = storeToRefs(containerStore)
+const containerStore = useContainerStore();
+const { stats, historicalStats } = storeToRefs(containerStore);
 
 // Local state
-const loading = ref(false)
-const autoRefresh = ref(true)
-const timeRange = ref('1h')
-const activeMetricTab = ref('system')
-const alerts = ref<Alert[]>([])
+const loading = ref(false);
+const autoRefresh = ref(true);
+const timeRange = ref("1h");
+const activeMetricTab = ref("system");
+const alerts = ref<Alert[]>([]);
 
 // Chart refs
-const cpuChartRef = ref<HTMLElement>()
-const memoryChartRef = ref<HTMLElement>()
-const networkChartRef = ref<HTMLElement>()
-const diskChartRef = ref<HTMLElement>()
+const cpuChartRef = ref<HTMLElement>();
+const memoryChartRef = ref<HTMLElement>();
+const networkChartRef = ref<HTMLElement>();
+const diskChartRef = ref<HTMLElement>();
 
 // Auto-refresh interval
-let refreshInterval: NodeJS.Timeout | null = null
+let refreshInterval: NodeJS.Timeout | null = null;
 
 // Computed
 const currentStats = computed(() => {
-  return stats.value.get(props.containerId)
-})
+  return stats.value.get(props.containerId);
+});
 
 const containerHistoricalStats = computed(() => {
-  return historicalStats.value.get(props.containerId) || []
-})
+  return historicalStats.value.get(props.containerId) || [];
+});
 
 const networkTotal = computed(() => {
-  if (!currentStats.value) return 0
-  return currentStats.value.network.txBytes + currentStats.value.network.rxBytes
-})
+  if (!currentStats.value) return 0;
+  return (
+    currentStats.value.network.txBytes + currentStats.value.network.rxBytes
+  );
+});
 
 const diskTotal = computed(() => {
-  if (!currentStats.value) return 0
-  return currentStats.value.disk.readBytes + currentStats.value.disk.writeBytes
-})
+  if (!currentStats.value) return 0;
+  return currentStats.value.disk.readBytes + currentStats.value.disk.writeBytes;
+});
 
 const systemMetrics = computed(() => {
-  if (!currentStats.value) return []
+  if (!currentStats.value) return [];
 
   return [
     {
-      metric: 'CPU Usage',
+      metric: "CPU Usage",
       value: formatPercentage(currentStats.value.cpu.usage),
-      unit: '%',
-      description: 'Current CPU utilization'
+      unit: "%",
+      description: "Current CPU utilization",
     },
     {
-      metric: 'Memory Usage',
+      metric: "Memory Usage",
       value: formatBytes(currentStats.value.memory.usage),
-      unit: 'Bytes',
-      description: 'Current memory consumption'
+      unit: "Bytes",
+      description: "Current memory consumption",
     },
     {
-      metric: 'Memory Percentage',
+      metric: "Memory Percentage",
       value: formatPercentage(currentStats.value.memory.percentage),
-      unit: '%',
-      description: 'Memory usage as percentage of limit'
+      unit: "%",
+      description: "Memory usage as percentage of limit",
     },
     {
-      metric: 'Network RX',
+      metric: "Network RX",
       value: formatBytes(currentStats.value.network.rxBytes),
-      unit: 'Bytes',
-      description: 'Total bytes received'
+      unit: "Bytes",
+      description: "Total bytes received",
     },
     {
-      metric: 'Network TX',
+      metric: "Network TX",
       value: formatBytes(currentStats.value.network.txBytes),
-      unit: 'Bytes',
-      description: 'Total bytes transmitted'
+      unit: "Bytes",
+      description: "Total bytes transmitted",
     },
     {
-      metric: 'Disk Read',
+      metric: "Disk Read",
       value: formatBytes(currentStats.value.disk.readBytes),
-      unit: 'Bytes',
-      description: 'Total bytes read from disk'
+      unit: "Bytes",
+      description: "Total bytes read from disk",
     },
     {
-      metric: 'Disk Write',
+      metric: "Disk Write",
       value: formatBytes(currentStats.value.disk.writeBytes),
-      unit: 'Bytes',
-      description: 'Total bytes written to disk'
-    }
-  ]
-})
+      unit: "Bytes",
+      description: "Total bytes written to disk",
+    },
+  ];
+});
 
 const networkMetrics = computed(() => {
-  if (!currentStats.value) return []
+  if (!currentStats.value) return [];
 
   // This would typically come from more detailed network stats
   return [
     {
-      interface: 'eth0',
+      interface: "eth0",
       rxBytes: formatBytes(currentStats.value.network.rxBytes),
       txBytes: formatBytes(currentStats.value.network.txBytes),
       rxPackets: currentStats.value.network.rxPackets.toLocaleString(),
-      txPackets: currentStats.value.network.txPackets.toLocaleString()
-    }
-  ]
-})
+      txPackets: currentStats.value.network.txPackets.toLocaleString(),
+    },
+  ];
+});
 
 // Methods
 function formatPercentage(value: number): string {
-  return `${Math.round(value * 100) / 100}%`
+  return `${Math.round(value * 100) / 100}%`;
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
+  if (bytes === 0) return "0 B";
 
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
 
-  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`
+  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
 }
 
 function formatTime(timestamp?: Date): string {
-  if (!timestamp) return 'Never'
-  return new Date(timestamp).toLocaleTimeString()
+  if (!timestamp) return "Never";
+  return new Date(timestamp).toLocaleTimeString();
 }
 
 function getResourceColor(percentage: number): string {
-  if (percentage < 50) return '#67c23a'
-  if (percentage < 80) return '#e6a23c'
-  return '#f56c6c'
+  if (percentage < 50) return "#67c23a";
+  if (percentage < 80) return "#e6a23c";
+  return "#f56c6c";
 }
 
 async function refreshStats() {
-  loading.value = true
+  loading.value = true;
   try {
-    await containerStore.fetchStats(props.containerId)
-    checkAlerts()
+    await containerStore.fetchStats(props.containerId);
+    checkAlerts();
   } catch (error) {
-    console.error('Failed to refresh stats:', error)
-    ElMessage.error('Failed to refresh statistics')
+    console.error("Failed to refresh stats:", error);
+    ElMessage.error("Failed to refresh statistics");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 async function fetchHistoricalData() {
-  if (!props.showHistorical) return
+  if (!props.showHistorical) return;
 
   try {
     await containerStore.fetchHistoricalStats(
       props.containerId,
       timeRange.value,
-      getIntervalForRange(timeRange.value)
-    )
-    await nextTick()
-    renderCharts()
+      getIntervalForRange(timeRange.value),
+    );
+    await nextTick();
+    renderCharts();
   } catch (error) {
-    console.error('Failed to fetch historical data:', error)
-    ElMessage.error('Failed to load historical data')
+    console.error("Failed to fetch historical data:", error);
+    ElMessage.error("Failed to load historical data");
   }
 }
 
 function getIntervalForRange(range: string): string {
   const intervals: Record<string, string> = {
-    '1h': '1m',
-    '6h': '5m',
-    '24h': '15m',
-    '7d': '1h'
-  }
-  return intervals[range] || '1m'
+    "1h": "1m",
+    "6h": "5m",
+    "24h": "15m",
+    "7d": "1h",
+  };
+  return intervals[range] || "1m";
 }
 
 function toggleAutoRefresh() {
-  autoRefresh.value = !autoRefresh.value
+  autoRefresh.value = !autoRefresh.value;
 
   if (autoRefresh.value) {
-    startAutoRefresh()
+    startAutoRefresh();
   } else {
-    stopAutoRefresh()
+    stopAutoRefresh();
   }
 }
 
 function startAutoRefresh() {
-  if (refreshInterval) return
+  if (refreshInterval) return;
 
   refreshInterval = setInterval(() => {
-    refreshStats()
-  }, 10000) // Refresh every 10 seconds
+    refreshStats();
+  }, 10000); // Refresh every 10 seconds
 }
 
 function stopAutoRefresh() {
   if (refreshInterval) {
-    clearInterval(refreshInterval)
-    refreshInterval = null
+    clearInterval(refreshInterval);
+    refreshInterval = null;
   }
 }
 
 function checkAlerts() {
-  const newAlerts: Alert[] = []
+  const newAlerts: Alert[] = [];
 
   if (currentStats.value) {
     // CPU alert
     if (currentStats.value.cpu.usage > 80) {
       newAlerts.push({
-        id: 'cpu-high',
-        type: 'warning',
-        title: 'High CPU Usage',
-        message: `CPU usage is at ${formatPercentage(currentStats.value.cpu.usage)}`
-      })
+        id: "cpu-high",
+        type: "warning",
+        title: "High CPU Usage",
+        message: `CPU usage is at ${formatPercentage(currentStats.value.cpu.usage)}`,
+      });
     }
 
     // Memory alert
     if (currentStats.value.memory.percentage > 85) {
       newAlerts.push({
-        id: 'memory-high',
-        type: 'error',
-        title: 'High Memory Usage',
-        message: `Memory usage is at ${formatPercentage(currentStats.value.memory.percentage)}`
-      })
+        id: "memory-high",
+        type: "error",
+        title: "High Memory Usage",
+        message: `Memory usage is at ${formatPercentage(currentStats.value.memory.percentage)}`,
+      });
     }
   }
 
-  alerts.value = newAlerts
+  alerts.value = newAlerts;
 }
 
 async function exportMetrics() {
@@ -508,33 +538,33 @@ async function exportMetrics() {
       currentStats: currentStats.value,
       historicalStats: containerHistoricalStats.value,
       systemMetrics: systemMetrics.value,
-      networkMetrics: networkMetrics.value
-    }
+      networkMetrics: networkMetrics.value,
+    };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json'
-    })
+      type: "application/json",
+    });
 
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${props.containerName}-metrics-${Date.now()}.json`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${props.containerName}-metrics-${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
-    ElMessage.success('Metrics exported successfully')
+    ElMessage.success("Metrics exported successfully");
   } catch (error) {
-    console.error('Failed to export metrics:', error)
-    ElMessage.error('Failed to export metrics')
+    console.error("Failed to export metrics:", error);
+    ElMessage.error("Failed to export metrics");
   }
 }
 
 function renderCharts() {
   // This would integrate with a charting library like Chart.js or ECharts
   // For now, we'll just log that charts would be rendered
-  console.log('Rendering charts with data:', containerHistoricalStats.value)
+  console.log("Rendering charts with data:", containerHistoricalStats.value);
 
   // Example Chart.js integration:
   /*
@@ -570,38 +600,41 @@ function renderCharts() {
 // Lifecycle
 onMounted(() => {
   if (props.autoStart) {
-    refreshStats()
+    refreshStats();
 
     if (props.showHistorical) {
-      fetchHistoricalData()
+      fetchHistoricalData();
     }
 
     if (autoRefresh.value) {
-      startAutoRefresh()
+      startAutoRefresh();
     }
   }
-})
+});
 
 onUnmounted(() => {
-  stopAutoRefresh()
-})
+  stopAutoRefresh();
+});
 
 // Watch for container changes
-watch(() => props.containerId, (newId) => {
-  if (newId) {
-    refreshStats()
-    if (props.showHistorical) {
-      fetchHistoricalData()
+watch(
+  () => props.containerId,
+  (newId) => {
+    if (newId) {
+      refreshStats();
+      if (props.showHistorical) {
+        fetchHistoricalData();
+      }
     }
-  }
-})
+  },
+);
 
 // Watch for time range changes
 watch(timeRange, () => {
   if (props.showHistorical) {
-    fetchHistoricalData()
+    fetchHistoricalData();
   }
-})
+});
 </script>
 
 <style scoped>

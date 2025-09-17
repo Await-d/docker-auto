@@ -44,7 +44,7 @@ type Config struct {
 	Monitoring MonitoringConfig `mapstructure:",squash"`
 
 	// Scheduler settings
-	Scheduler *SchedulerConfig `mapstructure:",squash"`
+	Scheduler SchedulerConfig `mapstructure:",squash"`
 }
 
 type DatabaseConfig struct {

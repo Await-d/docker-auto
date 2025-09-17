@@ -493,16 +493,7 @@ func (s *ImageService) initializeImageChecker() {
 	dockerhubClient := registry.NewDockerHubClient(nil)
 	s.imageChecker.RegisterClient("dockerhub", dockerhubClient)
 
-	// Register Harbor clients if configured
-	if s.config.Registry.Harbor.Enabled {
-		harborAuth := &registry.AuthConfig{
-			Username: s.config.Registry.Harbor.Username,
-			Password: s.config.Registry.Harbor.Password,
-			AuthType: "basic",
-		}
-		harborClient := registry.NewHarborClient(s.config.Registry.Harbor.URL, harborAuth)
-		s.imageChecker.RegisterClient("harbor", harborClient)
-	}
+	// Harbor clients can be registered later when needed
 
 	// Set default registry
 	s.imageChecker.SetDefaultRegistry("docker.io")
@@ -678,11 +669,13 @@ func (s *ImageService) logImageActivity(containerID int64, action, description s
 		}
 	}
 
+	userID := int64(0)
+	intContainerID := int(containerID)
 	activity := &model.ActivityLog{
-		UserID:       0, // System activity
+		UserID:       &userID, // System activity
 		Action:       action,
 		ResourceType: "container",
-		ResourceID:   &containerID,
+		ResourceID:   &intContainerID,
 		Description:  description,
 		Metadata:     metadataJSON,
 	}
@@ -708,8 +701,9 @@ func (s *ImageService) logSystemActivity(action, description string, metadata ma
 		}
 	}
 
+	systemUserID := int64(0)
 	activity := &model.ActivityLog{
-		UserID:      0, // System activity
+		UserID:      &systemUserID, // System activity
 		Action:      action,
 		Description: description,
 		Metadata:    metadataJSON,

@@ -128,17 +128,15 @@ func handlePanicRecovery(c *gin.Context, err interface{}, config *ErrorConfig) {
 	config.Logger.WithFields(logFields).Error("Panic recovered")
 
 	// Prepare error response
-	var response *utils.APIResponse
-
 	if config.EnableDetails {
-		response = utils.ErrorResponseWithDetails(http.StatusInternalServerError, "Internal server error", []utils.ErrorDetail{
+		errorResp := utils.ErrorResponseWithDetails(http.StatusInternalServerError, "Internal server error", []utils.ErrorDetail{
 			{Message: fmt.Sprintf("Panic: %v", err)},
 		})
+		c.JSON(http.StatusInternalServerError, errorResp)
 	} else {
-		response = utils.ErrorResponse(http.StatusInternalServerError, "Internal server error")
+		response := utils.ErrorResponse(http.StatusInternalServerError, "Internal server error")
+		c.JSON(http.StatusInternalServerError, response)
 	}
-
-	c.JSON(http.StatusInternalServerError, response)
 }
 
 // GlobalErrorHandler handles all errors in a centralized way
@@ -190,15 +188,14 @@ func handleError(c *gin.Context, err error) {
 		}
 
 		// Build response
-		response = map[string]interface{}{
-			"error": map[string]interface{}{
-				"type":    ae.Type,
-				"message": ae.Message,
-			},
-		}
-
 		if ae.Details != "" {
-			response["error"].(map[string]interface{})["details"] = ae.Details
+			errorResp := utils.ErrorResponseWithDetails(statusCode, ae.Message, []utils.ErrorDetail{
+				{Message: ae.Details},
+			})
+			c.JSON(statusCode, errorResp)
+			return
+		} else {
+			response = utils.ErrorResponse(statusCode, ae.Message)
 		}
 
 	} else {
@@ -250,8 +247,9 @@ func ValidationErrorMiddleware() gin.HandlerFunc {
 				}).Warn("Validation error")
 
 				c.JSON(http.StatusBadRequest, utils.ErrorResponseWithDetails(
+					http.StatusBadRequest,
 					"Validation failed",
-					err.Error(),
+					[]utils.ErrorDetail{{Message: err.Error()}},
 				))
 				return
 			}
@@ -269,7 +267,7 @@ func NotFoundHandler() gin.HandlerFunc {
 			"user_agent": c.Request.UserAgent(),
 		}).Warn("Route not found")
 
-		c.JSON(http.StatusNotFound, utils.ErrorResponse("Route not found"))
+		c.JSON(http.StatusNotFound, utils.ErrorResponse(http.StatusNotFound, "Route not found"))
 	}
 }
 
@@ -282,7 +280,7 @@ func MethodNotAllowedHandler() gin.HandlerFunc {
 			"client_ip":  c.ClientIP(),
 		}).Warn("Method not allowed")
 
-		c.JSON(http.StatusMethodNotAllowed, utils.ErrorResponse("Method not allowed"))
+		c.JSON(http.StatusMethodNotAllowed, utils.ErrorResponse(http.StatusMethodNotAllowed, "Method not allowed"))
 	}
 }
 
@@ -304,7 +302,7 @@ func DatabaseErrorHandler() gin.HandlerFunc {
 					"type":  "database_error",
 				}).Error("Database error")
 
-				c.JSON(http.StatusInternalServerError, utils.ErrorResponse("Database error"))
+				c.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, "Database error"))
 				return
 			}
 		}
@@ -324,7 +322,7 @@ func TimeoutErrorHandler() gin.HandlerFunc {
 					"type":  "timeout_error",
 				}).Warn("Request timeout")
 
-				c.JSON(http.StatusRequestTimeout, utils.ErrorResponse("Request timeout"))
+				c.JSON(http.StatusRequestTimeout, utils.ErrorResponse(http.StatusRequestTimeout, "Request timeout"))
 				return
 			}
 		}

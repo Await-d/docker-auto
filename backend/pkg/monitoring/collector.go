@@ -1,12 +1,8 @@
 package monitoring
 
 import (
-	"context"
-	"runtime"
 	"sync"
-	"syscall"
 	"time"
-	"unsafe"
 )
 
 // MetricsCollector manages all metrics collection
@@ -222,7 +218,7 @@ func (mc *MetricsCollector) collectionLoop() {
 
 // processMetricUpdate processes a single metric update
 func (mc *MetricsCollector) processMetricUpdate(update MetricUpdate) {
-	key := mc.metricKey(update.Name, update.Labels)
+	_ = mc.metricKey(update.Name, update.Labels)
 
 	switch update.Type {
 	case MetricTypeCounter:

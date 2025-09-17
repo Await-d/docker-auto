@@ -1,7 +1,9 @@
 <template>
   <div class="recent-activities-widget">
     <div class="widget-placeholder">
-      <el-icon :size="48"><Document /></el-icon>
+      <el-icon :size="48">
+        <Document />
+      </el-icon>
       <h3>Recent Activities</h3>
       <p>Timeline of recent system activities will be displayed here.</p>
       <div class="mock-data">
@@ -23,13 +25,13 @@
 </template>
 
 <script setup lang="ts">
-import { Document } from '@element-plus/icons-vue'
+import { Document } from "@element-plus/icons-vue";
 
 defineProps<{
-  widgetId: string
-  widgetConfig: any
-  widgetData?: any
-}>()
+  widgetId: string;
+  widgetConfig: any;
+  widgetData?: any;
+}>();
 </script>
 
 <style scoped lang="scss">

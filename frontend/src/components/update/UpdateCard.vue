@@ -9,8 +9,8 @@
         scheduled: update.scheduled,
         'requires-approval': update.requiresApproval,
         'security-update': isSecurityUpdate,
-        'critical-update': update.riskLevel === 'critical'
-      }
+        'critical-update': update.riskLevel === 'critical',
+      },
     ]"
   >
     <!-- Selection Checkbox -->
@@ -83,14 +83,18 @@
       <div class="version-change">
         <div class="current-version">
           <span class="version-label">Current</span>
-          <el-tag size="small" type="info">{{ update.currentVersion }}</el-tag>
+          <el-tag size="small" type="info">
+            {{ update.currentVersion }}
+          </el-tag>
         </div>
         <div class="version-arrow">
           <el-icon><Right /></el-icon>
         </div>
         <div class="new-version">
           <span class="version-label">Available</span>
-          <el-tag size="small" type="primary">{{ update.availableVersion }}</el-tag>
+          <el-tag size="small" type="primary">
+            {{ update.availableVersion }}
+          </el-tag>
         </div>
       </div>
 
@@ -115,7 +119,10 @@
       <h4>Security Patches</h4>
       <div class="patches-list">
         <div
-          v-for="patch in update.securityPatches.slice(0, showAllPatches ? undefined : 3)"
+          v-for="patch in update.securityPatches.slice(
+            0,
+            showAllPatches ? undefined : 3,
+          )"
           :key="patch.id"
           class="patch-item"
         >
@@ -132,7 +139,9 @@
               CVSS: {{ patch.score.toFixed(1) }}
             </span>
           </div>
-          <p class="patch-description">{{ patch.description }}</p>
+          <p class="patch-description">
+            {{ patch.description }}
+          </p>
         </div>
 
         <el-button
@@ -142,13 +151,20 @@
           size="small"
           @click="showAllPatches = !showAllPatches"
         >
-          {{ showAllPatches ? 'Show Less' : `Show ${update.securityPatches.length - 3} More` }}
+          {{
+            showAllPatches
+              ? "Show Less"
+              : `Show ${update.securityPatches.length - 3} More`
+          }}
         </el-button>
       </div>
     </div>
 
     <!-- Changelog Preview -->
-    <div v-if="update.changelog.length > 0 && expanded" class="changelog-preview">
+    <div
+      v-if="update.changelog.length > 0 && expanded"
+      class="changelog-preview"
+    >
       <h4>What's New</h4>
       <div class="changelog-items">
         <div
@@ -178,11 +194,9 @@
 
       <div v-if="update.releaseNotesUrl" class="release-notes-link">
         <el-button
-          text
-          type="primary"
-          size="small"
-          @click="openReleaseNotes"
-        >
+text type="primary"
+size="small" @click="openReleaseNotes"
+>
           <el-icon><Link /></el-icon>
           View Full Release Notes
         </el-button>
@@ -190,7 +204,13 @@
     </div>
 
     <!-- Dependencies and Conflicts -->
-    <div v-if="(update.dependencies.length > 0 || update.conflicts.length > 0) && expanded" class="dependencies-section">
+    <div
+      v-if="
+        (update.dependencies.length > 0 || update.conflicts.length > 0) &&
+          expanded
+      "
+      class="dependencies-section"
+    >
       <div v-if="update.dependencies.length > 0" class="dependencies">
         <h5>Dependencies</h5>
         <div class="dependency-list">
@@ -262,10 +282,12 @@
             v-if="!update.ignored && !update.scheduled"
             type="primary"
             :loading="loading"
-            :disabled="update.requiresApproval && update.approvalStatus !== 'approved'"
+            :disabled="
+              update.requiresApproval && update.approvalStatus !== 'approved'
+            "
             @click="$emit('update', update.id)"
           >
-            <el-icon><UpdateFilled /></el-icon>
+            <el-icon><Refresh /></el-icon>
             Update Now
           </el-button>
 
@@ -294,17 +316,13 @@
             <el-button :icon="MoreFilled" circle />
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item
-                  @click="$emit('details', update.id)"
-                >
+                <el-dropdown-item @click="$emit('details', update.id)">
                   <el-icon><View /></el-icon>
                   View Details
                 </el-dropdown-item>
-                <el-dropdown-item
-                  @click="$emit('compare', update.id)"
-                >
-                  <el-icon><Compare /></el-icon>
-                  Compare Versions
+                <el-dropdown-item @click="$emit('compare', update.id)">
+                  <el-icon><Document /></el-icon>
+                  Document Versions
                 </el-dropdown-item>
                 <el-dropdown-item
                   v-if="!update.ignored && !update.scheduled"
@@ -334,7 +352,7 @@
           :icon="expanded ? 'ArrowUp' : 'ArrowDown'"
           @click="toggleExpanded"
         >
-          {{ expanded ? 'Less Info' : 'More Info' }}
+          {{ expanded ? "Less Info" : "More Info" }}
         </el-button>
       </div>
     </div>
@@ -342,7 +360,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed } from "vue";
 import {
   Box,
   Clock,
@@ -355,161 +373,195 @@ import {
   Connection,
   CircleClose,
   Lock,
-  UpdateFilled,
+  Refresh,
   Check,
   MoreFilled,
   View,
-  Compare
-} from '@element-plus/icons-vue'
+  Document,
+} from "@element-plus/icons-vue";
 
 // Types
-import type { ContainerUpdate } from '@/types/updates'
+import type { ContainerUpdate } from "@/types/updates";
 
 // Props
 interface Props {
-  update: ContainerUpdate
-  selected?: boolean
-  loading?: boolean
-  viewMode?: 'list' | 'grid'
+  update: ContainerUpdate;
+  selected?: boolean;
+  loading?: boolean;
+  viewMode?: "list" | "grid";
 }
 
 const props = withDefaults(defineProps<Props>(), {
   selected: false,
   loading: false,
-  viewMode: 'list'
-})
+  viewMode: "list",
+});
 
 // Emits
 defineEmits<{
-  select: [updateId: string]
-  update: [updateId: string]
-  schedule: [updateId: string]
-  ignore: [updateId: string]
-  unignore: [updateId: string]
-  compare: [updateId: string]
-  details: [updateId: string]
-  reschedule: [updateId: string]
-}>()
+  select: [updateId: string];
+  update: [updateId: string];
+  schedule: [updateId: string];
+  ignore: [updateId: string];
+  unignore: [updateId: string];
+  compare: [updateId: string];
+  details: [updateId: string];
+  reschedule: [updateId: string];
+}>();
 
 // Local state
-const expanded = ref(false)
-const showAllPatches = ref(false)
+const expanded = ref(false);
+const showAllPatches = ref(false);
 
 // Computed
-const isSecurityUpdate = computed(() =>
-  props.update.updateType === 'security' || props.update.securityPatches.length > 0
-)
+const isSecurityUpdate = computed(
+  () =>
+    props.update.updateType === "security" ||
+    props.update.securityPatches.length > 0,
+);
 
 // Methods
 const toggleExpanded = () => {
-  expanded.value = !expanded.value
-}
+  expanded.value = !expanded.value;
+};
 
 const openReleaseNotes = () => {
   if (props.update.releaseNotesUrl) {
-    window.open(props.update.releaseNotesUrl, '_blank')
+    window.open(props.update.releaseNotesUrl, "_blank");
   }
-}
+};
 
 const getRiskLevelType = (riskLevel: string) => {
   switch (riskLevel) {
-    case 'low': return 'success'
-    case 'medium': return 'warning'
-    case 'high': return 'danger'
-    case 'critical': return 'danger'
-    default: return 'info'
+    case "low":
+      return "success";
+    case "medium":
+      return "warning";
+    case "high":
+      return "danger";
+    case "critical":
+      return "danger";
+    default:
+      return "info";
   }
-}
+};
 
 const getRiskIcon = (riskLevel: string) => {
   switch (riskLevel) {
-    case 'low': return 'Check'
-    case 'medium': return 'Warning'
-    case 'high': return 'Close'
-    case 'critical': return 'CircleClose'
-    default: return 'InfoFilled'
+    case "low":
+      return "Check";
+    case "medium":
+      return "Warning";
+    case "high":
+      return "Close";
+    case "critical":
+      return "CircleClose";
+    default:
+      return "InfoFilled";
   }
-}
+};
 
 const getUpdateTypeColor = (updateType: string) => {
   switch (updateType) {
-    case 'major': return 'danger'
-    case 'minor': return 'warning'
-    case 'patch': return 'success'
-    case 'security': return 'danger'
-    case 'hotfix': return 'warning'
-    default: return 'info'
+    case "major":
+      return "danger";
+    case "minor":
+      return "warning";
+    case "patch":
+      return "success";
+    case "security":
+      return "danger";
+    case "hotfix":
+      return "warning";
+    default:
+      return "info";
   }
-}
+};
 
 const getPatchSeverityType = (severity: string) => {
   switch (severity) {
-    case 'low': return 'success'
-    case 'medium': return 'warning'
-    case 'high': return 'danger'
-    case 'critical': return 'danger'
-    default: return 'info'
+    case "low":
+      return "success";
+    case "medium":
+      return "warning";
+    case "high":
+      return "danger";
+    case "critical":
+      return "danger";
+    default:
+      return "info";
   }
-}
+};
 
 const getChangeIcon = (type: string) => {
   switch (type) {
-    case 'added': return 'Plus'
-    case 'changed': return 'Edit'
-    case 'deprecated': return 'Warning'
-    case 'removed': return 'Minus'
-    case 'fixed': return 'Tools'
-    case 'security': return 'Lock'
-    default: return 'InfoFilled'
+    case "added":
+      return "Plus";
+    case "changed":
+      return "Edit";
+    case "deprecated":
+      return "Warning";
+    case "removed":
+      return "Minus";
+    case "fixed":
+      return "Tools";
+    case "security":
+      return "Lock";
+    default:
+      return "InfoFilled";
   }
-}
+};
 
 const getApprovalStatusType = (status: string) => {
   switch (status) {
-    case 'approved': return 'success'
-    case 'rejected': return 'danger'
-    case 'pending': return 'warning'
-    default: return 'info'
+    case "approved":
+      return "success";
+    case "rejected":
+      return "danger";
+    case "pending":
+      return "warning";
+    default:
+      return "info";
   }
-}
+};
 
 const getContainerName = (containerId: string) => {
   // This would typically lookup the container name from a store
   // For now, return a truncated ID
-  return containerId.substring(0, 8)
-}
+  return containerId.substring(0, 8);
+};
 
 const formatReleaseDate = (dateString: string) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffTime = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return `${diffDays} days ago`
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
 
-  return date.toLocaleDateString()
-}
+  return date.toLocaleDateString();
+};
 
 const formatSize = (bytes: number) => {
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  if (bytes === 0) return '0 B'
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
-}
+  const sizes = ["B", "KB", "MB", "GB"];
+  if (bytes === 0) return "0 B";
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+};
 
 const formatDuration = (seconds: number) => {
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
-}
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+};
 
 const formatDateTime = (dateString: string) => {
-  return new Date(dateString).toLocaleString()
-}
+  return new Date(dateString).toLocaleString();
+};
 </script>
 
 <style scoped lang="scss">
@@ -539,7 +591,7 @@ const formatDateTime = (dateString: string) => {
     border-color: var(--el-color-info-light-5);
 
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       top: 0;
       left: 0;
@@ -554,7 +606,7 @@ const formatDateTime = (dateString: string) => {
     background: var(--el-color-warning-light-9);
 
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       top: 0;
       left: 0;
@@ -568,13 +620,17 @@ const formatDateTime = (dateString: string) => {
     border-color: var(--el-color-danger-light-5);
 
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, var(--el-color-danger), var(--el-color-warning));
+      background: linear-gradient(
+        90deg,
+        var(--el-color-danger),
+        var(--el-color-warning)
+      );
     }
   }
 
@@ -583,7 +639,7 @@ const formatDateTime = (dateString: string) => {
     box-shadow: 0 0 0 1px var(--el-color-danger-light-8);
 
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       top: 0;
       left: 0;
@@ -596,7 +652,7 @@ const formatDateTime = (dateString: string) => {
 
   &.requires-approval {
     &::after {
-      content: '🔒';
+      content: "🔒";
       position: absolute;
       top: 12px;
       right: 12px;
@@ -623,8 +679,13 @@ const formatDateTime = (dateString: string) => {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .card-checkbox {
@@ -741,7 +802,7 @@ const formatDateTime = (dateString: string) => {
     gap: 6px;
 
     &::before {
-      content: '🔒';
+      content: "🔒";
     }
   }
 

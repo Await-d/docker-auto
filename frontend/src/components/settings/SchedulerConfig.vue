@@ -21,7 +21,11 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Max Concurrent Tasks" prop="maxConcurrentTasks" required>
+            <el-form-item
+              label="Max Concurrent Tasks"
+              prop="maxConcurrentTasks"
+              required
+            >
               <el-input-number
                 v-model="formData.maxConcurrentTasks"
                 :min="1"
@@ -31,7 +35,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Default Timeout" prop="defaultTimeout" required>
+            <el-form-item
+              label="Default Timeout"
+              prop="defaultTimeout"
+              required
+            >
               <div class="timeout-input">
                 <el-input-number
                   v-model="formData.defaultTimeout"
@@ -54,8 +62,8 @@
                 @change="handleFieldChange('deadLetterQueueEnabled', $event)"
               />
               <div class="field-help">
-                Store failed tasks for manual review
-              </div>
+Store failed tasks for manual review
+</div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -131,7 +139,11 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Metrics Retention" prop="performanceMonitoring.metricsRetention" required>
+            <el-form-item
+              label="Metrics Retention"
+              prop="performanceMonitoring.metricsRetention"
+              required
+            >
               <div class="timeout-input">
                 <el-input-number
                   v-model="formData.performanceMonitoring.metricsRetention"
@@ -144,7 +156,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Health Check Interval" prop="performanceMonitoring.healthCheckInterval" required>
+            <el-form-item
+              label="Health Check Interval"
+              prop="performanceMonitoring.healthCheckInterval"
+              required
+            >
               <div class="timeout-input">
                 <el-input-number
                   v-model="formData.performanceMonitoring.healthCheckInterval"
@@ -164,25 +180,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { Timer, Refresh, Monitor } from '@element-plus/icons-vue'
-import ConfigForm from './forms/ConfigForm.vue'
-import type { SchedulerSettings } from '@/store/settings'
+import { ref, computed, watch } from "vue";
+import { Timer, Refresh, Monitor } from "@element-plus/icons-vue";
+import ConfigForm from "./forms/ConfigForm.vue";
+import type { SchedulerSettings } from "@/store/settings";
 
 interface Props {
-  modelValue: SchedulerSettings
-  loading?: boolean
-  validationErrors?: Record<string, string[]>
+  modelValue: SchedulerSettings;
+  loading?: boolean;
+  validationErrors?: Record<string, string[]>;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: SchedulerSettings): void
-  (e: 'field-change', field: string, value: any): void
-  (e: 'field-validate', field: string, value: any): void
+  (e: "update:modelValue", value: SchedulerSettings): void;
+  (e: "field-change", field: string, value: any): void;
+  (e: "field-validate", field: string, value: any): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const formData = ref<SchedulerSettings>({
   maxConcurrentTasks: 10,
@@ -190,13 +206,13 @@ const formData = ref<SchedulerSettings>({
   retryPolicy: {
     enabled: true,
     maxAttempts: 3,
-    backoffStrategy: 'exponential',
+    backoffStrategy: "exponential",
     initialDelay: 30,
     maxDelay: 600,
-    multiplier: 2
+    multiplier: 2,
   },
   deadLetterQueueEnabled: true,
-  timezone: 'UTC',
+  timezone: "UTC",
   taskTemplates: [],
   performanceMonitoring: {
     metricsRetention: 30,
@@ -204,55 +220,92 @@ const formData = ref<SchedulerSettings>({
       taskFailureRate: 10,
       avgExecutionTime: 300,
       queueSize: 100,
-      resourceUsage: 80
+      resourceUsage: 80,
     },
-    healthCheckInterval: 60
-  }
-} as any)
+    healthCheckInterval: 60,
+  },
+} as any);
 
 const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue)
-})
+  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
+});
 
 const formRules = computed(() => ({
   maxConcurrentTasks: [
-    { required: true, message: 'Max concurrent tasks is required', trigger: 'blur' },
-    { type: 'number', min: 1, max: 50, message: 'Must be between 1 and 50', trigger: 'blur' }
+    {
+      required: true,
+      message: "Max concurrent tasks is required",
+      trigger: "blur",
+    },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 1 || value > 50) {
+          callback(new Error("Must be between 1 and 50"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   defaultTimeout: [
-    { required: true, message: 'Default timeout is required', trigger: 'blur' },
-    { type: 'number', min: 30, max: 7200, message: 'Must be between 30 and 7200 seconds', trigger: 'blur' }
+    { required: true, message: "Default timeout is required", trigger: "blur" },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 30 || value > 7200) {
+          callback(new Error("Must be between 30 and 7200 seconds"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   timezone: [
-    { required: true, message: 'Timezone is required', trigger: 'change' }
-  ]
-}))
+    { required: true, message: "Timezone is required", trigger: "change" },
+  ],
+}));
 
 const updateRetryPolicy = () => {
-  handleFieldChange('retryPolicy', formData.value.retryPolicy)
-}
+  handleFieldChange("retryPolicy", formData.value.retryPolicy);
+};
 
 const updatePerformanceMonitoring = () => {
-  handleFieldChange('performanceMonitoring', formData.value.performanceMonitoring)
-}
+  handleFieldChange(
+    "performanceMonitoring",
+    formData.value.performanceMonitoring,
+  );
+};
 
 const handleSave = () => {
-  emit('update:modelValue', formData.value)
-}
+  emit("update:modelValue", formData.value);
+};
 
 const handleReset = () => {
-  formData.value = { ...props.modelValue }
-}
+  formData.value = { ...props.modelValue };
+};
 
 const handleFieldChange = (field: string, value: any) => {
-  emit('field-change', field, value)
-}
+  emit("field-change", field, value);
+};
 
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    formData.value = { ...newValue }
-  }
-}, { immediate: true, deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = { ...newValue };
+    }
+  },
+  { immediate: true, deep: true },
+);
 </script>
 
 <style scoped lang="scss">

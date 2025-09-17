@@ -30,14 +30,16 @@
           <WarningFilled />
         </el-icon>
         <h2 class="error-title">Something went wrong</h2>
-        <p class="error-message">{{ globalError }}</p>
+        <p class="error-message">
+          {{ globalError }}
+        </p>
         <div class="error-actions">
           <el-button type="primary" @click="reloadApp">
             Reload Application
           </el-button>
           <el-button @click="clearError">
-            Try Again
-          </el-button>
+Try Again
+</el-button>
         </div>
       </div>
     </div>
@@ -55,14 +57,14 @@
           <strong>Environment:</strong> {{ env.MODE }}
         </div>
         <div class="debug-item">
-          <strong>Route:</strong> {{ currentRoute }}
+<strong>Route:</strong> {{ currentRoute }}
+</div>
+        <div class="debug-item">
+          <strong>User:</strong> {{ user?.username || "Not logged in" }}
         </div>
         <div class="debug-item">
-          <strong>User:</strong> {{ user?.username || 'Not logged in' }}
-        </div>
-        <div class="debug-item">
-          <strong>Theme:</strong> {{ theme }}
-        </div>
+<strong>Theme:</strong> {{ theme }}
+</div>
         <div class="debug-item">
           <strong>Screen Size:</strong> {{ screenSize }}
         </div>
@@ -72,103 +74,110 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, onErrorCaptured, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Box, Loading, WarningFilled, Close } from '@element-plus/icons-vue'
-import { useAuthStore } from '@/store/auth'
-import { useAppStore } from '@/store/app'
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  onErrorCaptured,
+  watch,
+} from "vue";
+import { useRoute } from "vue-router";
+import { ElMessage } from "element-plus";
+import { Box, Loading, WarningFilled, Close } from "@element-plus/icons-vue";
+import { useAuthStore } from "@/store/auth";
+import { useAppStore } from "@/store/app";
 
 // Composables
-const route = useRoute()
-const authStore = useAuthStore()
-const appStore = useAppStore()
+const route = useRoute();
+const authStore = useAuthStore();
+const appStore = useAppStore();
 
 // State
-const isInitializing = ref(true)
-const hasGlobalError = ref(false)
-const globalError = ref('')
-const showDebugPanel = ref(false)
+const isInitializing = ref(true);
+const hasGlobalError = ref(false);
+const globalError = ref("");
+const showDebugPanel = ref(false);
 
 // Environment info
-const env = import.meta.env
+const env = import.meta.env;
 
 // Computed properties
 const appClass = computed(() => ({
-  'app-dark': appStore.isDarkMode,
-  'app-mobile': appStore.isMobile,
-  'app-sidebar-collapsed': appStore.sidebarCollapsed,
-  'app-initializing': isInitializing.value,
-  'app-error': hasGlobalError.value
-}))
+  "app-dark": appStore.isDarkMode,
+  "app-mobile": appStore.isMobile,
+  "app-sidebar-collapsed": appStore.sidebarCollapsed,
+  "app-initializing": isInitializing.value,
+  "app-error": hasGlobalError.value,
+}));
 
-const currentRoute = computed(() => route.fullPath)
-const user = computed(() => authStore.user)
-const theme = computed(() => appStore.theme)
-const screenSize = computed(() => appStore.screenSize)
+const currentRoute = computed(() => route.fullPath);
+const user = computed(() => authStore.user);
+const theme = computed(() => appStore.theme);
+const screenSize = computed(() => appStore.screenSize);
 
 // Methods
 const getTransitionName = (route: any) => {
   if (route.meta?.transition) {
-    return route.meta.transition
+    return route.meta.transition;
   }
 
   // Default transition based on route type
-  if (route.path.startsWith('/login')) {
-    return 'slide-up'
+  if (route.path.startsWith("/login")) {
+    return "slide-up";
   }
 
-  return 'fade'
-}
+  return "fade";
+};
 
 const reloadApp = () => {
-  window.location.reload()
-}
+  window.location.reload();
+};
 
 const clearError = () => {
-  hasGlobalError.value = false
-  globalError.value = ''
-}
+  hasGlobalError.value = false;
+  globalError.value = "";
+};
 
 const toggleDebugPanel = () => {
-  showDebugPanel.value = !showDebugPanel.value
-}
+  showDebugPanel.value = !showDebugPanel.value;
+};
 
 // Initialize application
 const initializeApp = async () => {
   try {
-    console.log('🚀 Initializing Docker Auto-Update System...')
+    console.log("🚀 Initializing Docker Auto-Update System...");
 
     // Initialize app store
-    appStore.initialize()
+    appStore.initialize();
 
     // Initialize authentication
-    await authStore.initialize()
+    await authStore.initialize();
 
     // Start token validation for authenticated users
     if (authStore.isAuthenticated) {
-      authStore.startTokenCheck()
+      authStore.startTokenCheck();
     }
 
-    console.log('✅ Application initialized successfully')
+    console.log("✅ Application initialized successfully");
   } catch (error: any) {
-    console.error('❌ Failed to initialize application:', error)
-    hasGlobalError.value = true
-    globalError.value = error.message || 'Failed to initialize application'
+    console.error("❌ Failed to initialize application:", error);
+    hasGlobalError.value = true;
+    globalError.value = error.message || "Failed to initialize application";
   } finally {
     // Add a small delay for better UX
     setTimeout(() => {
-      isInitializing.value = false
-    }, 1000)
+      isInitializing.value = false;
+    }, 1000);
   }
-}
+};
 
 // Global error handler
-onErrorCaptured((error: any, instance: any, info: string) => {
-  console.error('Global error captured:', error, info)
+onErrorCaptured((error: any, _instance: any, info: string) => {
+  console.error("Global error captured:", error, info);
 
-  hasGlobalError.value = true
-  globalError.value = error.message || 'An unexpected error occurred'
+  hasGlobalError.value = true;
+  globalError.value = error.message || "An unexpected error occurred";
 
   // Report error to monitoring service
   if (env.PROD) {
@@ -176,99 +185,107 @@ onErrorCaptured((error: any, instance: any, info: string) => {
     // reportError(error, { instance, info })
   }
 
-  return false // Prevent the error from propagating further
-})
+  return false; // Prevent the error from propagating further
+});
 
 // Keyboard shortcuts for development
 const handleKeyboardShortcuts = (event: KeyboardEvent) => {
   if (env.DEV) {
     // Ctrl/Cmd + Shift + D to toggle debug panel
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'D') {
-      event.preventDefault()
-      toggleDebugPanel()
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      event.shiftKey &&
+      event.key === "D"
+    ) {
+      event.preventDefault();
+      toggleDebugPanel();
     }
 
     // Ctrl/Cmd + Shift + R to reload
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'R') {
-      event.preventDefault()
-      reloadApp()
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      event.shiftKey &&
+      event.key === "R"
+    ) {
+      event.preventDefault();
+      reloadApp();
     }
   }
-}
+};
 
 // Handle app visibility changes
 const handleVisibilityChange = () => {
   if (document.hidden) {
     // App became hidden - pause timers, etc.
-    console.log('App hidden')
+    console.log("App hidden");
   } else {
     // App became visible - resume timers, check for updates, etc.
-    console.log('App visible')
+    console.log("App visible");
 
     // Check authentication status when app becomes visible
     if (authStore.isAuthenticated) {
-      authStore.checkTokenExpiration()
+      authStore.checkTokenExpiration();
     }
   }
-}
+};
 
 // Handle online/offline status
 const handleOnline = () => {
-  ElMessage.success('Connection restored')
-  console.log('App back online')
-}
+  ElMessage.success("Connection restored");
+  console.log("App back online");
+};
 
 const handleOffline = () => {
-  ElMessage.warning('Connection lost - working offline')
-  console.log('App went offline')
-}
+  ElMessage.warning("Connection lost - working offline");
+  console.log("App went offline");
+};
 
 // Watch for auth state changes
 watch(
   () => authStore.isAuthenticated,
   (isAuthenticated) => {
     if (isAuthenticated) {
-      authStore.startTokenCheck()
+      authStore.startTokenCheck();
     } else {
-      authStore.stopTokenCheck()
+      authStore.stopTokenCheck();
     }
-  }
-)
+  },
+);
 
 // Lifecycle
 onMounted(async () => {
   // Add event listeners
-  document.addEventListener('keydown', handleKeyboardShortcuts)
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-  window.addEventListener('online', handleOnline)
-  window.addEventListener('offline', handleOffline)
+  document.addEventListener("keydown", handleKeyboardShortcuts);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("online", handleOnline);
+  window.addEventListener("offline", handleOffline);
 
   // Initialize application
-  await initializeApp()
+  await initializeApp();
 
   // Show debug panel in development
-  if (env.DEV && env.VITE_SHOW_DEBUG === 'true') {
-    showDebugPanel.value = true
+  if (env.DEV && env.VITE_SHOW_DEBUG === "true") {
+    showDebugPanel.value = true;
   }
-})
+});
 
 onUnmounted(() => {
   // Cleanup
-  document.removeEventListener('keydown', handleKeyboardShortcuts)
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-  window.removeEventListener('online', handleOnline)
-  window.removeEventListener('offline', handleOffline)
+  document.removeEventListener("keydown", handleKeyboardShortcuts);
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
+  window.removeEventListener("online", handleOnline);
+  window.removeEventListener("offline", handleOffline);
 
   // Stop auth checks
-  authStore.stopTokenCheck()
+  authStore.stopTokenCheck();
 
   // Cleanup app store
-  appStore.cleanup()
-})
+  appStore.cleanup();
+});
 </script>
 
 <style lang="scss">
-@use '@/styles/variables' as *;
+@use "@/styles/variables" as *;
 
 #app {
   width: 100%;

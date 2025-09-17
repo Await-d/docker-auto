@@ -3,7 +3,6 @@ package middleware
 import (
 	"docker-auto/pkg/utils"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -26,7 +25,7 @@ func JWTAuthMiddleware(secret string) gin.HandlerFunc {
 		// Extract token from header
 		authHeader := c.GetHeader(AuthorizationHeaderKey)
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authorization header is required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authorization header is required"))
 			c.Abort()
 			return
 		}
@@ -34,7 +33,7 @@ func JWTAuthMiddleware(secret string) gin.HandlerFunc {
 		token, err := extractTokenFromHeader(authHeader)
 		if err != nil {
 			logrus.WithError(err).Warn("Failed to extract token from header")
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Invalid authorization header format"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Invalid authorization header format"))
 			c.Abort()
 			return
 		}
@@ -43,7 +42,7 @@ func JWTAuthMiddleware(secret string) gin.HandlerFunc {
 		claims, err := utils.ValidateJWT(token, secret)
 		if err != nil {
 			logrus.WithError(err).WithField("token", token[:min(len(token), 20)]).Warn("Token validation failed")
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Invalid or expired token"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Invalid or expired token"))
 			c.Abort()
 			return
 		}
@@ -138,7 +137,7 @@ func RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := getUserFromContext(c)
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authentication required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authentication required"))
 			c.Abort()
 			return
 		}
@@ -151,17 +150,17 @@ func RequireActiveUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := getUserFromContext(c)
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Authentication required"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Authentication required"))
 			c.Abort()
 			return
 		}
 
-		if user.Status != "active" {
+		if !user.IsActive {
 			logrus.WithFields(logrus.Fields{
-				"user_id": user.UserID,
-				"status":  user.Status,
+				"user_id":   user.UserID,
+				"is_active": user.IsActive,
 			}).Warn("Inactive user attempted access")
-			c.JSON(http.StatusForbidden, utils.ErrorResponse("Account is not active"))
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "Account is not active"))
 			c.Abort()
 			return
 		}
@@ -187,7 +186,7 @@ func TokenBlacklistMiddleware(blacklist *utils.TokenBlacklist) gin.HandlerFunc {
 
 		if blacklist.IsBlacklisted(token) {
 			logrus.WithField("token", token[:min(len(token), 20)]).Warn("Blacklisted token used")
-			c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Token has been revoked"))
+			c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Token has been revoked"))
 			c.Abort()
 			return
 		}
@@ -196,10 +195,3 @@ func TokenBlacklistMiddleware(blacklist *utils.TokenBlacklist) gin.HandlerFunc {
 	}
 }
 
-// min returns the minimum of two integers
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}

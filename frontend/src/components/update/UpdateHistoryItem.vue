@@ -1,8 +1,7 @@
 <template>
   <div
-    class="update-history-item"
-    :class="[viewMode, `status-${item.status}`]"
-  >
+class="update-history-item" :class="[viewMode, `status-${item.status}`]"
+>
     <div v-if="viewMode === 'timeline'" class="timeline-indicator">
       <div class="timeline-dot" :class="getStatusClass(item.status)">
         <el-icon>
@@ -14,19 +13,24 @@
     <div class="item-content">
       <div class="item-header">
         <div class="container-info">
-          <h4 class="container-name">{{ item.containerName }}</h4>
+          <h4 class="container-name">
+            {{ item.containerName }}
+          </h4>
           <div class="version-change">
-            <el-tag size="small" type="info">{{ item.fromVersion }}</el-tag>
+            <el-tag size="small" type="info">
+              {{ item.fromVersion }}
+            </el-tag>
             <el-icon><Right /></el-icon>
-            <el-tag size="small" type="primary">{{ item.toVersion }}</el-tag>
+            <el-tag size="small" type="primary">
+              {{ item.toVersion }}
+            </el-tag>
           </div>
         </div>
 
         <div class="item-status">
           <el-tag
-            :type="getStatusTagType(item.status)"
-            size="small"
-          >
+:type="getStatusSellType(item.status)" size="small"
+>
             <el-icon>
               <component :is="getStatusIcon(item.status)" />
             </el-icon>
@@ -47,14 +51,16 @@
           <span v-else>-</span>
         </div>
         <div v-if="item.updateType" class="meta-item">
-          <el-icon><Tag /></el-icon>
+          <el-icon><Sell /></el-icon>
           <span>{{ item.updateType }}</span>
         </div>
       </div>
 
       <div v-if="item.error && item.status === 'failed'" class="error-info">
         <el-alert
-          :title="item.error"
+          :title="
+            typeof item.error === 'string' ? item.error : item.error.message
+          "
           type="error"
           :closable="false"
           show-icon
@@ -108,73 +114,88 @@ import {
   Right,
   User,
   Clock,
-  Tag,
+  Sell,
   View,
   Document,
   RefreshLeft,
-  Refresh
-} from '@element-plus/icons-vue'
+  Refresh,
+} from "@element-plus/icons-vue";
 
-import type { UpdateHistoryItem } from '@/types/updates'
+import type { UpdateHistoryItem } from "@/types/updates";
 
 // Props
 interface Props {
-  item: UpdateHistoryItem
-  viewMode?: 'timeline' | 'card' | 'table'
+  item: UpdateHistoryItem;
+  viewMode?: "timeline" | "card" | "table";
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  viewMode: 'timeline'
-})
+withDefaults(defineProps<Props>(), {
+  viewMode: "timeline",
+});
 
 // Emits
 defineEmits<{
-  rollback: [item: UpdateHistoryItem]
-  retry: [item: UpdateHistoryItem]
-  'view-logs': [item: UpdateHistoryItem]
-  'view-details': [item: UpdateHistoryItem]
-}>()
+  rollback: [item: UpdateHistoryItem];
+  retry: [item: UpdateHistoryItem];
+  "view-logs": [item: UpdateHistoryItem];
+  "view-details": [item: UpdateHistoryItem];
+}>();
 
 // Methods
 const getStatusClass = (status: string) => {
   switch (status) {
-    case 'completed': return 'success'
-    case 'failed': return 'error'
-    case 'cancelled': return 'warning'
-    case 'running': return 'primary'
-    default: return 'info'
+    case "completed":
+      return "success";
+    case "failed":
+      return "error";
+    case "cancelled":
+      return "warning";
+    case "running":
+      return "primary";
+    default:
+      return "info";
   }
-}
+};
 
-const getStatusTagType = (status: string) => {
+const getStatusSellType = (status: string) => {
   switch (status) {
-    case 'completed': return 'success'
-    case 'failed': return 'danger'
-    case 'cancelled': return 'warning'
-    case 'running': return 'primary'
-    default: return 'info'
+    case "completed":
+      return "success";
+    case "failed":
+      return "danger";
+    case "cancelled":
+      return "warning";
+    case "running":
+      return "primary";
+    default:
+      return "info";
   }
-}
+};
 
 const getStatusIcon = (status: string) => {
   switch (status) {
-    case 'completed': return 'Check'
-    case 'failed': return 'Close'
-    case 'cancelled': return 'Warning'
-    case 'running': return 'Loading'
-    default: return 'InfoFilled'
+    case "completed":
+      return "Check";
+    case "failed":
+      return "Close";
+    case "cancelled":
+      return "Warning";
+    case "running":
+      return "Loading";
+    default:
+      return "InfoFilled";
   }
-}
+};
 
 const formatTime = (dateString: string) => {
-  return new Date(dateString).toLocaleString()
-}
+  return new Date(dateString).toLocaleString();
+};
 
 const formatDuration = (seconds: number) => {
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
-}
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+};
 </script>
 
 <style scoped lang="scss">

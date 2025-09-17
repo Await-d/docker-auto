@@ -231,15 +231,15 @@ type NotificationTemplateRepository interface {
 // NotificationRepository defines the interface for user notification repository operations
 type NotificationRepository interface {
 	// Basic CRUD operations
-	Create(ctx context.Context, notification *model.Notification) error
-	GetByID(ctx context.Context, id int64) (*model.Notification, error)
-	Update(ctx context.Context, notification *model.Notification) error
+	Create(ctx context.Context, notification *model.UserNotification) error
+	GetByID(ctx context.Context, id int64) (*model.UserNotification, error)
+	Update(ctx context.Context, notification *model.UserNotification) error
 	Delete(ctx context.Context, id int64) error
 
 	// Query operations
-	List(ctx context.Context, filter *model.NotificationFilter) ([]*model.Notification, int64, error)
-	GetByUserID(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error)
-	GetByUserIDAndType(ctx context.Context, userID int64, notificationType string, limit, offset int) ([]*model.Notification, error)
+	List(ctx context.Context, filter *model.UserNotificationFilter) ([]*model.UserNotification, int64, error)
+	GetByUserID(ctx context.Context, userID int64, limit, offset int) ([]*model.UserNotification, error)
+	GetByUserIDAndType(ctx context.Context, userID int64, notificationType string, limit, offset int) ([]*model.UserNotification, error)
 	GetUnreadCount(ctx context.Context, userID int64) (int64, error)
 	GetTotalCount(ctx context.Context, userID int64) (int64, error)
 	GetCountByType(ctx context.Context, userID int64, notificationType string) (int64, error)
@@ -250,7 +250,8 @@ type NotificationRepository interface {
 
 	// Cleanup operations
 	DeleteOlderThan(ctx context.Context, cutoffDate time.Time) (int64, error)
-	CreateBatch(ctx context.Context, notifications []*model.Notification) error
+	CountOlderThan(ctx context.Context, cutoffDate time.Time) (int64, error)
+	CreateBatch(ctx context.Context, notifications []*model.UserNotification) error
 }
 
 // NotificationLogRepository defines the interface for notification log repository operations

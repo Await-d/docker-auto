@@ -1,7 +1,9 @@
 <template>
   <div class="health-monitor-widget">
     <div class="widget-placeholder">
-      <el-icon :size="48"><CircleCheckFilled /></el-icon>
+      <el-icon :size="48">
+        <CircleCheckFilled />
+      </el-icon>
       <h3>Health Monitor</h3>
       <p>Service health and availability metrics will be displayed here.</p>
       <div class="mock-data">
@@ -23,13 +25,13 @@
 </template>
 
 <script setup lang="ts">
-import { CircleCheckFilled } from '@element-plus/icons-vue'
+import { CircleCheckFilled } from "@element-plus/icons-vue";
 
 defineProps<{
-  widgetId: string
-  widgetConfig: any
-  widgetData?: any
-}>()
+  widgetId: string;
+  widgetConfig: any;
+  widgetData?: any;
+}>();
 </script>
 
 <style scoped lang="scss">
@@ -68,9 +70,15 @@ defineProps<{
       font-size: 12px;
 
       .health-status {
-        &.healthy { color: var(--el-color-success); }
-        &.warning { color: var(--el-color-warning); }
-        &.error { color: var(--el-color-danger); }
+        &.healthy {
+          color: var(--el-color-success);
+        }
+        &.warning {
+          color: var(--el-color-warning);
+        }
+        &.error {
+          color: var(--el-color-danger);
+        }
       }
     }
   }

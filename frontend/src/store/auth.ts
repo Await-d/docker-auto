@@ -1,320 +1,327 @@
 /**
  * Authentication store using Pinia
  */
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { ElMessage, ElNotification } from 'element-plus'
-import router from '@/router'
-import { http } from '@/utils/request'
-import { TokenManager, UserManager, AuthUtils } from '@/utils/auth'
-import { AUTH_ENDPOINTS, NOTIFICATION_TYPES } from '@/utils/constants'
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { ElMessage, ElNotification } from "element-plus";
+import router from "@/router";
+import { http } from "@/utils/request";
+import { TokenManager, UserManager, AuthUtils } from "@/utils/auth";
+import { AUTH_ENDPOINTS, NOTIFICATION_TYPES } from "@/utils/constants";
 import type {
   UserInfo,
   LoginForm,
   AuthResponse,
   ProfileUpdateForm,
   PasswordChangeForm,
-  TokenRefreshResponse
-} from '@/types/auth'
+  TokenRefreshResponse,
+} from "@/types/auth";
 
-export const useAuthStore = defineStore('auth', () => {
+export const useAuthStore = defineStore("auth", () => {
   // State
-  const user = ref<UserInfo | null>(null)
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
+  const user = ref<UserInfo | null>(null);
+  const isLoading = ref(false);
+  const error = ref<string | null>(null);
 
   // Computed
   const isAuthenticated = computed(() => {
-    const token = TokenManager.getAccessToken()
-    return !!token && TokenManager.isTokenValid(token) && !!user.value
-  })
+    const token = TokenManager.getAccessToken();
+    return !!token && TokenManager.isTokenValid(token) && !!user.value;
+  });
 
-  const userRole = computed(() => user.value?.role || null)
-  const userPermissions = computed(() => user.value?.permissions || [])
+  const userRole = computed(() => user.value?.role || null);
+  const userPermissions = computed(() => user.value?.permissions || []);
+  const token = computed(() => TokenManager.getAccessToken());
 
   // Actions
   const login = async (credentials: LoginForm): Promise<void> => {
-    isLoading.value = true
-    error.value = null
+    isLoading.value = true;
+    error.value = null;
 
     try {
       const response = await http.post<AuthResponse>(AUTH_ENDPOINTS.LOGIN, {
         username: credentials.username,
         password: credentials.password,
-        remember: credentials.remember
-      })
+        remember: credentials.remember,
+      });
 
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Login failed')
+        throw new Error(response.error || "Login failed");
       }
 
-      const { user: userData, accessToken, refreshToken } = response.data
+      const responseData = response.data.data!;
+      const userData = responseData.user;
+      const accessToken = responseData.accessToken;
+      const refreshToken = responseData.refreshToken;
 
       // Store tokens
-      TokenManager.setAccessToken(accessToken)
+      TokenManager.setAccessToken(accessToken);
       if (refreshToken) {
-        TokenManager.setRefreshToken(refreshToken)
+        TokenManager.setRefreshToken(refreshToken);
       }
 
       // Store user info
-      user.value = userData
-      UserManager.setUserInfo(userData)
+      user.value = userData;
+      UserManager.setUserInfo(userData);
 
-      ElMessage.success('Login successful')
+      ElMessage.success("Login successful");
 
       // Redirect to intended page or dashboard
-      const redirectUrl = AuthUtils.getRedirectUrl()
-      await router.push(redirectUrl)
+      const redirectUrl = AuthUtils.getRedirectUrl();
+      await router.push(redirectUrl);
     } catch (err: any) {
-      error.value = err.message || 'Login failed'
-      ElMessage.error(error.value)
-      throw err
+      error.value = err.message || "Login failed";
+      ElMessage.error(error.value || "Login failed");
+      throw err;
     } finally {
-      isLoading.value = false
+      isLoading.value = false;
     }
-  }
+  };
 
   const logout = async (): Promise<void> => {
-    isLoading.value = true
+    isLoading.value = true;
 
     try {
       // Call logout API if user is authenticated
       if (isAuthenticated.value) {
-        await http.post(AUTH_ENDPOINTS.LOGOUT)
+        await http.post(AUTH_ENDPOINTS.LOGOUT);
       }
     } catch (err) {
-      console.warn('Logout API call failed:', err)
+      console.warn("Logout API call failed:", err);
     } finally {
       // Clear local state regardless of API success
-      user.value = null
-      error.value = null
-      TokenManager.clearTokens()
-      UserManager.clearUserInfo()
+      user.value = null;
+      error.value = null;
+      TokenManager.clearTokens();
+      UserManager.clearUserInfo();
 
-      ElMessage.info('Logged out successfully')
+      ElMessage.info("Logged out successfully");
 
       // Redirect to login page
-      await router.push('/login')
-      isLoading.value = false
+      await router.push("/login");
+      isLoading.value = false;
     }
-  }
+  };
 
   const refreshToken = async (): Promise<boolean> => {
     try {
-      const refreshToken = TokenManager.getRefreshToken()
+      const refreshToken = TokenManager.getRefreshToken();
       if (!refreshToken) {
-        return false
+        return false;
       }
 
-      const response = await http.post<TokenRefreshResponse>(AUTH_ENDPOINTS.REFRESH, {
-        refresh_token: refreshToken
-      })
+      const response = await http.post<TokenRefreshResponse>(
+        AUTH_ENDPOINTS.REFRESH,
+        {
+          refresh_token: refreshToken,
+        },
+      );
 
       if (!response.success || !response.data) {
-        return false
+        return false;
       }
 
-      const { accessToken, refreshToken: newRefreshToken } = response.data
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-      TokenManager.setAccessToken(accessToken)
+      TokenManager.setAccessToken(accessToken);
       if (newRefreshToken) {
-        TokenManager.setRefreshToken(newRefreshToken)
+        TokenManager.setRefreshToken(newRefreshToken);
       }
 
-      return true
+      return true;
     } catch (err) {
-      console.error('Token refresh failed:', err)
-      return false
+      console.error("Token refresh failed:", err);
+      return false;
     }
-  }
+  };
 
   const getCurrentUser = async (): Promise<void> => {
     try {
-      const response = await http.get<UserInfo>(AUTH_ENDPOINTS.PROFILE)
+      const response = await http.get<UserInfo>(AUTH_ENDPOINTS.PROFILE);
 
       if (response.success && response.data) {
-        user.value = response.data
-        UserManager.setUserInfo(response.data)
+        user.value = response.data;
+        UserManager.setUserInfo(response.data);
       }
     } catch (err: any) {
-      console.error('Failed to get current user:', err)
+      console.error("Failed to get current user:", err);
 
       // If token is invalid, logout
       if (err.code === 401) {
-        await logout()
+        await logout();
       }
 
-      throw err
+      throw err;
     }
-  }
+  };
 
   const updateProfile = async (data: ProfileUpdateForm): Promise<void> => {
-    isLoading.value = true
-    error.value = null
+    isLoading.value = true;
+    error.value = null;
 
     try {
-      const response = await http.put<UserInfo>(AUTH_ENDPOINTS.PROFILE, data)
+      const response = await http.put<UserInfo>(AUTH_ENDPOINTS.PROFILE, data);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Profile update failed')
+        throw new Error(response.error || "Profile update failed");
       }
 
-      user.value = response.data
-      UserManager.setUserInfo(response.data)
+      user.value = response.data;
+      UserManager.setUserInfo(response.data);
 
       ElNotification({
-        title: 'Success',
-        message: 'Profile updated successfully',
-        type: NOTIFICATION_TYPES.SUCCESS
-      })
+        title: "Success",
+        message: "Profile updated successfully",
+        type: NOTIFICATION_TYPES.SUCCESS,
+      });
     } catch (err: any) {
-      error.value = err.message || 'Profile update failed'
+      error.value = err.message || "Profile update failed";
       ElNotification({
-        title: 'Error',
-        message: error.value,
-        type: NOTIFICATION_TYPES.ERROR
-      })
-      throw err
+        title: "Error",
+        message: error.value || "Profile update failed",
+        type: NOTIFICATION_TYPES.ERROR,
+      });
+      throw err;
     } finally {
-      isLoading.value = false
+      isLoading.value = false;
     }
-  }
+  };
 
   const changePassword = async (data: PasswordChangeForm): Promise<void> => {
-    isLoading.value = true
-    error.value = null
+    isLoading.value = true;
+    error.value = null;
 
     try {
-      const response = await http.post('/auth/change-password', {
+      const response = await http.post("/auth/change-password", {
         current_password: data.currentPassword,
-        new_password: data.newPassword
-      })
+        new_password: data.newPassword,
+      });
 
       if (!response.success) {
-        throw new Error(response.error || 'Password change failed')
+        throw new Error(response.error || "Password change failed");
       }
 
       ElNotification({
-        title: 'Success',
-        message: 'Password changed successfully',
-        type: NOTIFICATION_TYPES.SUCCESS
-      })
+        title: "Success",
+        message: "Password changed successfully",
+        type: NOTIFICATION_TYPES.SUCCESS,
+      });
     } catch (err: any) {
-      error.value = err.message || 'Password change failed'
+      error.value = err.message || "Password change failed";
       ElNotification({
-        title: 'Error',
-        message: error.value,
-        type: NOTIFICATION_TYPES.ERROR
-      })
-      throw err
+        title: "Error",
+        message: error.value || "Password change failed",
+        type: NOTIFICATION_TYPES.ERROR,
+      });
+      throw err;
     } finally {
-      isLoading.value = false
+      isLoading.value = false;
     }
-  }
+  };
 
   const hasPermission = (permission: string): boolean => {
-    return UserManager.hasPermission(permission, user.value)
-  }
+    return UserManager.hasPermission(permission, user.value);
+  };
 
   const hasRole = (role: string): boolean => {
-    return UserManager.hasRole(role, user.value)
-  }
+    return UserManager.hasRole(role, user.value);
+  };
 
   const canAccess = (route: string): boolean => {
     // Basic route access check - can be enhanced based on route metadata
     if (!isAuthenticated.value) {
-      return false
+      return false;
     }
 
     // Admin can access everything
-    if (hasRole('admin')) {
-      return true
+    if (hasRole("admin")) {
+      return true;
     }
 
     // Define route permissions
     const routePermissions: Record<string, string[]> = {
-      '/containers': ['container:read'],
-      '/images': ['image:read'],
-      '/updates': ['update:read'],
-      '/logs': ['log:read'],
-      '/settings': ['admin'],
-      '/users': ['admin']
-    }
+      "/containers": ["container:read"],
+      "/images": ["image:read"],
+      "/updates": ["update:read"],
+      "/logs": ["log:read"],
+      "/settings": ["admin"],
+      "/users": ["admin"],
+    };
 
-    const requiredPermissions = routePermissions[route]
+    const requiredPermissions = routePermissions[route];
     if (!requiredPermissions) {
-      return true // No specific permissions required
+      return true; // No specific permissions required
     }
 
-    return requiredPermissions.some(permission => hasPermission(permission))
-  }
+    return requiredPermissions.some((permission) => hasPermission(permission));
+  };
 
   const initialize = async (): Promise<void> => {
-    const token = TokenManager.getAccessToken()
+    const token = TokenManager.getAccessToken();
     if (!token || !TokenManager.isTokenValid(token)) {
-      return
+      return;
     }
 
     try {
-      await getCurrentUser()
+      await getCurrentUser();
 
       // Check if token needs refresh
       if (TokenManager.needsRefresh(token)) {
-        await refreshToken()
+        await refreshToken();
       }
     } catch (err) {
-      console.error('Failed to initialize auth store:', err)
+      console.error("Failed to initialize auth store:", err);
       // Clear invalid session
-      await logout()
+      await logout();
     }
-  }
+  };
 
   const checkTokenExpiration = (): void => {
-    const token = TokenManager.getAccessToken()
+    const token = TokenManager.getAccessToken();
     if (!token) {
-      return
+      return;
     }
 
     if (!TokenManager.isTokenValid(token)) {
       ElNotification({
-        title: 'Session Expired',
-        message: 'Your session has expired. Please log in again.',
+        title: "Session Expired",
+        message: "Your session has expired. Please log in again.",
         type: NOTIFICATION_TYPES.WARNING,
-        duration: 0 // Don't auto close
-      })
-      logout()
+        duration: 0, // Don't auto close
+      });
+      logout();
     } else if (TokenManager.needsRefresh(token)) {
       refreshToken().catch(() => {
         ElNotification({
-          title: 'Session Expiring',
-          message: 'Your session is about to expire. Please save your work.',
-          type: NOTIFICATION_TYPES.WARNING
-        })
-      })
+          title: "Session Expiring",
+          message: "Your session is about to expire. Please save your work.",
+          type: NOTIFICATION_TYPES.WARNING,
+        });
+      });
     }
-  }
+  };
 
   // Set up periodic token check
-  let tokenCheckInterval: NodeJS.Timeout | null = null
+  let tokenCheckInterval: NodeJS.Timeout | null = null;
 
   const startTokenCheck = (): void => {
     if (tokenCheckInterval) {
-      clearInterval(tokenCheckInterval)
+      clearInterval(tokenCheckInterval);
     }
 
     tokenCheckInterval = setInterval(() => {
       if (isAuthenticated.value) {
-        checkTokenExpiration()
+        checkTokenExpiration();
       }
-    }, 60000) // Check every minute
-  }
+    }, 60000); // Check every minute
+  };
 
   const stopTokenCheck = (): void => {
     if (tokenCheckInterval) {
-      clearInterval(tokenCheckInterval)
-      tokenCheckInterval = null
+      clearInterval(tokenCheckInterval);
+      tokenCheckInterval = null;
     }
-  }
+  };
 
   return {
     // State
@@ -326,6 +333,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     userRole,
     userPermissions,
+    token,
 
     // Actions
     login,
@@ -340,30 +348,30 @@ export const useAuthStore = defineStore('auth', () => {
     initialize,
     checkTokenExpiration,
     startTokenCheck,
-    stopTokenCheck
-  }
-})
+    stopTokenCheck,
+  };
+});
 
 // Export convenience composable
 export const useAuth = () => {
-  const authStore = useAuthStore()
+  const authStore = useAuthStore();
 
   return {
     ...authStore,
 
     // Additional convenience methods
-    isAdmin: computed(() => authStore.hasRole('admin')),
-    isOperator: computed(() => authStore.hasRole('operator')),
-    isViewer: computed(() => authStore.hasRole('viewer')),
+    isAdmin: computed(() => authStore.hasRole("admin")),
+    isOperator: computed(() => authStore.hasRole("operator")),
+    isViewer: computed(() => authStore.hasRole("viewer")),
 
     userDisplayName: computed(() => {
-      if (!authStore.user) return ''
-      return AuthUtils.formatUserDisplayName(authStore.user)
+      if (!authStore.user) return "";
+      return AuthUtils.formatUserDisplayName(authStore.user);
     }),
 
     userAvatar: computed(() => {
-      if (!authStore.user) return ''
-      return AuthUtils.getUserAvatar(authStore.user)
-    })
-  }
-}
+      if (!authStore.user) return "";
+      return AuthUtils.getUserAvatar(authStore.user);
+    }),
+  };
+};

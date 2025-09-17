@@ -23,9 +23,8 @@
               Refresh
             </el-button>
             <el-button
-              :icon="Download"
-              @click="showExportDialog = true"
-            >
+:icon="Download" @click="showExportDialog = true"
+>
               Export
             </el-button>
             <el-button
@@ -55,11 +54,15 @@
                 <div class="chart-details">
                   <span class="detail-item">
                     <span class="label">Completed:</span>
-                    <span class="value success">{{ updateAnalytics.updatesThisMonth }}</span>
+                    <span class="value success">{{
+                      updateAnalytics.updatesThisMonth
+                    }}</span>
                   </span>
                   <span class="detail-item">
                     <span class="label">Failed:</span>
-                    <span class="value error">{{ updateAnalytics.failedUpdatesLast30Days }}</span>
+                    <span class="value error">{{
+                      updateAnalytics.failedUpdatesLast30Days
+                    }}</span>
                   </span>
                 </div>
               </div>
@@ -69,11 +72,15 @@
             <div class="analytics-card">
               <h3>Average Update Time</h3>
               <div class="metric-display">
-                <span class="metric-value">{{ formatDuration(updateAnalytics.averageUpdateTime) }}</span>
+                <span class="metric-value">{{
+                  formatDuration(updateAnalytics.averageUpdateTime)
+                }}</span>
                 <span class="metric-unit">minutes</span>
               </div>
               <div class="metric-trend">
-                <el-icon class="trend-icon down"><ArrowDown /></el-icon>
+                <el-icon class="trend-icon down">
+                  <ArrowDown />
+                </el-icon>
                 <span class="trend-text">12% faster than last month</span>
               </div>
             </div>
@@ -89,17 +96,23 @@
                   :style="{ height: `${(day.total / maxDailyUpdates) * 100}%` }"
                   :title="`${day.date}: ${day.completed} completed, ${day.failed} failed`"
                 >
-                  <div class="bar-completed" :style="{ height: `${(day.completed / day.total) * 100}%` }"></div>
-                  <div class="bar-failed" :style="{ height: `${(day.failed / day.total) * 100}%` }"></div>
+                  <div
+                    class="bar-completed"
+                    :style="{ height: `${(day.completed / day.total) * 100}%` }"
+                  />
+                  <div
+                    class="bar-failed"
+                    :style="{ height: `${(day.failed / day.total) * 100}%` }"
+                  />
                 </div>
               </div>
               <div class="trend-legend">
                 <div class="legend-item">
-                  <div class="legend-color success"></div>
+                  <div class="legend-color success" />
                   <span>Completed</span>
                 </div>
                 <div class="legend-item">
-                  <div class="legend-color error"></div>
+                  <div class="legend-color error" />
                   <span>Failed</span>
                 </div>
               </div>
@@ -113,9 +126,8 @@
     <div class="history-controls">
       <div class="filters-section">
         <el-button
-          :icon="Filter"
-          @click="showFilters = !showFilters"
-        >
+:icon="Filter" @click="showFilters = !showFilters"
+>
           Filters
           <el-badge
             v-if="activeFiltersCount > 0"
@@ -202,33 +214,33 @@
           <div class="filter-group">
             <label>Status</label>
             <el-checkbox-group v-model="historyFilters.status">
-              <el-checkbox label="completed">Completed</el-checkbox>
-              <el-checkbox label="failed">Failed</el-checkbox>
-              <el-checkbox label="cancelled">Cancelled</el-checkbox>
-              <el-checkbox label="running">Running</el-checkbox>
+              <el-checkbox label="completed"> Completed </el-checkbox>
+              <el-checkbox label="failed"> Failed </el-checkbox>
+              <el-checkbox label="cancelled"> Cancelled </el-checkbox>
+              <el-checkbox label="running"> Running </el-checkbox>
             </el-checkbox-group>
           </div>
 
           <div class="filter-group">
             <label>Update Type</label>
             <el-checkbox-group v-model="historyFilters.updateType">
-              <el-checkbox label="major">Major</el-checkbox>
-              <el-checkbox label="minor">Minor</el-checkbox>
-              <el-checkbox label="patch">Patch</el-checkbox>
-              <el-checkbox label="security">Security</el-checkbox>
-              <el-checkbox label="hotfix">Hotfix</el-checkbox>
-              <el-checkbox label="rollback">Rollback</el-checkbox>
+              <el-checkbox label="major"> Major </el-checkbox>
+              <el-checkbox label="minor"> Minor </el-checkbox>
+              <el-checkbox label="patch"> Patch </el-checkbox>
+              <el-checkbox label="security"> Security </el-checkbox>
+              <el-checkbox label="hotfix"> Hotfix </el-checkbox>
+              <el-checkbox label="rollback"> Rollback </el-checkbox>
             </el-checkbox-group>
           </div>
 
           <div class="filter-group">
             <label>Triggered By</label>
             <el-checkbox-group v-model="historyFilters.triggeredBy">
-              <el-checkbox label="manual">Manual</el-checkbox>
-              <el-checkbox label="scheduled">Scheduled</el-checkbox>
-              <el-checkbox label="policy">Policy</el-checkbox>
-              <el-checkbox label="webhook">Webhook</el-checkbox>
-              <el-checkbox label="api">API</el-checkbox>
+              <el-checkbox label="manual"> Manual </el-checkbox>
+              <el-checkbox label="scheduled"> Scheduled </el-checkbox>
+              <el-checkbox label="policy"> Policy </el-checkbox>
+              <el-checkbox label="webhook"> Webhook </el-checkbox>
+              <el-checkbox label="api"> API </el-checkbox>
             </el-checkbox-group>
           </div>
 
@@ -246,8 +258,10 @@
         </div>
 
         <div class="filter-actions">
-          <el-button @click="clearAllFilters">Clear All</el-button>
-          <el-button type="primary" @click="applyFilters">Apply Filters</el-button>
+          <el-button @click="clearAllFilters"> Clear All </el-button>
+          <el-button type="primary" @click="applyFilters">
+            Apply Filters
+          </el-button>
         </div>
       </div>
     </el-collapse-transition>
@@ -260,9 +274,8 @@
 
       <div v-else-if="updateHistory.length === 0" class="empty-state">
         <el-empty
-          :image-size="200"
-          description="No update history found"
-        >
+:image-size="200" description="No update history found"
+>
           <el-button type="primary" @click="refreshHistory">
             Refresh History
           </el-button>
@@ -318,13 +331,17 @@
 
             <el-table-column prop="fromVersion" label="From" width="120">
               <template #default="{ row }">
-                <el-tag size="small" type="info">{{ row.fromVersion }}</el-tag>
+                <el-tag size="small" type="info">
+                  {{ row.fromVersion }}
+                </el-tag>
               </template>
             </el-table-column>
 
             <el-table-column prop="toVersion" label="To" width="120">
               <template #default="{ row }">
-                <el-tag size="small" type="primary">{{ row.toVersion }}</el-tag>
+                <el-tag size="small" type="primary">
+                  {{ row.toVersion }}
+                </el-tag>
               </template>
             </el-table-column>
 
@@ -342,9 +359,8 @@
             <el-table-column prop="status" label="Status" width="120">
               <template #default="{ row }">
                 <el-tag
-                  size="small"
-                  :type="getStatusTagType(row.status)"
-                >
+size="small" :type="getStatusTagType(row.status)"
+>
                   <el-icon>
                     <component :is="getStatusIcon(row.status)" />
                   </el-icon>
@@ -353,23 +369,41 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="startedAt" label="Started" width="180" sortable>
+            <el-table-column
+              prop="startedAt"
+              label="Started"
+              width="180"
+              sortable
+            >
               <template #default="{ row }">
                 <div class="date-cell">
                   <span>{{ formatDateTime(row.startedAt) }}</span>
-                  <span class="date-relative">{{ getRelativeTime(row.startedAt) }}</span>
+                  <span class="date-relative">{{
+                    getRelativeTime(row.startedAt)
+                  }}</span>
                 </div>
               </template>
             </el-table-column>
 
-            <el-table-column prop="duration" label="Duration" width="120" sortable>
+            <el-table-column
+              prop="duration"
+              label="Duration"
+              width="120"
+              sortable
+            >
               <template #default="{ row }">
-                <span v-if="row.duration">{{ formatDuration(row.duration) }}</span>
+                <span v-if="row.duration">{{
+                  formatDuration(row.duration)
+                }}</span>
                 <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
 
-            <el-table-column prop="triggeredBy" label="Triggered By" width="120">
+            <el-table-column
+              prop="triggeredBy"
+              label="Triggered By"
+              width="120"
+            >
               <template #default="{ row }">
                 <el-tag size="small" effect="plain">
                   <el-icon>
@@ -490,8 +524,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Clock,
   Refresh,
@@ -505,24 +539,29 @@ import {
   View,
   Document,
   RefreshLeft,
-  Box
-} from '@element-plus/icons-vue'
+  Box,
+} from "@element-plus/icons-vue";
 
 // Components
-import UpdateHistoryItem from '@/components/update/UpdateHistoryItem.vue'
-import UpdateDetailsDialog from '@/components/update/UpdateDetailsDialog.vue'
-import UpdateLogsDialog from '@/components/update/UpdateLogsDialog.vue'
-import ExportDialog from '@/components/update/ExportDialog.vue'
-import RollbackDialog from '@/components/update/RollbackDialog.vue'
+import UpdateHistoryItem from "@/components/update/UpdateHistoryItem.vue";
+import UpdateDetailsDialog from "@/components/update/UpdateDetailsDialog.vue";
+import UpdateLogsDialog from "@/components/update/UpdateLogsDialog.vue";
+import ExportDialog from "@/components/update/ExportDialog.vue";
+import RollbackDialog from "@/components/update/RollbackDialog.vue";
 
 // Store
-import { useUpdatesStore } from '@/store/updates'
+import { useUpdatesStore } from "@/store/updates";
 
 // Types
-import type { UpdateHistoryItem as UpdateHistoryItemType, UpdateFilter } from '@/types/updates'
+import type {
+  UpdateHistoryItem as IUpdateHistoryItem,
+  UpdateFilter,
+  ExportForm,
+  RollbackForm,
+} from "@/types/updates";
 
 // Store instance
-const updatesStore = useUpdatesStore()
+const updatesStore = useUpdatesStore();
 
 // Reactive state from store
 const {
@@ -533,138 +572,140 @@ const {
   historyPageSize,
   totalHistoryItems,
   historyFilters,
-  sortConfig
-} = updatesStore
+  sortConfig,
+} = updatesStore;
 
 // Local reactive state
-const showAnalytics = ref(true)
-const showFilters = ref(false)
-const showDetailsDialog = ref(false)
-const showLogsDialog = ref(false)
-const showExportDialog = ref(false)
-const showRollbackDialog = ref(false)
-const searchQuery = ref('')
-const quickFilter = ref('all')
-const dateRange = ref<[string, string] | null>(null)
-const durationRange = ref([0, 3600])
-const viewMode = ref<'timeline' | 'table' | 'cards'>('timeline')
-const selectedUpdateItem = ref<UpdateHistoryItemType | null>(null)
+const showAnalytics = ref(true);
+const showFilters = ref(false);
+const showDetailsDialog = ref(false);
+const showLogsDialog = ref(false);
+const showExportDialog = ref(false);
+const showRollbackDialog = ref(false);
+const searchQuery = ref("");
+const quickFilter = ref("all");
+const dateRange = ref<[string, string] | null>(null);
+const durationRange = ref([0, 3600]);
+const viewMode = ref<"timeline" | "table" | "cards">("timeline");
+const selectedUpdateItem = ref<IUpdateHistoryItem | null>(null);
 
 // Computed properties
 const activeFiltersCount = computed(() => {
-  let count = 0
-  if (historyFilters.status?.length) count++
-  if (historyFilters.updateType?.length) count++
-  if (historyFilters.triggeredBy?.length) count++
-  if (searchQuery.value) count++
-  if (quickFilter.value !== 'all') count++
-  if (dateRange.value) count++
-  return count
-})
+  let count = 0;
+  if (historyFilters.status?.length) count++;
+  if (historyFilters.updateType?.length) count++;
+  if (historyFilters.triggeredBy?.length) count++;
+  if (searchQuery.value) count++;
+  if (quickFilter.value !== "all") count++;
+  if (dateRange.value) count++;
+  return count;
+});
 
 const paginatedHistory = computed(() => {
-  const start = (historyPage.value - 1) * historyPageSize.value
-  const end = start + historyPageSize.value
-  return updateHistory.value.slice(start, end)
-})
+  const start = (historyPage - 1) * historyPageSize;
+  const end = start + historyPageSize;
+  return updateHistory.slice(start, end);
+});
 
 const groupedHistory = computed(() => {
-  const grouped: Record<string, UpdateHistoryItemType[]> = {}
+  const grouped: Record<string, IUpdateHistoryItem[]> = {};
 
-  paginatedHistory.value.forEach(item => {
-    const date = new Date(item.startedAt).toDateString()
+  paginatedHistory.value.forEach((item) => {
+    const date = new Date(item.startedAt).toDateString();
     if (!grouped[date]) {
-      grouped[date] = []
+      grouped[date] = [];
     }
-    grouped[date].push(item)
-  })
+    grouped[date].push(item);
+  });
 
-  return grouped
-})
+  return grouped;
+});
 
 const trendData = computed(() => {
   // Generate mock trend data - in real app this would come from analytics
-  const data = []
+  const data = [];
   for (let i = 29; i >= 0; i--) {
-    const date = new Date()
-    date.setDate(date.getDate() - i)
+    const date = new Date();
+    date.setDate(date.getDate() - i);
 
-    const completed = Math.floor(Math.random() * 10)
-    const failed = Math.floor(Math.random() * 3)
+    const completed = Math.floor(Math.random() * 10);
+    const failed = Math.floor(Math.random() * 3);
 
     data.push({
-      date: date.toISOString().split('T')[0],
+      date: date.toISOString().split("T")[0],
       completed,
       failed,
-      total: completed + failed
-    })
+      total: completed + failed,
+    });
   }
-  return data
-})
+  return data;
+});
 
 const maxDailyUpdates = computed(() => {
-  return Math.max(...trendData.value.map(d => d.total), 1)
-})
+  return Math.max(...trendData.value.map((d) => d.total), 1);
+});
 
 // Methods
 const refreshHistory = async () => {
   try {
-    await updatesStore.fetchUpdateHistory()
+    await updatesStore.fetchUpdateHistory();
   } catch (error) {
-    console.error('Failed to refresh history:', error)
+    console.error("Failed to refresh history:", error);
   }
-}
+};
 
 const applyQuickFilter = () => {
-  const now = new Date()
-  const filters: UpdateFilter = {}
+  const now = new Date();
+  const filters: UpdateFilter = {};
 
   switch (quickFilter.value) {
-    case 'completed':
-      filters.status = ['completed']
-      break
-    case 'failed':
-      filters.status = ['failed']
-      break
-    case 'security':
-      filters.updateType = ['security']
-      break
-    case 'rollback':
-      filters.updateType = ['rollback']
-      break
-    case 'week':
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    case "completed":
+      filters.status = ["completed"];
+      break;
+    case "failed":
+      filters.status = ["failed"];
+      break;
+    case "security":
+      filters.updateType = ["security"];
+      break;
+    case "rollback":
+      filters.updateType = ["rollback"];
+      break;
+    case "week": {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       filters.dateRange = {
         start: weekAgo.toISOString(),
-        end: now.toISOString()
-      }
-      break
-    case 'month':
-      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        end: now.toISOString(),
+      };
+      break;
+    }
+    case "month": {
+      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       filters.dateRange = {
         start: monthAgo.toISOString(),
-        end: now.toISOString()
-      }
-      break
+        end: now.toISOString(),
+      };
+      break;
+    }
   }
 
-  updatesStore.historyFilters = { ...updatesStore.historyFilters, ...filters }
-  refreshHistory()
-}
+  updatesStore.historyFilters = { ...updatesStore.historyFilters, ...filters };
+  refreshHistory();
+};
 
 const handleSearch = () => {
   if (searchQuery.value) {
     updatesStore.historyFilters = {
       ...updatesStore.historyFilters,
-      containerName: searchQuery.value
-    }
+      containerName: searchQuery.value,
+    };
   } else {
-    const newFilters = { ...updatesStore.historyFilters }
-    delete newFilters.containerName
-    updatesStore.historyFilters = newFilters
+    const newFilters = { ...updatesStore.historyFilters };
+    delete newFilters.containerName;
+    updatesStore.historyFilters = newFilters;
   }
-  refreshHistory()
-}
+  refreshHistory();
+};
 
 const handleDateRangeChange = () => {
   if (dateRange.value) {
@@ -672,219 +713,274 @@ const handleDateRangeChange = () => {
       ...updatesStore.historyFilters,
       dateRange: {
         start: dateRange.value[0],
-        end: dateRange.value[1]
-      }
-    }
+        end: dateRange.value[1],
+      },
+    };
   } else {
-    const newFilters = { ...updatesStore.historyFilters }
-    delete newFilters.dateRange
-    updatesStore.historyFilters = newFilters
+    const newFilters = { ...updatesStore.historyFilters };
+    delete newFilters.dateRange;
+    updatesStore.historyFilters = newFilters;
   }
-  refreshHistory()
-}
+  refreshHistory();
+};
 
 const handleSort = () => {
-  updatesStore.setSorting(sortConfig.field)
-  refreshHistory()
-}
+  updatesStore.setSorting(sortConfig.field);
+  refreshHistory();
+};
 
 const toggleSortDirection = () => {
-  updatesStore.setSorting(sortConfig.field,
-    sortConfig.direction === 'asc' ? 'desc' : 'asc'
-  )
-  refreshHistory()
-}
+  updatesStore.setSorting(
+    sortConfig.field,
+    sortConfig.direction === "asc" ? "desc" : "asc",
+  );
+  refreshHistory();
+};
 
-const handleTableSort = ({ prop, order }: { prop: string; order: string | null }) => {
+const handleTableSort = ({
+  prop,
+  order,
+}: {
+  prop: string;
+  order: string | null;
+}) => {
   if (order) {
-    updatesStore.setSorting(prop as any, order === 'ascending' ? 'asc' : 'desc')
-    refreshHistory()
+    updatesStore.setSorting(
+      prop as any,
+      order === "ascending" ? "asc" : "desc",
+    );
+    refreshHistory();
   }
-}
+};
 
 const handleDurationFilter = () => {
   updatesStore.historyFilters = {
     ...updatesStore.historyFilters,
     duration: {
       min: durationRange.value[0],
-      max: durationRange.value[1]
-    }
-  }
-}
+      max: durationRange.value[1],
+    },
+  };
+};
 
 const applyFilters = () => {
-  refreshHistory()
-  showFilters.value = false
-}
+  refreshHistory();
+  showFilters.value = false;
+};
 
 const clearAllFilters = () => {
-  updatesStore.historyFilters = {}
-  searchQuery.value = ''
-  quickFilter.value = 'all'
-  dateRange.value = null
-  durationRange.value = [0, 3600]
-  refreshHistory()
-}
+  updatesStore.historyFilters = {};
+  searchQuery.value = "";
+  quickFilter.value = "all";
+  dateRange.value = null;
+  durationRange.value = [0, 3600];
+  refreshHistory();
+};
 
-const handleViewDetails = (item: UpdateHistoryItemType) => {
-  selectedUpdateItem.value = item
-  showDetailsDialog.value = true
-}
+const handleViewDetails = (item: IUpdateHistoryItem) => {
+  selectedUpdateItem.value = item;
+  showDetailsDialog.value = true;
+};
 
-const handleViewLogs = (item: UpdateHistoryItemType) => {
-  selectedUpdateItem.value = item
-  showLogsDialog.value = true
-}
+const handleViewLogs = (item: IUpdateHistoryItem) => {
+  selectedUpdateItem.value = item;
+  showLogsDialog.value = true;
+};
 
-const handleRollback = (item: UpdateHistoryItemType) => {
-  selectedUpdateItem.value = item
-  showRollbackDialog.value = true
-}
+const handleRollback = (item: IUpdateHistoryItem) => {
+  selectedUpdateItem.value = item;
+  showRollbackDialog.value = true;
+};
 
-const handleRetry = async (item: UpdateHistoryItemType) => {
+const handleRetry = async (item: IUpdateHistoryItem) => {
   try {
     await ElMessageBox.confirm(
       `Are you sure you want to retry the update for "${item.containerName}"?`,
-      'Retry Update',
+      "Retry Update",
       {
-        confirmButtonText: 'Yes, Retry',
-        cancelButtonText: 'Cancel',
-        type: 'info'
-      }
-    )
+        confirmButtonText: "Yes, Retry",
+        cancelButtonText: "Cancel",
+        type: "info",
+      },
+    );
 
     // Create a new update request based on the failed one
     // This would need to be implemented in the store
-    ElMessage.success('Update retry initiated')
+    ElMessage.success("Update retry initiated");
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to retry update:', error)
+    if (error !== "cancel") {
+      console.error("Failed to retry update:", error);
     }
   }
-}
+};
 
-const handleConfirmRollback = async (targetVersion: string, reason: string) => {
-  if (!selectedUpdateItem.value) return
+const handleConfirmRollback = async (data: {
+  update: IUpdateHistoryItem;
+  options: any;
+}) => {
+  if (!data.update) return;
 
   try {
-    await updatesStore.rollbackUpdate(selectedUpdateItem.value.id, targetVersion)
-    showRollbackDialog.value = false
-    ElMessage.success('Rollback initiated successfully')
-  } catch (error) {
-    console.error('Failed to initiate rollback:', error)
-  }
-}
+    // Convert dialog form data to API rollback form
+    const rollbackForm: RollbackForm = {
+      historyItemId: data.update.id,
+      containerId: data.update.containerId,
+      targetVersion: data.update.fromVersion,
+      reason: data.options.reason || "Manual rollback",
+      strategy:
+        data.options.strategy === "immediate"
+          ? "recreate"
+          : data.options.strategy === "graceful"
+            ? "rolling"
+            : "blue-green",
+      force: data.options.strategy === "immediate",
+    };
 
-const handleExport = async (format: 'csv' | 'json' | 'pdf', filters: UpdateFilter) => {
-  try {
-    await updatesStore.exportUpdateHistory(format, filters)
-    showExportDialog.value = false
+    await updatesStore.rollbackUpdate(
+      data.update.id,
+      rollbackForm.targetVersion,
+    );
+    showRollbackDialog.value = false;
+    ElMessage.success("Rollback initiated successfully");
   } catch (error) {
-    console.error('Failed to export history:', error)
+    console.error("Failed to initiate rollback:", error);
   }
-}
+};
+
+const handleExport = async (options: ExportForm) => {
+  try {
+    await updatesStore.exportUpdateHistory(options.format, options.filters);
+    showExportDialog.value = false;
+  } catch (error) {
+    console.error("Failed to export history:", error);
+  }
+};
 
 const handlePageSizeChange = (newSize: number) => {
-  updatesStore.historyPageSize = newSize
-  refreshHistory()
-}
+  updatesStore.historyPageSize = newSize;
+  refreshHistory();
+};
 
 const handlePageChange = (newPage: number) => {
-  updatesStore.historyPage = newPage
-  refreshHistory()
-}
+  updatesStore.historyPage = newPage;
+  refreshHistory();
+};
 
 // Utility functions
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
 const formatDateTime = (dateString: string) => {
-  return new Date(dateString).toLocaleString()
-}
+  return new Date(dateString).toLocaleString();
+};
 
 const formatDuration = (seconds: number) => {
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
-}
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+};
 
 const formatDurationTooltip = (value: number) => {
-  return formatDuration(value)
-}
+  return formatDuration(value);
+};
 
 const getRelativeTime = (dateString: string) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
 
-  if (diff < 60000) return 'Just now'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-  return `${Math.floor(diff / 86400000)}d ago`
-}
+  if (diff < 60000) return "Just now";
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return `${Math.floor(diff / 86400000)}d ago`;
+};
 
 const getSuccessRateColor = (rate: number) => {
-  if (rate >= 95) return '#67C23A'
-  if (rate >= 85) return '#E6A23C'
-  return '#F56C6C'
-}
+  if (rate >= 95) return "#67C23A";
+  if (rate >= 85) return "#E6A23C";
+  return "#F56C6C";
+};
 
-const getUpdateTypeTagType = (type: string) => {
+const getUpdateTypeTagType = (
+  type: string,
+): "success" | "info" | "warning" | "primary" | "danger" => {
   switch (type) {
-    case 'security': return 'danger'
-    case 'major': return 'warning'
-    case 'minor': return 'primary'
-    case 'patch': return 'success'
-    case 'rollback': return 'info'
-    default: return ''
+    case "security":
+      return "danger";
+    case "major":
+      return "warning";
+    case "minor":
+      return "primary";
+    case "patch":
+      return "success";
+    case "rollback":
+      return "info";
+    default:
+      return "info";
   }
-}
+};
 
 const getStatusTagType = (status: string) => {
   switch (status) {
-    case 'completed': return 'success'
-    case 'failed': return 'danger'
-    case 'cancelled': return 'warning'
-    case 'running': return 'primary'
-    default: return 'info'
+    case "completed":
+      return "success";
+    case "failed":
+      return "danger";
+    case "cancelled":
+      return "warning";
+    case "running":
+      return "primary";
+    default:
+      return "info";
   }
-}
+};
 
 const getStatusIcon = (status: string) => {
   switch (status) {
-    case 'completed': return 'Check'
-    case 'failed': return 'Close'
-    case 'cancelled': return 'Warning'
-    case 'running': return 'Loading'
-    default: return 'InfoFilled'
+    case "completed":
+      return "Check";
+    case "failed":
+      return "Close";
+    case "cancelled":
+      return "Warning";
+    case "running":
+      return "Loading";
+    default:
+      return "InfoFilled";
   }
-}
+};
 
 const getTriggerIcon = (trigger: string) => {
   switch (trigger) {
-    case 'manual': return 'User'
-    case 'scheduled': return 'Clock'
-    case 'policy': return 'Setting'
-    case 'webhook': return 'Link'
-    case 'api': return 'Connection'
-    default: return 'QuestionFilled'
+    case "manual":
+      return "User";
+    case "scheduled":
+      return "Clock";
+    case "policy":
+      return "Setting";
+    case "webhook":
+      return "Link";
+    case "api":
+      return "Connection";
+    default:
+      return "QuestionFilled";
   }
-}
+};
 
 // Lifecycle hooks
 onMounted(async () => {
   await Promise.all([
     updatesStore.fetchUpdateHistory(),
-    updatesStore.getUpdateAnalytics()
-  ])
-})
+    updatesStore.getUpdateAnalytics(),
+  ]);
+});
 </script>
 
 <style scoped lang="scss">
@@ -1150,7 +1246,7 @@ onMounted(async () => {
       position: relative;
 
       &::before {
-        content: '';
+        content: "";
         position: absolute;
         left: 24px;
         top: 0;

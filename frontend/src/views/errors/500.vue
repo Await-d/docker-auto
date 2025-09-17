@@ -9,7 +9,8 @@
       <h1 class="error-title">500</h1>
       <h2 class="error-subtitle">Server Error</h2>
       <p class="error-description">
-        Something went wrong on our servers. Please try again later or contact support if the problem persists.
+        Something went wrong on our servers. Please try again later or contact
+        support if the problem persists.
       </p>
       <div class="error-actions">
         <el-button type="primary" @click="reload">
@@ -26,22 +27,22 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { Warning, Refresh, House } from '@element-plus/icons-vue'
+import { useRouter } from "vue-router";
+import { Warning, Refresh, House } from "@element-plus/icons-vue";
 
-const router = useRouter()
+const router = useRouter();
 
 const reload = () => {
-  window.location.reload()
-}
+  window.location.reload();
+};
 
 const goHome = () => {
-  router.push('/')
-}
+  router.push("/");
+};
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/variables' as *;
+@use "@/styles/variables" as *;
 
 .error-page {
   min-height: 100vh;

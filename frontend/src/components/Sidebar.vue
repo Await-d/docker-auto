@@ -6,9 +6,11 @@
           <Box />
         </el-icon>
         <transition name="fade">
-          <h1 v-show="!sidebarCollapsed" class="logo-text">
-            Docker Auto
-          </h1>
+          <h1 v-show="!sidebarCollapsed"
+class="logo-text"
+>
+Docker Auto
+</h1>
         </transition>
       </div>
     </div>
@@ -46,10 +48,9 @@
 
             <!-- Submenu -->
             <el-sub-menu
-              v-else
-              :index="item.path"
-              :disabled="item.disabled"
-            >
+v-else :index="item.path"
+:disabled="item.disabled"
+>
               <template #title>
                 <el-icon>
                   <component :is="item.icon" />
@@ -90,14 +91,20 @@
     </div>
 
     <div class="sidebar-footer">
-      <div class="user-card" v-if="user">
+      <div
+v-if="user" class="user-card"
+>
         <el-avatar :size="sidebarCollapsed ? 32 : 40" :src="userAvatar">
           {{ userInitials }}
         </el-avatar>
         <transition name="fade">
           <div v-show="!sidebarCollapsed" class="user-info">
-            <div class="user-name">{{ userDisplayName }}</div>
-            <div class="user-role">{{ user.role }}</div>
+            <div class="user-name">
+              {{ userDisplayName }}
+            </div>
+            <div class="user-role">
+              {{ user.role }}
+            </div>
           </div>
         </transition>
       </div>
@@ -118,238 +125,227 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import {
-  Box,
-  Monitor,
-  Files,
-  Picture,
-  Refresh,
-  Document,
-  Setting,
-  User,
-  DataAnalysis,
-  Bell,
-  Key,
-  Lock,
-  Expand,
-  Fold,
-  Warning,
-  SuccessFilled
-} from '@element-plus/icons-vue'
-import { useAuth } from '@/store/auth'
-import { useApp } from '@/store/app'
-import { storeToRefs } from 'pinia'
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import { Box, Expand, Fold } from "@element-plus/icons-vue";
+import { useAuth } from "@/store/auth";
+import { useApp } from "@/store/app";
+import { storeToRefs } from "pinia";
 
 // Composables
-const route = useRoute()
-const authStore = useAuth()
-const appStore = useApp()
+const route = useRoute();
+const authStore = useAuth();
+const appStore = useApp();
 
 // Reactive refs from stores
-const { user, userDisplayName, userAvatar } = storeToRefs(authStore)
-const { sidebarCollapsed } = storeToRefs(appStore)
+const { user } = storeToRefs(authStore);
+const { userDisplayName, userAvatar } = authStore;
+const { sidebarCollapsed } = storeToRefs(appStore);
 
 // Store methods
-const { hasPermission, hasRole } = authStore
-const { toggleSidebar } = appStore
+const { hasPermission, hasRole } = authStore;
+const { toggleSidebar } = appStore;
 
 interface MenuItem {
-  path: string
-  title: string
-  icon: string
-  permission?: string
-  role?: string
-  disabled?: boolean
-  badge?: string | number
-  badgeType?: 'primary' | 'success' | 'warning' | 'danger' | 'info'
-  children?: MenuItem[]
+  path: string;
+  title: string;
+  icon: string;
+  permission?: string;
+  role?: string;
+  disabled?: boolean;
+  badge?: string | number;
+  badgeType?: "primary" | "success" | "warning" | "danger" | "info";
+  children?: MenuItem[];
 }
 
 // Computed properties
 const sidebarClass = computed(() => ({
-  'sidebar-collapsed': sidebarCollapsed.value
-}))
+  "sidebar-collapsed": sidebarCollapsed.value,
+}));
 
 const activeMenu = computed(() => {
-  return route.path
-})
+  return route.path;
+});
 
 const userInitials = computed(() => {
-  if (!user.value) return 'U'
-  const name = userDisplayName.value
-  return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2)
-})
+  if (!user.value) return "U";
+  const name = userDisplayName.value;
+  return name
+    .split(" ")
+    .map((word: string) => word.charAt(0))
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+});
 
 // Get menu items based on user role and permissions
 const menuItems = computed(() => {
-  if (!user.value) return []
+  if (!user.value) return [];
 
   const items: MenuItem[] = [
     {
-      path: '/dashboard',
-      title: 'Dashboard',
-      icon: 'Dashboard',
-      permission: 'read'
+      path: "/dashboard",
+      title: "Dashboard",
+      icon: "Dashboard",
+      permission: "read",
     },
     {
-      path: '/containers',
-      title: 'Containers',
-      icon: 'Box',
-      permission: 'container:read',
+      path: "/containers",
+      title: "Containers",
+      icon: "Box",
+      permission: "container:read",
       children: [
         {
-          path: '/containers/running',
-          title: 'Running',
-          icon: 'SuccessFilled',
-          permission: 'container:read'
+          path: "/containers/running",
+          title: "Running",
+          icon: "SuccessFilled",
+          permission: "container:read",
         },
         {
-          path: '/containers/stopped',
-          title: 'Stopped',
-          icon: 'Warning',
-          permission: 'container:read'
+          path: "/containers/stopped",
+          title: "Stopped",
+          icon: "Warning",
+          permission: "container:read",
         },
         {
-          path: '/containers/all',
-          title: 'All Containers',
-          icon: 'Box',
-          permission: 'container:read'
-        }
-      ]
+          path: "/containers/all",
+          title: "All Containers",
+          icon: "Box",
+          permission: "container:read",
+        },
+      ],
     },
     {
-      path: '/images',
-      title: 'Images',
-      icon: 'Picture',
-      permission: 'image:read'
+      path: "/images",
+      title: "Images",
+      icon: "Picture",
+      permission: "image:read",
     },
     {
-      path: '/updates',
-      title: 'Updates',
-      icon: 'Refresh',
-      permission: 'update:read'
+      path: "/updates",
+      title: "Updates",
+      icon: "Refresh",
+      permission: "update:read",
     },
     {
-      path: '/logs',
-      title: 'Logs',
-      icon: 'Document',
-      permission: 'log:read'
+      path: "/logs",
+      title: "Logs",
+      icon: "Document",
+      permission: "log:read",
     },
     {
-      path: '/monitoring',
-      title: 'Monitoring',
-      icon: 'Monitor',
-      permission: 'monitor:read',
+      path: "/monitoring",
+      title: "Monitoring",
+      icon: "Monitor",
+      permission: "monitor:read",
       children: [
         {
-          path: '/monitoring/metrics',
-          title: 'Metrics',
-          icon: 'DataAnalysis',
-          permission: 'monitor:read'
+          path: "/monitoring/metrics",
+          title: "Metrics",
+          icon: "DataAnalysis",
+          permission: "monitor:read",
         },
         {
-          path: '/monitoring/alerts',
-          title: 'Alerts',
-          icon: 'Bell',
-          permission: 'monitor:read'
-        }
-      ]
-    }
-  ]
+          path: "/monitoring/alerts",
+          title: "Alerts",
+          icon: "Bell",
+          permission: "monitor:read",
+        },
+      ],
+    },
+  ];
 
   // Add admin-only items
-  if (hasRole('admin')) {
+  if (hasRole("admin")) {
     items.push(
       {
-        path: '/users',
-        title: 'User Management',
-        icon: 'User',
-        role: 'admin'
+        path: "/users",
+        title: "User Management",
+        icon: "User",
+        role: "admin",
       },
       {
-        path: '/settings',
-        title: 'System Settings',
-        icon: 'Setting',
-        role: 'admin',
+        path: "/settings",
+        title: "System Settings",
+        icon: "Setting",
+        role: "admin",
         children: [
           {
-            path: '/settings/general',
-            title: 'General',
-            icon: 'Setting',
-            role: 'admin'
+            path: "/settings/general",
+            title: "General",
+            icon: "Setting",
+            role: "admin",
           },
           {
-            path: '/settings/security',
-            title: 'Security',
-            icon: 'Shield',
-            role: 'admin'
+            path: "/settings/security",
+            title: "Security",
+            icon: "Shield",
+            role: "admin",
           },
           {
-            path: '/settings/api-keys',
-            title: 'API Keys',
-            icon: 'Key',
-            role: 'admin'
-          }
-        ]
-      }
-    )
+            path: "/settings/api-keys",
+            title: "API Keys",
+            icon: "Key",
+            role: "admin",
+          },
+        ],
+      },
+    );
   }
 
   // Filter items based on permissions
-  return filterMenuItems(items)
-})
+  return filterMenuItems(items);
+});
 
 // Methods
 const filterMenuItems = (items: MenuItem[]): MenuItem[] => {
-  return items.filter(item => {
+  return items.filter((item) => {
     // Check role requirement
     if (item.role && !hasRole(item.role)) {
-      return false
+      return false;
     }
 
     // Check permission requirement
     if (item.permission && !hasPermission(item.permission)) {
-      return false
+      return false;
     }
 
     // Filter children if they exist
     if (item.children) {
-      item.children = filterMenuItems(item.children)
+      item.children = filterMenuItems(item.children);
       // Hide parent if no children are visible
-      return item.children.length > 0
+      return item.children.length > 0;
     }
 
-    return true
-  })
-}
+    return true;
+  });
+};
 
 const handleMenuClick = (item: MenuItem) => {
   if (item.disabled) {
-    return
+    return;
   }
 
   // Add any custom click handling here
   // The router navigation is handled automatically by the el-menu
-}
+};
 
 // Simulate dynamic badges (replace with actual data)
 const updateBadges = () => {
   // This would typically come from your store or API
-  const runningContainers = ref(12)
-  const pendingUpdates = ref(3)
-  const unreadAlerts = ref(5)
+  const runningContainers = ref(12);
+  const pendingUpdates = ref(3);
+  const unreadAlerts = ref(5);
 
   // You can watch for changes and update badges accordingly
   watch([runningContainers, pendingUpdates, unreadAlerts], () => {
     // Update menu items with new badge values
     // This is just an example - implement based on your data structure
-  })
-}
+  });
+};
 
 // Initialize badges
-updateBadges()
+updateBadges();
 </script>
 
 <style scoped lang="scss">
@@ -439,7 +435,7 @@ updateBadges()
         color: var(--el-color-primary);
 
         &::before {
-          content: '';
+          content: "";
           position: absolute;
           right: 8px;
           top: 50%;

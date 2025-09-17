@@ -1,21 +1,23 @@
 <template>
   <div class="resource-charts-widget">
     <div class="widget-placeholder">
-      <el-icon :size="48"><DataAnalysis /></el-icon>
+      <el-icon :size="48">
+        <DataAnalysis />
+      </el-icon>
       <h3>Resource Charts</h3>
       <p>Historical resource usage charts will be displayed here.</p>
       <div class="mock-chart">
         <div class="chart-legend">
           <div class="legend-item cpu">
-            <div class="legend-color"></div>
+            <div class="legend-color" />
             <span>CPU Usage</span>
           </div>
           <div class="legend-item memory">
-            <div class="legend-color"></div>
+            <div class="legend-color" />
             <span>Memory Usage</span>
           </div>
           <div class="legend-item disk">
-            <div class="legend-color"></div>
+            <div class="legend-color" />
             <span>Disk I/O</span>
           </div>
         </div>
@@ -47,13 +49,13 @@
 </template>
 
 <script setup lang="ts">
-import { DataAnalysis } from '@element-plus/icons-vue'
+import { DataAnalysis } from "@element-plus/icons-vue";
 
 defineProps<{
-  widgetId: string
-  widgetConfig: any
-  widgetData?: any
-}>()
+  widgetId: string;
+  widgetConfig: any;
+  widgetData?: any;
+}>();
 </script>
 
 <style scoped lang="scss">

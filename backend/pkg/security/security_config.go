@@ -6,6 +6,49 @@ import (
 	"time"
 )
 
+// ValidationConfig represents input validation configuration
+type ValidationConfig struct {
+	MaxLength         int      `json:"max_length"`
+	AllowedPatterns   []string `json:"allowed_patterns"`
+	BlockedPatterns   []string `json:"blocked_patterns"`
+	StrictMode        bool     `json:"strict_mode"`
+	EnableXSSProtection bool   `json:"enable_xss_protection"`
+	EnableSQLInjectionProtection bool `json:"enable_sql_injection_protection"`
+	MaxRequestSize    int      `json:"max_request_size"`
+	AllowedMimeTypes  []string `json:"allowed_mime_types"`
+	SQLInjectionProtection bool `json:"sql_injection_protection"`
+	XSSProtection     bool     `json:"xss_protection"`
+	PathTraversalProtection bool `json:"path_traversal_protection"`
+	CommandInjectionProtection bool `json:"command_injection_protection"`
+	InputSanitization bool     `json:"input_sanitization"`
+}
+
+// SecurityConfig represents security middleware configuration
+type SecurityConfig struct {
+	EnableHTTPS       bool              `json:"enable_https"`
+	HSTSMaxAge        int               `json:"hsts_max_age"`
+	ContentSecurityPolicy string        `json:"content_security_policy"`
+	XFrameOptions     string            `json:"x_frame_options"`
+	XContentTypeOptions string          `json:"x_content_type_options"`
+	ReferrerPolicy    string            `json:"referrer_policy"`
+	TrustedProxies    []string          `json:"trusted_proxies"`
+	CORSConfig        *CORSConfig       `json:"cors_config"`
+	ForceHTTPS        bool              `json:"force_https"`
+	HTTPSRedirect     bool              `json:"https_redirect"`
+	EnableHSTS        bool              `json:"enable_hsts"`
+	AllowInsecureLocal bool             `json:"allow_insecure_local"`
+}
+
+// CORSConfig represents CORS configuration
+type CORSConfig struct {
+	AllowedOrigins   []string `json:"allowed_origins"`
+	AllowedMethods   []string `json:"allowed_methods"`
+	AllowedHeaders   []string `json:"allowed_headers"`
+	ExposedHeaders   []string `json:"exposed_headers"`
+	AllowCredentials bool     `json:"allow_credentials"`
+	MaxAge           int      `json:"max_age"`
+}
+
 // SecurityMasterConfig represents the master security configuration
 type SecurityMasterConfig struct {
 	// Environment settings
@@ -68,6 +111,16 @@ type TLSConfig struct {
 	// Certificate rotation
 	AutoRotation       bool              `json:"auto_rotation"`
 	RotationDays       int               `json:"rotation_days"`
+
+	// Additional security headers
+	EnableCSP             bool              `json:"enable_csp"`
+	CSPDirectives         string            `json:"csp_directives"`
+	EnableXFrameOptions   bool              `json:"enable_x_frame_options"`
+	XFrameOptions         string            `json:"x_frame_options"`
+	EnableXSSProtection   bool              `json:"enable_xss_protection"`
+	EnableContentTypeOptions bool           `json:"enable_content_type_options"`
+	EnableReferrerPolicy  bool              `json:"enable_referrer_policy"`
+	ReferrerPolicy        string            `json:"referrer_policy"`
 }
 
 // MonitoringConfig represents security monitoring configuration
@@ -179,15 +232,6 @@ func getProductionConfig() *SecurityMasterConfig {
 			HTTPSRedirect:         true,
 			EnableHSTS:            true,
 			HSTSMaxAge:           31536000, // 1 year
-			HSTSIncludeSubdomains: true,
-			EnableCSP:             true,
-			CSPDirectives:         "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'",
-			EnableXFrameOptions:   true,
-			XFrameOptions:         "DENY",
-			EnableXSSProtection:   true,
-			EnableContentTypeOptions: true,
-			EnableReferrerPolicy: true,
-			ReferrerPolicy:       "strict-origin-when-cross-origin",
 		},
 
 		WebSocket: &WebSocketSecurityConfig{
@@ -257,6 +301,14 @@ func getProductionConfig() *SecurityMasterConfig {
 			HSTSPreload:           true,
 			AutoRotation:          true,
 			RotationDays:          30,
+			EnableCSP:             true,
+			CSPDirectives:         "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'",
+			EnableXFrameOptions:   true,
+			XFrameOptions:         "DENY",
+			EnableXSSProtection:   true,
+			EnableContentTypeOptions: true,
+			EnableReferrerPolicy: true,
+			ReferrerPolicy:       "strict-origin-when-cross-origin",
 		},
 
 		Monitoring: &MonitoringConfig{

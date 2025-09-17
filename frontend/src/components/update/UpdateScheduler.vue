@@ -22,9 +22,8 @@
               </span>
             </div>
             <el-tag
-              :type="getRiskLevelType(update.riskLevel)"
-              size="small"
-            >
+:type="getRiskLevelType(update.riskLevel)" size="small"
+>
               {{ update.riskLevel }}
             </el-tag>
           </div>
@@ -42,8 +41,8 @@
           <!-- Schedule Type -->
           <el-form-item label="Schedule Type" prop="scheduleType">
             <el-radio-group v-model="scheduleForm.scheduleType">
-              <el-radio label="once">One-time</el-radio>
-              <el-radio label="recurring">Recurring</el-radio>
+              <el-radio label="once"> One-time </el-radio>
+              <el-radio label="recurring"> Recurring </el-radio>
             </el-radio-group>
           </el-form-item>
 
@@ -126,7 +125,9 @@
                   @input="validateCronExpression"
                 />
                 <div class="cron-help">
-                  <el-tooltip content="Cron expression format: minute hour day month day-of-week">
+                  <el-tooltip
+                    content="Cron expression format: minute hour day month day-of-week"
+                  >
                     <el-button text type="primary" size="small">
                       <el-icon><QuestionFilled /></el-icon>
                       Cron Help
@@ -207,7 +208,10 @@
                 Enable notifications
               </el-checkbox>
 
-              <div v-if="scheduleForm.notifications.enabled" class="notification-options">
+              <div
+                v-if="scheduleForm.notifications.enabled"
+                class="notification-options"
+              >
                 <el-form-item label="Notify Before">
                   <el-select
                     v-model="scheduleForm.notifyBefore"
@@ -222,10 +226,18 @@
                 </el-form-item>
 
                 <el-checkbox-group v-model="scheduleForm.notifications.events">
-                  <el-checkbox label="update_started">Update started</el-checkbox>
-                  <el-checkbox label="update_completed">Update completed</el-checkbox>
-                  <el-checkbox label="update_failed">Update failed</el-checkbox>
-                  <el-checkbox label="rollback_started">Rollback started</el-checkbox>
+                  <el-checkbox label="update_started">
+                    Update started
+                  </el-checkbox>
+                  <el-checkbox label="update_completed">
+                    Update completed
+                  </el-checkbox>
+                  <el-checkbox label="update_failed">
+                    Update failed
+                  </el-checkbox>
+                  <el-checkbox label="rollback_started">
+                    Rollback started
+                  </el-checkbox>
                 </el-checkbox-group>
               </div>
             </div>
@@ -262,7 +274,10 @@
                 <strong>Next Execution:</strong>
                 <span>{{ getNextExecutionTime() }}</span>
               </div>
-              <div v-if="scheduleForm.scheduleType === 'recurring'" class="preview-item">
+              <div
+                v-if="scheduleForm.scheduleType === 'recurring'"
+                class="preview-item"
+              >
                 <strong>Pattern:</strong>
                 <span>{{ getPatternDescription() }}</span>
               </div>
@@ -281,9 +296,15 @@
         <el-calendar v-model="calendarValue">
           <template #date-cell="{ data }">
             <div class="calendar-day">
-              <span>{{ data.day.split('-').slice(-1)[0] }}</span>
-              <div v-if="hasScheduledUpdates(data.day)" class="scheduled-indicator">
-                <el-badge :value="getScheduledCount(data.day)" class="scheduled-badge" />
+              <span>{{ data.day.split("-").slice(-1)[0] }}</span>
+              <div
+                v-if="hasScheduledUpdates(data.day)"
+                class="scheduled-indicator"
+              >
+                <el-badge
+                  :value="getScheduledCount(data.day)"
+                  class="scheduled-badge"
+                />
               </div>
             </div>
           </template>
@@ -293,14 +314,14 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">Cancel</el-button>
+        <el-button @click="handleClose"> Cancel </el-button>
         <el-button
           type="primary"
           :loading="scheduling"
           :disabled="!isFormValid"
           @click="handleSchedule"
         >
-          Schedule Update{{ selectedUpdates.length > 1 ? 's' : '' }}
+          Schedule Update{{ selectedUpdates.length > 1 ? "s" : "" }}
         </el-button>
       </div>
     </template>
@@ -308,289 +329,329 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { QuestionFilled } from '@element-plus/icons-vue'
-import type { FormInstance, FormRules } from 'element-plus'
+import { ref, computed, watch } from "vue";
+import { ElMessage } from "element-plus";
+import { QuestionFilled } from "@element-plus/icons-vue";
+import type { FormInstance, FormRules } from "element-plus";
 
 // Store
-import { useUpdatesStore } from '@/store/updates'
+import { useUpdatesStore } from "@/store/updates";
 
 // Types
-import type { UpdateStrategy, NotificationSettings, ContainerUpdate } from '@/types/updates'
+import type {
+  UpdateStrategy,
+  NotificationSettings,
+  ContainerUpdate,
+} from "@/types/updates";
 
 // Props
 interface Props {
-  modelValue: boolean
-  selectedUpdates: string[]
+  modelValue: boolean;
+  selectedUpdates: string[];
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // Emits
-defineEmits<{
-  'update:modelValue': [value: boolean]
-  scheduled: []
-}>()
+const emit = defineEmits<{
+  "update:modelValue": [value: boolean];
+  scheduled: [];
+}>();
 
 // Store
-const updatesStore = useUpdatesStore()
+const updatesStore = useUpdatesStore();
 
 // Local state
-const formRef = ref<FormInstance>()
-const scheduling = ref(false)
-const recurringType = ref('daily')
-const dailyTime = ref(new Date())
-const weeklyDays = ref(['1'])
-const weeklyTime = ref(new Date())
-const calendarValue = ref(new Date())
-const cronDescription = ref('')
+const formRef = ref<FormInstance>();
+const scheduling = ref(false);
+const recurringType = ref("daily");
+const dailyTime = ref(new Date());
+const weeklyDays = ref(["1"]);
+const weeklyTime = ref(new Date());
+const calendarValue = ref(new Date());
+const cronDescription = ref("");
 
 const scheduleForm = ref({
-  scheduleType: 'once' as 'once' | 'recurring',
-  scheduledAt: '',
-  recurringPattern: '',
+  scheduleType: "once" as "once" | "recurring",
+  scheduledAt: "",
+  recurringPattern: "",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  strategy: 'recreate' as UpdateStrategy,
+  strategy: "recreate" as UpdateStrategy,
   rollbackOnFailure: true,
   runTests: false,
   notifyBefore: 300000, // 5 minutes
   respectDependencies: true,
-  dependencyStrategy: 'strict' as 'strict' | 'loose' | 'ignore',
+  dependencyStrategy: "strict" as "strict" | "loose" | "ignore",
   notifications: {
     enabled: true,
-    events: ['update_started', 'update_completed', 'update_failed']
-  } as NotificationSettings
-})
+    events: ["update_started", "update_completed", "update_failed"],
+  } as NotificationSettings,
+});
 
 // Computed
 const visible = computed({
   get: () => props.modelValue,
-  set: (value) => $emit('update:modelValue', value)
-})
+  set: (value) => emit("update:modelValue", value),
+});
 
 const timezones = computed(() => [
-  { label: 'UTC', value: 'UTC' },
-  { label: 'America/New_York (EST/EDT)', value: 'America/New_York' },
-  { label: 'America/Chicago (CST/CDT)', value: 'America/Chicago' },
-  { label: 'America/Denver (MST/MDT)', value: 'America/Denver' },
-  { label: 'America/Los_Angeles (PST/PDT)', value: 'America/Los_Angeles' },
-  { label: 'Europe/London (GMT/BST)', value: 'Europe/London' },
-  { label: 'Europe/Berlin (CET/CEST)', value: 'Europe/Berlin' },
-  { label: 'Asia/Tokyo (JST)', value: 'Asia/Tokyo' },
-  { label: 'Asia/Shanghai (CST)', value: 'Asia/Shanghai' },
-  { label: 'Australia/Sydney (AEDT/AEST)', value: 'Australia/Sydney' }
-])
+  { label: "UTC", value: "UTC" },
+  { label: "America/New_York (EST/EDT)", value: "America/New_York" },
+  { label: "America/Chicago (CST/CDT)", value: "America/Chicago" },
+  { label: "America/Denver (MST/MDT)", value: "America/Denver" },
+  { label: "America/Los_Angeles (PST/PDT)", value: "America/Los_Angeles" },
+  { label: "Europe/London (GMT/BST)", value: "Europe/London" },
+  { label: "Europe/Berlin (CET/CEST)", value: "Europe/Berlin" },
+  { label: "Asia/Tokyo (JST)", value: "Asia/Tokyo" },
+  { label: "Asia/Shanghai (CST)", value: "Asia/Shanghai" },
+  { label: "Australia/Sydney (AEDT/AEST)", value: "Australia/Sydney" },
+]);
 
 const hasDependencies = computed(() => {
-  const selectedUpdateDetails = getSelectedUpdateDetails()
-  return selectedUpdateDetails.some(update =>
-    update.dependencies.length > 0 || update.conflicts.length > 0
-  )
-})
+  const selectedUpdateDetails = getSelectedUpdateDetails();
+  return selectedUpdateDetails.some(
+    (update) => update.dependencies.length > 0 || update.conflicts.length > 0,
+  );
+});
 
 const isFormValid = computed(() => {
-  if (scheduleForm.value.scheduleType === 'once') {
-    return !!scheduleForm.value.scheduledAt
+  if (scheduleForm.value.scheduleType === "once") {
+    return !!scheduleForm.value.scheduledAt;
   } else {
-    return !!scheduleForm.value.recurringPattern
+    return !!scheduleForm.value.recurringPattern;
   }
-})
+});
 
 // Form validation rules
 const formRules: FormRules = {
   scheduledAt: [
-    { required: true, message: 'Please select a date and time', trigger: 'blur' }
+    {
+      required: true,
+      message: "Please select a date and time",
+      trigger: "blur",
+    },
   ],
   recurringPattern: [
-    { required: true, message: 'Please set a recurring pattern', trigger: 'blur' }
+    {
+      required: true,
+      message: "Please set a recurring pattern",
+      trigger: "blur",
+    },
   ],
   strategy: [
-    { required: true, message: 'Please select an update strategy', trigger: 'change' }
-  ]
-}
+    {
+      required: true,
+      message: "Please select an update strategy",
+      trigger: "change",
+    },
+  ],
+};
 
 // Methods
 const getSelectedUpdateDetails = (): ContainerUpdate[] => {
-  return props.selectedUpdates.map(id =>
-    updatesStore.availableUpdates.find(u => u.id === id)
-  ).filter(Boolean) as ContainerUpdate[]
-}
+  return props.selectedUpdates
+    .map((id) => updatesStore.availableUpdates.find((u) => u.id === id))
+    .filter(Boolean) as ContainerUpdate[];
+};
 
 const getRiskLevelType = (riskLevel: string) => {
   switch (riskLevel) {
-    case 'low': return 'success'
-    case 'medium': return 'warning'
-    case 'high': return 'danger'
-    case 'critical': return 'danger'
-    default: return 'info'
+    case "low":
+      return "success";
+    case "medium":
+      return "warning";
+    case "high":
+      return "danger";
+    case "critical":
+      return "danger";
+    default:
+      return "info";
   }
-}
+};
 
 const disabledDate = (time: Date) => {
-  return time.getTime() < Date.now() - 24 * 60 * 60 * 1000
-}
+  return time.getTime() < Date.now() - 24 * 60 * 60 * 1000;
+};
 
 const updateRecurringPattern = () => {
-  if (recurringType.value === 'daily') {
-    const time = dailyTime.value
-    const hour = time.getHours()
-    const minute = time.getMinutes()
-    scheduleForm.value.recurringPattern = `${minute} ${hour} * * *`
-  } else if (recurringType.value === 'weekly') {
-    const time = weeklyTime.value
-    const hour = time.getHours()
-    const minute = time.getMinutes()
-    const days = weeklyDays.value.join(',')
-    scheduleForm.value.recurringPattern = `${minute} ${hour} * * ${days}`
+  if (recurringType.value === "daily") {
+    const time = dailyTime.value;
+    const hour = time.getHours();
+    const minute = time.getMinutes();
+    scheduleForm.value.recurringPattern = `${minute} ${hour} * * *`;
+  } else if (recurringType.value === "weekly") {
+    const time = weeklyTime.value;
+    const hour = time.getHours();
+    const minute = time.getMinutes();
+    const days = weeklyDays.value.join(",");
+    scheduleForm.value.recurringPattern = `${minute} ${hour} * * ${days}`;
   }
-  updateCronDescription()
-}
+  updateCronDescription();
+};
 
 const validateCronExpression = () => {
   // Basic cron validation
-  const pattern = scheduleForm.value.recurringPattern
-  const parts = pattern.split(' ')
+  const pattern = scheduleForm.value.recurringPattern;
+  const parts = pattern.split(" ");
 
   if (parts.length !== 5) {
-    cronDescription.value = 'Invalid cron expression'
-    return false
+    cronDescription.value = "Invalid cron expression";
+    return false;
   }
 
-  updateCronDescription()
-  return true
-}
+  updateCronDescription();
+  return true;
+};
 
 const updateCronDescription = () => {
-  const pattern = scheduleForm.value.recurringPattern
-  if (!pattern) return
+  const pattern = scheduleForm.value.recurringPattern;
+  if (!pattern) return;
 
   try {
     // This is a simplified description generator
     // In a real app, you'd use a cron parser library
-    cronDescription.value = parseCronExpression(pattern)
+    cronDescription.value = parseCronExpression(pattern);
   } catch (error) {
-    cronDescription.value = 'Invalid cron expression'
+    cronDescription.value = "Invalid cron expression";
   }
-}
+};
 
 const parseCronExpression = (pattern: string): string => {
-  const parts = pattern.split(' ')
-  const [minute, hour, day, month, dayOfWeek] = parts
+  const parts = pattern.split(" ");
+  const [minute, hour, day, _month, dayOfWeek] = parts;
 
-  let description = 'Runs '
+  let description = "Runs ";
 
-  if (dayOfWeek !== '*') {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    const selectedDays = dayOfWeek.split(',').map(d => days[parseInt(d)])
-    description += `every ${selectedDays.join(', ')} `
-  } else if (day !== '*') {
-    description += `on day ${day} of each month `
+  if (dayOfWeek !== "*") {
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const selectedDays = dayOfWeek.split(",").map((d) => days[parseInt(d)]);
+    description += `every ${selectedDays.join(", ")} `;
+  } else if (day !== "*") {
+    description += `on day ${day} of each month `;
   } else {
-    description += 'daily '
+    description += "daily ";
   }
 
-  if (hour !== '*' && minute !== '*') {
-    description += `at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+  if (hour !== "*" && minute !== "*") {
+    description += `at ${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
   }
 
-  return description
-}
+  return description;
+};
 
 const getNextExecutionTime = () => {
-  if (scheduleForm.value.scheduleType === 'once' && scheduleForm.value.scheduledAt) {
-    return new Date(scheduleForm.value.scheduledAt).toLocaleString()
-  } else if (scheduleForm.value.scheduleType === 'recurring' && scheduleForm.value.recurringPattern) {
+  if (
+    scheduleForm.value.scheduleType === "once" &&
+    scheduleForm.value.scheduledAt
+  ) {
+    return new Date(scheduleForm.value.scheduledAt).toLocaleString();
+  } else if (
+    scheduleForm.value.scheduleType === "recurring" &&
+    scheduleForm.value.recurringPattern
+  ) {
     // Calculate next execution based on cron pattern
     // This is simplified - in reality you'd use a cron library
-    return calculateNextCronExecution(scheduleForm.value.recurringPattern)
+    return calculateNextCronExecution(scheduleForm.value.recurringPattern);
   }
-  return 'Not configured'
-}
+  return "Not configured";
+};
 
-const calculateNextCronExecution = (pattern: string): string => {
+const calculateNextCronExecution = (_pattern: string): string => {
   // Simplified next execution calculation
   // In a real app, use a proper cron library
-  const now = new Date()
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-  return tomorrow.toLocaleString()
-}
+  const now = new Date();
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  return tomorrow.toLocaleString();
+};
 
 const getPatternDescription = () => {
   if (scheduleForm.value.recurringPattern) {
-    return cronDescription.value || scheduleForm.value.recurringPattern
+    return cronDescription.value || scheduleForm.value.recurringPattern;
   }
-  return 'Not configured'
-}
+  return "Not configured";
+};
 
 const getEstimatedDuration = () => {
-  const selectedUpdateDetails = getSelectedUpdateDetails()
-  const totalTime = selectedUpdateDetails.reduce((sum, update) => sum + update.estimatedDowntime, 0)
+  const selectedUpdateDetails = getSelectedUpdateDetails();
+  const totalTime = selectedUpdateDetails.reduce(
+    (sum, update) => sum + update.estimatedDowntime,
+    0,
+  );
 
-  if (totalTime < 60) return `~${totalTime}s`
-  if (totalTime < 3600) return `~${Math.floor(totalTime / 60)}m`
-  return `~${Math.floor(totalTime / 3600)}h ${Math.floor((totalTime % 3600) / 60)}m`
-}
+  if (totalTime < 60) return `~${totalTime}s`;
+  if (totalTime < 3600) return `~${Math.floor(totalTime / 60)}m`;
+  return `~${Math.floor(totalTime / 3600)}h ${Math.floor((totalTime % 3600) / 60)}m`;
+};
 
-const hasScheduledUpdates = (date: string): boolean => {
+const hasScheduledUpdates = (_date: string): boolean => {
   // Check if there are scheduled updates on this date
   // This would come from the store in a real app
-  return false
-}
+  return false;
+};
 
-const getScheduledCount = (date: string): number => {
+const getScheduledCount = (_date: string): number => {
   // Return count of scheduled updates on this date
-  return 0
-}
+  return 0;
+};
 
 const handleSchedule = async () => {
-  if (!formRef.value) return
+  if (!formRef.value) return;
 
   try {
-    await formRef.value.validate()
+    await formRef.value.validate();
 
-    scheduling.value = true
+    scheduling.value = true;
 
     // Schedule each selected update
-    const promises = props.selectedUpdates.map(updateId => {
-      const scheduledAt = scheduleForm.value.scheduleType === 'once'
-        ? new Date(scheduleForm.value.scheduledAt)
-        : new Date() // For recurring, calculate next execution
+    const promises = props.selectedUpdates.map((updateId) => {
+      const scheduledAt =
+        scheduleForm.value.scheduleType === "once"
+          ? new Date(scheduleForm.value.scheduledAt)
+          : new Date(); // For recurring, calculate next execution
 
       return updatesStore.scheduleUpdate(updateId, scheduledAt, {
-        recurring: scheduleForm.value.scheduleType === 'recurring',
+        recurring: scheduleForm.value.scheduleType === "recurring",
         recurringPattern: scheduleForm.value.recurringPattern,
-        notifyBefore: scheduleForm.value.notifyBefore
-      })
-    })
+        notifyBefore: scheduleForm.value.notifyBefore,
+      });
+    });
 
-    await Promise.all(promises)
+    await Promise.all(promises);
 
-    ElMessage.success(`Successfully scheduled ${props.selectedUpdates.length} update(s)`)
-    $emit('scheduled')
-    handleClose()
-
+    ElMessage.success(
+      `Successfully scheduled ${props.selectedUpdates.length} update(s)`,
+    );
+    emit("scheduled");
+    handleClose();
   } catch (error) {
-    console.error('Failed to schedule updates:', error)
-    ElMessage.error('Failed to schedule updates')
+    console.error("Failed to schedule updates:", error);
+    ElMessage.error("Failed to schedule updates");
   } finally {
-    scheduling.value = false
+    scheduling.value = false;
   }
-}
+};
 
 const handleClose = () => {
-  visible.value = false
-}
+  visible.value = false;
+};
 
 // Watch for changes to update cron description
-watch(() => scheduleForm.value.recurringPattern, updateCronDescription)
+watch(() => scheduleForm.value.recurringPattern, updateCronDescription);
 
 // Initialize daily time to 2 AM
-dailyTime.value.setHours(2, 0, 0, 0)
-weeklyTime.value.setHours(2, 0, 0, 0)
+dailyTime.value.setHours(2, 0, 0, 0);
+weeklyTime.value.setHours(2, 0, 0, 0);
 
 // Set default recurring pattern
-updateRecurringPattern()
+updateRecurringPattern();
 </script>
 
 <style scoped lang="scss">

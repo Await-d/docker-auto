@@ -8,10 +8,10 @@
       :multiple="multiple"
       :limit="limit"
       :disabled="disabled"
+      class="upload-component"
       @change="handleChange"
       @remove="handleRemove"
       @exceed="handleExceed"
-      class="upload-component"
     >
       <el-button type="primary" :disabled="disabled" :size="size">
         <el-icon><FolderOpened /></el-icon>
@@ -47,153 +47,156 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import {
-  FolderOpened,
-  Document,
-  Delete
-} from '@element-plus/icons-vue'
-import type { UploadFile, UploadFiles } from 'element-plus'
+import { ref, computed } from "vue";
+import { ElMessage } from "element-plus";
+import { FolderOpened, Document, Delete } from "@element-plus/icons-vue";
+import type { UploadFile, UploadFiles } from "element-plus";
 
 interface Props {
-  modelValue: string | string[]
-  accept?: string
-  multiple?: boolean
-  limit?: number
-  disabled?: boolean
-  size?: 'large' | 'default' | 'small'
-  placeholder?: string
-  showFileList?: boolean
-  showTip?: boolean
-  maxSize?: number // in MB
+  modelValue: string | string[];
+  accept?: string;
+  multiple?: boolean;
+  limit?: number;
+  disabled?: boolean;
+  size?: "large" | "default" | "small";
+  placeholder?: string;
+  showFileList?: boolean;
+  showTip?: boolean;
+  maxSize?: number; // in MB
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: string | string[]): void
-  (e: 'change', value: string | string[]): void
-  (e: 'error', error: string): void
+  (e: "update:modelValue", value: string | string[]): void;
+  (e: "change", value: string | string[]): void;
+  (e: "error", error: string): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  accept: '*',
+  accept: "*",
   multiple: false,
   limit: 1,
   disabled: false,
-  size: 'default',
-  placeholder: 'Select file',
+  size: "default",
+  placeholder: "Select file",
   showFileList: true,
   showTip: true,
-  maxSize: 10
-})
+  maxSize: 10,
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const uploadRef = ref()
-const error = ref('')
+const uploadRef = ref();
+const error = ref("");
 
 const buttonText = computed(() => {
   if (props.multiple) {
-    return props.modelValue && Array.isArray(props.modelValue) && props.modelValue.length > 0
-      ? 'Change Files'
-      : 'Select Files'
+    return props.modelValue &&
+      Array.isArray(props.modelValue) &&
+      props.modelValue.length > 0
+      ? "Change Files"
+      : "Select Files";
   }
-  return props.modelValue ? 'Change File' : props.placeholder
-})
+  return props.modelValue ? "Change File" : props.placeholder;
+});
 
 const tipText = computed(() => {
-  const acceptText = props.accept !== '*' ? `Accepted: ${props.accept}` : 'All file types'
-  const sizeText = `Max size: ${props.maxSize}MB`
-  return `${acceptText}, ${sizeText}`
-})
+  const acceptText =
+    props.accept !== "*" ? `Accepted: ${props.accept}` : "All file types";
+  const sizeText = `Max size: ${props.maxSize}MB`;
+  return `${acceptText}, ${sizeText}`;
+});
 
 const currentFileName = computed(() => {
-  if (!props.modelValue || typeof props.modelValue !== 'string') return ''
+  if (!props.modelValue || typeof props.modelValue !== "string") return "";
 
   // Extract filename from path or use as-is
-  const parts = props.modelValue.split('/')
-  return parts[parts.length - 1] || props.modelValue
-})
+  const parts = props.modelValue.split("/");
+  return parts[parts.length - 1] || props.modelValue;
+});
 
-const handleChange = (uploadFile: UploadFile, uploadFiles: UploadFiles) => {
-  error.value = ''
+const handleChange = (uploadFile: UploadFile, _uploadFiles: UploadFiles) => {
+  error.value = "";
 
-  if (!uploadFile.raw) return
+  if (!uploadFile.raw) return;
 
   // Validate file size
-  const fileSizeMB = uploadFile.raw.size / 1024 / 1024
+  const fileSizeMB = uploadFile.raw.size / 1024 / 1024;
   if (fileSizeMB > props.maxSize) {
-    error.value = `File size exceeds ${props.maxSize}MB limit`
-    emit('error', error.value)
-    return
+    error.value = `File size exceeds ${props.maxSize}MB limit`;
+    emit("error", error.value);
+    return;
   }
 
   // Read file content
-  const reader = new FileReader()
+  const reader = new FileReader();
   reader.onload = (e) => {
-    const content = e.target?.result as string
+    const content = e.target?.result as string;
 
     if (props.multiple) {
-      const currentValues = Array.isArray(props.modelValue) ? [...props.modelValue] : []
-      currentValues.push(content)
-      emit('update:modelValue', currentValues)
-      emit('change', currentValues)
+      const currentValues = Array.isArray(props.modelValue)
+        ? [...props.modelValue]
+        : [];
+      currentValues.push(content);
+      emit("update:modelValue", currentValues);
+      emit("change", currentValues);
     } else {
-      emit('update:modelValue', content)
-      emit('change', content)
+      emit("update:modelValue", content);
+      emit("change", content);
     }
-  }
+  };
 
   reader.onerror = () => {
-    error.value = 'Failed to read file'
-    emit('error', error.value)
-  }
+    error.value = "Failed to read file";
+    emit("error", error.value);
+  };
 
   // Read as text for certificates, data URL for images, etc.
-  if (props.accept.includes('image/')) {
-    reader.readAsDataURL(uploadFile.raw)
+  if (props.accept.includes("image/")) {
+    reader.readAsDataURL(uploadFile.raw);
   } else {
-    reader.readAsText(uploadFile.raw)
+    reader.readAsText(uploadFile.raw);
   }
-}
+};
 
 const handleRemove = (uploadFile: UploadFile, uploadFiles: UploadFiles) => {
   if (props.multiple) {
     // For multiple files, remove the specific file
-    const currentValues = Array.isArray(props.modelValue) ? [...props.modelValue] : []
-    const index = uploadFiles.findIndex(f => f.uid === uploadFile.uid)
+    const currentValues = Array.isArray(props.modelValue)
+      ? [...props.modelValue]
+      : [];
+    const index = uploadFiles.findIndex((f) => f.uid === uploadFile.uid);
     if (index !== -1) {
-      currentValues.splice(index, 1)
-      emit('update:modelValue', currentValues)
-      emit('change', currentValues)
+      currentValues.splice(index, 1);
+      emit("update:modelValue", currentValues);
+      emit("change", currentValues);
     }
   } else {
     // For single file, clear the value
-    clearFile()
+    clearFile();
   }
-}
+};
 
 const handleExceed = () => {
-  ElMessage.warning(`Maximum ${props.limit} file(s) allowed`)
-}
+  ElMessage.warning(`Maximum ${props.limit} file(s) allowed`);
+};
 
 const clearFile = () => {
   if (props.multiple) {
-    emit('update:modelValue', [])
-    emit('change', [])
+    emit("update:modelValue", []);
+    emit("change", []);
   } else {
-    emit('update:modelValue', '')
-    emit('change', '')
+    emit("update:modelValue", "");
+    emit("change", "");
   }
 
-  uploadRef.value?.clearFiles()
-  error.value = ''
-}
+  uploadRef.value?.clearFiles();
+  error.value = "";
+};
 
 defineExpose({
   clearFiles: () => uploadRef.value?.clearFiles(),
-  upload: () => uploadRef.value?.submit()
-})
+  upload: () => uploadRef.value?.submit(),
+});
 </script>
 
 <style scoped lang="scss">

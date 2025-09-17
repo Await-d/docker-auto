@@ -1,14 +1,25 @@
 <template>
-  <div class="quick-actions-widget" :class="{ 'compact-mode': displayMode === 'compact' }">
+  <div
+    class="quick-actions-widget"
+    :class="{ 'compact-mode': displayMode === 'compact' }"
+  >
     <!-- Primary Actions -->
-    <div class="primary-actions" v-if="displayMode !== 'minimal'">
+    <div
+v-if="displayMode !== 'minimal'" class="primary-actions"
+>
       <div class="section-title">Quick Actions</div>
       <div class="actions-grid">
         <div
           v-for="action in primaryActions"
           :key="action.id"
           class="action-button"
-          :class="[action.type, { disabled: action.disabled, loading: loadingActions.has(action.id) }]"
+          :class="[
+            action.type,
+            {
+              disabled: action.disabled,
+              loading: loadingActions.has(action.id),
+            },
+          ]"
           @click="executeAction(action)"
         >
           <div class="action-icon">
@@ -23,7 +34,9 @@
             <span class="action-title">{{ action.title }}</span>
             <span class="action-description">{{ action.description }}</span>
           </div>
-          <div class="action-indicator" v-if="action.badge">
+          <div
+v-if="action.badge" class="action-indicator"
+>
             <el-badge :value="action.badge" :type="getBadgeType(action.type)" />
           </div>
         </div>
@@ -31,27 +44,29 @@
     </div>
 
     <!-- Container Actions -->
-    <div class="container-actions" v-if="displayMode === 'detailed'">
+    <div
+v-if="displayMode === 'detailed'" class="container-actions"
+>
       <div class="section-title">Container Management</div>
       <div class="actions-row">
         <el-button-group size="small">
           <el-button
-            @click="executeContainerAction('start-all')"
             :loading="loadingActions.has('start-all')"
+            @click="executeContainerAction('start-all')"
           >
             <el-icon><CaretRight /></el-icon>
             Start All
           </el-button>
           <el-button
-            @click="executeContainerAction('stop-all')"
             :loading="loadingActions.has('stop-all')"
+            @click="executeContainerAction('stop-all')"
           >
             <el-icon><VideoPlay /></el-icon>
             Stop All
           </el-button>
           <el-button
-            @click="executeContainerAction('restart-all')"
             :loading="loadingActions.has('restart-all')"
+            @click="executeContainerAction('restart-all')"
           >
             <el-icon><Refresh /></el-icon>
             Restart All
@@ -62,27 +77,28 @@
 
     <!-- System Actions -->
     <div class="system-actions">
-      <div class="section-title" v-if="displayMode !== 'minimal'">System</div>
+      <div
+v-if="displayMode !== 'minimal'" class="section-title">System</div>
       <div class="actions-row">
         <el-button-group size="small">
           <el-button
-            @click="executeSystemAction('scan-updates')"
             :loading="loadingActions.has('scan-updates')"
             type="primary"
+            @click="executeSystemAction('scan-updates')"
           >
             <el-icon><Search /></el-icon>
             <span v-if="displayMode !== 'compact'">Scan Updates</span>
           </el-button>
           <el-button
-            @click="executeSystemAction('cleanup')"
             :loading="loadingActions.has('cleanup')"
+            @click="executeSystemAction('cleanup')"
           >
             <el-icon><Delete /></el-icon>
             <span v-if="displayMode !== 'compact'">Cleanup</span>
           </el-button>
           <el-button
-            @click="executeSystemAction('backup')"
             :loading="loadingActions.has('backup')"
+            @click="executeSystemAction('backup')"
           >
             <el-icon><Download /></el-icon>
             <span v-if="displayMode !== 'compact'">Backup</span>
@@ -92,7 +108,9 @@
     </div>
 
     <!-- Navigation Actions -->
-    <div class="navigation-actions" v-if="displayMode === 'detailed'">
+    <div
+v-if="displayMode === 'detailed'" class="navigation-actions"
+>
       <div class="section-title">Quick Navigation</div>
       <div class="nav-grid">
         <div
@@ -105,18 +123,33 @@
             <component :is="nav.icon" />
           </el-icon>
           <span class="nav-label">{{ nav.label }}</span>
-          <div class="nav-badge" v-if="nav.badge">
-            <el-badge :value="nav.badge" :type="nav.badgeType || 'primary'" />
+          <div
+v-if="nav.badge" class="nav-badge"
+>
+            <el-badge
+              :value="nav.badge"
+              :type="
+                (nav.badgeType as
+                  | 'success'
+                  | 'warning'
+                  | 'info'
+                  | 'primary'
+                  | 'danger') || 'primary'
+              "
+            />
           </div>
         </div>
       </div>
     </div>
 
     <!-- Custom Actions -->
-    <div class="custom-actions" v-if="customActions.length > 0 && displayMode !== 'minimal'">
+    <div
+      v-if="customActions.length > 0 && displayMode !== 'minimal'"
+      class="custom-actions"
+    >
       <div class="section-title">
         Custom Actions
-        <el-button size="mini" type="text" @click="showCustomActionDialog">
+        <el-button size="small" type="text" @click="showCustomActionDialog">
           <el-icon><Plus /></el-icon>
           Add
         </el-button>
@@ -134,15 +167,21 @@
             </el-icon>
           </div>
           <span class="custom-label">{{ action.name }}</span>
-          <el-dropdown @command="(cmd) => handleCustomActionMenu(cmd, action)">
-            <el-button size="mini" type="text">
+          <el-dropdown
+            @command="(cmd: string) => handleCustomActionMenu(cmd, action)"
+          >
+            <el-button size="small" type="text">
               <el-icon><MoreFilled /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="edit">Edit</el-dropdown-item>
-                <el-dropdown-item command="duplicate">Duplicate</el-dropdown-item>
-                <el-dropdown-item command="delete" divided>Delete</el-dropdown-item>
+                <el-dropdown-item command="edit"> Edit </el-dropdown-item>
+                <el-dropdown-item command="duplicate">
+                  Duplicate
+                </el-dropdown-item>
+                <el-dropdown-item command="delete" divided>
+                  Delete
+                </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -151,7 +190,10 @@
     </div>
 
     <!-- Recent Actions -->
-    <div class="recent-actions" v-if="recentActions.length > 0 && displayMode === 'detailed'">
+    <div
+      v-if="recentActions.length > 0 && displayMode === 'detailed'"
+      class="recent-actions"
+    >
       <div class="section-title">Recent Actions</div>
       <div class="recent-list">
         <div
@@ -167,10 +209,12 @@
           </div>
           <div class="recent-content">
             <span class="recent-action">{{ action.action }}</span>
-            <span class="recent-time">{{ formatRelativeTime(action.timestamp) }}</span>
+            <span class="recent-time">{{
+              formatRelativeTime(action.timestamp)
+            }}</span>
           </div>
           <div class="recent-status">
-            <el-tag :type="getStatusType(action.status)" size="mini">
+            <el-tag :type="getStatusType(action.status)" size="small">
               {{ action.status }}
             </el-tag>
           </div>
@@ -179,23 +223,25 @@
     </div>
 
     <!-- Emergency Actions -->
-    <div class="emergency-actions" v-if="displayMode === 'detailed'">
+    <div
+v-if="displayMode === 'detailed'" class="emergency-actions"
+>
       <el-divider>Emergency</el-divider>
       <div class="emergency-buttons">
         <el-button
-          @click="executeEmergencyAction('maintenance-mode')"
           :loading="loadingActions.has('maintenance-mode')"
           type="warning"
           size="small"
+          @click="executeEmergencyAction('maintenance-mode')"
         >
           <el-icon><Warning /></el-icon>
-          {{ maintenanceMode ? 'Exit' : 'Enter' }} Maintenance
+          {{ maintenanceMode ? "Exit" : "Enter" }} Maintenance
         </el-button>
         <el-button
-          @click="executeEmergencyAction('emergency-stop')"
           :loading="loadingActions.has('emergency-stop')"
           type="danger"
           size="small"
+          @click="executeEmergencyAction('emergency-stop')"
         >
           <el-icon><SwitchButton /></el-icon>
           Emergency Stop
@@ -209,12 +255,20 @@
       title="Add Custom Action"
       width="500px"
     >
-      <el-form ref="customActionFormRef" :model="customActionForm" :rules="customActionRules" label-width="100px">
+      <el-form
+        ref="customActionFormRef"
+        :model="customActionForm"
+        :rules="customActionRules"
+        label-width="100px"
+      >
         <el-form-item label="Name" prop="name">
           <el-input v-model="customActionForm.name" placeholder="Action name" />
         </el-form-item>
         <el-form-item label="Command" prop="command">
-          <el-input v-model="customActionForm.command" placeholder="Command to execute" />
+          <el-input
+            v-model="customActionForm.command"
+            placeholder="Command to execute"
+          />
         </el-form-item>
         <el-form-item label="Icon" prop="icon">
           <el-select v-model="customActionForm.icon" placeholder="Select icon">
@@ -229,451 +283,491 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="customActionDialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="saveCustomAction">Save</el-button>
+        <el-button @click="customActionDialogVisible = false">
+          Cancel
+        </el-button>
+        <el-button
+type="primary" @click="saveCustomAction"> Save </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { useRouter } from "vue-router";
 import {
-  CaretRight, VideoPlay, Refresh, Search, Delete, Download,
-  Plus, MoreFilled, Warning, SwitchButton, Loading,
-  SuccessFilled, CircleCloseFilled, Clock, Box, Monitor,
-  Document, DataAnalysis, Bell, User, Setting
-} from '@element-plus/icons-vue'
+  CaretRight,
+  VideoPlay,
+  Refresh,
+  Search,
+  Delete,
+  Download,
+  Plus,
+  MoreFilled,
+  Warning,
+  SwitchButton,
+  Loading,
+  SuccessFilled,
+  CircleCloseFilled,
+  Clock,
+  Box,
+  Monitor,
+  Document,
+  DataAnalysis,
+  Bell,
+  User,
+  Setting,
+} from "@element-plus/icons-vue";
+
+// Icons used in dynamic template components - create reference object for TypeScript
+// @ts-ignore: _dynamicIcons is intentionally unused - exists to prevent unused import warnings
+const _dynamicIcons = {
+  SuccessFilled,
+  CircleCloseFilled,
+  Clock,
+  Box,
+  Monitor,
+  Document,
+  DataAnalysis,
+  Bell,
+  User,
+  Setting,
+};
 
 // Props
 interface Props {
-  widgetId: string
-  widgetConfig: any
-  widgetData?: any
-  displayMode?: 'default' | 'compact' | 'detailed' | 'minimal'
+  widgetId: string;
+  widgetConfig: any;
+  widgetData?: any;
+  displayMode?: "default" | "compact" | "detailed" | "minimal";
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  displayMode: 'default'
-})
+withDefaults(defineProps<Props>(), {
+  displayMode: "default",
+});
 
 // Emits
 const emit = defineEmits<{
-  'data-updated': [data: any]
-  'error': [error: any]
-  'loading': [loading: boolean]
-}>()
+  "data-updated": [data: any];
+  error: [error: any];
+  loading: [loading: boolean];
+}>();
 
 // Router
-const router = useRouter()
+const router = useRouter();
 
 // Reactive state
-const loadingActions = ref(new Set<string>())
-const customActionDialogVisible = ref(false)
-const customActionFormRef = ref()
-const maintenanceMode = ref(false)
+const loadingActions = ref(new Set<string>());
+const customActionDialogVisible = ref(false);
+const customActionFormRef = ref();
+const maintenanceMode = ref(false);
 
 const customActionForm = ref({
-  name: '',
-  command: '',
-  icon: 'Setting',
-  requiresConfirmation: false
-})
+  name: "",
+  command: "",
+  icon: "Setting",
+  requiresConfirmation: false,
+});
 
 const customActionRules = {
   name: [
-    { required: true, message: 'Action name is required', trigger: 'blur' }
+    { required: true, message: "Action name is required", trigger: "blur" },
   ],
   command: [
-    { required: true, message: 'Command is required', trigger: 'blur' }
-  ]
-}
+    { required: true, message: "Command is required", trigger: "blur" },
+  ],
+};
 
 const customActions = ref([
   {
-    id: 'custom1',
-    name: 'Restart Nginx',
-    command: 'docker restart nginx',
-    icon: 'Refresh',
-    requiresConfirmation: true
+    id: "custom1",
+    name: "Restart Nginx",
+    command: "docker restart nginx",
+    icon: "Refresh",
+    requiresConfirmation: true,
   },
   {
-    id: 'custom2',
-    name: 'Clear Logs',
-    command: 'docker system prune --volumes',
-    icon: 'Delete',
-    requiresConfirmation: true
-  }
-])
+    id: "custom2",
+    name: "Clear Logs",
+    command: "docker system prune --volumes",
+    icon: "Delete",
+    requiresConfirmation: true,
+  },
+]);
 
 const recentActions = ref([
   {
-    id: 'recent1',
-    action: 'Container restart: web-server',
-    status: 'success',
-    timestamp: new Date(Date.now() - 300000)
+    id: "recent1",
+    action: "Container restart: web-server",
+    status: "success",
+    timestamp: new Date(Date.now() - 300000),
   },
   {
-    id: 'recent2',
-    action: 'System cleanup',
-    status: 'success',
-    timestamp: new Date(Date.now() - 600000)
+    id: "recent2",
+    action: "System cleanup",
+    status: "success",
+    timestamp: new Date(Date.now() - 600000),
   },
   {
-    id: 'recent3',
-    action: 'Update scan',
-    status: 'failed',
-    timestamp: new Date(Date.now() - 900000)
-  }
-])
+    id: "recent3",
+    action: "Update scan",
+    status: "failed",
+    timestamp: new Date(Date.now() - 900000),
+  },
+]);
 
 // Computed properties
 const primaryActions = computed(() => [
   {
-    id: 'update-scan',
-    title: 'Scan Updates',
-    description: 'Check for new updates',
-    icon: 'Search',
-    type: 'primary',
+    id: "update-scan",
+    title: "Scan Updates",
+    description: "Check for new updates",
+    icon: "Search",
+    type: "primary",
     badge: 3,
-    disabled: false
+    disabled: false,
   },
   {
-    id: 'system-health',
-    title: 'Health Check',
-    description: 'Run system diagnostics',
-    icon: 'Monitor',
-    type: 'info',
+    id: "system-health",
+    title: "Health Check",
+    description: "Run system diagnostics",
+    icon: "Monitor",
+    type: "info",
     badge: null,
-    disabled: false
+    disabled: false,
   },
   {
-    id: 'container-prune',
-    title: 'Cleanup System',
-    description: 'Remove unused resources',
-    icon: 'Delete',
-    type: 'warning',
+    id: "container-prune",
+    title: "Cleanup System",
+    description: "Remove unused resources",
+    icon: "Delete",
+    type: "warning",
     badge: null,
-    disabled: false
+    disabled: false,
   },
   {
-    id: 'backup-create',
-    title: 'Create Backup',
-    description: 'Backup system state',
-    icon: 'Download',
-    type: 'success',
+    id: "backup-create",
+    title: "Create Backup",
+    description: "Backup system state",
+    icon: "Download",
+    type: "success",
     badge: null,
-    disabled: false
-  }
-])
+    disabled: false,
+  },
+]);
 
 const navigationItems = computed(() => [
   {
-    path: '/containers',
-    label: 'Containers',
-    icon: 'Box',
+    path: "/containers",
+    label: "Containers",
+    icon: "Box",
     badge: 12,
-    badgeType: 'primary'
+    badgeType: "primary",
   },
   {
-    path: '/images',
-    label: 'Images',
-    icon: 'Picture',
-    badge: null
+    path: "/images",
+    label: "Images",
+    icon: "Picture",
+    badge: null,
   },
   {
-    path: '/monitoring',
-    label: 'Monitoring',
-    icon: 'DataAnalysis',
-    badge: null
+    path: "/monitoring",
+    label: "Monitoring",
+    icon: "DataAnalysis",
+    badge: null,
   },
   {
-    path: '/logs',
-    label: 'Logs',
-    icon: 'Document',
+    path: "/logs",
+    label: "Logs",
+    icon: "Document",
     badge: 5,
-    badgeType: 'warning'
+    badgeType: "warning",
   },
   {
-    path: '/settings',
-    label: 'Settings',
-    icon: 'Setting',
-    badge: null
+    path: "/settings",
+    label: "Settings",
+    icon: "Setting",
+    badge: null,
   },
   {
-    path: '/users',
-    label: 'Users',
-    icon: 'User',
-    badge: null
-  }
-])
+    path: "/users",
+    label: "Users",
+    icon: "User",
+    badge: null,
+  },
+]);
 
 // Methods
 const executeAction = async (action: any) => {
-  if (action.disabled || loadingActions.value.has(action.id)) return
+  if (action.disabled || loadingActions.value.has(action.id)) return;
 
   try {
-    loadingActions.value.add(action.id)
+    loadingActions.value.add(action.id);
 
     // Simulate action execution
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     // Add to recent actions
     recentActions.value.unshift({
       id: Date.now().toString(),
       action: `${action.title}: ${action.description}`,
-      status: 'success',
-      timestamp: new Date()
-    })
+      status: "success",
+      timestamp: new Date(),
+    });
 
-    ElMessage.success(`${action.title} completed successfully`)
-    emit('data-updated', { recentActions: recentActions.value })
+    ElMessage.success(`${action.title} completed successfully`);
+    emit("data-updated", { recentActions: recentActions.value });
   } catch (error) {
     recentActions.value.unshift({
       id: Date.now().toString(),
       action: `${action.title}: ${action.description}`,
-      status: 'failed',
-      timestamp: new Date()
-    })
+      status: "failed",
+      timestamp: new Date(),
+    });
 
-    ElMessage.error(`${action.title} failed`)
-    emit('error', error)
+    ElMessage.error(`${action.title} failed`);
+    emit("error", error);
   } finally {
-    loadingActions.value.delete(action.id)
+    loadingActions.value.delete(action.id);
   }
-}
+};
 
 const executeContainerAction = async (actionType: string) => {
-  if (loadingActions.value.has(actionType)) return
+  if (loadingActions.value.has(actionType)) return;
 
   try {
-    loadingActions.value.add(actionType)
+    loadingActions.value.add(actionType);
 
     const actionMap = {
-      'start-all': 'Starting all containers...',
-      'stop-all': 'Stopping all containers...',
-      'restart-all': 'Restarting all containers...'
-    }
+      "start-all": "Starting all containers...",
+      "stop-all": "Stopping all containers...",
+      "restart-all": "Restarting all containers...",
+    };
 
-    ElMessage.info(actionMap[actionType as keyof typeof actionMap])
+    ElMessage.info(actionMap[actionType as keyof typeof actionMap]);
 
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    ElMessage.success('Container action completed')
+    ElMessage.success("Container action completed");
   } catch (error) {
-    ElMessage.error('Container action failed')
-    emit('error', error)
+    ElMessage.error("Container action failed");
+    emit("error", error);
   } finally {
-    loadingActions.value.delete(actionType)
+    loadingActions.value.delete(actionType);
   }
-}
+};
 
 const executeSystemAction = async (actionType: string) => {
-  if (loadingActions.value.has(actionType)) return
+  if (loadingActions.value.has(actionType)) return;
 
   try {
-    loadingActions.value.add(actionType)
+    loadingActions.value.add(actionType);
 
     const actionMap = {
-      'scan-updates': 'Scanning for updates...',
-      'cleanup': 'Cleaning up system...',
-      'backup': 'Creating backup...'
-    }
+      "scan-updates": "Scanning for updates...",
+      cleanup: "Cleaning up system...",
+      backup: "Creating backup...",
+    };
 
-    ElMessage.info(actionMap[actionType as keyof typeof actionMap])
+    ElMessage.info(actionMap[actionType as keyof typeof actionMap]);
 
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    ElMessage.success('System action completed')
+    ElMessage.success("System action completed");
   } catch (error) {
-    ElMessage.error('System action failed')
-    emit('error', error)
+    ElMessage.error("System action failed");
+    emit("error", error);
   } finally {
-    loadingActions.value.delete(actionType)
+    loadingActions.value.delete(actionType);
   }
-}
+};
 
 const executeCustomAction = async (action: any) => {
   try {
     if (action.requiresConfirmation) {
       await ElMessageBox.confirm(
         `Are you sure you want to execute: ${action.command}?`,
-        'Confirm Action',
+        "Confirm Action",
         {
-          type: 'warning',
-          confirmButtonText: 'Execute',
-          cancelButtonText: 'Cancel'
-        }
-      )
+          type: "warning",
+          confirmButtonText: "Execute",
+          cancelButtonText: "Cancel",
+        },
+      );
     }
 
-    ElMessage.info(`Executing: ${action.name}`)
+    ElMessage.info(`Executing: ${action.name}`);
 
     // Simulate command execution
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    ElMessage.success(`${action.name} executed successfully`)
+    ElMessage.success(`${action.name} executed successfully`);
   } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error(`Failed to execute ${action.name}`)
+    if (error !== "cancel") {
+      ElMessage.error(`Failed to execute ${action.name}`);
     }
   }
-}
+};
 
 const executeEmergencyAction = async (actionType: string) => {
-  if (loadingActions.value.has(actionType)) return
+  if (loadingActions.value.has(actionType)) return;
 
   try {
-    const confirmMessage = actionType === 'maintenance-mode'
-      ? `Are you sure you want to ${maintenanceMode.value ? 'exit' : 'enter'} maintenance mode?`
-      : 'Are you sure you want to perform an emergency stop? This will stop all containers immediately.'
+    const confirmMessage =
+      actionType === "maintenance-mode"
+        ? `Are you sure you want to ${maintenanceMode.value ? "exit" : "enter"} maintenance mode?`
+        : "Are you sure you want to perform an emergency stop? This will stop all containers immediately.";
 
-    await ElMessageBox.confirm(
-      confirmMessage,
-      'Confirm Emergency Action',
-      {
-        type: 'warning',
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel'
-      }
-    )
+    await ElMessageBox.confirm(confirmMessage, "Confirm Emergency Action", {
+      type: "warning",
+      confirmButtonText: "Confirm",
+      cancelButtonText: "Cancel",
+    });
 
-    loadingActions.value.add(actionType)
+    loadingActions.value.add(actionType);
 
-    if (actionType === 'maintenance-mode') {
-      maintenanceMode.value = !maintenanceMode.value
-      ElMessage.success(`Maintenance mode ${maintenanceMode.value ? 'activated' : 'deactivated'}`)
+    if (actionType === "maintenance-mode") {
+      maintenanceMode.value = !maintenanceMode.value;
+      ElMessage.success(
+        `Maintenance mode ${maintenanceMode.value ? "activated" : "deactivated"}`,
+      );
     } else {
-      ElMessage.warning('Emergency stop initiated')
+      ElMessage.warning("Emergency stop initiated");
     }
 
     // Simulate action
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('Emergency action failed')
+    if (error !== "cancel") {
+      ElMessage.error("Emergency action failed");
     }
   } finally {
-    loadingActions.value.delete(actionType)
+    loadingActions.value.delete(actionType);
   }
-}
+};
 
 const navigateTo = (path: string) => {
-  router.push(path)
-  ElMessage.info(`Navigating to ${path}`)
-}
+  router.push(path);
+  ElMessage.info(`Navigating to ${path}`);
+};
 
 const showCustomActionDialog = () => {
   customActionForm.value = {
-    name: '',
-    command: '',
-    icon: 'Setting',
-    requiresConfirmation: false
-  }
-  customActionDialogVisible.value = true
-}
+    name: "",
+    command: "",
+    icon: "Setting",
+    requiresConfirmation: false,
+  };
+  customActionDialogVisible.value = true;
+};
 
 const saveCustomAction = async () => {
   try {
-    await customActionFormRef.value.validate()
+    await customActionFormRef.value.validate();
 
     const newAction = {
       id: Date.now().toString(),
-      ...customActionForm.value
-    }
+      ...customActionForm.value,
+    };
 
-    customActions.value.push(newAction)
-    customActionDialogVisible.value = false
-    ElMessage.success('Custom action added')
+    customActions.value.push(newAction);
+    customActionDialogVisible.value = false;
+    ElMessage.success("Custom action added");
   } catch (error) {
-    console.error('Form validation failed:', error)
+    console.error("Form validation failed:", error);
   }
-}
+};
 
 const handleCustomActionMenu = (command: string, action: any) => {
   switch (command) {
-    case 'edit':
-      ElMessage.info(`Editing ${action.name}`)
-      break
-    case 'duplicate':
-      const duplicated = { ...action, id: Date.now().toString(), name: `${action.name} (Copy)` }
-      customActions.value.push(duplicated)
-      ElMessage.success('Action duplicated')
-      break
-    case 'delete':
-      const index = customActions.value.findIndex(a => a.id === action.id)
+    case "edit":
+      ElMessage.info(`Editing ${action.name}`);
+      break;
+    case "duplicate": {
+      const duplicated = {
+        ...action,
+        id: Date.now().toString(),
+        name: `${action.name} (Copy)`,
+      };
+      customActions.value.push(duplicated);
+      ElMessage.success("Action duplicated");
+      break;
+    }
+    case "delete": {
+      const index = customActions.value.findIndex((a) => a.id === action.id);
       if (index !== -1) {
-        customActions.value.splice(index, 1)
-        ElMessage.success('Action deleted')
+        customActions.value.splice(index, 1);
+        ElMessage.success("Action deleted");
       }
-      break
+      break;
+    }
   }
-}
+};
 
 const getBadgeType = (actionType: string) => {
   switch (actionType) {
-    case 'primary':
-      return 'primary'
-    case 'warning':
-      return 'warning'
-    case 'danger':
-      return 'danger'
-    case 'success':
-      return 'success'
+    case "primary":
+      return "primary";
+    case "warning":
+      return "warning";
+    case "danger":
+      return "danger";
+    case "success":
+      return "success";
     default:
-      return 'info'
+      return "info";
   }
-}
+};
 
 const getStatusIcon = (status: string) => {
   switch (status) {
-    case 'success':
-      return 'SuccessFilled'
-    case 'failed':
-      return 'CircleCloseFilled'
-    case 'pending':
-      return 'Clock'
+    case "success":
+      return "SuccessFilled";
+    case "failed":
+      return "CircleCloseFilled";
+    case "pending":
+      return "Clock";
     default:
-      return 'Clock'
+      return "Clock";
   }
-}
+};
 
 const getStatusType = (status: string) => {
   switch (status) {
-    case 'success':
-      return 'success'
-    case 'failed':
-      return 'danger'
-    case 'pending':
-      return 'warning'
+    case "success":
+      return "success";
+    case "failed":
+      return "danger";
+    case "pending":
+      return "warning";
     default:
-      return 'info'
+      return "info";
   }
-}
+};
 
 const formatRelativeTime = (date: Date): string => {
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(minutes / 60)
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
 
-  if (minutes < 60) return `${minutes}m ago`
-  if (hours < 24) return `${hours}h ago`
-  return date.toLocaleDateString()
-}
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return date.toLocaleDateString();
+};
 
 // Lifecycle hooks
 onMounted(() => {
-  emit('data-updated', {
+  emit("data-updated", {
     customActions: customActions.value,
     recentActions: recentActions.value,
-    maintenanceMode: maintenanceMode.value
-  })
-})
+    maintenanceMode: maintenanceMode.value,
+  });
+});
 </script>
 
 <style scoped lang="scss">

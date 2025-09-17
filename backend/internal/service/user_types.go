@@ -2,8 +2,6 @@ package service
 
 import (
 	"time"
-
-	"docker-auto/internal/model"
 )
 
 // Authentication related request types

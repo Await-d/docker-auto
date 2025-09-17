@@ -96,7 +96,7 @@ func ValidationMiddleware(config *ValidationConfig) gin.HandlerFunc {
 				"path":           c.Request.URL.Path,
 				"client_ip":      c.ClientIP(),
 			}).Warn("Request size exceeds limit")
-			c.JSON(http.StatusRequestEntityTooLarge, utils.ErrorResponse("Request too large"))
+			c.JSON(http.StatusRequestEntityTooLarge, utils.ErrorResponse(http.StatusRequestEntityTooLarge, "Request too large"))
 			c.Abort()
 			return
 		}
@@ -105,7 +105,7 @@ func ValidationMiddleware(config *ValidationConfig) gin.HandlerFunc {
 		if hasRequestBody(c.Request.Method) {
 			if err := validateContentType(c, config.AllowedMimeTypes); err != nil {
 				logrus.WithError(err).Warn("Content-Type validation failed")
-				c.JSON(http.StatusUnsupportedMediaType, utils.ErrorResponse("Unsupported content type"))
+				c.JSON(http.StatusUnsupportedMediaType, utils.ErrorResponse(http.StatusUnsupportedMediaType, "Unsupported content type"))
 				c.Abort()
 				return
 			}
@@ -114,7 +114,7 @@ func ValidationMiddleware(config *ValidationConfig) gin.HandlerFunc {
 		// Validate and sanitize URL parameters
 		if err := validateAndSanitizeQuery(c, config, sanitizer); err != nil {
 			logrus.WithError(err).Warn("Query parameter validation failed")
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid query parameters"))
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid query parameters"))
 			c.Abort()
 			return
 		}
@@ -122,7 +122,7 @@ func ValidationMiddleware(config *ValidationConfig) gin.HandlerFunc {
 		// Validate and sanitize path parameters
 		if err := validateAndSanitizePath(c, config, sanitizer); err != nil {
 			logrus.WithError(err).Warn("Path parameter validation failed")
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid path parameters"))
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid path parameters"))
 			c.Abort()
 			return
 		}
@@ -131,7 +131,7 @@ func ValidationMiddleware(config *ValidationConfig) gin.HandlerFunc {
 		if hasRequestBody(c.Request.Method) {
 			if err := validateAndSanitizeBody(c, config, sanitizer); err != nil {
 				logrus.WithError(err).Warn("Request body validation failed")
-				c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid request body"))
+				c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid request body"))
 				c.Abort()
 				return
 			}
@@ -140,7 +140,7 @@ func ValidationMiddleware(config *ValidationConfig) gin.HandlerFunc {
 		// Validate headers
 		if err := validateHeaders(c, config, sanitizer); err != nil {
 			logrus.WithError(err).Warn("Header validation failed")
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid headers"))
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid headers"))
 			c.Abort()
 			return
 		}
@@ -581,7 +581,7 @@ func FieldValidationMiddleware(rules map[string]ValidationRule) gin.HandlerFunc 
 
 		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse("Failed to read request body"))
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Failed to read request body"))
 			c.Abort()
 			return
 		}
@@ -591,7 +591,7 @@ func FieldValidationMiddleware(rules map[string]ValidationRule) gin.HandlerFunc 
 
 		var data map[string]interface{}
 		if err := json.Unmarshal(body, &data); err != nil {
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid JSON format"))
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid JSON format"))
 			c.Abort()
 			return
 		}
@@ -601,8 +601,9 @@ func FieldValidationMiddleware(rules map[string]ValidationRule) gin.HandlerFunc 
 			if err := validateField(fieldName, data[fieldName], rule); err != nil {
 				logrus.WithError(err).WithField("field", fieldName).Warn("Field validation failed")
 				c.JSON(http.StatusBadRequest, utils.ErrorResponseWithDetails(
+					http.StatusBadRequest,
 					fmt.Sprintf("Validation failed for field '%s'", fieldName),
-					err.Error(),
+					[]utils.ErrorDetail{{Message: err.Error()}},
 				))
 				c.Abort()
 				return
@@ -745,7 +746,7 @@ func FileUploadValidationMiddleware(maxSize int64, allowedTypes []string, allowe
 		err := c.Request.ParseMultipartForm(maxSize)
 		if err != nil {
 			logrus.WithError(err).Warn("Failed to parse multipart form")
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid multipart form"))
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid multipart form"))
 			c.Abort()
 			return
 		}
@@ -755,7 +756,7 @@ func FileUploadValidationMiddleware(maxSize int64, allowedTypes []string, allowe
 				// Check file size
 				if file.Size > maxSize {
 					c.JSON(http.StatusRequestEntityTooLarge,
-						utils.ErrorResponseWithDetails("File too large", fmt.Sprintf("Field: %s, Size: %d", fieldName, file.Size)))
+						utils.ErrorResponseWithDetails(http.StatusRequestEntityTooLarge, "File too large", []utils.ErrorDetail{{Message: fmt.Sprintf("Field: %s, Size: %d", fieldName, file.Size)}}))
 					c.Abort()
 					return
 				}
@@ -764,7 +765,7 @@ func FileUploadValidationMiddleware(maxSize int64, allowedTypes []string, allowe
 				ext := strings.ToLower(filepath.Ext(file.Filename))
 				if !isAllowedExtension(ext, allowedExtensions) {
 					c.JSON(http.StatusUnsupportedMediaType,
-						utils.ErrorResponseWithDetails("File type not allowed", fmt.Sprintf("Field: %s, Extension: %s", fieldName, ext)))
+						utils.ErrorResponseWithDetails(http.StatusUnsupportedMediaType, "File type not allowed", []utils.ErrorDetail{{Message: fmt.Sprintf("Field: %s, Extension: %s", fieldName, ext)}}))
 					c.Abort()
 					return
 				}
@@ -774,7 +775,7 @@ func FileUploadValidationMiddleware(maxSize int64, allowedTypes []string, allowe
 					contentType := file.Header.Get("Content-Type")
 					if !isAllowedMimeType(contentType, allowedTypes) {
 						c.JSON(http.StatusUnsupportedMediaType,
-							utils.ErrorResponseWithDetails("MIME type not allowed", fmt.Sprintf("Field: %s, Type: %s", fieldName, contentType)))
+							utils.ErrorResponseWithDetails(http.StatusUnsupportedMediaType, "MIME type not allowed", []utils.ErrorDetail{{Message: fmt.Sprintf("Field: %s, Type: %s", fieldName, contentType)}}))
 						c.Abort()
 						return
 					}
@@ -783,7 +784,7 @@ func FileUploadValidationMiddleware(maxSize int64, allowedTypes []string, allowe
 				// Check for potentially dangerous filenames
 				if containsDangerousPath(file.Filename) {
 					c.JSON(http.StatusBadRequest,
-						utils.ErrorResponseWithDetails("Dangerous filename detected", fmt.Sprintf("Field: %s, Filename: %s", fieldName, file.Filename)))
+						utils.ErrorResponseWithDetails(http.StatusBadRequest, "Dangerous filename detected", []utils.ErrorDetail{{Message: fmt.Sprintf("Field: %s, Filename: %s", fieldName, file.Filename)}}))
 					c.Abort()
 					return
 				}

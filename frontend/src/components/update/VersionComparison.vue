@@ -18,9 +18,13 @@
         <div class="comparison-header">
           <h3>{{ comparisonData.containerName }}</h3>
           <div class="version-badges">
-            <el-tag type="info">{{ comparisonData.fromVersion }}</el-tag>
+            <el-tag type="info">
+              {{ comparisonData.fromVersion }}
+            </el-tag>
             <el-icon><Right /></el-icon>
-            <el-tag type="primary">{{ comparisonData.toVersion }}</el-tag>
+            <el-tag type="primary">
+              {{ comparisonData.toVersion }}
+            </el-tag>
           </div>
         </div>
 
@@ -40,40 +44,40 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">Close</el-button>
+        <el-button @click="handleClose"> Close </el-button>
       </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Right } from '@element-plus/icons-vue'
-import type { VersionComparison } from '@/types/updates'
+import { computed } from "vue";
+import { Right } from "@element-plus/icons-vue";
+import type { VersionComparison } from "@/types/updates";
 
 // Props
 interface Props {
-  modelValue: boolean
-  comparisonData?: VersionComparison | null
+  modelValue: boolean;
+  comparisonData?: VersionComparison | null;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // Emits
-defineEmits<{
-  'update:modelValue': [value: boolean]
-}>()
+const emit = defineEmits<{
+  "update:modelValue": [value: boolean];
+}>();
 
 // Computed
 const visible = computed({
   get: () => props.modelValue,
-  set: (value) => $emit('update:modelValue', value)
-})
+  set: (value) => emit("update:modelValue", value),
+});
 
 // Methods
 const handleClose = () => {
-  visible.value = false
-}
+  visible.value = false;
+};
 </script>
 
 <style scoped lang="scss">

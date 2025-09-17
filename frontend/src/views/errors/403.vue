@@ -9,7 +9,8 @@
       <h1 class="error-title">403</h1>
       <h2 class="error-subtitle">Access Denied</h2>
       <p class="error-description">
-        You don't have permission to access this resource. Please contact your administrator if you believe this is an error.
+        You don't have permission to access this resource. Please contact your
+        administrator if you believe this is an error.
       </p>
       <div class="error-actions">
         <el-button type="primary" @click="goHome">
@@ -26,22 +27,22 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { Lock, House, ArrowLeft } from '@element-plus/icons-vue'
+import { useRouter } from "vue-router";
+import { Lock, House, ArrowLeft } from "@element-plus/icons-vue";
 
-const router = useRouter()
+const router = useRouter();
 
 const goHome = () => {
-  router.push('/')
-}
+  router.push("/");
+};
 
 const goBack = () => {
-  router.go(-1)
-}
+  router.go(-1);
+};
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/variables' as *;
+@use "@/styles/variables" as *;
 
 .error-page {
   min-height: 100vh;

@@ -16,6 +16,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 	"github.com/sirupsen/logrus"
 )
 
@@ -312,7 +313,7 @@ func configureTLS(config *DockerSecurityConfig) (*tls.Config, error) {
 }
 
 // SecureContainerCreate creates a container with security checks
-func (sdc *SecureDockerClient) SecureContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, containerName string, userContext *DockerUserContext) (*container.ContainerCreateCreatedBody, error) {
+func (sdc *SecureDockerClient) SecureContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, containerName string, userContext *DockerUserContext) (*container.CreateResponse, error) {
 	sdc.mutex.Lock()
 	defer sdc.mutex.Unlock()
 
@@ -613,7 +614,7 @@ func (sdc *SecureDockerClient) validateBindMount(bind string) error {
 }
 
 // validatePortBinding validates port binding security
-func (sdc *SecureDockerClient) validatePortBinding(binding types.PortBinding) error {
+func (sdc *SecureDockerClient) validatePortBinding(binding nat.PortBinding) error {
 	// Check restricted ports
 	if binding.HostPort != "" {
 		for _, restricted := range sdc.config.RestrictedPorts {

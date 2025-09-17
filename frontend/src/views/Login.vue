@@ -127,8 +127,8 @@
 
     <!-- Background decoration -->
     <div class="login-background">
-      <div class="bg-pattern"></div>
-      <div class="bg-gradient"></div>
+      <div class="bg-pattern" />
+      <div class="bg-gradient" />
     </div>
 
     <!-- Forgot password dialog -->
@@ -156,8 +156,8 @@
 
       <template #footer>
         <el-button @click="forgotPasswordVisible = false">
-          Cancel
-        </el-button>
+Cancel
+</el-button>
         <el-button
           type="primary"
           :loading="isForgotLoading"
@@ -171,227 +171,233 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, nextTick } from "vue";
+import { useRouter } from "vue-router";
+import { Box, User, Lock, Message } from "@element-plus/icons-vue";
 import {
-  Box,
-  User,
-  Lock,
-  Message
-} from '@element-plus/icons-vue'
-import { ElMessage, ElNotification, type FormInstance, type FormRules } from 'element-plus'
-import { useAuth } from '@/store/auth'
-import { useApp } from '@/store/app'
-import type { LoginForm } from '@/types/auth'
+  ElMessage,
+  ElNotification,
+  type FormInstance,
+  type FormRules,
+} from "element-plus";
+import { useAuth } from "@/store/auth";
+import { useApp } from "@/store/app";
+import type { LoginForm } from "@/types/auth";
 
 // Composables
-const router = useRouter()
-const { login, isLoading } = useAuth()
-const { showError } = useApp()
+const router = useRouter();
+const { login, isLoading } = useAuth();
+const { showError } = useApp();
 
 // Form refs
-const loginFormRef = ref<FormInstance>()
-const passwordInputRef = ref()
-const forgotFormRef = ref<FormInstance>()
+const loginFormRef = ref<FormInstance>();
+const passwordInputRef = ref();
+const forgotFormRef = ref<FormInstance>();
 
 // Form data
 const loginForm = ref<LoginForm>({
-  username: '',
-  password: '',
-  remember: false
-})
+  username: "",
+  password: "",
+  remember: false,
+});
 
 const forgotForm = ref({
-  email: ''
-})
+  email: "",
+});
 
 // UI state
-const forgotPasswordVisible = ref(false)
-const isForgotLoading = ref(false)
+const forgotPasswordVisible = ref(false);
+const isForgotLoading = ref(false);
 const systemStatus = ref<{
-  title: string
-  description: string
-  type: 'success' | 'warning' | 'error' | 'info'
-} | null>(null)
+  title: string;
+  description: string;
+  type: "success" | "warning" | "error" | "info";
+} | null>(null);
 
 // Form validation rules
 const loginRules = computed<FormRules>(() => ({
   username: [
     {
       required: true,
-      message: 'Username is required',
-      trigger: 'blur'
+      message: "Username is required",
+      trigger: "blur",
     },
     {
       min: 3,
       max: 50,
-      message: 'Username must be between 3 and 50 characters',
-      trigger: 'blur'
+      message: "Username must be between 3 and 50 characters",
+      trigger: "blur",
     },
     {
       pattern: /^[a-zA-Z0-9_.-]+$/,
-      message: 'Username can only contain letters, numbers, dots, hyphens, and underscores',
-      trigger: 'blur'
-    }
+      message:
+        "Username can only contain letters, numbers, dots, hyphens, and underscores",
+      trigger: "blur",
+    },
   ],
   password: [
     {
       required: true,
-      message: 'Password is required',
-      trigger: 'blur'
+      message: "Password is required",
+      trigger: "blur",
     },
     {
       min: 6,
-      message: 'Password must be at least 6 characters long',
-      trigger: 'blur'
-    }
-  ]
-}))
+      message: "Password must be at least 6 characters long",
+      trigger: "blur",
+    },
+  ],
+}));
 
 const forgotRules = computed<FormRules>(() => ({
   email: [
     {
       required: true,
-      message: 'Email is required',
-      trigger: 'blur'
+      message: "Email is required",
+      trigger: "blur",
     },
     {
-      type: 'email',
-      message: 'Please enter a valid email address',
-      trigger: 'blur'
-    }
-  ]
-}))
+      type: "email",
+      message: "Please enter a valid email address",
+      trigger: "blur",
+    },
+  ],
+}));
 
 // Computed properties
 const isFormValid = computed(() => {
-  return loginForm.value.username.trim() !== '' &&
-         loginForm.value.password.trim() !== '' &&
-         !isLoading.value
-})
+  return (
+    loginForm.value.username.trim() !== "" &&
+    loginForm.value.password.trim() !== "" &&
+    !isLoading
+  );
+});
 
 // Methods
 const handleLogin = async () => {
-  if (!loginFormRef.value) return
+  if (!loginFormRef.value) return;
 
   try {
-    await loginFormRef.value.validate()
-    await login(loginForm.value)
+    await loginFormRef.value.validate();
+    await login(loginForm.value);
 
-    ElMessage.success('Login successful!')
+    ElMessage.success("Login successful!");
 
     // Navigation is handled by the auth store
   } catch (error: any) {
-    console.error('Login error:', error)
+    console.error("Login error:", error);
 
     if (error.validation) {
       // Form validation errors are handled by Element Plus
-      return
+      return;
     }
 
     // Handle API errors
-    const errorMessage = error.message || 'Login failed. Please check your credentials.'
-    showError(errorMessage)
+    const errorMessage =
+      error.message || "Login failed. Please check your credentials.";
+    showError(errorMessage);
 
     // Clear password on error
-    loginForm.value.password = ''
+    loginForm.value.password = "";
 
     // Focus password field
     nextTick(() => {
-      passwordInputRef.value?.focus()
-    })
+      passwordInputRef.value?.focus();
+    });
   }
-}
+};
 
 const focusPassword = () => {
-  passwordInputRef.value?.focus()
-}
+  passwordInputRef.value?.focus();
+};
 
-const fillDemoCredentials = (role: 'admin' | 'operator' | 'viewer') => {
+const fillDemoCredentials = (role: "admin" | "operator" | "viewer") => {
   const demoAccounts = {
-    admin: { username: 'admin', password: 'admin123' },
-    operator: { username: 'operator', password: 'operator123' },
-    viewer: { username: 'viewer', password: 'viewer123' }
-  }
+    admin: { username: "admin", password: "admin123" },
+    operator: { username: "operator", password: "operator123" },
+    viewer: { username: "viewer", password: "viewer123" },
+  };
 
-  const account = demoAccounts[role]
-  loginForm.value.username = account.username
-  loginForm.value.password = account.password
-  loginForm.value.remember = false
+  const account = demoAccounts[role];
+  loginForm.value.username = account.username;
+  loginForm.value.password = account.password;
+  loginForm.value.remember = false;
 
   ElNotification({
-    title: 'Demo Account',
+    title: "Demo Account",
     message: `Demo ${role} credentials have been filled in. Click "Sign In" to continue.`,
-    type: 'info',
-    duration: 3000
-  })
-}
+    type: "info",
+    duration: 3000,
+  });
+};
 
 const showForgotPassword = () => {
-  forgotPasswordVisible.value = true
-  forgotForm.value.email = ''
-}
+  forgotPasswordVisible.value = true;
+  forgotForm.value.email = "";
+};
 
 const showRegister = () => {
-  router.push('/register')
-}
+  router.push("/register");
+};
 
 const handleForgotPassword = async () => {
-  if (!forgotFormRef.value) return
+  if (!forgotFormRef.value) return;
 
   try {
-    await forgotFormRef.value.validate()
-    isForgotLoading.value = true
+    await forgotFormRef.value.validate();
+    isForgotLoading.value = true;
 
     // Simulate API call for password reset
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    ElMessage.success('Password reset link has been sent to your email!')
-    forgotPasswordVisible.value = false
+    ElMessage.success("Password reset link has been sent to your email!");
+    forgotPasswordVisible.value = false;
   } catch (error: any) {
     if (error.validation) {
-      return
+      return;
     }
 
-    showError('Failed to send reset link. Please try again.')
+    showError("Failed to send reset link. Please try again.");
   } finally {
-    isForgotLoading.value = false
+    isForgotLoading.value = false;
   }
-}
+};
 
 const checkSystemStatus = async () => {
   try {
     // Simulate system health check
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // You would normally call your health check API here
     // const response = await http.get('/system/health')
 
     systemStatus.value = {
-      title: 'System Online',
-      description: 'All services are running normally.',
-      type: 'success'
-    }
+      title: "System Online",
+      description: "All services are running normally.",
+      type: "success",
+    };
   } catch (error) {
     systemStatus.value = {
-      title: 'System Unavailable',
-      description: 'Some services may be temporarily unavailable.',
-      type: 'warning'
-    }
+      title: "System Unavailable",
+      description: "Some services may be temporarily unavailable.",
+      type: "warning",
+    };
   }
-}
+};
 
 // Lifecycle
 onMounted(() => {
   // Auto-focus username field
   nextTick(() => {
-    const usernameInput = document.querySelector('input[autocomplete="username"]') as HTMLInputElement
-    usernameInput?.focus()
-  })
+    const usernameInput = document.querySelector(
+      'input[autocomplete="username"]',
+    ) as HTMLInputElement;
+    usernameInput?.focus();
+  });
 
   // Check system status
-  checkSystemStatus()
-})
+  checkSystemStatus();
+});
 </script>
 
 <style scoped lang="scss">
@@ -532,8 +538,16 @@ onMounted(() => {
     right: 0;
     bottom: 0;
     background-image:
-      radial-gradient(circle at 25% 25%, var(--el-color-primary-light-7) 0%, transparent 50%),
-      radial-gradient(circle at 75% 75%, var(--el-color-success-light-7) 0%, transparent 50%);
+      radial-gradient(
+        circle at 25% 25%,
+        var(--el-color-primary-light-7) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 75% 75%,
+        var(--el-color-success-light-7) 0%,
+        transparent 50%
+      );
     opacity: 0.3;
   }
 

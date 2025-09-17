@@ -38,7 +38,9 @@
       </main>
 
       <!-- Footer -->
-      <footer class="app-footer" v-if="showFooter">
+      <footer
+v-if="showFooter" class="app-footer"
+>
         <div class="footer-content">
           <div class="footer-left">
             <span class="copyright">
@@ -52,9 +54,11 @@
               Documentation
             </el-link>
             <el-divider direction="vertical" />
-            <el-link href="/api" target="_blank" type="primary">
-              API
-            </el-link>
+            <el-link href="/api"
+target="_blank" type="primary"
+>
+API
+</el-link>
             <el-divider direction="vertical" />
             <el-link href="/support" target="_blank" type="primary">
               Support
@@ -86,10 +90,9 @@
 
     <!-- Back to top button -->
     <el-backtop
-      :right="30"
-      :bottom="30"
-      :visibility-height="300"
-    >
+:right="30" :bottom="30"
+:visibility-height="300"
+>
       <el-icon :size="20">
         <CaretTop />
       </el-icon>
@@ -101,19 +104,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { CaretTop } from '@element-plus/icons-vue'
-import Header from '@/components/Header.vue'
-import Sidebar from '@/components/Sidebar.vue'
-import Loading from '@/components/Loading.vue'
-import SettingsDrawer from '@/components/SettingsDrawer.vue'
-import { useApp } from '@/store/app'
-import { useAuth } from '@/store/auth'
-import { useContainerWebSocket } from '@/services/containerWebSocket'
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import { CaretTop } from "@element-plus/icons-vue";
+import Header from "@/components/Header.vue";
+import Sidebar from "@/components/Sidebar.vue";
+import Loading from "@/components/Loading.vue";
+import SettingsDrawer from "@/components/SettingsDrawer.vue";
+import { useApp } from "@/store/app";
+import { useAuth } from "@/store/auth";
+import { useContainerWebSocket } from "@/services/containerWebSocket";
 
 // Composables
-const route = useRoute()
+const route = useRoute();
 const {
   sidebarCollapsed,
   setSidebarCollapsed,
@@ -121,120 +124,126 @@ const {
   isMobile,
   isDarkMode,
   notifications,
-  removeNotification
-} = useApp()
-const { isAuthenticated } = useAuth()
-const { subscribeToAll, isConnected, state } = useContainerWebSocket()
+  removeNotification,
+} = useApp();
+const { isAuthenticated } = useAuth();
+const { subscribeToAll } = useContainerWebSocket();
 
 // Reactive state
-const showSettingsDrawer = ref(false)
-const appVersion = ref('1.0.0')
-const currentYear = ref(new Date().getFullYear())
+const showSettingsDrawer = ref(false);
+const appVersion = ref("1.0.0");
+const currentYear = ref(new Date().getFullYear());
 
 // Computed properties
 const layoutClass = computed(() => ({
-  'layout-mobile': isMobile.value,
-  'layout-collapsed': sidebarCollapsed.value,
-  'layout-dark': isDarkMode.value
-}))
+  "layout-mobile": isMobile,
+  "layout-collapsed": sidebarCollapsed,
+  "layout-dark": isDarkMode,
+}));
 
 const showFooter = computed(() => {
   // Hide footer on certain pages
-  const hideFooterPages = ['/login', '/register', '/forgot-password']
-  return !hideFooterPages.includes(route.path) && isAuthenticated.value
-})
+  const hideFooterPages = ["/login", "/register", "/forgot-password"];
+  return !hideFooterPages.includes(route.path) && isAuthenticated;
+});
 
 const keepAlivePages = computed(() => {
   // Pages to keep alive for better performance
-  return ['Dashboard', 'Containers', 'Images', 'Logs']
-})
+  return ["Dashboard", "Containers", "Images", "Logs"];
+});
 
 // Methods
 const getTransitionName = (route: any) => {
   // Different transitions based on route depth or type
   if (route.meta?.transition) {
-    return route.meta.transition
+    return route.meta.transition;
   }
 
   // Default transitions
-  if (route.path === '/login') {
-    return 'slide-up'
+  if (route.path === "/login") {
+    return "slide-up";
   }
 
-  return 'fade'
-}
+  return "fade";
+};
 
 const handleResize = () => {
   // Auto-collapse sidebar on mobile
-  if (isMobile.value && !sidebarCollapsed.value) {
-    setSidebarCollapsed(true)
+  if (isMobile && !sidebarCollapsed) {
+    setSidebarCollapsed(true);
   }
-}
+};
 
 const handleKeyboardShortcuts = (event: KeyboardEvent) => {
   // Global keyboard shortcuts
   if (event.ctrlKey || event.metaKey) {
     switch (event.key) {
-      case 'b':
+      case "b":
         // Toggle sidebar
-        event.preventDefault()
-        setSidebarCollapsed(!sidebarCollapsed.value)
-        break
-      case 'k':
+        event.preventDefault();
+        setSidebarCollapsed(!sidebarCollapsed);
+        break;
+      case "k":
         // Global search (implement if needed)
-        event.preventDefault()
+        event.preventDefault();
         // Open search modal
-        break
-      case ',':
+        break;
+      case ",":
         // Open settings
-        event.preventDefault()
-        showSettingsDrawer.value = true
-        break
+        event.preventDefault();
+        showSettingsDrawer.value = true;
+        break;
     }
   }
 
   // ESC key handling
-  if (event.key === 'Escape') {
+  if (event.key === "Escape") {
     if (showSettingsDrawer.value) {
-      showSettingsDrawer.value = false
-    } else if (isMobile.value && !sidebarCollapsed.value) {
-      setSidebarCollapsed(true)
+      showSettingsDrawer.value = false;
+    } else if (isMobile && !sidebarCollapsed) {
+      setSidebarCollapsed(true);
     }
   }
-}
+};
 
 // Watchers
-watch(isMobile, (isMobile) => {
-  if (isMobile && !sidebarCollapsed.value) {
-    setSidebarCollapsed(true)
-  }
-})
+watch(
+  () => isMobile,
+  (isMobile: boolean) => {
+    if (isMobile && !sidebarCollapsed) {
+      setSidebarCollapsed(true);
+    }
+  },
+);
 
 // Lifecycle
 onMounted(() => {
-  window.addEventListener('resize', handleResize)
-  window.addEventListener('keydown', handleKeyboardShortcuts)
+  window.addEventListener("resize", handleResize);
+  window.addEventListener("keydown", handleKeyboardShortcuts);
 
   // Set initial sidebar state based on screen size
-  handleResize()
+  handleResize();
 
   // Initialize WebSocket connections when authenticated
-  if (isAuthenticated.value) {
-    subscribeToAll()
+  if (isAuthenticated) {
+    subscribeToAll();
   }
-})
+});
 
 // Watch for authentication changes
-watch(isAuthenticated, (authenticated) => {
-  if (authenticated) {
-    subscribeToAll()
-  }
-})
+watch(
+  () => isAuthenticated,
+  (authenticated: boolean) => {
+    if (authenticated) {
+      subscribeToAll();
+    }
+  },
+);
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-  window.removeEventListener('keydown', handleKeyboardShortcuts)
-})
+  window.removeEventListener("resize", handleResize);
+  window.removeEventListener("keydown", handleKeyboardShortcuts);
+});
 </script>
 
 <style scoped lang="scss">

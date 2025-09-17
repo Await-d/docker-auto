@@ -6,14 +6,18 @@
         <el-button-group size="small">
           <el-button
             :type="isFollowing ? 'primary' : 'default'"
-            @click="toggleFollow"
             :disabled="loading"
+            @click="toggleFollow"
           >
-            <el-icon><VideoPlay v-if="!isFollowing" /><VideoPause v-else /></el-icon>
-            {{ isFollowing ? 'Following' : 'Follow' }}
+            <el-icon>
+              <VideoPlay v-if="!isFollowing" /><VideoPause v-else />
+            </el-icon>
+            {{ isFollowing ? "Following" : "Follow" }}
           </el-button>
 
-          <el-button @click="refreshLogs" :loading="loading">
+          <el-button
+:loading="loading" @click="refreshLogs"
+>
             <el-icon><Refresh /></el-icon>
             Refresh
           </el-button>
@@ -30,8 +34,8 @@
           v-model="logLevel"
           placeholder="Log Level"
           size="small"
-          @change="filterLogs"
           clearable
+          @change="filterLogs"
         >
           <el-option label="All Levels" value="" />
           <el-option label="Debug" value="debug" />
@@ -46,8 +50,8 @@
           placeholder="Search logs..."
           size="small"
           clearable
-          @input="filterLogs"
           style="width: 200px"
+          @input="filterLogs"
         >
           <template #prefix>
             <el-icon><Search /></el-icon>
@@ -78,10 +82,9 @@
         </el-checkbox>
 
         <el-checkbox
-          v-model="wrapLines"
-          size="small"
-          @change="toggleWrapLines"
-        >
+v-model="wrapLines" size="small"
+@change="toggleWrapLines"
+>
           Wrap Lines
         </el-checkbox>
       </div>
@@ -113,10 +116,12 @@
     </div>
 
     <!-- Log Stats -->
-    <div class="log-stats" v-if="logs.length > 0">
+    <div
+v-if="containerLogs.length > 0" class="log-stats"
+>
       <div class="stat-item">
         <span class="stat-label">Total Lines:</span>
-        <span class="stat-value">{{ formatNumber(logs.length) }}</span>
+        <span class="stat-value">{{ formatNumber(containerLogs.length) }}</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">Filtered:</span>
@@ -133,23 +138,31 @@
     </div>
 
     <!-- Log Content -->
-    <div class="log-content" ref="logContentRef">
+    <div
+ref="logContentRef" class="log-content"
+>
       <!-- Loading State -->
-      <div v-if="loading && logs.length === 0" class="log-loading">
-        <el-icon class="loading-spinner"><Loading /></el-icon>
+      <div v-if="loading && containerLogs.length === 0" class="log-loading">
+        <el-icon class="loading-spinner">
+          <Loading />
+        </el-icon>
         <span>Loading logs...</span>
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="logs.length === 0" class="log-empty">
-        <el-icon class="empty-icon"><Document /></el-icon>
+      <div v-else-if="containerLogs.length === 0" class="log-empty">
+        <el-icon class="empty-icon">
+          <Document />
+        </el-icon>
         <h3>No logs available</h3>
         <p>This container hasn't generated any logs yet.</p>
       </div>
 
       <!-- No Results -->
       <div v-else-if="filteredLogs.length === 0" class="log-empty">
-        <el-icon class="empty-icon"><Search /></el-icon>
+        <el-icon class="empty-icon">
+          <Search />
+        </el-icon>
         <h3>No matching logs</h3>
         <p>No logs match your current filters.</p>
       </div>
@@ -157,10 +170,10 @@
       <!-- Log Lines -->
       <div v-else class="log-lines" :class="{ 'wrap-lines': wrapLines }">
         <VirtualList
+          v-slot="{ item, index }"
           :items="filteredLogs"
           :item-height="lineHeight"
           :container-height="containerHeight"
-          v-slot="{ item, index }"
         >
           <div
             :key="index"
@@ -170,7 +183,7 @@
               'log-warning': item.level === 'warn',
               'log-info': item.level === 'info',
               'log-debug': item.level === 'debug',
-              'highlighted': highlightedLines.has(index)
+              highlighted: highlightedLines.has(index),
             }"
             @click="toggleLineHighlight(index)"
           >
@@ -186,7 +199,7 @@
               {{ item.stream }}
             </span>
 
-            <span class="log-message" v-html="formatLogMessage(item.message)"></span>
+            <span class="log-message" v-html="formatLogMessage(item.message)" />
           </div>
         </VirtualList>
       </div>
@@ -201,9 +214,12 @@
     </div>
 
     <!-- Log Footer -->
-    <div class="log-footer" v-if="logs.length > 0">
+    <div
+v-if="containerLogs.length > 0" class="log-footer"
+>
       <div class="footer-info">
-        <span>Line {{ currentLine }} of {{ formatNumber(filteredLogs.length) }}</span>
+        <span>Line {{ currentLine }} of
+          {{ formatNumber(filteredLogs.length) }}</span>
         <span v-if="selectedLinesCount > 0">
           | {{ selectedLinesCount }} lines selected
         </span>
@@ -211,10 +227,15 @@
 
       <div class="footer-controls">
         <el-button-group size="small">
-          <el-button @click="goToTop" :disabled="currentLine <= 1">
+          <el-button
+:disabled="currentLine <= 1" @click="goToTop"
+>
             <el-icon><Top /></el-icon>
           </el-button>
-          <el-button @click="goToBottom" :disabled="currentLine >= filteredLogs.length">
+          <el-button
+            :disabled="currentLine >= filteredLogs.length"
+            @click="goToBottom"
+          >
             <el-icon><Bottom /></el-icon>
           </el-button>
         </el-button-group>
@@ -224,9 +245,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { storeToRefs } from 'pinia'
-import { ElMessage, ElNotification } from 'element-plus'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { storeToRefs } from "pinia";
+import { ElMessage, ElNotification } from "element-plus";
 import {
   VideoPlay,
   VideoPause,
@@ -241,111 +262,110 @@ import {
   Document,
   ArrowDown,
   Top,
-  Bottom
-} from '@element-plus/icons-vue'
+  Bottom,
+} from "@element-plus/icons-vue";
 
-import { useContainerStore } from '@/store/containers'
-import VirtualList from '@/components/common/VirtualList.vue'
-import type { ContainerLog } from '@/types/container'
+import { useContainerStore } from "@/store/containers";
+import VirtualList from "@/components/common/VirtualList.vue";
 
 interface Props {
-  containerId: string
-  containerName: string
-  fullHeight?: boolean
-  autoStart?: boolean
+  containerId: string;
+  containerName: string;
+  fullHeight?: boolean;
+  autoStart?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   fullHeight: false,
-  autoStart: true
-})
+  autoStart: true,
+});
 
-const containerStore = useContainerStore()
-const { logs } = storeToRefs(containerStore)
+const containerStore = useContainerStore();
+const { logs } = storeToRefs(containerStore);
 
 // Local state
-const loading = ref(false)
-const isFollowing = ref(false)
-const logLevel = ref('')
-const searchQuery = ref('')
-const showTimestamps = ref(true)
-const wrapLines = ref(false)
-const tailLines = ref(100)
-const lastUpdate = ref(new Date())
-const highlightedLines = ref(new Set<number>())
-const currentLine = ref(1)
-const isAtBottom = ref(true)
+const loading = ref(false);
+const isFollowing = ref(false);
+const logLevel = ref("");
+const searchQuery = ref("");
+const showTimestamps = ref(true);
+const wrapLines = ref(false);
+const tailLines = ref(100);
+const lastUpdate = ref(new Date());
+const highlightedLines = ref(new Set<number>());
+const currentLine = ref(1);
+const isAtBottom = ref(true);
 
 // Refs
-const logContentRef = ref<HTMLElement>()
+const logContentRef = ref<HTMLElement>();
 
 // Virtual list settings
-const lineHeight = ref(24)
-const containerHeight = ref(400)
+const lineHeight = ref(24);
+const containerHeight = ref(400);
 
 // Computed
 const containerLogs = computed(() => {
-  return logs.value.get(props.containerId) || []
-})
+  return logs.value.get(props.containerId) || [];
+});
 
 const filteredLogs = computed(() => {
-  let filtered = containerLogs.value
+  let filtered = containerLogs.value;
 
   // Filter by log level
   if (logLevel.value) {
-    filtered = filtered.filter(log => log.level === logLevel.value)
+    filtered = filtered.filter((log) => log.level === logLevel.value);
   }
 
   // Filter by search query
   if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(log =>
-      log.message.toLowerCase().includes(query)
-    )
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter((log) =>
+      log.message.toLowerCase().includes(query),
+    );
   }
 
-  return filtered
-})
+  return filtered;
+});
 
 const errorCount = computed(() => {
-  return containerLogs.value.filter(log =>
-    log.level === 'error' || log.level === 'fatal'
-  ).length
-})
+  return containerLogs.value.filter(
+    (log) => log.level === "error" || log.level === "fatal",
+  ).length;
+});
 
 const selectedLinesCount = computed(() => {
-  return highlightedLines.value.size
-})
+  return highlightedLines.value.size;
+});
 
 // WebSocket connection
-let wsConnection: WebSocket | null = null
-let followInterval: NodeJS.Timeout | null = null
+let wsConnection: WebSocket | null = null;
+let followInterval: NodeJS.Timeout | null = null;
 
 // Methods
 function formatNumber(num: number): string {
-  return num.toLocaleString()
+  return num.toLocaleString();
 }
 
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString()
+  return date.toLocaleTimeString();
 }
 
 function formatLogTime(timestamp: Date | string): string {
-  const date = new Date(timestamp)
-  return date.toISOString().split('T')[1].split('.')[0]
+  const date = new Date(timestamp);
+  return date.toISOString().split("T")[1].split(".")[0];
 }
 
 function formatLogMessage(message: string): string {
   // Escape HTML and highlight search terms
   let escaped = message
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 
   // Highlight search query
   if (searchQuery.value) {
-    const regex = new RegExp(`(${searchQuery.value})`, 'gi')
-    escaped = escaped.replace(regex, '<mark>$1</mark>')
+    const regex = new RegExp(`(${searchQuery.value})`, "gi");
+    escaped = escaped.replace(regex, "<mark>$1</mark>");
   }
 
   // Highlight common patterns
@@ -353,301 +373,300 @@ function formatLogMessage(message: string): string {
     .replace(/\b(ERROR|FATAL)\b/g, '<span class="text-error">$1</span>')
     .replace(/\b(WARN|WARNING)\b/g, '<span class="text-warning">$1</span>')
     .replace(/\b(INFO)\b/g, '<span class="text-info">$1</span>')
-    .replace(/\b(DEBUG)\b/g, '<span class="text-debug">$1</span>')
+    .replace(/\b(DEBUG)\b/g, '<span class="text-debug">$1</span>');
 
-  return escaped
+  return escaped;
 }
 
 async function refreshLogs() {
-  loading.value = true
+  loading.value = true;
   try {
     await containerStore.fetchLogs(props.containerId, {
       tail: tailLines.value || undefined,
-      timestamps: showTimestamps.value
-    })
-    lastUpdate.value = new Date()
+      timestamps: showTimestamps.value,
+    });
+    lastUpdate.value = new Date();
 
     if (isFollowing.value) {
-      await nextTick()
-      scrollToBottom()
+      await nextTick();
+      scrollToBottom();
     }
   } catch (error) {
-    console.error('Failed to refresh logs:', error)
-    ElMessage.error('Failed to refresh logs')
+    console.error("Failed to refresh logs:", error);
+    ElMessage.error("Failed to refresh logs");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 function clearLogs() {
-  logs.value.set(props.containerId, [])
-  highlightedLines.value.clear()
-  ElMessage.success('Logs cleared')
+  logs.value.set(props.containerId, []);
+  highlightedLines.value.clear();
+  ElMessage.success("Logs cleared");
 }
 
 function toggleFollow() {
-  isFollowing.value = !isFollowing.value
+  isFollowing.value = !isFollowing.value;
 
   if (isFollowing.value) {
-    startFollowing()
-    scrollToBottom()
+    startFollowing();
+    scrollToBottom();
   } else {
-    stopFollowing()
+    stopFollowing();
   }
 }
 
 function startFollowing() {
-  if (followInterval) return
+  if (followInterval) return;
 
   // Start WebSocket connection for real-time logs
-  connectWebSocket()
+  connectWebSocket();
 
   // Fallback polling
   followInterval = setInterval(() => {
     if (!wsConnection || wsConnection.readyState !== WebSocket.OPEN) {
-      refreshLogs()
+      refreshLogs();
     }
-  }, 5000)
+  }, 5000);
 }
 
 function stopFollowing() {
   if (followInterval) {
-    clearInterval(followInterval)
-    followInterval = null
+    clearInterval(followInterval);
+    followInterval = null;
   }
 
   if (wsConnection) {
-    wsConnection.close()
-    wsConnection = null
+    wsConnection.close();
+    wsConnection = null;
   }
 }
 
 function connectWebSocket() {
   try {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl = `${protocol}//${window.location.host}/api/containers/${props.containerId}/logs/stream`
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/api/containers/${props.containerId}/logs/stream`;
 
-    wsConnection = new WebSocket(wsUrl)
+    wsConnection = new WebSocket(wsUrl);
 
     wsConnection.onopen = () => {
-      console.log('WebSocket connected for log streaming')
-    }
+      console.log("WebSocket connected for log streaming");
+    };
 
     wsConnection.onmessage = (event) => {
-      const logData = JSON.parse(event.data)
-      const currentLogs = logs.value.get(props.containerId) || []
-      logs.value.set(props.containerId, [...currentLogs, ...logData.logs])
+      const logData = JSON.parse(event.data);
+      const currentLogs = logs.value.get(props.containerId) || [];
+      logs.value.set(props.containerId, [...currentLogs, ...logData.logs]);
 
-      lastUpdate.value = new Date()
+      lastUpdate.value = new Date();
 
       if (isFollowing.value && isAtBottom.value) {
-        nextTick(() => scrollToBottom())
+        nextTick(() => scrollToBottom());
       }
-    }
+    };
 
     wsConnection.onerror = (error) => {
-      console.error('WebSocket error:', error)
-    }
+      console.error("WebSocket error:", error);
+    };
 
     wsConnection.onclose = () => {
-      console.log('WebSocket connection closed')
+      console.log("WebSocket connection closed");
       if (isFollowing.value) {
         // Try to reconnect after a delay
-        setTimeout(connectWebSocket, 3000)
+        setTimeout(connectWebSocket, 3000);
       }
-    }
+    };
   } catch (error) {
-    console.error('Failed to connect WebSocket:', error)
+    console.error("Failed to connect WebSocket:", error);
   }
 }
 
 function filterLogs() {
   // Reset to top when filters change
-  currentLine.value = 1
-  scrollToTop()
+  currentLine.value = 1;
+  scrollToTop();
 }
 
 function changeTailLines() {
-  refreshLogs()
+  refreshLogs();
 }
 
 function toggleTimestamps() {
   // Timestamps preference saved in local storage
-  localStorage.setItem('logViewer.showTimestamps', showTimestamps.value.toString())
+  localStorage.setItem(
+    "logViewer.showTimestamps",
+    showTimestamps.value.toString(),
+  );
 }
 
 function toggleWrapLines() {
-  localStorage.setItem('logViewer.wrapLines', wrapLines.value.toString())
+  localStorage.setItem("logViewer.wrapLines", wrapLines.value.toString());
 }
 
 function toggleLineHighlight(index: number) {
   if (highlightedLines.value.has(index)) {
-    highlightedLines.value.delete(index)
+    highlightedLines.value.delete(index);
   } else {
-    highlightedLines.value.add(index)
+    highlightedLines.value.add(index);
   }
 }
 
 function scrollToBottom() {
   if (logContentRef.value) {
-    const scrollContainer = logContentRef.value.querySelector('.log-lines')
+    const scrollContainer = logContentRef.value.querySelector(".log-lines");
     if (scrollContainer) {
-      scrollContainer.scrollTop = scrollContainer.scrollHeight
-      isAtBottom.value = true
-      currentLine.value = filteredLogs.value.length
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      isAtBottom.value = true;
+      currentLine.value = filteredLogs.value.length;
     }
   }
 }
 
 function scrollToTop() {
   if (logContentRef.value) {
-    const scrollContainer = logContentRef.value.querySelector('.log-lines')
+    const scrollContainer = logContentRef.value.querySelector(".log-lines");
     if (scrollContainer) {
-      scrollContainer.scrollTop = 0
-      isAtBottom.value = false
-      currentLine.value = 1
+      scrollContainer.scrollTop = 0;
+      isAtBottom.value = false;
+      currentLine.value = 1;
     }
   }
 }
 
 function goToTop() {
-  scrollToTop()
+  scrollToTop();
 }
 
 function goToBottom() {
-  scrollToBottom()
+  scrollToBottom();
 }
 
 async function handleAction(command: string) {
   switch (command) {
-    case 'download':
-      await downloadLogs()
-      break
-    case 'copy':
-      await copyLogs()
-      break
-    case 'share':
-      await shareLogs()
-      break
+    case "download":
+      await downloadLogs();
+      break;
+    case "copy":
+      await copyLogs();
+      break;
+    case "share":
+      await shareLogs();
+      break;
   }
 }
 
 async function downloadLogs() {
   try {
-    const logText = filteredLogs.value.map(log => {
-      const parts = []
-      if (showTimestamps.value) {
-        parts.push(formatLogTime(log.timestamp))
-      }
-      parts.push(log.level.toUpperCase())
-      parts.push(log.stream)
-      parts.push(log.message)
-      return parts.join(' ')
-    }).join('\n')
+    const logText = filteredLogs.value
+      .map((log) => {
+        const parts = [];
+        if (showTimestamps.value) {
+          parts.push(formatLogTime(log.timestamp));
+        }
+        parts.push(log.level.toUpperCase());
+        parts.push(log.stream);
+        parts.push(log.message);
+        return parts.join(" ");
+      })
+      .join("\n");
 
-    const blob = new Blob([logText], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${props.containerName}-logs-${Date.now()}.txt`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    const blob = new Blob([logText], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${props.containerName}-logs-${Date.now()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
-    ElMessage.success('Logs downloaded successfully')
+    ElMessage.success("Logs downloaded successfully");
   } catch (error) {
-    console.error('Failed to download logs:', error)
-    ElMessage.error('Failed to download logs')
+    console.error("Failed to download logs:", error);
+    ElMessage.error("Failed to download logs");
   }
 }
 
 async function copyLogs() {
   try {
-    const logText = filteredLogs.value.map(log => {
-      const parts = []
-      if (showTimestamps.value) {
-        parts.push(formatLogTime(log.timestamp))
-      }
-      parts.push(log.level.toUpperCase())
-      parts.push(log.stream)
-      parts.push(log.message)
-      return parts.join(' ')
-    }).join('\n')
+    const logText = filteredLogs.value
+      .map((log) => {
+        const parts = [];
+        if (showTimestamps.value) {
+          parts.push(formatLogTime(log.timestamp));
+        }
+        parts.push(log.level.toUpperCase());
+        parts.push(log.stream);
+        parts.push(log.message);
+        return parts.join(" ");
+      })
+      .join("\n");
 
-    await navigator.clipboard.writeText(logText)
-    ElMessage.success('Logs copied to clipboard')
+    await navigator.clipboard.writeText(logText);
+    ElMessage.success("Logs copied to clipboard");
   } catch (error) {
-    console.error('Failed to copy logs:', error)
-    ElMessage.error('Failed to copy logs')
+    console.error("Failed to copy logs:", error);
+    ElMessage.error("Failed to copy logs");
   }
 }
 
 async function shareLogs() {
   // Generate a shareable link or create a log snippet
   ElNotification({
-    title: 'Share Logs',
-    message: 'Log sharing functionality will be implemented here',
-    type: 'info'
-  })
-}
-
-function handleScroll(event: Event) {
-  const target = event.target as HTMLElement
-  const { scrollTop, scrollHeight, clientHeight } = target
-
-  isAtBottom.value = scrollTop + clientHeight >= scrollHeight - 10
-
-  // Update current line based on scroll position
-  const lineIndex = Math.floor(scrollTop / lineHeight.value)
-  currentLine.value = Math.max(1, lineIndex + 1)
+    title: "Share Logs",
+    message: "Log sharing functionality will be implemented here",
+    type: "info",
+  });
 }
 
 function updateContainerHeight() {
   if (props.fullHeight && logContentRef.value) {
-    const rect = logContentRef.value.getBoundingClientRect()
-    const availableHeight = window.innerHeight - rect.top - 100
-    containerHeight.value = Math.max(200, availableHeight)
+    const rect = logContentRef.value.getBoundingClientRect();
+    const availableHeight = window.innerHeight - rect.top - 100;
+    containerHeight.value = Math.max(200, availableHeight);
   }
 }
 
 // Load preferences
 function loadPreferences() {
-  const savedTimestamps = localStorage.getItem('logViewer.showTimestamps')
+  const savedTimestamps = localStorage.getItem("logViewer.showTimestamps");
   if (savedTimestamps !== null) {
-    showTimestamps.value = savedTimestamps === 'true'
+    showTimestamps.value = savedTimestamps === "true";
   }
 
-  const savedWrapLines = localStorage.getItem('logViewer.wrapLines')
+  const savedWrapLines = localStorage.getItem("logViewer.wrapLines");
   if (savedWrapLines !== null) {
-    wrapLines.value = savedWrapLines === 'true'
+    wrapLines.value = savedWrapLines === "true";
   }
 }
 
 // Lifecycle
 onMounted(() => {
-  loadPreferences()
-  updateContainerHeight()
+  loadPreferences();
+  updateContainerHeight();
 
   if (props.autoStart) {
-    refreshLogs()
+    refreshLogs();
   }
 
-  window.addEventListener('resize', updateContainerHeight)
-})
+  window.addEventListener("resize", updateContainerHeight);
+});
 
 onUnmounted(() => {
-  stopFollowing()
-  window.removeEventListener('resize', updateContainerHeight)
-})
+  stopFollowing();
+  window.removeEventListener("resize", updateContainerHeight);
+});
 
 // Watch for container changes
-watch(() => props.containerId, (newId) => {
-  if (newId) {
-    clearLogs()
-    refreshLogs()
-  }
-})
+watch(
+  () => props.containerId,
+  (newId) => {
+    if (newId) {
+      clearLogs();
+      refreshLogs();
+    }
+  },
+);
 </script>
 
 <style scoped>
@@ -656,7 +675,7 @@ watch(() => props.containerId, (newId) => {
   flex-direction: column;
   background: #1e1e1e;
   color: #d4d4d4;
-  font-family: 'Courier New', 'Consolas', monospace;
+  font-family: "Courier New", "Consolas", monospace;
   font-size: 13px;
   line-height: 1.5;
   border-radius: 4px;
@@ -913,8 +932,12 @@ watch(() => props.containerId, (newId) => {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive */

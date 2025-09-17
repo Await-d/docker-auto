@@ -129,7 +129,8 @@ func (hc *HealthChecker) CheckHealth(name string) (HealthResult, error) {
 		return HealthResult{}, fmt.Errorf("health check %s not found", name)
 	}
 
-	return hc.executeCheck(check)
+	result := hc.executeCheck(check)
+	return result, nil
 }
 
 // CheckAllHealth performs all registered health checks
@@ -265,7 +266,7 @@ func (hc *HealthChecker) executeCheck(check HealthCheck) HealthResult {
 	defer cancel()
 
 	var result HealthResult
-	var lastErr error
+	var _ error // lastErr removed as unused
 
 	// Retry logic
 	for attempt := 0; attempt <= hc.config.RetryAttempts; attempt++ {
@@ -281,7 +282,7 @@ func (hc *HealthChecker) executeCheck(check HealthCheck) HealthResult {
 			break
 		}
 
-		lastErr = fmt.Errorf("health check failed: %s", result.Message)
+		_ = fmt.Errorf("health check failed: %s", result.Message)
 	}
 
 	// Store result and update metrics
@@ -380,7 +381,6 @@ func (hc *HealthChecker) updateMetrics(name string, result HealthResult) {
 func (hc *HealthChecker) handleStatusChange(name string, result HealthResult) {
 	hc.mu.RLock()
 	failureCount := hc.failureCounts[name]
-	successCount := hc.successCounts[name]
 	hc.mu.RUnlock()
 
 	// Check if we need to trigger an alert

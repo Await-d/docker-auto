@@ -12,7 +12,6 @@ import (
 	"docker-auto/internal/repository"
 	"docker-auto/pkg/events"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -51,16 +50,16 @@ type NotificationService struct {
 
 // NotificationServiceInterface defines the notification service interface
 type NotificationServiceInterface interface {
-	CreateNotification(ctx context.Context, userID *int64, notificationType NotificationType, title, message string, data map[string]interface{}) (*model.Notification, error)
-	CreateNotificationFromTemplate(ctx context.Context, userID *int64, templateID string, data map[string]interface{}) (*model.Notification, error)
-	GetNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error)
+	CreateNotification(ctx context.Context, userID *int64, notificationType NotificationType, title, message string, data map[string]interface{}) (*model.UserNotification, error)
+	CreateNotificationFromTemplate(ctx context.Context, userID *int64, templateID string, data map[string]interface{}) (*model.UserNotification, error)
+	GetNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.UserNotification, error)
 	GetUnreadCount(ctx context.Context, userID int64) (int64, error)
 	MarkAsRead(ctx context.Context, notificationID int64, userID int64) error
 	MarkAllAsRead(ctx context.Context, userID int64) error
 	DeleteNotification(ctx context.Context, notificationID int64, userID int64) error
 	BroadcastNotification(ctx context.Context, notificationType NotificationType, title, message string, data map[string]interface{}) error
 	RegisterTemplate(templateID string, notificationType NotificationType, title, message string) error
-	GetNotificationsByType(ctx context.Context, userID int64, notificationType NotificationType, limit, offset int) ([]*model.Notification, error)
+	GetNotificationsByType(ctx context.Context, userID int64, notificationType NotificationType, limit, offset int) ([]*model.UserNotification, error)
 }
 
 // NewNotificationService creates a new notification service
@@ -101,8 +100,8 @@ func (ns *NotificationService) CreateNotification(
 	notificationType NotificationType,
 	title, message string,
 	data map[string]interface{},
-) (*model.Notification, error) {
-	notification := &model.Notification{
+) (*model.UserNotification, error) {
+	notification := &model.UserNotification{
 		UserID:    userID,
 		Type:      string(notificationType),
 		Title:     title,
@@ -154,7 +153,7 @@ func (ns *NotificationService) CreateNotificationFromTemplate(
 	userID *int64,
 	templateID string,
 	data map[string]interface{},
-) (*model.Notification, error) {
+) (*model.UserNotification, error) {
 	ns.templatesMu.RLock()
 	tmpl, exists := ns.templates[templateID]
 	ns.templatesMu.RUnlock()
@@ -173,7 +172,7 @@ func (ns *NotificationService) CreateNotificationFromTemplate(
 }
 
 // GetNotifications retrieves notifications for a user
-func (ns *NotificationService) GetNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.Notification, error) {
+func (ns *NotificationService) GetNotifications(ctx context.Context, userID int64, limit, offset int) ([]*model.UserNotification, error) {
 	notifications, err := ns.notificationRepo.GetByUserID(ctx, userID, limit, offset)
 	if err != nil {
 		ns.logger.WithError(err).Error("Failed to get notifications")
@@ -358,7 +357,7 @@ func (ns *NotificationService) RegisterTemplate(templateID string, notificationT
 }
 
 // GetNotificationsByType retrieves notifications by type for a user
-func (ns *NotificationService) GetNotificationsByType(ctx context.Context, userID int64, notificationType NotificationType, limit, offset int) ([]*model.Notification, error) {
+func (ns *NotificationService) GetNotificationsByType(ctx context.Context, userID int64, notificationType NotificationType, limit, offset int) ([]*model.UserNotification, error) {
 	notifications, err := ns.notificationRepo.GetByUserIDAndType(ctx, userID, string(notificationType), limit, offset)
 	if err != nil {
 		ns.logger.WithError(err).Error("Failed to get notifications by type")
@@ -402,7 +401,7 @@ func (ns *NotificationService) mapTypeToSeverity(notificationType NotificationTy
 }
 
 // sendExternalNotifications sends notifications via email/webhook if configured
-func (ns *NotificationService) sendExternalNotifications(notification *model.Notification) {
+func (ns *NotificationService) sendExternalNotifications(notification *model.UserNotification) {
 	if notification.UserID == nil {
 		return
 	}
@@ -415,16 +414,25 @@ func (ns *NotificationService) sendExternalNotifications(notification *model.Not
 		return
 	}
 
+	// Convert UserNotification to runtime Notification for external services
+	runtimeNotification := &model.Notification{
+		Type:     model.NotificationType(notification.Type),
+		Title:    notification.Title,
+		Message:  notification.Message,
+		Priority: model.NotificationPriorityNormal, // Default priority for stored notifications
+		Data:     notification.Data,
+	}
+
 	// Send email notification if enabled
 	if ns.emailService != nil && user.EmailNotifications {
-		if err := ns.emailService.SendNotificationEmail(user.Email, notification); err != nil {
+		if err := ns.emailService.SendNotificationEmail(user.Email, runtimeNotification); err != nil {
 			ns.logger.WithError(err).Error("Failed to send email notification")
 		}
 	}
 
 	// Send webhook notification if enabled
 	if ns.webhookService != nil {
-		if err := ns.webhookService.SendNotificationWebhook(notification); err != nil {
+		if err := ns.webhookService.SendNotificationWebhook(runtimeNotification); err != nil {
 			ns.logger.WithError(err).Error("Failed to send webhook notification")
 		}
 	}
@@ -532,6 +540,31 @@ func (ns *NotificationService) CleanupOldNotifications(ctx context.Context, rete
 			"cutoff_date":     cutoffDate,
 		}).Info("Cleaned up old notifications")
 	}
+
+	return nil
+}
+
+// SendNotification sends a notification using the configured channels
+func (ns *NotificationService) SendNotification(ctx context.Context, notification *model.Notification) error {
+	if notification == nil {
+		return fmt.Errorf("notification is nil")
+	}
+
+	ns.logger.WithFields(logrus.Fields{
+		"type":     notification.Type,
+		"title":    notification.Title,
+		"priority": notification.Priority,
+	}).Info("Sending notification")
+
+	// For now, just log the notification
+	// In a full implementation, you would route to appropriate channels based on type
+	ns.logger.WithFields(logrus.Fields{
+		"type":     notification.Type,
+		"title":    notification.Title,
+		"message":  notification.Message,
+		"priority": notification.Priority,
+		"data":     notification.Data,
+	}).Info("Notification sent")
 
 	return nil
 }

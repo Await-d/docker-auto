@@ -123,7 +123,7 @@ func SecurityMiddleware(config *SecurityConfig) gin.HandlerFunc {
 		if config.ForceHTTPS {
 			if err := enforceHTTPS(c, config); err != nil {
 				logrus.WithError(err).Warn("HTTPS enforcement failed")
-				c.JSON(http.StatusUpgradeRequired, utils.ErrorResponse("HTTPS required"))
+				c.JSON(http.StatusUpgradeRequired, utils.ErrorResponse(http.StatusUpgradeRequired, "HTTPS required"))
 				c.Abort()
 				return
 			}
@@ -136,7 +136,7 @@ func SecurityMiddleware(config *SecurityConfig) gin.HandlerFunc {
 				"max_size":       config.MaxRequestSize,
 				"client_ip":      c.ClientIP(),
 			}).Warn("Request size exceeds security limit")
-			c.JSON(http.StatusRequestEntityTooLarge, utils.ErrorResponse("Request too large"))
+			c.JSON(http.StatusRequestEntityTooLarge, utils.ErrorResponse(http.StatusRequestEntityTooLarge, "Request too large"))
 			c.Abort()
 			return
 		}
@@ -149,7 +149,7 @@ func SecurityMiddleware(config *SecurityConfig) gin.HandlerFunc {
 					"client_ip":  c.ClientIP(),
 					"path":       c.Request.URL.Path,
 				}).Warn("Suspicious user agent blocked")
-				c.JSON(http.StatusForbidden, utils.ErrorResponse("Access denied"))
+				c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "Access denied"))
 				c.Abort()
 				return
 			}
@@ -159,7 +159,7 @@ func SecurityMiddleware(config *SecurityConfig) gin.HandlerFunc {
 		if config.RequireAPIKey {
 			if err := validateAPIKey(c, config); err != nil {
 				logrus.WithError(err).Warn("API key validation failed")
-				c.JSON(http.StatusUnauthorized, utils.ErrorResponse("Invalid or missing API key"))
+				c.JSON(http.StatusUnauthorized, utils.ErrorResponse(http.StatusUnauthorized, "Invalid or missing API key"))
 				c.Abort()
 				return
 			}
@@ -176,7 +176,7 @@ func SecurityMiddleware(config *SecurityConfig) gin.HandlerFunc {
 		if config.EnableCORS && c.Request.Method != "OPTIONS" {
 			if err := validateCORS(c, config); err != nil {
 				logrus.WithError(err).Warn("CORS validation failed")
-				c.JSON(http.StatusForbidden, utils.ErrorResponse("CORS policy violation"))
+				c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "CORS policy violation"))
 				c.Abort()
 				return
 			}
@@ -272,14 +272,6 @@ func isHTTPS(c *gin.Context, config *SecurityConfig) bool {
 	return false
 }
 
-// isLocalRequest checks if the request is from localhost
-func isLocalRequest(c *gin.Context) bool {
-	host := c.Request.Host
-	if strings.HasPrefix(host, "localhost") || strings.HasPrefix(host, "127.0.0.1") || strings.HasPrefix(host, "::1") {
-		return true
-	}
-	return false
-}
 
 // isSuspiciousUserAgent checks if the user agent matches suspicious patterns
 func isSuspiciousUserAgent(userAgent string, patterns []string) bool {
@@ -403,7 +395,7 @@ func CSRFProtectionMiddleware(secretKey string, cookieName string) gin.HandlerFu
 		expectedToken, err := c.Cookie(cookieName)
 		if err != nil {
 			logrus.WithError(err).Warn("CSRF cookie missing")
-			c.JSON(http.StatusForbidden, utils.ErrorResponse("CSRF token missing"))
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "CSRF token missing"))
 			c.Abort()
 			return
 		}
@@ -415,7 +407,7 @@ func CSRFProtectionMiddleware(secretKey string, cookieName string) gin.HandlerFu
 				"path":      c.Request.URL.Path,
 				"method":    c.Request.Method,
 			}).Warn("CSRF token validation failed")
-			c.JSON(http.StatusForbidden, utils.ErrorResponse("CSRF token invalid"))
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "CSRF token invalid"))
 			c.Abort()
 			return
 		}
@@ -519,7 +511,7 @@ func IPWhitelistMiddleware(allowedIPs []string) gin.HandlerFunc {
 				"path":        c.Request.URL.Path,
 				"user_agent":  c.GetHeader("User-Agent"),
 			}).Warn("IP not in whitelist")
-			c.JSON(http.StatusForbidden, utils.ErrorResponse("Access denied"))
+			c.JSON(http.StatusForbidden, utils.ErrorResponse(http.StatusForbidden, "Access denied"))
 			c.Abort()
 			return
 		}
@@ -528,23 +520,6 @@ func IPWhitelistMiddleware(allowedIPs []string) gin.HandlerFunc {
 	}
 }
 
-// getClientIP extracts the real client IP
-func getClientIP(c *gin.Context) string {
-	// Check X-Forwarded-For header
-	xff := c.GetHeader("X-Forwarded-For")
-	if xff != "" {
-		ips := strings.Split(xff, ",")
-		return strings.TrimSpace(ips[0])
-	}
-
-	// Check X-Real-IP header
-	xri := c.GetHeader("X-Real-IP")
-	if xri != "" {
-		return strings.TrimSpace(xri)
-	}
-
-	return c.ClientIP()
-}
 
 // SecurityHeadersOnlyMiddleware applies only security headers without other checks
 func SecurityHeadersOnlyMiddleware(config *SecurityConfig) gin.HandlerFunc {
@@ -609,7 +584,7 @@ func URLValidationMiddleware() gin.HandlerFunc {
 		// Validate URL structure
 		if _, err := url.Parse(c.Request.RequestURI); err != nil {
 			logrus.WithError(err).WithField("uri", c.Request.RequestURI).Warn("Invalid URL structure")
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid URL"))
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid URL"))
 			c.Abort()
 			return
 		}
@@ -630,7 +605,7 @@ func URLValidationMiddleware() gin.HandlerFunc {
 					"pattern": pattern,
 					"client_ip": c.ClientIP(),
 				}).Warn("Suspicious URL pattern detected")
-				c.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid URL pattern"))
+				c.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, "Invalid URL pattern"))
 				c.Abort()
 				return
 			}

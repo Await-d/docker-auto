@@ -44,11 +44,16 @@ type NotificationLog struct {
 type NotificationType string
 
 const (
-	NotificationTypeEmail   NotificationType = "email"
-	NotificationTypeWebhook NotificationType = "webhook"
-	NotificationTypeWeChat  NotificationType = "wechat"
-	NotificationTypeSlack   NotificationType = "slack"
-	NotificationTypeDiscord NotificationType = "discord"
+	NotificationTypeEmail            NotificationType = "email"
+	NotificationTypeWebhook          NotificationType = "webhook"
+	NotificationTypeWeChat           NotificationType = "wechat"
+	NotificationTypeSlack            NotificationType = "slack"
+	NotificationTypeDiscord          NotificationType = "discord"
+	NotificationTypeBackup           NotificationType = "backup"
+	NotificationTypeImageUpdate      NotificationType = "image_update"
+	NotificationTypeSecurityUpdate   NotificationType = "security_update"
+	NotificationTypeSystemMaintenance NotificationType = "system_maintenance"
+	NotificationTypeContainerUpdate   NotificationType = "container_update"
 )
 
 // NotificationStatus defines notification status
@@ -59,6 +64,25 @@ const (
 	NotificationStatusSent    NotificationStatus = "sent"
 	NotificationStatusFailed  NotificationStatus = "failed"
 )
+
+// NotificationPriority defines notification priority levels
+type NotificationPriority string
+
+const (
+	NotificationPriorityLow    NotificationPriority = "low"
+	NotificationPriorityNormal NotificationPriority = "normal"
+	NotificationPriorityHigh   NotificationPriority = "high"
+	NotificationPriorityCritical NotificationPriority = "critical"
+)
+
+// Notification represents a runtime notification (not stored in database)
+type Notification struct {
+	Type     NotificationType     `json:"type"`
+	Title    string               `json:"title"`
+	Message  string               `json:"message"`
+	Priority NotificationPriority `json:"priority"`
+	Data     map[string]interface{} `json:"data,omitempty"`
+}
 
 // NotificationEvent represents different types of notification events
 type NotificationEvent string

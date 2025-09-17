@@ -21,7 +21,11 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Minimum Length" prop="passwordPolicy.minLength" required>
+            <el-form-item
+              label="Minimum Length"
+              prop="passwordPolicy.minLength"
+              required
+            >
               <el-input-number
                 v-model="formData.passwordPolicy.minLength"
                 :min="6"
@@ -31,7 +35,10 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Maximum Age (days)" prop="passwordPolicy.maxAge">
+            <el-form-item
+              label="Maximum Age (days)"
+              prop="passwordPolicy.maxAge"
+            >
               <el-input-number
                 v-model="formData.passwordPolicy.maxAge"
                 :min="0"
@@ -103,7 +110,10 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Max Concurrent Sessions" prop="sessionPolicy.maxConcurrentSessions">
+            <el-form-item
+              label="Max Concurrent Sessions"
+              prop="sessionPolicy.maxConcurrentSessions"
+            >
               <el-input-number
                 v-model="formData.sessionPolicy.maxConcurrentSessions"
                 :min="1"
@@ -127,7 +137,7 @@
       <el-card class="config-section" shadow="never">
         <template #header>
           <div class="section-header">
-            <el-icon><Shield /></el-icon>
+            <el-icon><Lock /></el-icon>
             <span>Account Lockout</span>
           </div>
         </template>
@@ -174,25 +184,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { Lock, Clock, Shield } from '@element-plus/icons-vue'
-import ConfigForm from './forms/ConfigForm.vue'
-import type { UserSettings } from '@/store/settings'
+import { ref, computed, watch } from "vue";
+import { Lock, Clock } from "@element-plus/icons-vue";
+import ConfigForm from "./forms/ConfigForm.vue";
+import type { UserSettings } from "@/store/settings";
 
 interface Props {
-  modelValue: UserSettings
-  loading?: boolean
-  validationErrors?: Record<string, string[]>
+  modelValue: UserSettings;
+  loading?: boolean;
+  validationErrors?: Record<string, string[]>;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: UserSettings): void
-  (e: 'field-change', field: string, value: any): void
-  (e: 'field-validate', field: string, value: any): void
+  (e: "update:modelValue", value: UserSettings): void;
+  (e: "field-change", field: string, value: any): void;
+  (e: "field-validate", field: string, value: any): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const formData = ref<UserSettings>({
   passwordPolicy: {
@@ -202,64 +212,94 @@ const formData = ref<UserSettings>({
     requireNumbers: true,
     requireSpecialChars: true,
     maxAge: 90,
-    preventReuse: 5
+    preventReuse: 5,
   },
   sessionPolicy: {
     maxConcurrentSessions: 3,
     idleTimeout: 30,
     absoluteTimeout: 480,
-    requireReauth: false
+    requireReauth: false,
   },
   roles: [],
-  defaultRole: 'user',
+  defaultRole: "user",
   jwtExpiration: 60,
   refreshTokenExpiration: 10080,
   twoFactorEnabled: false,
   accountLockoutEnabled: true,
   maxLoginAttempts: 5,
-  lockoutDuration: 30
-} as any)
+  lockoutDuration: 30,
+} as any);
 
 const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue)
-})
+  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
+});
 
 const formRules = computed(() => ({
-  'passwordPolicy.minLength': [
-    { required: true, message: 'Minimum length is required', trigger: 'blur' },
-    { type: 'number', min: 6, max: 50, message: 'Must be between 6 and 50', trigger: 'blur' }
+  "passwordPolicy.minLength": [
+    { required: true, message: "Minimum length is required", trigger: "blur" },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 6 || value > 50) {
+          callback(new Error("Must be between 6 and 50"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   jwtExpiration: [
-    { required: true, message: 'JWT expiration is required', trigger: 'blur' },
-    { type: 'number', min: 15, max: 1440, message: 'Must be between 15 and 1440 minutes', trigger: 'blur' }
-  ]
-}))
+    { required: true, message: "JWT expiration is required", trigger: "blur" },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 15 || value > 1440) {
+          callback(new Error("Must be between 15 and 1440 minutes"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+}));
 
 const updatePasswordPolicy = () => {
-  handleFieldChange('passwordPolicy', formData.value.passwordPolicy)
-}
+  handleFieldChange("passwordPolicy", formData.value.passwordPolicy);
+};
 
 const updateSessionPolicy = () => {
-  handleFieldChange('sessionPolicy', formData.value.sessionPolicy)
-}
+  handleFieldChange("sessionPolicy", formData.value.sessionPolicy);
+};
 
 const handleSave = () => {
-  emit('update:modelValue', formData.value)
-}
+  emit("update:modelValue", formData.value);
+};
 
 const handleReset = () => {
-  formData.value = { ...props.modelValue }
-}
+  formData.value = { ...props.modelValue };
+};
 
 const handleFieldChange = (field: string, value: any) => {
-  emit('field-change', field, value)
-}
+  emit("field-change", field, value);
+};
 
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    formData.value = { ...newValue }
-  }
-}, { immediate: true, deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = { ...newValue };
+    }
+  },
+  { immediate: true, deep: true },
+);
 </script>
 
 <style scoped lang="scss">

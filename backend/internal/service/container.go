@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"docker-auto/internal/config"
@@ -155,8 +154,8 @@ func (s *ContainerService) GetContainer(ctx context.Context, userID int64, conta
 
 	// Get Docker status if container has Docker ID
 	if container.ContainerID != "" {
-		if dockerStatus, err := s.getDetailedDockerStatus(ctx, container.ContainerID); err == nil {
-			detail.DockerStatus = dockerStatus
+		if dockerStatus, err := s.dockerClient.GetContainerStatus(ctx, container.ContainerID); err == nil {
+			detail.DockerStatus = &dockerStatus
 		} else {
 			logrus.WithError(err).WithField("container_id", container.ContainerID).Warn("Failed to get Docker status")
 		}
@@ -394,7 +393,7 @@ func (s *ContainerService) ListContainers(ctx context.Context, userID int64, fil
 		// Get Docker status
 		if container.ContainerID != "" {
 			if dockerStatus, err := s.dockerClient.GetContainerStatus(ctx, container.ContainerID); err == nil {
-				summary.DockerStatus = string(dockerStatus.State)
+				summary.DockerStatus = string(dockerStatus)
 			}
 		}
 
@@ -486,7 +485,7 @@ func (s *ContainerService) StopContainer(ctx context.Context, userID int64, cont
 
 	// Stop Docker container
 	timeout := 30 // seconds
-	if err := s.dockerClient.StopContainer(ctx, container.ContainerID, timeout); err != nil {
+	if err := s.dockerClient.StopContainer(ctx, container.ContainerID, &timeout); err != nil {
 		return fmt.Errorf("failed to stop container: %w", err)
 	}
 
@@ -521,7 +520,7 @@ func (s *ContainerService) RestartContainer(ctx context.Context, userID int64, c
 
 	// Restart Docker container
 	timeout := 30 // seconds
-	if err := s.dockerClient.RestartContainer(ctx, container.ContainerID, timeout); err != nil {
+	if err := s.dockerClient.RestartContainer(ctx, container.ContainerID, &timeout); err != nil {
 		return fmt.Errorf("failed to restart container: %w", err)
 	}
 
@@ -618,14 +617,8 @@ func (s *ContainerService) GetContainerStatus(ctx context.Context, containerID i
 	// Get Docker status if available
 	if container.ContainerID != "" {
 		if dockerStatus, err := s.dockerClient.GetContainerStatus(ctx, container.ContainerID); err == nil {
-			status.DockerStatus = dockerStatus
-			if dockerStatus.Health != "" {
-				status.Health = dockerStatus.Health
-			}
-			status.RestartCount = dockerStatus.RestartCount
-			if dockerStatus.StartedAt != nil {
-				status.Uptime = time.Since(*dockerStatus.StartedAt)
-			}
+			status.DockerStatus = &dockerStatus
+			// Additional docker info would need to be fetched separately if needed
 		}
 	}
 
@@ -656,50 +649,56 @@ func (s *ContainerService) GetContainerLogs(ctx context.Context, userID int64, c
 	}
 
 	// Convert options to Docker log options
-	dockerOptions := &docker.LogOptions{
-		Tail:       options.Tail,
+	dockerOptions := types.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Tail:       strconv.Itoa(options.Tail),
 		Follow:     options.Follow,
 		Timestamps: options.Timestamps,
 	}
 
 	if !options.Since.IsZero() {
-		dockerOptions.Since = &options.Since
+		dockerOptions.Since = options.Since.Format(time.RFC3339)
 	}
 	if !options.Until.IsZero() {
-		dockerOptions.Until = &options.Until
+		dockerOptions.Until = options.Until.Format(time.RFC3339)
 	}
 
 	// Get logs from Docker
-	logs, err := s.dockerClient.GetContainerLogs(ctx, container.ContainerID, dockerOptions)
+	logs, err := s.dockerClient.GetContainerLogsAsEntries(ctx, container.ContainerID, dockerOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get container logs: %w", err)
 	}
 
-	// Convert to log entries
-	entries := make([]LogEntry, len(logs))
-	for i, log := range logs {
-		entries[i] = LogEntry{
-			Timestamp: log.Timestamp,
-			Source:    log.Source,
-			Message:   log.Message,
-		}
-	}
-
+	// Build response
 	response := &LogResponse{
 		ContainerID: containerID,
 		Name:        container.Name,
-		Logs:        entries,
-		Count:       len(entries),
+		Logs:        convertDockerLogEntries(logs),
+		Count:       len(logs),
 		Since:       options.Since,
 		Until:       options.Until,
 	}
 
 	// Check if logs were truncated
-	if options.Tail > 0 && len(entries) >= options.Tail {
+	if options.Tail > 0 && len(logs) >= options.Tail {
 		response.Truncated = true
 	}
 
 	return response, nil
+}
+
+// convertDockerLogEntries converts docker.LogEntry to service.LogEntry
+func convertDockerLogEntries(dockerLogs []docker.LogEntry) []LogEntry {
+	logs := make([]LogEntry, len(dockerLogs))
+	for i, log := range dockerLogs {
+		logs[i] = LogEntry{
+			Timestamp: log.Timestamp,
+			Source:    log.Source,
+			Message:   log.Message,
+		}
+	}
+	return logs
 }
 
 // GetContainerStats retrieves container resource statistics
@@ -763,24 +762,8 @@ func (s *ContainerService) SyncContainerStatus(ctx context.Context) error {
 			continue
 		}
 
-		// Determine new status
-		var newStatus model.ContainerStatus
-		switch dockerStatus.State {
-		case "running":
-			newStatus = model.ContainerStatusRunning
-		case "exited":
-			newStatus = model.ContainerStatusExited
-		case "paused":
-			newStatus = model.ContainerStatusPaused
-		case "restarting":
-			newStatus = model.ContainerStatusRestarting
-		case "removing":
-			newStatus = model.ContainerStatusRemoving
-		case "dead":
-			newStatus = model.ContainerStatusDead
-		default:
-			newStatus = model.ContainerStatusUnknown
-		}
+		// Use the status directly
+		newStatus := dockerStatus
 
 		// Update status if changed
 		if container.Status != newStatus {

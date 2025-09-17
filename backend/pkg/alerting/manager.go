@@ -1,7 +1,6 @@
 package alerting
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"

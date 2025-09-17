@@ -14,7 +14,7 @@
       <el-card class="config-section" shadow="never">
         <template #header>
           <div class="section-header">
-            <el-icon><CloudUpload /></el-icon>
+            <el-icon><Upload /></el-icon>
             <span>Registry Connections</span>
             <el-button type="primary" size="small" @click="addRegistry">
               <el-icon><Plus /></el-icon>
@@ -44,8 +44,11 @@
                 class="registry-name"
                 @input="updateRegistry(index)"
               />
-              <el-tag :type="registry.enabled ? 'success' : 'info'" size="small">
-                {{ registry.enabled ? 'Enabled' : 'Disabled' }}
+              <el-tag
+                :type="registry.enabled ? 'success' : 'info'"
+                size="small"
+              >
+                {{ registry.enabled ? "Enabled" : "Disabled" }}
               </el-tag>
               <el-switch
                 v-model="registry.enabled"
@@ -54,8 +57,8 @@
               <el-button
                 type="text"
                 size="small"
-                @click="removeRegistry(index)"
                 class="danger-button"
+                @click="removeRegistry(index)"
               >
                 <el-icon><Delete /></el-icon>
               </el-button>
@@ -126,7 +129,11 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Search Result Limit" prop="searchLimit" required>
+            <el-form-item
+              label="Search Result Limit"
+              prop="searchLimit"
+              required
+            >
               <el-input-number
                 v-model="formData.searchLimit"
                 :min="10"
@@ -185,109 +192,121 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import {
-  CloudUpload,
-  Search,
-  Plus,
-  Delete
-} from '@element-plus/icons-vue'
-import ConfigForm from './forms/ConfigForm.vue'
-import type { RegistrySettings, DockerRegistry } from '@/store/settings'
+import { ref, computed, watch } from "vue";
+import { Upload, Search, Plus, Delete } from "@element-plus/icons-vue";
+import ConfigForm from "./forms/ConfigForm.vue";
+import type { RegistrySettings, DockerRegistry } from "@/store/settings";
 
 interface Props {
-  modelValue: RegistrySettings
-  loading?: boolean
-  validationErrors?: Record<string, string[]>
+  modelValue: RegistrySettings;
+  loading?: boolean;
+  validationErrors?: Record<string, string[]>;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: RegistrySettings): void
-  (e: 'field-change', field: string, value: any): void
-  (e: 'field-validate', field: string, value: any): void
+  (e: "update:modelValue", value: RegistrySettings): void;
+  (e: "field-change", field: string, value: any): void;
+  (e: "field-validate", field: string, value: any): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const formData = ref<RegistrySettings>({
-  defaultRegistry: '',
+  defaultRegistry: "",
   registries: [],
   searchLimit: 50,
-  trustPolicy: 'signed',
-  securityScanEnabled: true
-} as any)
+  trustPolicy: "signed",
+  securityScanEnabled: true,
+} as any);
 
 const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue)
-})
+  return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
+});
 
 const enabledRegistries = computed(() => {
-  return formData.value.registries.filter(registry => registry.enabled)
-})
+  return formData.value.registries.filter((registry) => registry.enabled);
+});
 
 const formRules = computed(() => ({
   searchLimit: [
-    { required: true, message: 'Search limit is required', trigger: 'blur' },
-    { type: 'number', min: 10, max: 100, message: 'Must be between 10 and 100', trigger: 'blur' }
+    { required: true, message: "Search limit is required", trigger: "blur" },
+    {
+      validator: (
+        _rule: any,
+        value: any,
+        callback: (error?: Error) => void,
+      ) => {
+        if (value < 10 || value > 100) {
+          callback(new Error("Must be between 10 and 100"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
   trustPolicy: [
-    { required: true, message: 'Trust policy is required', trigger: 'change' }
-  ]
-}))
+    { required: true, message: "Trust policy is required", trigger: "change" },
+  ],
+}));
 
 const generateId = (): string => {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9)
-}
+  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+};
 
 const addRegistry = () => {
   const newRegistry: DockerRegistry = {
     id: generateId(),
     name: `Registry ${formData.value.registries.length + 1}`,
-    url: '',
-    type: 'generic',
-    username: '',
-    password: '',
+    url: "",
+    type: "generic",
+    username: "",
+    password: "",
     isDefault: false,
     healthCheckInterval: 300,
-    enabled: true
-  }
+    enabled: true,
+  };
 
-  formData.value.registries.push(newRegistry)
-  updateRegistries()
-}
+  formData.value.registries.push(newRegistry);
+  updateRegistries();
+};
 
 const removeRegistry = (index: number) => {
-  formData.value.registries.splice(index, 1)
-  updateRegistries()
-}
+  formData.value.registries.splice(index, 1);
+  updateRegistries();
+};
 
-const updateRegistry = (index: number) => {
-  updateRegistries()
-}
+const updateRegistry = (_index: number) => {
+  updateRegistries();
+};
 
 const updateRegistries = () => {
-  handleFieldChange('registries', formData.value.registries)
-}
+  handleFieldChange("registries", formData.value.registries);
+};
 
 const handleSave = () => {
-  emit('update:modelValue', formData.value)
-}
+  emit("update:modelValue", formData.value);
+};
 
 const handleReset = () => {
-  formData.value = { ...props.modelValue }
-}
+  formData.value = { ...props.modelValue };
+};
 
 const handleFieldChange = (field: string, value: any) => {
-  emit('field-change', field, value)
-}
+  emit("field-change", field, value);
+};
 
 // Initialize form data from props
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    formData.value = { ...newValue }
-  }
-}, { immediate: true, deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = { ...newValue };
+    }
+  },
+  { immediate: true, deep: true },
+);
 </script>
 
 <style scoped lang="scss">

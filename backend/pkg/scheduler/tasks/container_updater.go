@@ -162,8 +162,8 @@ type MaintenanceWindow struct {
 	Timezone   string `json:"timezone"`
 }
 
-// ContainerUpdateResult represents the result of updating all containers
-type ContainerUpdateResult struct {
+// ContainerUpdateTaskResult represents the result of updating all containers
+type ContainerUpdateTaskResult struct {
 	ContainerResults  []*SingleContainerUpdateResult `json:"container_results"`
 	SuccessfulUpdates int                             `json:"successful_updates"`
 	FailedUpdates     int                             `json:"failed_updates"`
@@ -307,8 +307,8 @@ func (t *ContainerUpdaterTask) hasUpdatesAvailable(ctx context.Context, containe
 // findContainersNeedingUpdates finds all containers that need updates
 func (t *ContainerUpdaterTask) findContainersNeedingUpdates(ctx context.Context, params *ContainerUpdateParameters) []*model.Container {
 	filter := &model.ContainerFilter{
-		UpdatePolicy: &model.UpdatePolicyAutomatic,
-		Status:       &model.ContainerStatusRunning,
+		UpdatePolicy: &model.UpdatePolicyAuto,
+		Status:       model.ContainerStatusRunning,
 		Limit:        1000,
 	}
 
@@ -351,7 +351,7 @@ func (t *ContainerUpdaterTask) isInMaintenanceWindow(params *ContainerUpdatePara
 }
 
 // timeInWindow checks if the given time is within the maintenance window
-func (t *ContainerUpdaterTask) timeInWindow(t time.Time, window MaintenanceWindow) bool {
+func (t *ContainerUpdaterTask) timeInWindow(checkTime time.Time, window MaintenanceWindow) bool {
 	// Parse timezone
 	location := time.UTC
 	if window.Timezone != "" {
@@ -361,7 +361,7 @@ func (t *ContainerUpdaterTask) timeInWindow(t time.Time, window MaintenanceWindo
 	}
 
 	// Convert time to window timezone
-	windowTime := t.In(location)
+	windowTime := checkTime.In(location)
 
 	// Check day of week
 	if len(window.DaysOfWeek) > 0 {
@@ -399,9 +399,9 @@ func (t *ContainerUpdaterTask) timeInWindow(t time.Time, window MaintenanceWindo
 }
 
 // updateContainers performs the actual container updates
-func (t *ContainerUpdaterTask) updateContainers(ctx context.Context, containers []*model.Container, params *ContainerUpdateParameters) (*ContainerUpdateResult, error) {
+func (t *ContainerUpdaterTask) updateContainers(ctx context.Context, containers []*model.Container, params *ContainerUpdateParameters) (*ContainerUpdateTaskResult, error) {
 	startTime := time.Now()
-	result := &ContainerUpdateResult{
+	result := &ContainerUpdateTaskResult{
 		ContainerResults: make([]*SingleContainerUpdateResult, 0, len(containers)),
 		UpdatedAt:        startTime,
 	}
@@ -572,7 +572,7 @@ func (t *ContainerUpdaterTask) updateWithBlueGreenStrategy(ctx context.Context, 
 }
 
 // processResults processes the update results
-func (t *ContainerUpdaterTask) processResults(ctx context.Context, results *ContainerUpdateResult, params *ContainerUpdateParameters) error {
+func (t *ContainerUpdaterTask) processResults(ctx context.Context, results *ContainerUpdateTaskResult, params *ContainerUpdateParameters) error {
 	// Send notifications
 	if params.NotifyOnSuccess && results.SuccessfulUpdates > 0 {
 		t.sendSuccessNotification(ctx, results)

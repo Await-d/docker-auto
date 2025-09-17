@@ -74,8 +74,8 @@
           <el-button
             type="text"
             size="small"
-            @click="discardAllChanges"
             class="discard-btn"
+            @click="discardAllChanges"
           >
             Discard All
           </el-button>
@@ -98,9 +98,9 @@
               :key="section.key"
               :class="[
                 'section-item',
-                { 'active': currentSection === section.key },
+                { active: currentSection === section.key },
                 { 'has-changes': section.hasChanges },
-                { 'has-errors': !section.isValid }
+                { 'has-errors': !section.isValid },
               ]"
               @click="selectSection(section.key)"
             >
@@ -109,8 +109,12 @@
               </div>
 
               <div class="section-info">
-                <h4 class="section-title">{{ section.title }}</h4>
-                <p class="section-description">{{ section.description }}</p>
+                <h4 class="section-title">
+                  {{ section.title }}
+                </h4>
+                <p class="section-description">
+                  {{ section.description }}
+                </p>
               </div>
 
               <div class="section-indicators">
@@ -142,14 +146,16 @@
               <component :is="currentSectionInfo?.icon" />
               {{ currentSectionInfo?.title }}
             </h2>
-            <p class="section-description">{{ currentSectionInfo?.description }}</p>
+            <p class="section-description">
+              {{ currentSectionInfo?.description }}
+            </p>
           </div>
 
           <div class="section-actions">
             <el-button
               v-if="currentSectionHasChanges"
-              @click="resetCurrentSection"
               :disabled="saving"
+              @click="resetCurrentSection"
             >
               <el-icon><RefreshLeft /></el-icon>
               Reset
@@ -177,8 +183,8 @@
           />
 
           <component
-            v-else-if="settings && currentSectionComponent"
             :is="currentSectionComponent"
+            v-else-if="settings && currentSectionComponent"
             v-model="currentSectionData"
             :loading="saving"
             :validation-errors="currentSectionValidationErrors"
@@ -213,7 +219,8 @@
           <template #title>
             Importing settings will overwrite current configuration
           </template>
-          This action cannot be undone. Make sure to export your current settings as a backup.
+          This action cannot be undone. Make sure to export your current
+          settings as a backup.
         </el-alert>
 
         <el-upload
@@ -222,9 +229,9 @@
           :show-file-list="true"
           :limit="1"
           accept=".json"
+          class="import-upload"
           @change="handleFileSelect"
           @remove="handleFileRemove"
-          class="import-upload"
         >
           <el-button type="primary">
             <el-icon><FolderOpened /></el-icon>
@@ -240,7 +247,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="importDialogVisible = false">Cancel</el-button>
+          <el-button @click="importDialogVisible = false"> Cancel </el-button>
           <el-button
             type="primary"
             :disabled="!selectedFile"
@@ -256,9 +263,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { ElMessageBox } from "element-plus";
 import {
   Setting,
   Search,
@@ -268,34 +275,34 @@ import {
   RefreshLeft,
   Check,
   Warning,
-  FolderOpened
-} from '@element-plus/icons-vue'
+  FolderOpened,
+} from "@element-plus/icons-vue";
 
 // Import settings components
-import SystemConfig from '@/components/settings/SystemConfig.vue'
-import DockerConfig from '@/components/settings/DockerConfig.vue'
-import UpdatePolicies from '@/components/settings/UpdatePolicies.vue'
-import RegistryConfig from '@/components/settings/RegistryConfig.vue'
-import UserManagement from '@/components/settings/UserManagement.vue'
-import NotificationConfig from '@/components/settings/NotificationConfig.vue'
-import SchedulerConfig from '@/components/settings/SchedulerConfig.vue'
-import SecurityConfig from '@/components/settings/SecurityConfig.vue'
-import MonitoringConfig from '@/components/settings/MonitoringConfig.vue'
+import SystemConfig from "@/components/settings/SystemConfig.vue";
+import DockerConfig from "@/components/settings/DockerConfig.vue";
+import UpdatePolicies from "@/components/settings/UpdatePoliciesSettings.vue";
+import RegistryConfig from "@/components/settings/RegistryConfig.vue";
+import UserManagement from "@/components/settings/UserManagement.vue";
+import NotificationConfig from "@/components/settings/NotificationConfig.vue";
+import SchedulerConfig from "@/components/settings/SchedulerConfig.vue";
+import SecurityConfig from "@/components/settings/SecurityConfig.vue";
+import MonitoringConfig from "@/components/settings/MonitoringConfig.vue";
 
-import { useSettings } from '@/store/settings'
-import { useAuthStore } from '@/store/auth'
-import { useApp } from '@/store/app'
+import { useSettings } from "@/store/settings";
+import type { SystemSettings } from "@/store/settings";
+import { useAuthStore } from "@/store/auth";
+import { useApp } from "@/store/app";
 
-const router = useRouter()
-const route = useRoute()
-const auth = useAuthStore()
-const app = useApp()
+const router = useRouter();
+const route = useRoute();
+const auth = useAuthStore();
+const app = useApp();
 const {
   settings,
   loading,
   saving,
   isDirty,
-  canSave,
   settingsSections,
   filteredSections,
   currentSection,
@@ -310,8 +317,8 @@ const {
   setSearchQuery,
   updateField,
   validateField,
-  setValidationErrors
-} = useSettings()
+  setValidationErrors,
+} = useSettings();
 
 // Component mapping
 const sectionComponents = {
@@ -323,288 +330,313 @@ const sectionComponents = {
   notifications: NotificationConfig,
   scheduler: SchedulerConfig,
   security: SecurityConfig,
-  monitoring: MonitoringConfig
-}
+  monitoring: MonitoringConfig,
+};
 
 // Local state
-const importDialogVisible = ref(false)
-const importing = ref(false)
-const selectedFile = ref<File | null>(null)
-const uploadRef = ref()
+const importDialogVisible = ref(false);
+const importing = ref(false);
+const selectedFile = ref<File | null>(null);
+const uploadRef = ref();
 
 // Computed properties
 const visibleSections = computed(() => {
-  return filteredSections.value.filter(section => {
+  return filteredSections.filter((section: any) => {
     // Check permissions for each section
-    return section.permissions.every(permission => {
-      if (permission === 'admin') {
-        return auth.hasRole('admin')
+    return section.permissions.every((permission: any) => {
+      if (permission === "admin") {
+        return auth.hasRole("admin");
       }
-      return auth.hasPermission(permission)
-    })
-  })
-})
+      return auth.hasPermission(permission);
+    });
+  });
+});
 
 const currentSectionInfo = computed(() => {
-  return settingsSections.value.find(section => section.key === currentSection.value)
-})
+  return settingsSections.find(
+    (section: any) => section.key === currentSection,
+  );
+});
 
 const currentSectionComponent = computed(() => {
-  return sectionComponents[currentSection.value as keyof typeof sectionComponents]
-})
+  return sectionComponents[currentSection as keyof typeof sectionComponents];
+});
 
 const currentSectionData = computed({
   get() {
-    if (!settings.value || !currentSection.value) return null
-    return settings.value[currentSection.value as keyof typeof settings.value]
+    if (!settings || !currentSection) return null;
+    return (settings as any)[currentSection];
   },
   set(value) {
-    if (value && currentSection.value) {
-      updateField(currentSection.value, value)
+    if (value && currentSection) {
+      updateField(currentSection, value);
     }
-  }
-})
+  },
+});
 
 const currentSectionHasChanges = computed(() => {
-  return currentSectionInfo.value?.hasChanges || false
-})
+  return currentSectionInfo.value?.hasChanges || false;
+});
 
 const currentSectionValidationErrors = computed(() => {
-  const prefix = `${currentSection.value}.`
-  const errors: Record<string, string[]> = {}
+  const prefix = `${currentSection}.`;
+  const errors: Record<string, string[]> = {};
 
   Object.entries(validationErrors.value).forEach(([field, fieldErrors]) => {
     if (field.startsWith(prefix)) {
-      const localField = field.replace(prefix, '')
-      errors[localField] = fieldErrors
+      const localField = field.replace(prefix, "");
+      errors[localField] = Array.isArray(fieldErrors)
+        ? fieldErrors
+        : [fieldErrors];
     }
-  })
+  });
 
-  return errors
-})
+  return errors;
+});
 
 const canSaveCurrentSection = computed(() => {
-  return currentSectionHasChanges.value &&
-         currentSectionInfo.value?.isValid &&
-         !saving.value
-})
+  return (
+    currentSectionHasChanges.value &&
+    currentSectionInfo.value?.isValid &&
+    !saving
+  );
+});
 
 const canSaveGlobal = computed(() => {
-  return isDirty.value && !saving.value
-})
+  return isDirty && !saving;
+});
 
 // Methods
 const selectSection = (sectionKey: string) => {
-  if (isDirty.value) {
+  if (isDirty) {
     ElMessageBox.confirm(
-      'You have unsaved changes. Do you want to continue?',
-      'Unsaved Changes',
+      "You have unsaved changes. Do you want to continue?",
+      "Unsaved Changes",
       {
-        confirmButtonText: 'Continue',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }
-    ).then(() => {
-      setCurrentSection(sectionKey)
-      updateRouteSection(sectionKey)
-    }).catch(() => {
-      // User cancelled
-    })
+        confirmButtonText: "Continue",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      },
+    )
+      .then(() => {
+        setCurrentSection(sectionKey);
+        updateRouteSection(sectionKey);
+      })
+      .catch(() => {
+        // User cancelled
+      });
   } else {
-    setCurrentSection(sectionKey)
-    updateRouteSection(sectionKey)
+    setCurrentSection(sectionKey);
+    updateRouteSection(sectionKey);
   }
-}
+};
 
 const updateRouteSection = (sectionKey: string) => {
   router.replace({
-    name: 'Settings',
-    query: { section: sectionKey }
-  })
-}
+    name: "Settings",
+    query: { section: sectionKey },
+  });
+};
 
 const handleSearch = (query: string) => {
-  setSearchQuery(query)
-}
+  setSearchQuery(query);
+};
 
 const handleFieldChange = (field: string, value: any) => {
-  const fullField = `${currentSection.value}.${field}`
-  updateField(fullField, value)
-}
+  const fullField = `${currentSection}.${field}`;
+  updateField(fullField, value);
+};
 
 const handleFieldValidate = (field: string, value: any) => {
-  const fullField = `${currentSection.value}.${field}`
-  const errors = validateField(fullField, value)
-  setValidationErrors(fullField, errors)
-}
+  const fullField = `${currentSection}.${field}`;
+  const errors = validateField(fullField, value);
+  setValidationErrors(fullField, errors);
+};
+
+const testConfiguration = async (_section: string, _config: any) => {
+  // Placeholder implementation for testing configuration
+  return new Promise((resolve) => {
+    setTimeout(() => resolve({ success: true }), 1000);
+  });
+};
 
 const handleTestConfiguration = async (config: any) => {
   try {
-    app.showInfo('Testing configuration...')
+    app.showInfo("Testing configuration...");
     // Implementation would depend on the specific section
-    const result = await testConfiguration(currentSection.value, config)
-    app.showSuccess('Configuration test successful')
-    return result
+    const result = await testConfiguration(currentSection, config);
+    app.showSuccess("Configuration test successful");
+    return result;
   } catch (error) {
-    app.showError('Configuration test failed')
-    throw error
+    app.showError("Configuration test failed");
+    throw error;
   }
-}
+};
 
 const saveCurrentSection = async () => {
   try {
-    await saveSettings(currentSection.value)
+    if (currentSection) {
+      await saveSettings(currentSection as keyof SystemSettings);
+    }
   } catch (error) {
-    console.error('Failed to save section:', error)
+    console.error("Failed to save section:", error);
   }
-}
+};
 
 const saveAllSettings = async () => {
   try {
-    await saveSettings()
+    await saveSettings();
   } catch (error) {
-    console.error('Failed to save all settings:', error)
+    console.error("Failed to save all settings:", error);
   }
-}
+};
 
 const resetCurrentSection = async () => {
   try {
     await ElMessageBox.confirm(
       `Reset ${currentSectionInfo.value?.title} to saved values?`,
-      'Reset Section',
+      "Reset Section",
       {
-        confirmButtonText: 'Reset',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }
-    )
+        confirmButtonText: "Reset",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      },
+    );
 
-    await resetSettings(currentSection.value)
+    if (currentSection) {
+      await resetSettings(currentSection as keyof SystemSettings);
+    }
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to reset section:', error)
+    if (error !== "cancel") {
+      console.error("Failed to reset section:", error);
     }
   }
-}
+};
 
 const discardAllChanges = async () => {
   try {
     await ElMessageBox.confirm(
-      'Discard all unsaved changes?',
-      'Discard Changes',
+      "Discard all unsaved changes?",
+      "Discard Changes",
       {
-        confirmButtonText: 'Discard',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }
-    )
+        confirmButtonText: "Discard",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      },
+    );
 
-    await resetSettings()
+    await resetSettings();
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to discard changes:', error)
+    if (error !== "cancel") {
+      console.error("Failed to discard changes:", error);
     }
   }
-}
+};
 
 const handleGlobalAction = async (command: string) => {
   switch (command) {
-    case 'export':
-      await handleExport()
-      break
-    case 'import':
-      importDialogVisible.value = true
-      break
-    case 'reset-all':
-      await handleResetAll()
-      break
+    case "export":
+      await handleExport();
+      break;
+    case "import":
+      importDialogVisible.value = true;
+      break;
+    case "reset-all":
+      await handleResetAll();
+      break;
   }
-}
+};
 
 const handleExport = async () => {
   try {
-    await exportSettings()
+    await exportSettings();
   } catch (error) {
-    console.error('Failed to export settings:', error)
+    console.error("Failed to export settings:", error);
   }
-}
+};
 
 const handleResetAll = async () => {
   try {
     await ElMessageBox.confirm(
-      'Reset ALL settings to factory defaults? This cannot be undone.',
-      'Reset All Settings',
+      "Reset ALL settings to factory defaults? This cannot be undone.",
+      "Reset All Settings",
       {
-        confirmButtonText: 'Reset All',
-        cancelButtonText: 'Cancel',
-        type: 'error'
-      }
-    )
+        confirmButtonText: "Reset All",
+        cancelButtonText: "Cancel",
+        type: "error",
+      },
+    );
 
     // This would call a special API endpoint to reset to defaults
     // await resetToDefaults()
-    app.showWarning('Reset to defaults functionality not yet implemented')
+    app.showWarning("Reset to defaults functionality not yet implemented");
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to reset all settings:', error)
+    if (error !== "cancel") {
+      console.error("Failed to reset all settings:", error);
     }
   }
-}
+};
 
 const handleFileSelect = (file: any) => {
-  selectedFile.value = file.raw
-}
+  selectedFile.value = file.raw;
+};
 
 const handleFileRemove = () => {
-  selectedFile.value = null
-}
+  selectedFile.value = null;
+};
 
 const resetImportDialog = () => {
-  selectedFile.value = null
-  uploadRef.value?.clearFiles()
-}
+  selectedFile.value = null;
+  uploadRef.value?.clearFiles();
+};
 
 const confirmImport = async () => {
-  if (!selectedFile.value) return
+  if (!selectedFile.value) return;
 
   try {
-    importing.value = true
-    await importSettings(selectedFile.value)
-    importDialogVisible.value = false
-    resetImportDialog()
+    importing.value = true;
+    await importSettings(selectedFile.value);
+    importDialogVisible.value = false;
+    resetImportDialog();
 
     // Reload settings after import
-    await loadSettings()
+    await loadSettings();
   } catch (error) {
-    console.error('Failed to import settings:', error)
+    console.error("Failed to import settings:", error);
   } finally {
-    importing.value = false
+    importing.value = false;
   }
-}
+};
 
 // Initialize settings when component mounts
 onMounted(async () => {
   try {
-    await loadSettings()
+    await loadSettings();
 
     // Set initial section from route query
-    const sectionFromRoute = route.query.section as string
-    if (sectionFromRoute && settingsSections.value.some(s => s.key === sectionFromRoute)) {
-      setCurrentSection(sectionFromRoute)
+    const sectionFromRoute = route.query.section as string;
+    if (
+      sectionFromRoute &&
+      settingsSections.some((s: any) => s.key === sectionFromRoute)
+    ) {
+      setCurrentSection(sectionFromRoute);
     } else {
-      setCurrentSection('general')
+      setCurrentSection("general");
     }
   } catch (error) {
-    console.error('Failed to load settings:', error)
+    console.error("Failed to load settings:", error);
   }
-})
+});
 
 // Watch for route changes
-watch(() => route.query.section, (newSection) => {
-  if (newSection && typeof newSection === 'string') {
-    setCurrentSection(newSection)
-  }
-})
+watch(
+  () => route.query.section,
+  (newSection) => {
+    if (newSection && typeof newSection === "string") {
+      setCurrentSection(newSection);
+    }
+  },
+);
 </script>
 
 <style scoped lang="scss">

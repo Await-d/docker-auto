@@ -7,8 +7,8 @@
           type="text"
           :icon="Expand"
           class="sidebar-toggle"
-          @click="toggleSidebar"
           :title="sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
+          @click="toggleSidebar"
         />
 
         <div class="breadcrumb-container">
@@ -40,7 +40,11 @@
       <!-- Right section -->
       <div class="header-right">
         <!-- Notifications -->
-        <el-badge :value="unreadNotifications" :max="99" :hidden="unreadNotifications === 0">
+        <el-badge
+          :value="unreadNotifications"
+          :max="99"
+          :hidden="unreadNotifications === 0"
+        >
           <el-button type="text" :icon="Bell" @click="showNotifications" />
         </el-badge>
 
@@ -50,12 +54,21 @@
         </el-tooltip>
 
         <!-- Full screen toggle -->
-        <el-tooltip :content="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'" placement="bottom">
-          <el-button type="text" :icon="fullscreenIcon" @click="toggleFullscreen" />
+        <el-tooltip
+          :content="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'"
+          placement="bottom"
+        >
+          <el-button
+            type="text"
+            :icon="fullscreenIcon"
+            @click="toggleFullscreen"
+          />
         </el-tooltip>
 
         <!-- User dropdown -->
-        <el-dropdown @command="handleUserCommand" placement="bottom-end">
+        <el-dropdown
+placement="bottom-end" @command="handleUserCommand"
+>
           <div class="user-info">
             <el-avatar :size="32" :src="userAvatar">
               {{ userInitials }}
@@ -108,15 +121,24 @@
             v-for="notification in notifications"
             :key="notification.id"
             class="notification-item"
-            :class="{ 'unread': !notification.read }"
+            :class="{ unread: !notification.read }"
           >
-            <el-icon class="notification-icon" :class="`notification-${notification.type}`">
+            <el-icon
+              class="notification-icon"
+              :class="`notification-${notification.type}`"
+            >
               <component :is="getNotificationIcon(notification.type)" />
             </el-icon>
             <div class="notification-content">
-              <h4 class="notification-title">{{ notification.title }}</h4>
-              <p class="notification-message">{{ notification.message }}</p>
-              <span class="notification-time">{{ formatTime(notification.timestamp) }}</span>
+              <h4 class="notification-title">
+                {{ notification.title }}
+              </h4>
+              <p class="notification-message">
+                {{ notification.message }}
+              </p>
+              <span class="notification-time">{{
+                formatTime(notification.timestamp)
+              }}</span>
             </div>
             <el-button
               size="small"
@@ -126,7 +148,10 @@
             />
           </div>
 
-          <el-empty v-if="notifications.length === 0" description="No notifications" />
+          <el-empty
+            v-if="notifications.length === 0"
+            description="No notifications"
+          />
         </div>
       </div>
     </el-drawer>
@@ -134,9 +159,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { dayjs } from 'element-plus'
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { dayjs } from "element-plus";
 import {
   Expand,
   Bell,
@@ -156,192 +181,204 @@ import {
   CircleCloseFilled,
   InfoFilled,
   CircleCheckFilled,
-  CircleClose
-} from '@element-plus/icons-vue'
-import { useAuth } from '@/store/auth'
-import { useApp, type Notification } from '@/store/app'
-import { storeToRefs } from 'pinia'
+  CircleClose,
+} from "@element-plus/icons-vue";
+import { useAuth } from "@/store/auth";
+import { useApp, type Notification } from "@/store/app";
+import { storeToRefs } from "pinia";
 
 // Composables
-const route = useRoute()
-const router = useRouter()
-const authStore = useAuth()
-const appStore = useApp()
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuth();
+const appStore = useApp();
 
 // Reactive refs from stores
-const { user, userDisplayName, userAvatar } = storeToRefs(authStore)
-const {
-  sidebarCollapsed,
-  theme,
-  notifications
-} = storeToRefs(appStore)
+const { user } = storeToRefs(authStore);
+const { userDisplayName, userAvatar } = authStore;
+const { sidebarCollapsed, theme, notifications } = storeToRefs(appStore);
 
 // Store methods
-const { logout } = authStore
-const {
-  toggleSidebar,
-  toggleTheme,
-  removeNotification,
-  clearNotifications
-} = appStore
+const { logout } = authStore;
+const { toggleSidebar, toggleTheme, removeNotification, clearNotifications } =
+  appStore;
 
 // Reactive state
-const notificationDrawer = ref(false)
-const isFullscreen = ref(false)
-const systemStatus = ref<'healthy' | 'warning' | 'error'>('healthy')
+const notificationDrawer = ref(false);
+const isFullscreen = ref(false);
+const systemStatus = ref<"healthy" | "warning" | "error">("healthy");
 
 // Computed properties
 const breadcrumbs = computed(() => {
-  const matched = route.matched.filter(item => item.meta?.title)
-  const crumbs = matched.map(item => ({
+  const matched = route.matched.filter((item) => item.meta?.title);
+  const crumbs = matched.map((item) => ({
     path: item.path,
     title: item.meta?.title as string,
-    icon: item.meta?.icon as string
-  }))
+    icon: item.meta?.icon as string,
+  }));
 
   // Add home breadcrumb if not already present
-  if (crumbs.length > 0 && crumbs[0].path !== '/') {
+  if (crumbs.length > 0 && crumbs[0].path !== "/") {
     crumbs.unshift({
-      path: '/',
-      title: 'Dashboard',
-      icon: 'House'
-    })
+      path: "/",
+      title: "Dashboard",
+      icon: "House",
+    });
   }
 
-  return crumbs
-})
+  return crumbs;
+});
 
-const currentPath = computed(() => route.path)
+const currentPath = computed(() => route.path);
 
 const userInitials = computed(() => {
-  if (!user.value) return 'U'
-  const name = userDisplayName.value
-  return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2)
-})
+  if (!user.value) return "U";
+  const name = userDisplayName.value;
+  return name
+    .split(" ")
+    .map((word: string) => word.charAt(0))
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+});
 
-const unreadNotifications = computed(() =>
-  notifications.value.filter((n: Notification) => !n.read).length
-)
+const unreadNotifications = computed(
+  () => notifications.value.filter((n: Notification) => !n.read).length,
+);
 
 const themeIcon = computed(() => {
   switch (theme.value) {
-    case 'light': return Sunny
-    case 'dark': return Moon
-    default: return Monitor
+    case "light":
+      return Sunny;
+    case "dark":
+      return Moon;
+    default:
+      return Monitor;
   }
-})
+});
 
-const fullscreenIcon = computed(() =>
-  isFullscreen.value ? Aim : FullScreen
-)
+const fullscreenIcon = computed(() => (isFullscreen.value ? Aim : FullScreen));
 
-const systemStatusClass = computed(() => `status-${systemStatus.value}`)
+const systemStatusClass = computed(() => `status-${systemStatus.value}`);
 
 const systemStatusIcon = computed(() => {
   switch (systemStatus.value) {
-    case 'healthy': return CircleCheckFilled
-    case 'warning': return WarningFilled
-    case 'error': return CircleClose
-    default: return CircleCheckFilled
+    case "healthy":
+      return CircleCheckFilled;
+    case "warning":
+      return WarningFilled;
+    case "error":
+      return CircleClose;
+    default:
+      return CircleCheckFilled;
   }
-})
+});
 
 const systemStatusText = computed(() => {
   switch (systemStatus.value) {
-    case 'healthy': return 'System Healthy'
-    case 'warning': return 'System Warning'
-    case 'error': return 'System Error'
-    default: return 'System Status'
+    case "healthy":
+      return "System Healthy";
+    case "warning":
+      return "System Warning";
+    case "error":
+      return "System Error";
+    default:
+      return "System Status";
   }
-})
+});
 
 // Methods
 const showNotifications = () => {
-  notificationDrawer.value = true
-}
+  notificationDrawer.value = true;
+};
 
 const handleUserCommand = async (command: string) => {
   switch (command) {
-    case 'profile':
-      router.push('/profile')
-      break
-    case 'settings':
-      router.push('/settings')
-      break
-    case 'help':
-      router.push('/help')
-      break
-    case 'logout':
-      await logout()
-      break
+    case "profile":
+      router.push("/profile");
+      break;
+    case "settings":
+      router.push("/settings");
+      break;
+    case "help":
+      router.push("/help");
+      break;
+    case "logout":
+      await logout();
+      break;
   }
-}
+};
 
 const toggleFullscreen = () => {
   if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen()
-    isFullscreen.value = true
+    document.documentElement.requestFullscreen();
+    isFullscreen.value = true;
   } else {
-    document.exitFullscreen()
-    isFullscreen.value = false
+    document.exitFullscreen();
+    isFullscreen.value = false;
   }
-}
+};
 
 const markAllAsRead = () => {
   notifications.value.forEach((notification: Notification) => {
-    notification.read = true
-  })
-}
+    notification.read = true;
+  });
+};
 
 const clearAllNotifications = () => {
-  clearNotifications()
-  notificationDrawer.value = false
-}
+  clearNotifications();
+  notificationDrawer.value = false;
+};
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
-    case 'success': return SuccessFilled
-    case 'warning': return WarningFilled
-    case 'error': return CircleCloseFilled
-    case 'info': return InfoFilled
-    default: return InfoFilled
+    case "success":
+      return SuccessFilled;
+    case "warning":
+      return WarningFilled;
+    case "error":
+      return CircleCloseFilled;
+    case "info":
+      return InfoFilled;
+    default:
+      return InfoFilled;
   }
-}
+};
 
 const formatTime = (timestamp: number) => {
-  return dayjs(timestamp).fromNow()
-}
+  return dayjs(timestamp).fromNow();
+};
 
 // Fullscreen event listeners
 const handleFullscreenChange = () => {
-  isFullscreen.value = !!document.fullscreenElement
-}
+  isFullscreen.value = !!document.fullscreenElement;
+};
 
 // System status simulation (replace with actual API call)
 const checkSystemStatus = async () => {
   try {
     // Simulate API call
-    const response = await fetch('/api/system/health')
-    const data = await response.json()
-    systemStatus.value = data.status || 'healthy'
+    const response = await fetch("/api/system/health");
+    const data = await response.json();
+    systemStatus.value = data.status || "healthy";
   } catch (error) {
-    systemStatus.value = 'error'
+    systemStatus.value = "error";
   }
-}
+};
 
 // Lifecycle
 onMounted(() => {
-  document.addEventListener('fullscreenchange', handleFullscreenChange)
-  checkSystemStatus()
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
+  checkSystemStatus();
 
   // Check system status periodically
-  const statusInterval = setInterval(checkSystemStatus, 30000) // Every 30 seconds
+  const statusInterval = setInterval(checkSystemStatus, 30000); // Every 30 seconds
 
   onUnmounted(() => {
-    document.removeEventListener('fullscreenchange', handleFullscreenChange)
-    clearInterval(statusInterval)
-  })
-})
+    document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    clearInterval(statusInterval);
+  });
+});
 </script>
 
 <style scoped lang="scss">

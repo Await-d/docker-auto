@@ -10,9 +10,9 @@
         <div class="layout-selector">
           <el-select
             v-model="currentLayoutId"
-            @change="switchLayout"
             placeholder="Select Layout"
             size="small"
+            @change="switchLayout"
           >
             <el-option
               v-for="layout in layouts"
@@ -22,8 +22,14 @@
             >
               <span class="layout-option">
                 <span>{{ layout.name }}</span>
-                <el-tag v-if="layout.isDefault" size="mini" type="primary">Default</el-tag>
-                <el-tag v-if="layout.isShared" size="mini" type="success">Shared</el-tag>
+                <el-tag
+v-if="layout.isDefault" size="small" type="primary"
+                  >Default</el-tag
+                >
+                <el-tag
+v-if="layout.isShared" size="small" type="success"
+                  >Shared</el-tag
+                >
               </span>
             </el-option>
           </el-select>
@@ -41,7 +47,7 @@
             <el-dropdown-menu>
               <el-dropdown-item command="auto-refresh">
                 <el-icon><Refresh /></el-icon>
-                Auto Refresh: {{ globalSettings.autoRefresh ? 'On' : 'Off' }}
+                Auto Refresh: {{ globalSettings.autoRefresh ? "On" : "Off" }}
               </el-dropdown-item>
               <el-dropdown-item command="theme">
                 <el-icon><Sunny /></el-icon>
@@ -49,11 +55,11 @@
               </el-dropdown-item>
               <el-dropdown-item command="animations">
                 <el-icon><Magic /></el-icon>
-                Animations: {{ globalSettings.animations ? 'On' : 'Off' }}
+                Animations: {{ globalSettings.animations ? "On" : "Off" }}
               </el-dropdown-item>
               <el-dropdown-item command="compact-mode">
                 <el-icon><Compress /></el-icon>
-                Compact Mode: {{ globalSettings.compactMode ? 'On' : 'Off' }}
+                Compact Mode: {{ globalSettings.compactMode ? "On" : "Off" }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -69,7 +75,7 @@
             <el-dropdown-menu>
               <el-dropdown-item command="edit-mode">
                 <el-icon><Edit /></el-icon>
-                {{ isEditMode ? 'Exit Edit Mode' : 'Edit Mode' }}
+                {{ isEditMode ? "Exit Edit Mode" : "Edit Mode" }}
               </el-dropdown-item>
               <el-dropdown-item command="add-widget">
                 <el-icon><Plus /></el-icon>
@@ -94,9 +100,9 @@
         <!-- Refresh All -->
         <el-button
           size="small"
-          @click="refreshAllWidgets"
           :loading="isRefreshing"
           type="primary"
+          @click="refreshAllWidgets"
         >
           <el-icon><Refresh /></el-icon>
           Refresh All
@@ -105,7 +111,13 @@
     </div>
 
     <!-- Dashboard Content -->
-    <div class="dashboard-content" :class="{ 'edit-mode': isEditMode, 'compact-mode': globalSettings.compactMode }">
+    <div
+      class="dashboard-content"
+      :class="{
+        'edit-mode': isEditMode,
+        'compact-mode': globalSettings.compactMode,
+      }"
+    >
       <!-- Loading State -->
       <div v-if="isLoading" class="dashboard-loading">
         <el-skeleton animated>
@@ -134,8 +146,8 @@
         :vertical-compact="true"
         :margin="gridConfig.margin"
         :use-css-transforms="true"
-        @layout-updated="onLayoutUpdated"
         class="widget-grid"
+        @layout-updated="onLayoutUpdated"
       >
         <grid-item
           v-for="widget in currentLayout.widgets"
@@ -166,7 +178,10 @@
       </grid-layout>
 
       <!-- Empty State -->
-      <div v-if="!isLoading && currentLayout.widgets.length === 0" class="empty-state">
+      <div
+        v-if="!isLoading && currentLayout.widgets.length === 0"
+        class="empty-state"
+      >
         <el-empty description="No widgets configured">
           <el-button type="primary" @click="showAddWidgetDialog">
             <el-icon><Plus /></el-icon>
@@ -185,18 +200,26 @@
       class="add-widget-dialog"
     >
       <div class="widget-gallery">
-        <div v-for="(widgets, category) in widgetsByCategory" :key="category" class="widget-category">
-          <h3 class="category-title">{{ formatCategoryName(category) }}</h3>
+        <div
+          v-for="(widgets, category) in widgetsByCategory"
+          :key="category"
+          class="widget-category"
+        >
+          <h3 class="category-title">
+            {{ formatCategoryName(category) }}
+          </h3>
           <div class="widget-grid">
             <div
               v-for="widget in widgets"
               :key="widget.type"
               class="widget-card"
-              @click="selectWidget(widget)"
               :class="{ active: selectedWidgetType === widget.type }"
+              @click="selectWidget(widget)"
             >
               <div class="widget-icon">
-                <el-icon :size="24"><component :is="widget.icon" /></el-icon>
+                <el-icon :size="24">
+                  <component :is="widget.icon" />
+                </el-icon>
               </div>
               <div class="widget-info">
                 <h4>{{ widget.name }}</h4>
@@ -208,11 +231,11 @@
       </div>
 
       <template #footer>
-        <el-button @click="addWidgetDialogVisible = false">Cancel</el-button>
+        <el-button @click="addWidgetDialogVisible = false"> Cancel </el-button>
         <el-button
           type="primary"
-          @click="addSelectedWidget"
           :disabled="!selectedWidgetType"
+          @click="addSelectedWidget"
         >
           Add Widget
         </el-button>
@@ -236,30 +259,44 @@
           >
             <div class="layout-info">
               <h4>{{ layout.name }}</h4>
-              <p>{{ layout.description || 'No description' }}</p>
+              <p>{{ layout.description || "No description" }}</p>
               <div class="layout-meta">
-                <el-tag v-if="layout.isDefault" size="mini" type="primary">Default</el-tag>
-                <el-tag v-if="layout.isShared" size="mini" type="success">Shared</el-tag>
-                <span class="layout-date">{{ formatDate(layout.updatedAt) }}</span>
+                <el-tag v-if="layout.isDefault" size="small" type="primary">
+                  Default
+                </el-tag>
+                <el-tag v-if="layout.isShared" size="small" type="success">
+                  Shared
+                </el-tag>
+                <span class="layout-date">{{
+                  formatDate(layout.updatedAt)
+                }}</span>
               </div>
             </div>
             <div class="layout-actions">
               <el-button
                 v-if="layout.id !== currentLayoutId"
-                size="mini"
+                size="small"
                 @click="switchLayout(layout.id)"
               >
                 Switch
               </el-button>
-              <el-dropdown @command="(cmd) => handleLayoutItemAction(cmd, layout)">
-                <el-button size="mini" type="text">
+              <el-dropdown
+                @command="(cmd: string) => handleLayoutItemAction(cmd, layout)"
+              >
+                <el-button size="small" type="text">
                   <el-icon><More /></el-icon>
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="duplicate">Duplicate</el-dropdown-item>
-                    <el-dropdown-item command="rename">Rename</el-dropdown-item>
-                    <el-dropdown-item command="export">Export</el-dropdown-item>
+                    <el-dropdown-item command="duplicate">
+                      Duplicate
+                    </el-dropdown-item>
+                    <el-dropdown-item command="rename">
+                      Rename
+                    </el-dropdown-item>
+                    <el-dropdown-item command="export">
+                      Export
+                    </el-dropdown-item>
                     <el-dropdown-item
                       v-if="!layout.isDefault && layouts.length > 1"
                       command="delete"
@@ -276,7 +313,7 @@
       </div>
 
       <template #footer>
-        <el-button @click="layoutDialogVisible = false">Close</el-button>
+        <el-button @click="layoutDialogVisible = false"> Close </el-button>
         <el-button type="primary" @click="showCreateLayoutDialog">
           Create New Layout
         </el-button>
@@ -293,156 +330,165 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { GridLayout, GridItem } from 'vue-grid-layout'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { GridLayout, GridItem } from "vue-grid-layout";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
-  Monitor, Setting, Refresh, Grid, Edit, Plus, DocumentAdd,
-  FolderOpened, RefreshLeft, Sunny, Magic, Compress, More
-} from '@element-plus/icons-vue'
+  Monitor,
+  Setting,
+  Refresh,
+  Grid,
+  Edit,
+  Plus,
+  DocumentAdd,
+  FolderOpened,
+  RefreshLeft,
+  Sunny,
+  More,
+} from "@element-plus/icons-vue";
 
 // Store imports
-import { useDashboardStore } from '@/store/dashboard'
-import type { DashboardWidget, DashboardLayout } from '@/store/dashboard'
-import { useWidgetManager } from '@/services/widgetManager'
+import { useDashboardStore } from "@/store/dashboard";
+import type { DashboardWidget, DashboardLayout } from "@/store/dashboard";
+import { useWidgetManager } from "@/services/widgetManager";
 
 // Component imports
-import WidgetWrapper from '@/components/dashboard/WidgetWrapper.vue'
-import WidgetConfigDialog from '@/components/dashboard/WidgetConfigDialog.vue'
+import WidgetWrapper from "@/components/dashboard/WidgetWrapper.vue";
+import WidgetConfigDialog from "@/components/dashboard/WidgetConfigDialog.vue";
 
 // Initialize stores and services
-const dashboardStore = useDashboardStore()
-const widgetManager = useWidgetManager()
+const dashboardStore = useDashboardStore();
+const widgetManager = useWidgetManager();
 
 // Reactive state
-const isRefreshing = ref(false)
-const addWidgetDialogVisible = ref(false)
-const layoutDialogVisible = ref(false)
-const configDialogVisible = ref(false)
-const selectedWidgetType = ref<string>('')
-const configWidget = ref<DashboardWidget | null>(null)
+const isRefreshing = ref(false);
+const addWidgetDialogVisible = ref(false);
+const layoutDialogVisible = ref(false);
+const configDialogVisible = ref(false);
+const selectedWidgetType = ref<string>("");
+const configWidget = ref<DashboardWidget | null>(null);
 
 // Computed properties
-const isLoading = computed(() => dashboardStore.state.isLoading)
-const isEditMode = computed(() => dashboardStore.state.isEditMode)
-const layouts = computed(() => dashboardStore.state.layouts)
-const currentLayout = computed(() => dashboardStore.currentLayout!)
+const isLoading = computed(() => dashboardStore.state.isLoading);
+const isEditMode = computed(() => dashboardStore.state.isEditMode);
+const layouts = computed(() => dashboardStore.state.layouts);
+const currentLayout = computed(() => dashboardStore.currentLayout!);
 const currentLayoutId = computed({
   get: () => dashboardStore.state.currentLayoutId,
-  set: (value: string) => switchLayout(value)
-})
-const globalSettings = computed(() => dashboardStore.state.globalSettings)
-const widgetsByCategory = computed(() => dashboardStore.widgetsByCategory)
+  set: (value: string) => switchLayout(value),
+});
+const globalSettings = computed(() => dashboardStore.state.globalSettings);
+const widgetsByCategory = computed(() => dashboardStore.widgetsByCategory);
 
 // Grid configuration
 const gridConfig = computed(() => ({
   cols: 12,
   rowHeight: 80,
-  margin: globalSettings.value.compactMode ? [5, 5] : [10, 10]
-}))
+  margin: globalSettings.value.compactMode ? [5, 5] : [10, 10],
+}));
 
 // Methods
 const switchLayout = async (layoutId: string) => {
   try {
-    await dashboardStore.switchLayout(layoutId)
-    ElMessage.success('Layout switched successfully')
+    await dashboardStore.switchLayout(layoutId);
+    ElMessage.success("Layout switched successfully");
   } catch (error) {
-    console.error('Failed to switch layout:', error)
-    ElMessage.error('Failed to switch layout')
+    console.error("Failed to switch layout:", error);
+    ElMessage.error("Failed to switch layout");
   }
-}
+};
 
 const refreshAllWidgets = async () => {
   try {
-    isRefreshing.value = true
-    const widgetIds = currentLayout.value.widgets.map(w => w.id)
-    await widgetManager.refreshMultipleWidgets(widgetIds, true)
-    ElMessage.success('All widgets refreshed')
+    isRefreshing.value = true;
+    const widgetIds = currentLayout.value.widgets.map((w) => w.id);
+    await widgetManager.refreshMultipleWidgets(widgetIds, true);
+    ElMessage.success("All widgets refreshed");
   } catch (error) {
-    console.error('Failed to refresh widgets:', error)
-    ElMessage.error('Failed to refresh some widgets')
+    console.error("Failed to refresh widgets:", error);
+    ElMessage.error("Failed to refresh some widgets");
   } finally {
-    isRefreshing.value = false
+    isRefreshing.value = false;
   }
-}
+};
 
 const refreshWidget = async (widgetId: string) => {
   try {
-    await widgetManager.refreshWidget(widgetId, true)
-    ElMessage.success('Widget refreshed')
+    await widgetManager.refreshWidget(widgetId, true);
+    ElMessage.success("Widget refreshed");
   } catch (error) {
-    console.error('Failed to refresh widget:', error)
-    ElMessage.error('Failed to refresh widget')
+    console.error("Failed to refresh widget:", error);
+    ElMessage.error("Failed to refresh widget");
   }
-}
+};
 
 const showAddWidgetDialog = () => {
-  selectedWidgetType.value = ''
-  addWidgetDialogVisible.value = true
-}
+  selectedWidgetType.value = "";
+  addWidgetDialogVisible.value = true;
+};
 
 const selectWidget = (widget: any) => {
-  selectedWidgetType.value = widget.type
-}
+  selectedWidgetType.value = widget.type;
+};
 
 const addSelectedWidget = async () => {
-  if (!selectedWidgetType.value) return
+  if (!selectedWidgetType.value) return;
 
   try {
-    await dashboardStore.addWidget(selectedWidgetType.value)
-    addWidgetDialogVisible.value = false
-    ElMessage.success('Widget added successfully')
+    await dashboardStore.addWidget(selectedWidgetType.value);
+    addWidgetDialogVisible.value = false;
+    ElMessage.success("Widget added successfully");
   } catch (error) {
-    console.error('Failed to add widget:', error)
-    ElMessage.error('Failed to add widget')
+    console.error("Failed to add widget:", error);
+    ElMessage.error("Failed to add widget");
   }
-}
+};
 
 const removeWidget = async (widgetId: string) => {
   try {
     await ElMessageBox.confirm(
-      'Are you sure you want to remove this widget?',
-      'Confirm Removal',
+      "Are you sure you want to remove this widget?",
+      "Confirm Removal",
       {
-        type: 'warning',
-        confirmButtonText: 'Remove',
-        cancelButtonText: 'Cancel'
-      }
-    )
+        type: "warning",
+        confirmButtonText: "Remove",
+        cancelButtonText: "Cancel",
+      },
+    );
 
-    await dashboardStore.removeWidget(widgetId)
-    ElMessage.success('Widget removed successfully')
+    await dashboardStore.removeWidget(widgetId);
+    ElMessage.success("Widget removed successfully");
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to remove widget:', error)
-      ElMessage.error('Failed to remove widget')
+    if (error !== "cancel") {
+      console.error("Failed to remove widget:", error);
+      ElMessage.error("Failed to remove widget");
     }
   }
-}
+};
 
 const configureWidget = (widget: DashboardWidget) => {
-  configWidget.value = widget
-  configDialogVisible.value = true
-}
+  configWidget.value = widget;
+  configDialogVisible.value = true;
+};
 
 const saveWidgetConfig = async (widgetId: string, config: any) => {
   try {
-    await dashboardStore.updateWidget(widgetId, config)
-    configDialogVisible.value = false
-    ElMessage.success('Widget configuration saved')
+    await dashboardStore.updateWidget(widgetId, config);
+    configDialogVisible.value = false;
+    ElMessage.success("Widget configuration saved");
   } catch (error) {
-    console.error('Failed to save widget config:', error)
-    ElMessage.error('Failed to save configuration')
+    console.error("Failed to save widget config:", error);
+    ElMessage.error("Failed to save configuration");
   }
-}
+};
 
 const onLayoutUpdated = async (layout: any[]) => {
-  if (!currentLayout.value) return
+  if (!currentLayout.value) return;
 
   try {
     // Update widget positions
-    const updatedWidgets = currentLayout.value.widgets.map(widget => {
-      const layoutItem = layout.find(item => item.i === widget.id)
+    const updatedWidgets = currentLayout.value.widgets.map((widget) => {
+      const layoutItem = layout.find((item) => item.i === widget.id);
       if (layoutItem) {
         return {
           ...widget,
@@ -450,250 +496,260 @@ const onLayoutUpdated = async (layout: any[]) => {
             x: layoutItem.x,
             y: layoutItem.y,
             w: layoutItem.w,
-            h: layoutItem.h
-          }
-        }
+            h: layoutItem.h,
+          },
+        };
       }
-      return widget
-    })
+      return widget;
+    });
 
     await dashboardStore.updateLayout(currentLayout.value.id, {
-      widgets: updatedWidgets
-    })
+      widgets: updatedWidgets,
+    });
   } catch (error) {
-    console.error('Failed to update layout:', error)
+    console.error("Failed to update layout:", error);
   }
-}
+};
 
 const handleGlobalAction = async (command: string) => {
   switch (command) {
-    case 'auto-refresh':
+    case "auto-refresh":
       await dashboardStore.updateGlobalSettings({
-        autoRefresh: !globalSettings.value.autoRefresh
-      })
-      break
-    case 'theme':
-      const themes = ['auto', 'light', 'dark']
-      const currentIndex = themes.indexOf(globalSettings.value.theme)
-      const nextTheme = themes[(currentIndex + 1) % themes.length]
-      await dashboardStore.updateGlobalSettings({ theme: nextTheme })
-      break
-    case 'animations':
+        autoRefresh: !globalSettings.value.autoRefresh,
+      });
+      break;
+    case "theme": {
+      const themes = ["auto", "light", "dark"];
+      const currentIndex = themes.indexOf(globalSettings.value.theme);
+      const nextTheme = themes[(currentIndex + 1) % themes.length];
+      await dashboardStore.updateGlobalSettings({ theme: nextTheme });
+      break;
+    }
+    case "animations":
       await dashboardStore.updateGlobalSettings({
-        animations: !globalSettings.value.animations
-      })
-      break
-    case 'compact-mode':
+        animations: !globalSettings.value.animations,
+      });
+      break;
+    case "compact-mode":
       await dashboardStore.updateGlobalSettings({
-        compactMode: !globalSettings.value.compactMode
-      })
-      break
+        compactMode: !globalSettings.value.compactMode,
+      });
+      break;
   }
-}
+};
 
 const handleLayoutAction = async (command: string) => {
   switch (command) {
-    case 'edit-mode':
-      dashboardStore.setEditMode(!isEditMode.value)
-      break
-    case 'add-widget':
-      showAddWidgetDialog()
-      break
-    case 'create-layout':
-      showCreateLayoutDialog()
-      break
-    case 'manage-layouts':
-      layoutDialogVisible.value = true
-      break
-    case 'reset-layout':
-      await resetLayout()
-      break
+    case "edit-mode":
+      dashboardStore.setEditMode(!isEditMode.value);
+      break;
+    case "add-widget":
+      showAddWidgetDialog();
+      break;
+    case "create-layout":
+      showCreateLayoutDialog();
+      break;
+    case "manage-layouts":
+      layoutDialogVisible.value = true;
+      break;
+    case "reset-layout":
+      await resetLayout();
+      break;
   }
-}
+};
 
-const handleLayoutItemAction = async (command: string, layout: DashboardLayout) => {
+const handleLayoutItemAction = async (
+  command: string,
+  layout: DashboardLayout,
+) => {
   switch (command) {
-    case 'duplicate':
-      await duplicateLayout(layout)
-      break
-    case 'rename':
-      await renameLayout(layout)
-      break
-    case 'export':
-      await exportLayout(layout)
-      break
-    case 'delete':
-      await deleteLayout(layout)
-      break
+    case "duplicate":
+      await duplicateLayout(layout);
+      break;
+    case "rename":
+      await renameLayout(layout);
+      break;
+    case "export":
+      await exportLayout(layout);
+      break;
+    case "delete":
+      await deleteLayout(layout);
+      break;
   }
-}
+};
 
 const showCreateLayoutDialog = async () => {
   try {
     const { value: name } = await ElMessageBox.prompt(
-      'Enter layout name',
-      'Create New Layout',
+      "Enter layout name",
+      "Create New Layout",
       {
-        confirmButtonText: 'Create',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: "Create",
+        cancelButtonText: "Cancel",
         inputPattern: /^.+$/,
-        inputErrorMessage: 'Layout name is required'
-      }
-    )
+        inputErrorMessage: "Layout name is required",
+      },
+    );
 
-    await dashboardStore.createLayout(name)
-    ElMessage.success('Layout created successfully')
+    await dashboardStore.createLayout(name);
+    ElMessage.success("Layout created successfully");
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to create layout:', error)
-      ElMessage.error('Failed to create layout')
+    if (error !== "cancel") {
+      console.error("Failed to create layout:", error);
+      ElMessage.error("Failed to create layout");
     }
   }
-}
+};
 
 const duplicateLayout = async (layout: DashboardLayout) => {
   try {
     const { value: name } = await ElMessageBox.prompt(
-      'Enter name for the duplicated layout',
-      'Duplicate Layout',
+      "Enter name for the duplicated layout",
+      "Duplicate Layout",
       {
-        confirmButtonText: 'Duplicate',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: "Duplicate",
+        cancelButtonText: "Cancel",
         inputValue: `${layout.name} (Copy)`,
         inputPattern: /^.+$/,
-        inputErrorMessage: 'Layout name is required'
-      }
-    )
+        inputErrorMessage: "Layout name is required",
+      },
+    );
 
-    await dashboardStore.createLayout(name, `Copy of ${layout.name}`, layout.id)
-    ElMessage.success('Layout duplicated successfully')
+    await dashboardStore.createLayout(
+      name,
+      `Copy of ${layout.name}`,
+      layout.id,
+    );
+    ElMessage.success("Layout duplicated successfully");
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to duplicate layout:', error)
-      ElMessage.error('Failed to duplicate layout')
+    if (error !== "cancel") {
+      console.error("Failed to duplicate layout:", error);
+      ElMessage.error("Failed to duplicate layout");
     }
   }
-}
+};
 
 const renameLayout = async (layout: DashboardLayout) => {
   try {
     const { value: name } = await ElMessageBox.prompt(
-      'Enter new layout name',
-      'Rename Layout',
+      "Enter new layout name",
+      "Rename Layout",
       {
-        confirmButtonText: 'Rename',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: "Rename",
+        cancelButtonText: "Cancel",
         inputValue: layout.name,
         inputPattern: /^.+$/,
-        inputErrorMessage: 'Layout name is required'
-      }
-    )
+        inputErrorMessage: "Layout name is required",
+      },
+    );
 
-    await dashboardStore.updateLayout(layout.id, { name })
-    ElMessage.success('Layout renamed successfully')
+    await dashboardStore.updateLayout(layout.id, { name });
+    ElMessage.success("Layout renamed successfully");
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to rename layout:', error)
-      ElMessage.error('Failed to rename layout')
+    if (error !== "cancel") {
+      console.error("Failed to rename layout:", error);
+      ElMessage.error("Failed to rename layout");
     }
   }
-}
+};
 
 const exportLayout = async (layout: DashboardLayout) => {
   try {
-    const data = JSON.stringify(layout, null, 2)
-    const blob = new Blob([data], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
+    const data = JSON.stringify(layout, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
 
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `dashboard-layout-${layout.name.replace(/\s+/g, '-').toLowerCase()}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dashboard-layout-${layout.name.replace(/\s+/g, "-").toLowerCase()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
-    ElMessage.success('Layout exported successfully')
+    ElMessage.success("Layout exported successfully");
   } catch (error) {
-    console.error('Failed to export layout:', error)
-    ElMessage.error('Failed to export layout')
+    console.error("Failed to export layout:", error);
+    ElMessage.error("Failed to export layout");
   }
-}
+};
 
 const deleteLayout = async (layout: DashboardLayout) => {
   try {
     await ElMessageBox.confirm(
       `Are you sure you want to delete the layout "${layout.name}"?`,
-      'Confirm Deletion',
+      "Confirm Deletion",
       {
-        type: 'warning',
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel'
-      }
-    )
+        type: "warning",
+        confirmButtonText: "Delete",
+        cancelButtonText: "Cancel",
+      },
+    );
 
-    await dashboardStore.deleteLayout(layout.id)
-    ElMessage.success('Layout deleted successfully')
-    layoutDialogVisible.value = false
+    await dashboardStore.deleteLayout(layout.id);
+    ElMessage.success("Layout deleted successfully");
+    layoutDialogVisible.value = false;
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to delete layout:', error)
-      ElMessage.error('Failed to delete layout')
+    if (error !== "cancel") {
+      console.error("Failed to delete layout:", error);
+      ElMessage.error("Failed to delete layout");
     }
   }
-}
+};
 
 const resetLayout = async () => {
   try {
     await ElMessageBox.confirm(
-      'Are you sure you want to reset the current layout to its default state?',
-      'Confirm Reset',
+      "Are you sure you want to reset the current layout to its default state?",
+      "Confirm Reset",
       {
-        type: 'warning',
-        confirmButtonText: 'Reset',
-        cancelButtonText: 'Cancel'
-      }
-    )
+        type: "warning",
+        confirmButtonText: "Reset",
+        cancelButtonText: "Cancel",
+      },
+    );
 
     // Implementation for resetting layout
-    ElMessage.success('Layout reset successfully')
+    ElMessage.success("Layout reset successfully");
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to reset layout:', error)
-      ElMessage.error('Failed to reset layout')
+    if (error !== "cancel") {
+      console.error("Failed to reset layout:", error);
+      ElMessage.error("Failed to reset layout");
     }
   }
-}
+};
 
 const formatCategoryName = (category: string): string => {
-  return category.charAt(0).toUpperCase() + category.slice(1).replace(/[-_]/g, ' ')
-}
+  return (
+    category.charAt(0).toUpperCase() + category.slice(1).replace(/[-_]/g, " ")
+  );
+};
 
 const formatDate = (date: Date): string => {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
-}
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
 
 // Lifecycle hooks
 onMounted(async () => {
-  await dashboardStore.initialize()
-})
+  await dashboardStore.initialize();
+});
 
 onUnmounted(() => {
   // Cleanup if needed
-})
+});
 
 // Watch for edit mode changes
 watch(isEditMode, (editMode) => {
   if (editMode) {
-    ElMessage.info('Edit mode enabled. Drag and resize widgets as needed.')
+    ElMessage.info("Edit mode enabled. Drag and resize widgets as needed.");
   }
-})
+});
 </script>
 
 <style scoped lang="scss">
