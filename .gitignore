@@ -278,8 +278,8 @@ yarn.lock
 pnpm-lock.yaml
 .pnpm-store/
 
-# Go modules
-go.sum
+# Go modules (go.sum should be committed for reproducible builds)
+# go.sum
 
 # ===========================================
 # Custom Application Data
