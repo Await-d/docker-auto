@@ -20,11 +20,11 @@ RUN apk add --no-cache gcc musl-dev sqlite-dev
 WORKDIR /app/backend
 
 # Copy go mod files first for better caching
-COPY backend/go.mod backend/go.sum ./
+COPY ./backend/go.mod ./backend/go.sum ./
 RUN go mod download
 
 # Copy backend source
-COPY backend/ ./
+COPY ./backend/ ./
 
 # Build backend with CGO support
 RUN CGO_ENABLED=1 GOOS=linux go build \
