@@ -1,6 +1,6 @@
-# Docker Auto Update System - Unified Single Image v2.2.0
+# Docker Auto Update System - External Database Edition v2.3.0
 # Optimized multi-stage build combining frontend and backend services
-# Enhanced with streamlined CI/CD integration and improved performance
+# Designed for external PostgreSQL database connection only
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
@@ -14,8 +14,8 @@ RUN npm install --frozen-lockfile && npm run build
 # Go backend builder stage
 FROM golang:1.23-alpine AS backend-builder
 
-# Install build dependencies
-RUN apk add --no-cache gcc musl-dev sqlite-dev
+# Install build dependencies (removed sqlite-dev for external DB only)
+RUN apk add --no-cache gcc musl-dev
 
 WORKDIR /app/backend
 
@@ -34,13 +34,14 @@ RUN CGO_ENABLED=1 GOOS=linux go build \
 # Main application stage
 FROM alpine:3.18
 
-# Install runtime dependencies
+# Install runtime dependencies (external database optimized)
 RUN apk add --no-cache \
     supervisor \
     nginx \
     curl \
     tzdata \
     postgresql-client \
+    netcat-openbsd \
     ca-certificates \
     libc6-compat
 
@@ -139,26 +140,58 @@ EOF
 RUN cat > /docker-entrypoint.sh << 'EOF'
 #!/bin/sh
 
-echo "🚀 Starting Docker Auto Update System v2.3.0"
+echo "🚀 Starting Docker Auto Update System v2.3.0 (External Database Edition)"
 
-# Wait for database if DB_HOST is provided
-if [ -n "$DB_HOST" ]; then
-    echo "⏳ Waiting for database at $DB_HOST:${DB_PORT:-5432}..."
-    timeout=60
-    while ! nc -z "$DB_HOST" "${DB_PORT:-5432}" > /dev/null 2>&1; do
-        timeout=$((timeout - 1))
-        if [ $timeout -le 0 ]; then
-            echo "❌ Database connection timeout"
-            exit 1
-        fi
-        sleep 1
-    done
-    echo "✅ Database connection established"
+# Validate required database environment variables
+if [ -z "$DB_HOST" ]; then
+    echo "❌ ERROR: DB_HOST environment variable is required"
+    echo "   Please provide external PostgreSQL database connection details:"
+    echo "   - DB_HOST: PostgreSQL server hostname/IP"
+    echo "   - DB_PORT: PostgreSQL server port (default: 5432)"
+    echo "   - DB_NAME: Database name"
+    echo "   - DB_USER: Database username"
+    echo "   - DB_PASSWORD: Database password"
+    exit 1
+fi
+
+# Set default database port if not provided
+DB_PORT=${DB_PORT:-5432}
+
+echo "📡 Connecting to external PostgreSQL database:"
+echo "   Host: $DB_HOST:$DB_PORT"
+echo "   Database: ${DB_NAME:-dockerauto}"
+echo "   User: ${DB_USER:-dockerauto}"
+
+# Wait for external database connection
+echo "⏳ Waiting for database connection..."
+timeout=60
+while ! nc -z "$DB_HOST" "$DB_PORT" > /dev/null 2>&1; do
+    timeout=$((timeout - 1))
+    if [ $timeout -le 0 ]; then
+        echo "❌ Database connection timeout after 60 seconds"
+        echo "   Please verify:"
+        echo "   1. PostgreSQL server is running"
+        echo "   2. Network connectivity to $DB_HOST:$DB_PORT"
+        echo "   3. Firewall allows connection on port $DB_PORT"
+        exit 1
+    fi
+    echo "   Retrying... (${timeout}s remaining)"
+    sleep 1
+done
+
+echo "✅ Database connection established"
+
+# Test database authentication
+echo "🔐 Testing database authentication..."
+export PGPASSWORD="$DB_PASSWORD"
+if ! pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "${DB_USER:-dockerauto}" -d "${DB_NAME:-dockerauto}" > /dev/null 2>&1; then
+    echo "⚠️  Database authentication test failed, but continuing startup..."
+    echo "   Please verify database credentials in environment variables"
 fi
 
 # Create directories and set permissions
-mkdir -p /app/logs
-chmod 755 /app/logs
+mkdir -p /app/logs /app/data
+chmod 755 /app/logs /app/data
 chmod +x /app/backend/docker-auto-server
 
 echo "✅ Starting services with supervisor..."
@@ -174,12 +207,15 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD curl -f http://localhost/health || exit 1
 
-# Set environment variables
+# Set environment variables (external database required)
 ENV APP_PORT=8080 \
     APP_ENV=production \
     LOG_LEVEL=info \
     LOG_FORMAT=json \
-    NGINX_PORT=80
+    NGINX_PORT=80 \
+    DB_PORT=5432 \
+    DB_NAME=dockerauto \
+    DB_USER=dockerauto
 
 # Start services
 ENTRYPOINT ["/docker-entrypoint.sh"]

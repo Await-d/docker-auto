@@ -102,42 +102,70 @@ graph TB
 
 ### 快速安装
 
-#### 方法一：Docker Run 快捷安装（推荐）
+#### 方法一：完整启动（数据库 + 应用）
 
 ```bash
-# 快速启动统一容器（内置数据库）
+# 1. 启动 PostgreSQL 数据库
+docker run -d \
+  --name postgres-db \
+  -e POSTGRES_DB=dockerauto \
+  -e POSTGRES_USER=dockerauto \
+  -e POSTGRES_PASSWORD=secure_password_123 \
+  -p 5432:5432 \
+  -v postgres-data:/var/lib/postgresql/data \
+  postgres:15-alpine
+
+# 2. 等待数据库启动
+sleep 10
+
+# 3. 启动 Docker Auto 应用
 docker run -d \
   --name docker-auto-system \
   -p 80:80 \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
   -v docker-auto-data:/app/data \
   -e APP_ENV=production \
+  -e DB_HOST=host.docker.internal \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=secure_password_123 \
   -e JWT_SECRET=your-super-secure-jwt-secret-key-change-this \
   -e LOG_LEVEL=info \
   await2719/docker-auto:latest
 
-# 等待服务启动（约30秒）
+# 4. 验证安装
 sleep 30
+curl http://localhost/health
+```
+
+#### 方法二：连接现有数据库
+
+```bash
+# 连接到现有的 PostgreSQL 数据库
+docker run -d \
+  --name docker-auto-system \
+  -p 80:80 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v docker-auto-data:/app/data \
+  -e APP_ENV=production \
+  -e DB_HOST=your-postgres-host \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=your-secure-db-password \
+  -e JWT_SECRET=your-super-secure-jwt-secret-key-change-this \
+  -e LOG_LEVEL=info \
+  await2719/docker-auto:latest
 
 # 验证安装
 curl http://localhost/health
 ```
 
-#### 方法二：简化单命令启动
-
-```bash
-# 最简单的启动方式（使用默认配置）
-docker run -d \
-  --name docker-auto \
-  -p 80:80 \
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
-  await2719/docker-auto:latest
-```
-
 #### 方法三：生产环境完整配置
 
 ```bash
-# 生产环境统一容器启动
+# 生产环境完整配置启动
 docker run -d \
   --name docker-auto-prod \
   --restart unless-stopped \
@@ -148,6 +176,11 @@ docker run -d \
   -v docker-auto-backups:/app/backups \
   -e APP_ENV=production \
   -e APP_PORT=8080 \
+  -e DB_HOST=your-postgres-host \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=your-secure-db-password \
   -e JWT_SECRET=your-jwt-secret-key \
   -e JWT_EXPIRE_HOURS=24 \
   -e DOCKER_HOST=unix:///var/run/docker.sock \
@@ -158,26 +191,6 @@ docker run -d \
 
 # 查看启动日志
 docker logs -f docker-auto-prod
-```
-
-#### 方法三-B：外部数据库模式
-
-```bash
-# 使用外部 PostgreSQL 数据库
-docker run -d \
-  --name docker-auto-external-db \
-  --restart unless-stopped \
-  -p 80:80 \
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
-  -v docker-auto-data:/app/data \
-  -e APP_ENV=production \
-  -e DB_HOST=your-postgres-host \
-  -e DB_PORT=5432 \
-  -e DB_NAME=dockerauto \
-  -e DB_USER=dockerauto \
-  -e DB_PASSWORD=your-secure-db-password \
-  -e JWT_SECRET=your-jwt-secret-key \
-  await2719/docker-auto:latest
 ```
 
 #### 方法四：Docker Compose 分离式部署
@@ -203,13 +216,16 @@ curl http://localhost/health
 | 环境变量 | 默认值 | 说明 |
 |---------|--------|------|
 | `APP_PORT` | `8080` | 应用端口 |
-| `DB_HOST` | `localhost` | 数据库主机 |
+| `DB_HOST` | **必需** | PostgreSQL 数据库主机 |
+| `DB_PORT` | `5432` | 数据库端口 |
 | `DB_NAME` | `dockerauto` | 数据库名称 |
 | `DB_USER` | `dockerauto` | 数据库用户 |
-| `DB_PASSWORD` | `secure_password_123` | 数据库密码 |
-| `JWT_SECRET` | `your-jwt-secret` | JWT 密钥（必须修改） |
+| `DB_PASSWORD` | **必需** | 数据库密码 |
+| `JWT_SECRET` | **必需** | JWT 密钥 |
 | `LOG_LEVEL` | `info` | 日志级别 |
 | `PROMETHEUS_ENABLED` | `true` | 启用监控 |
+
+> ⚠️ **注意**：镜像现在需要外部 PostgreSQL 数据库连接。`DB_HOST`、`DB_PASSWORD` 和 `JWT_SECRET` 为必需环境变量。
 
 ### 🚀 一键启动脚本
 
@@ -233,7 +249,20 @@ echo "📝 生成的密码信息："
 echo "数据库密码: $DB_PASSWORD"
 echo "JWT 密钥: $JWT_SECRET"
 
-# 启动容器
+# 启动数据库
+docker run -d \
+  --name postgres-db \
+  -e POSTGRES_DB=dockerauto \
+  -e POSTGRES_USER=dockerauto \
+  -e POSTGRES_PASSWORD="$DB_PASSWORD" \
+  -p 5432:5432 \
+  -v postgres-data:/var/lib/postgresql/data \
+  postgres:15-alpine
+
+echo "⏳ 等待数据库启动..."
+sleep 10
+
+# 启动应用容器
 docker run -d \
   --name docker-auto-system \
   --restart unless-stopped \
@@ -242,6 +271,11 @@ docker run -d \
   -v docker-auto-data:/app/data \
   -v docker-auto-logs:/app/logs \
   -e APP_ENV=production \
+  -e DB_HOST=host.docker.internal \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD="$DB_PASSWORD" \
   -e JWT_SECRET="$JWT_SECRET" \
   -e LOG_LEVEL=info \
   await2719/docker-auto:latest

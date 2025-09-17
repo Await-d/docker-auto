@@ -102,36 +102,64 @@ graph TB
 
 ### Quick Installation
 
-#### Method 1: Docker Run Quick Install (Recommended)
+#### Method 1: Complete Setup (Database + Application)
 
 ```bash
-# Quick start unified container (built-in database)
+# 1. Start PostgreSQL database
+docker run -d \
+  --name postgres-db \
+  -e POSTGRES_DB=dockerauto \
+  -e POSTGRES_USER=dockerauto \
+  -e POSTGRES_PASSWORD=secure_password_123 \
+  -p 5432:5432 \
+  -v postgres-data:/var/lib/postgresql/data \
+  postgres:15-alpine
+
+# 2. Wait for database startup
+sleep 10
+
+# 3. Start Docker Auto application
 docker run -d \
   --name docker-auto-system \
   -p 80:80 \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
   -v docker-auto-data:/app/data \
   -e APP_ENV=production \
+  -e DB_HOST=host.docker.internal \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=secure_password_123 \
   -e JWT_SECRET=your-super-secure-jwt-secret-key-change-this \
   -e LOG_LEVEL=info \
   await2719/docker-auto:latest
 
-# Wait for service startup (about 30 seconds)
+# 4. Verify installation
 sleep 30
-
-# Verify installation
 curl http://localhost/health
 ```
 
-#### Method 2: Simplified Single Command
+#### Method 2: Connect to Existing Database
 
 ```bash
-# Simplest startup method (using default configuration)
+# Connect to existing PostgreSQL database
 docker run -d \
-  --name docker-auto \
+  --name docker-auto-system \
   -p 80:80 \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v docker-auto-data:/app/data \
+  -e APP_ENV=production \
+  -e DB_HOST=your-postgres-host \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD=your-secure-db-password \
+  -e JWT_SECRET=your-super-secure-jwt-secret-key-change-this \
+  -e LOG_LEVEL=info \
   await2719/docker-auto:latest
+
+# Verify installation
+curl http://localhost/health
 ```
 
 #### Method 3: Production Environment Full Configuration
@@ -203,13 +231,16 @@ curl http://localhost/health
 | Environment Variable | Default Value | Description |
 |---------------------|---------------|-------------|
 | `APP_PORT` | `8080` | Application port |
-| `DB_HOST` | `localhost` | Database host |
+| `DB_HOST` | **Required** | PostgreSQL database host |
+| `DB_PORT` | `5432` | Database port |
 | `DB_NAME` | `dockerauto` | Database name |
 | `DB_USER` | `dockerauto` | Database user |
-| `DB_PASSWORD` | `secure_password_123` | Database password |
-| `JWT_SECRET` | `your-jwt-secret` | JWT secret key (must change) |
+| `DB_PASSWORD` | **Required** | Database password |
+| `JWT_SECRET` | **Required** | JWT secret key |
 | `LOG_LEVEL` | `info` | Log level |
 | `PROMETHEUS_ENABLED` | `true` | Enable monitoring |
+
+> ⚠️ **Note**: The image now requires external PostgreSQL database connection. `DB_HOST`, `DB_PASSWORD` and `JWT_SECRET` are required environment variables.
 
 ### 🚀 One-Click Installation Script
 
@@ -233,7 +264,20 @@ echo "📝 Generated password information:"
 echo "Database password: $DB_PASSWORD"
 echo "JWT secret: $JWT_SECRET"
 
-# Start container
+# Start database
+docker run -d \
+  --name postgres-db \
+  -e POSTGRES_DB=dockerauto \
+  -e POSTGRES_USER=dockerauto \
+  -e POSTGRES_PASSWORD="$DB_PASSWORD" \
+  -p 5432:5432 \
+  -v postgres-data:/var/lib/postgresql/data \
+  postgres:15-alpine
+
+echo "⏳ Waiting for database to start..."
+sleep 10
+
+# Start application container
 docker run -d \
   --name docker-auto-system \
   --restart unless-stopped \
@@ -242,6 +286,11 @@ docker run -d \
   -v docker-auto-data:/app/data \
   -v docker-auto-logs:/app/logs \
   -e APP_ENV=production \
+  -e DB_HOST=host.docker.internal \
+  -e DB_PORT=5432 \
+  -e DB_NAME=dockerauto \
+  -e DB_USER=dockerauto \
+  -e DB_PASSWORD="$DB_PASSWORD" \
   -e JWT_SECRET="$JWT_SECRET" \
   -e LOG_LEVEL=info \
   await2719/docker-auto:latest
