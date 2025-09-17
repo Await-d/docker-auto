@@ -1,4 +1,4 @@
-# Docker Auto-Update System
+# Docker 自动更新管理系统
 
 ![Auto Release](https://github.com/Await-d/docker-auto/actions/workflows/auto-release-pipeline.yml/badge.svg)
 ![PR Checks](https://github.com/Await-d/docker-auto/actions/workflows/pr-lint-check.yml/badge.svg)
@@ -10,67 +10,69 @@
 [![Vue](https://img.shields.io/badge/vue-3.0+-green)](https://vuejs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-A professional Docker container auto-update management system with enterprise-grade features, real-time monitoring, comprehensive web-based management interface, and unified single-image architecture.
+> **语言版本**: **🇨🇳 中文** | [🇺🇸 English](README.en.md)
 
-## 🚀 Overview
+一个专业的 Docker 容器自动更新管理系统，具备企业级功能特性、实时监控、全面的 Web 管理界面和统一的单镜像架构。
 
-The Docker Auto-Update System is a comprehensive solution for managing Docker container lifecycles in production environments. It provides automated image update detection, intelligent update scheduling, rollback capabilities, and extensive monitoring features through a modern web interface.
+## 🚀 概览
 
-### Key Features
+Docker 自动更新管理系统是一个用于在生产环境中管理 Docker 容器生命周期的综合解决方案。它提供自动镜像更新检测、智能更新调度、回滚功能以及通过现代 Web 界面的广泛监控功能。
 
-- **🔄 Automated Container Updates**: Intelligent update detection with multiple strategies and scheduling
-- **📊 Real-time Monitoring**: Live container status tracking with WebSocket updates
-- **🖥️ Modern Web Interface**: Vue 3 + TypeScript dashboard with responsive design
-- **🔐 Enterprise Security**: JWT authentication, role-based access control, and audit logging
-- **📈 Performance Monitoring**: Integrated metrics collection and alerting
-- **🔄 Rollback Support**: Automated rollback mechanisms for failed updates
-- **🐳 Multi-Registry Support**: Docker Hub, private registries, and cloud providers
-- **⚡ High Performance**: Go backend with PostgreSQL and Redis caching
-- **🔔 Notification System**: Email, Slack, webhook notifications for updates and alerts
-- **📱 Mobile Responsive**: Full mobile support for on-the-go management
-- **🎯 Single Image Architecture**: Unified container with frontend, backend, and docs
-- **⚡ Optimized Performance**: Enhanced build process with streamlined CI/CD integration
-- **🔧 Master Branch Integration**: Complete GitHub Actions workflow optimized for master branch
+### 核心特性
 
-## 🏗️ Architecture
+- **🔄 自动化容器更新**: 智能更新检测，支持多种策略和调度
+- **📊 实时监控**: 通过 WebSocket 实现的实时容器状态跟踪
+- **🖥️ 现代化 Web 界面**: Vue 3 + TypeScript 响应式控制面板
+- **🔐 企业级安全**: JWT 认证、基于角色的访问控制和审计日志
+- **📈 性能监控**: 集成的指标收集和告警系统
+- **🔄 回滚支持**: 失败更新的自动回滚机制
+- **🐳 多注册中心支持**: Docker Hub、私有注册中心和云服务商
+- **⚡ 高性能**: Go 后端搭配 PostgreSQL 和 Redis 缓存
+- **🔔 通知系统**: 邮件、Slack、Webhook 通知更新和告警
+- **📱 移动响应式**: 全面支持移动端管理
+- **🎯 单镜像架构**: 统一容器包含前端、后端和文档
+- **⚡ 优化性能**: 增强的构建流程和简化的 CI/CD 集成
+- **🔧 主分支集成**: 针对主分支优化的完整 GitHub Actions 工作流
 
-### Technology Stack
+## 🏗️ 架构
 
-- **Backend**: Go 1.21+ with Gin framework and GORM ORM
-- **Frontend**: Vue 3 + TypeScript + Element Plus UI
-- **Database**: PostgreSQL 13+ with Redis for caching
-- **Real-time**: WebSocket for live updates
-- **Containerization**: Docker + Docker Compose
-- **Monitoring**: Prometheus metrics with Grafana dashboards (optional)
-- **Proxy**: Nginx for production deployment
+### 技术栈
 
-### System Architecture
+- **后端**: Go 1.21+ 配合 Gin 框架和 GORM ORM
+- **前端**: Vue 3 + TypeScript + Element Plus UI
+- **数据库**: PostgreSQL 13+ 配合 Redis 缓存
+- **实时通信**: WebSocket 实现实时更新
+- **容器化**: Docker + Docker Compose
+- **监控**: Prometheus 指标配合 Grafana 仪表板（可选）
+- **代理**: Nginx 用于生产部署
+
+### 系统架构
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
-        A[Vue 3 Dashboard]
-        B[Container Management]
-        C[Settings Panel]
+    subgraph "前端层"
+        A[Vue 3 控制面板]
+        B[容器管理]
+        C[设置面板]
     end
 
-    subgraph "API Gateway"
-        D[Gin Router + Middleware]
-        E[JWT Authentication]
-        F[Rate Limiting]
+    subgraph "API 网关"
+        D[Gin 路由 + 中间件]
+        E[JWT 认证]
+        F[限流]
     end
 
-    subgraph "Service Layer"
-        G[Container Service]
-        H[Update Service]
-        I[Scheduler Service]
-        J[Notification Service]
+    subgraph "服务层"
+        G[容器服务]
+        H[更新服务]
+        I[调度服务]
+        J[通知服务]
     end
 
-    subgraph "Data Layer"
+    subgraph "数据层"
         K[(PostgreSQL)]
-        L[(Redis Cache)]
-        M[Docker Engine]
+        L[(Redis 缓存)]
+        M[Docker 引擎]
     end
 
     A --> D
@@ -85,78 +87,212 @@ graph TB
     I --> M
 ```
 
-## 🚦 Quick Start
+## 🚦 快速开始
 
-**New in v2.3.0**: Complete GitHub Actions automation replication from claude-relay-service with optimized master branch integration!
+**v2.3.0 新特性**: 完整的 GitHub Actions 自动化，针对主分支集成进行了优化！
 
-### Prerequisites
+### 系统要求
 
-- **Docker**: 20.10+ with Docker Compose v2
-- **System**: Linux/macOS/Windows with 2GB+ RAM
-- **Network**: Internet access for image downloads
-- **Ports**: 80 (unified service), 5432 (database)
+- **Docker**: 20.10+ 配合 Docker Compose v2
+- **系统**: Linux/macOS/Windows，2GB+ 内存
+- **网络**: 用于下载镜像的互联网访问
+- **端口**: 80（统一服务）、5432（数据库）
 
-### 1-Minute Setup
+### 1 分钟安装
 
 ```bash
-# Clone the repository
+# 克隆仓库
 git clone https://github.com/your-org/docker-auto.git
 cd docker-auto
 
-# Configure environment
+# 配置环境
 cp .env.example .env
-# Edit .env with your settings
+# 编辑 .env 文件配置您的设置
 
-# Start the system
+# 启动系统
 docker-compose up -d
 
-# Verify installation
+# 验证安装
 curl http://localhost/health
 ```
 
-### Access the System
+### 访问系统
 
-- **Web Dashboard**: http://localhost (unified interface)
-- **API Endpoint**: http://localhost/api
-- **Documentation**: http://localhost/docs
-- **Default Login**: admin@example.com / admin123 (change immediately)
+- **Web 控制面板**: http://localhost（统一界面）
+- **API 端点**: http://localhost/api
+- **文档**: http://localhost/docs
+- **默认登录**: admin@example.com / admin123（请立即更改）
 
-## 📖 Documentation
+## 🐳 Docker 镜像示例
 
-### User Documentation
-- [**Getting Started Guide**](docs/user/getting-started.md) - Quick setup and first steps
-- [**User Manual**](USER_GUIDE.md) - Complete user guide
-- [**Dashboard Overview**](docs/user/dashboard.md) - Web interface guide
-- [**Container Management**](docs/user/containers.md) - Managing containers
-- [**FAQ**](docs/user/faq.md) - Common questions and answers
+### 常用镜像添加示例
 
-### Administrator Documentation
-- [**Installation Guide**](INSTALLATION.md) - Complete installation procedures
-- [**Configuration Guide**](CONFIGURATION.md) - System configuration
-- [**Deployment Guide**](DEPLOYMENT_GUIDE.md) - Production deployment
-- [**Security Guide**](docs/admin/security.md) - Security best practices
-- [**Monitoring Setup**](docs/admin/monitoring.md) - Monitoring and alerting
-- [**Troubleshooting**](TROUBLESHOOTING.md) - Common issues and solutions
+系统支持管理各种类型的 Docker 镜像，以下是一些常见的使用案例：
 
-### Developer Documentation
-- [**API Documentation**](API_DOCUMENTATION.md) - Complete API reference
-- [**Architecture Guide**](docs/developer/architecture.md) - System architecture
-- [**Development Setup**](docs/developer/development-setup.md) - Local development
-- [**Contributing Guide**](docs/developer/contributing.md) - Contribution guidelines
-- [**Testing Guide**](docs/developer/testing.md) - Testing procedures
+#### Web 应用
+```yaml
+# Nginx Web 服务器
+镜像名称: nginx
+标签: latest
+更新策略: rolling
+健康检查: ✓
+端口映射: 80:80
 
-### Operations Documentation
-- [**Production Deployment**](docs/operations/deployment.md) - Production setup
-- [**Performance Tuning**](docs/operations/performance-tuning.md) - Optimization guide
-- [**Scaling Guide**](docs/operations/scaling.md) - Horizontal and vertical scaling
-- [**Incident Response**](docs/operations/incident-response.md) - Emergency procedures
+# Apache HTTP 服务器
+镜像名称: httpd
+标签: 2.4-alpine
+更新策略: blue-green
+健康检查: ✓
+端口映射: 8080:80
+```
 
-## 🔧 Configuration
+#### 数据库服务
+```yaml
+# PostgreSQL 数据库
+镜像名称: postgres
+标签: 15-alpine
+更新策略: manual
+备份策略: ✓
+环境变量:
+  - POSTGRES_DB=myapp
+  - POSTGRES_USER=user
+  - POSTGRES_PASSWORD=password
+数据卷: /var/lib/postgresql/data
 
-### Basic Configuration
+# MySQL 数据库
+镜像名称: mysql
+标签: 8.0
+更新策略: scheduled
+备份策略: ✓
+环境变量:
+  - MYSQL_ROOT_PASSWORD=rootpassword
+  - MYSQL_DATABASE=myapp
+数据卷: /var/lib/mysql
+```
+
+#### 应用服务
+```yaml
+# Node.js 应用
+镜像名称: node
+标签: 18-alpine
+更新策略: canary
+健康检查: ✓
+端口映射: 3000:3000
+环境变量:
+  - NODE_ENV=production
+  - PORT=3000
+
+# Python 应用
+镜像名称: python
+标签: 3.11-slim
+更新策略: rolling
+健康检查: ✓
+端口映射: 8000:8000
+工作目录: /app
+启动命令: python app.py
+```
+
+#### 中间件服务
+```yaml
+# Redis 缓存
+镜像名称: redis
+标签: 7-alpine
+更新策略: rolling
+健康检查: ✓
+端口映射: 6379:6379
+数据卷: /data
+
+# Elasticsearch
+镜像名称: elasticsearch
+标签: 8.11.0
+更新策略: manual
+资源限制:
+  - 内存: 2GB
+  - CPU: 1 核心
+环境变量:
+  - discovery.type=single-node
+  - ES_JAVA_OPTS=-Xms1g -Xmx1g
+```
+
+#### 监控工具
+```yaml
+# Prometheus 监控
+镜像名称: prom/prometheus
+标签: latest
+更新策略: scheduled
+端口映射: 9090:9090
+配置文件: /etc/prometheus/prometheus.yml
+
+# Grafana 仪表板
+镜像名称: grafana/grafana
+标签: latest
+更新策略: rolling
+端口映射: 3000:3000
+数据卷: /var/lib/grafana
+环境变量:
+  - GF_SECURITY_ADMIN_PASSWORD=admin
+```
+
+### 私有镜像配置示例
 
 ```yaml
-# docker-compose.yml - Production ready
+# 私有仓库镜像
+镜像名称: registry.company.com/myapp/backend
+标签: v1.2.0
+注册中心: registry.company.com
+认证信息:
+  用户名: deploy-user
+  密码: [加密存储]
+更新策略: blue-green
+健康检查端点: /health
+```
+
+### 镜像更新策略说明
+
+| 策略类型 | 适用场景 | 特点 |
+|---------|---------|------|
+| **rolling** | Web 应用、API 服务 | 零停机更新，逐步替换 |
+| **blue-green** | 关键业务应用 | 完整环境切换，快速回滚 |
+| **canary** | 用户面向服务 | 渐进式发布，风险控制 |
+| **scheduled** | 数据库、基础设施 | 维护窗口更新 |
+| **manual** | 生产关键系统 | 手动审批更新 |
+
+## 📖 文档
+
+### 用户文档
+- [**快速入门指南**](docs/user/getting-started.md) - 快速设置和入门
+- [**用户手册**](USER_GUIDE.md) - 完整用户指南
+- [**控制面板概览**](docs/user/dashboard.md) - Web 界面指南
+- [**容器管理**](docs/user/containers.md) - 容器管理指南
+- [**常见问题**](docs/user/faq.md) - 常见问题和解答
+
+### 管理员文档
+- [**安装指南**](INSTALLATION.md) - 完整安装流程
+- [**配置指南**](CONFIGURATION.md) - 系统配置
+- [**部署指南**](DEPLOYMENT_GUIDE.md) - 生产环境部署
+- [**安全指南**](docs/admin/security.md) - 安全最佳实践
+- [**监控设置**](docs/admin/monitoring.md) - 监控和告警
+- [**故障排除**](TROUBLESHOOTING.md) - 常见问题解决方案
+
+### 开发者文档
+- [**API 文档**](API_DOCUMENTATION.md) - 完整 API 参考
+- [**架构指南**](docs/developer/architecture.md) - 系统架构
+- [**开发环境设置**](docs/developer/development-setup.md) - 本地开发
+- [**贡献指南**](docs/developer/contributing.md) - 贡献指导原则
+- [**测试指南**](docs/developer/testing.md) - 测试流程
+
+### 运维文档
+- [**生产部署**](docs/operations/deployment.md) - 生产环境设置
+- [**性能调优**](docs/operations/performance-tuning.md) - 优化指南
+- [**扩展指南**](docs/operations/scaling.md) - 水平和垂直扩展
+- [**事件响应**](docs/operations/incident-response.md) - 应急处理流程
+
+## 🔧 配置
+
+### 基础配置
+
+```yaml
+# docker-compose.yml - 生产就绪
 version: '3.8'
 services:
   docker-auto:
@@ -189,160 +325,160 @@ volumes:
   postgres_data:
 ```
 
-### Environment Variables
+### 环境变量
 
-Key configuration options:
+关键配置选项：
 
 ```bash
-# Database Configuration
+# 数据库配置
 DATABASE_URL=postgresql://user:pass@localhost:5432/dockerauto
 REDIS_URL=redis://localhost:6379
 
-# Authentication
+# 认证配置
 JWT_SECRET=your-secure-jwt-secret-key
 JWT_EXPIRE_HOURS=24
 
-# Docker Configuration
+# Docker 配置
 DOCKER_HOST=unix:///var/run/docker.sock
 DOCKER_API_VERSION=1.41
 
-# Notification Settings
+# 通知设置
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SLACK_WEBHOOK_URL=https://hooks.slack.com/...
 
-# Monitoring
+# 监控配置
 PROMETHEUS_ENABLED=true
 METRICS_PORT=9090
 ```
 
-## 🔒 Security Features
+## 🔒 安全特性
 
-- **Authentication**: JWT-based authentication with refresh tokens
-- **Authorization**: Role-based access control (RBAC)
-- **Audit Logging**: Complete audit trail for all operations
-- **Secure Communication**: HTTPS/TLS encryption
-- **API Security**: Rate limiting, input validation, CORS protection
-- **Container Security**: Rootless containers, security scanning
-- **Data Protection**: Encrypted sensitive data, secure secrets management
+- **身份认证**: 基于 JWT 的认证系统，支持刷新令牌
+- **权限控制**: 基于角色的访问控制（RBAC）
+- **审计日志**: 所有操作的完整审计轨迹
+- **安全通信**: HTTPS/TLS 加密
+- **API 安全**: 限流、输入验证、CORS 保护
+- **容器安全**: 无 root 容器、安全扫描
+- **数据保护**: 敏感数据加密、安全的密钥管理
 
-## 📊 Monitoring & Metrics
+## 📊 监控与指标
 
-### Built-in Metrics
-- Container health and resource usage
-- Update success/failure rates
-- API performance and response times
-- System resource utilization
-- User activity and audit logs
+### 内置指标
+- 容器健康状态和资源使用情况
+- 更新成功/失败率
+- API 性能和响应时间
+- 系统资源利用率
+- 用户活动和审计日志
 
-### Integration Support
-- **Prometheus**: Native metrics export
-- **Grafana**: Pre-built dashboards
-- **Alertmanager**: Alert routing and notification
-- **ELK Stack**: Log aggregation and analysis
-- **Custom Webhooks**: Integration with any monitoring system
+### 集成支持
+- **Prometheus**: 原生指标导出
+- **Grafana**: 预构建仪表板
+- **Alertmanager**: 告警路由和通知
+- **ELK Stack**: 日志聚合和分析
+- **自定义 Webhook**: 与任何监控系统集成
 
-## 🚀 Performance
+## 🚀 性能
 
-### System Capabilities
-- **Concurrent Operations**: Handle 1000+ containers simultaneously
-- **API Performance**: < 100ms average response time
-- **Database**: Optimized queries with connection pooling
-- **Caching**: Redis caching for frequently accessed data
-- **Resource Usage**: < 256MB RAM, < 5% CPU in idle state
+### 系统能力
+- **并发操作**: 同时处理 1000+ 个容器
+- **API 性能**: < 100ms 平均响应时间
+- **数据库**: 优化查询和连接池
+- **缓存**: Redis 缓存常用数据
+- **资源使用**: 空闲状态下 < 256MB RAM，< 5% CPU
 
-### Scalability
-- **Horizontal Scaling**: Multiple backend instances with load balancing
-- **Database Scaling**: Read replicas and connection pooling
-- **Container Management**: Distributed across multiple Docker hosts
-- **Monitoring**: Efficient resource utilization tracking
+### 可扩展性
+- **水平扩展**: 多个后端实例配合负载均衡
+- **数据库扩展**: 读取副本和连接池
+- **容器管理**: 分布在多个 Docker 主机
+- **监控**: 高效的资源利用率跟踪
 
-## 🔄 Update Strategies
+## 🔄 更新策略
 
-### Available Strategies
-1. **Rolling Updates**: Zero-downtime updates with health checks
-2. **Blue-Green**: Complete environment switching
-3. **Canary**: Gradual rollout with traffic splitting
-4. **Scheduled**: Maintenance window updates
-5. **Manual**: On-demand updates with approval
+### 可用策略
+1. **滚动更新**: 零停机更新，带健康检查
+2. **蓝绿部署**: 完整环境切换
+3. **金丝雀发布**: 渐进式推出，流量分割
+4. **计划更新**: 维护窗口更新
+5. **手动更新**: 需要审批的按需更新
 
-### Safety Features
-- **Pre-update Validation**: Image and configuration validation
-- **Health Checks**: Automated health verification
-- **Automatic Rollback**: Failed update detection and rollback
-- **Backup Creation**: Automatic container state backups
-- **Notification**: Real-time update status notifications
+### 安全功能
+- **更新前验证**: 镜像和配置验证
+- **健康检查**: 自动健康状态验证
+- **自动回滚**: 失败更新检测和回滚
+- **备份创建**: 自动容器状态备份
+- **通知**: 实时更新状态通知
 
-## 🤝 Contributing
+## 🤝 贡献
 
-We welcome contributions! Please see our [Contributing Guide](docs/developer/contributing.md) for details.
+我们欢迎贡献！请查看我们的[贡献指南](docs/developer/contributing.md)了解详情。
 
-### Development Workflow
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Make changes and add tests
-4. Run tests: `make test`
-5. Submit a pull request
+### 开发工作流
+1. Fork 仓库
+2. 创建功能分支: `git checkout -b feature/new-feature`
+3. 进行更改并添加测试
+4. 运行测试: `make test`
+5. 提交拉取请求
 
-### Code Standards
-- **Go**: Follow Go conventions with `gofmt` and `golint`
-- **TypeScript**: ESLint + Prettier with Vue style guide
-- **Testing**: Minimum 80% code coverage
-- **Documentation**: Update docs for all new features
+### 代码标准
+- **Go**: 遵循 Go 约定，使用 `gofmt` 和 `golint`
+- **TypeScript**: ESLint + Prettier 配合 Vue 风格指南
+- **测试**: 最低 80% 代码覆盖率
+- **文档**: 为所有新功能更新文档
 
-## 📋 Roadmap
+## 📋 路线图
 
-### Version 2.0 (Q2 2024)
-- [ ] Kubernetes support
-- [ ] Multi-tenant architecture
-- [ ] Advanced scheduling options
-- [ ] Plugin system for custom integrations
+### 版本 2.0（2024 年第二季度）
+- [ ] Kubernetes 支持
+- [ ] 多租户架构
+- [ ] 高级调度选项
+- [ ] 自定义集成插件系统
 
-### Version 2.1 (Q3 2024)
-- [ ] GitOps integration
-- [ ] Advanced monitoring dashboards
-- [ ] Mobile app for iOS/Android
-- [ ] Enhanced security features
+### 版本 2.1（2024 年第三季度）
+- [ ] GitOps 集成
+- [ ] 高级监控仪表板
+- [ ] iOS/Android 移动应用
+- [ ] 增强安全功能
 
-## 📞 Support
+## 📞 支持
 
-### Community Support
-- **GitHub Issues**: Bug reports and feature requests
-- **Discussions**: Q&A and community support
-- **Discord**: Real-time community chat
-- **Documentation**: Comprehensive guides and tutorials
+### 社区支持
+- **GitHub Issues**: 错误报告和功能请求
+- **讨论区**: 问答和社区支持
+- **Discord**: 实时社区聊天
+- **文档**: 全面的指南和教程
 
-### Enterprise Support
-- **Professional Support**: 24/7 support with SLA
-- **Custom Development**: Feature development and customization
-- **Training**: On-site training and consulting
-- **Deployment**: Managed deployment and maintenance
+### 企业支持
+- **专业支持**: 24/7 支持，SLA 保证
+- **定制开发**: 功能开发和定制
+- **培训**: 现场培训和咨询
+- **部署**: 托管部署和维护
 
-## 📄 License
+## 📄 许可证
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
-## 🏆 Acknowledgments
+## 🏆 致谢
 
-- **Docker**: For the amazing containerization platform
-- **Go Community**: For the excellent libraries and tools
-- **Vue.js Team**: For the fantastic frontend framework
-- **Contributors**: Thanks to all our amazing contributors
+- **Docker**: 感谢出色的容器化平台
+- **Go 社区**: 感谢优秀的库和工具
+- **Vue.js 团队**: 感谢出色的前端框架
+- **贡献者**: 感谢所有出色的贡献者
 
 ---
 
-**Status**: 🚀 Production Ready
-**Version**: 2.3.0
-**Last Updated**: September 16, 2025
+**状态**: 🚀 生产就绪
+**版本**: 2.3.0
+**最后更新**: 2025年9月16日
 
 <details>
-<summary>📊 Project Statistics</summary>
+<summary>📊 项目统计</summary>
 
-- **Lines of Code**: 50,000+
-- **Test Coverage**: 85%+
-- **Docker Images**: 10+ supported registries
-- **Languages**: Go, TypeScript, SQL
-- **Contributors**: 15+ active developers
-- **Production Deployments**: 100+ installations
+- **代码行数**: 50,000+
+- **测试覆盖率**: 85%+
+- **Docker 镜像**: 支持 10+ 个注册中心
+- **编程语言**: Go、TypeScript、SQL
+- **贡献者**: 15+ 活跃开发者
+- **生产部署**: 100+ 安装实例
 
 </details>
