@@ -61,7 +61,7 @@ COPY *.md /app/docs/
 RUN mkdir -p /app/docs && (cp -r docs/* /app/docs/ 2>/dev/null || true)
 
 # Create Nginx configuration
-RUN cat > /etc/nginx/conf.d/default.conf << 'EOF'
+RUN mkdir -p /etc/nginx/conf.d && cat > /etc/nginx/conf.d/default.conf << 'EOF'
 server {
     listen 80;
     server_name localhost;
