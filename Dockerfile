@@ -5,13 +5,11 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm install --frozen-lockfile
-
-# Copy source files and build
+# Copy all frontend files
 COPY frontend/ ./
-RUN npm run build
+
+# Install dependencies and build
+RUN npm install --frozen-lockfile && npm run build
 
 # Main application stage
 FROM node:20-alpine
