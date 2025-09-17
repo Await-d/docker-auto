@@ -23,13 +23,11 @@ jobs:
 
       - name: Check for version bump necessity
         id: check_bump
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          # Get first line of commit message for merge detection
-          commit_first_line="${{ github.event.head_commit.message }}"
-          commit_first_line=$(echo "$commit_first_line" | head -n1)
-
           # Skip version bump for merge commits or documentation-only changes
-          if [[ "$commit_first_line" == Merge* ]]; then
+          if [[ "$COMMIT_MESSAGE" == Merge* ]]; then
             echo "Skip version bump for merge commit"
             echo "should_bump=false" >> $GITHUB_OUTPUT
             exit 0
@@ -72,6 +70,8 @@ jobs:
       - name: Calculate next version
         if: steps.check_bump.outputs.should_bump == 'true'
         id: version
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           # Get latest tag
           latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
@@ -85,17 +85,15 @@ jobs:
           patch=${VERSION_PARTS[2]:-0}
 
           # Determine version bump type based on commit message
-          commit_message="${{ github.event.head_commit.message }}"
-          commit_first_line=$(echo "$commit_message" | head -n1)
-          commit_full_text="$commit_message"
+          commit_first_line=$(echo "$COMMIT_MESSAGE" | head -n1)
 
-          if [[ "$commit_first_line" == feat*!:* ]] || [[ "$commit_full_text" == *"BREAKING CHANGE"* ]] || [[ "$commit_full_text" == *"[major]"* ]]; then
+          if [[ "$commit_first_line" == feat*!:* ]] || [[ "$COMMIT_MESSAGE" == *"BREAKING CHANGE"* ]] || [[ "$COMMIT_MESSAGE" == *"[major]"* ]]; then
             # Major version bump
             major=$((major + 1))
             minor=0
             patch=0
             echo "Major version bump"
-          elif [[ "$commit_first_line" == feat:* ]] || [[ "$commit_first_line" == feat\(*\):* ]] || [[ "$commit_full_text" == *"[minor]"* ]]; then
+          elif [[ "$commit_first_line" == feat:* ]] || [[ "$commit_first_line" == feat\(*\):* ]] || [[ "$COMMIT_MESSAGE" == *"[minor]"* ]]; then
             # Minor version bump
             minor=$((minor + 1))
             patch=0
