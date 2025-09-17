@@ -3,7 +3,7 @@ name: Auto Release Pipeline
 on:
   push:
     branches:
-      - main
+      - master
 
 permissions:
   contents: write

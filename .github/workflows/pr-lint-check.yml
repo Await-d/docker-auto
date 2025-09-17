@@ -3,7 +3,7 @@ name: PR Lint Check
 on:
   pull_request:
     branches:
-      - main
+      - master
     paths:
       - '**.js'
       - '**.ts'
@@ -46,8 +46,8 @@ jobs:
         id: changed-files
         run: |
           # Get changed files in this PR
-          git fetch origin main
-          changed_files=$(git diff --name-only origin/main...HEAD)
+          git fetch origin master
+          changed_files=$(git diff --name-only origin/master...HEAD)
           echo "Changed files:"
           echo "$changed_files"
 
