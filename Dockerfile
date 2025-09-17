@@ -11,19 +11,38 @@ COPY frontend/ ./
 # Install dependencies and build
 RUN npm install --frozen-lockfile && npm run build
 
-# Main application stage
-FROM node:20-alpine
+# Go backend builder stage
+FROM golang:1.23-alpine AS backend-builder
 
-# Install system dependencies
+# Install build dependencies
+RUN apk add --no-cache gcc musl-dev sqlite-dev
+
+WORKDIR /app/backend
+
+# Copy go mod files first for better caching
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+# Copy backend source
+COPY backend/ ./
+
+# Build backend with CGO support
+RUN CGO_ENABLED=1 GOOS=linux go build \
+    -a -installsuffix cgo \
+    -o docker-auto-server ./cmd/server
+
+# Main application stage
+FROM alpine:3.18
+
+# Install runtime dependencies
 RUN apk add --no-cache \
     supervisor \
     nginx \
     curl \
     tzdata \
     postgresql-client \
-    go \
-    gcc \
-    musl-dev
+    ca-certificates \
+    libc6-compat
 
 # Set timezone
 ENV TZ=Asia/Shanghai
@@ -31,17 +50,11 @@ ENV TZ=Asia/Shanghai
 # Create application directories
 RUN mkdir -p /app/backend /app/frontend /app/docs /app/logs /var/log/supervisor
 
-# Copy frontend build from previous stage
+# Copy frontend build from frontend-builder stage
 COPY --from=frontend-builder /app/dist/ /app/frontend/
 
-# Copy backend source and build
-WORKDIR /app/backend
-COPY backend/ ./
-
-# Build backend
-RUN CGO_ENABLED=1 GOOS=linux go build \
-    -a -installsuffix cgo \
-    -o docker-auto-server ./cmd/server
+# Copy backend binary from backend-builder stage
+COPY --from=backend-builder /app/backend/docker-auto-server /app/backend/
 
 # Copy documentation files
 COPY *.md /app/docs/
