@@ -122,18 +122,17 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Box,
-  Dashboard,
-  Container,
+  Monitor,
+  Files,
   Picture,
   Refresh,
   Document,
   Setting,
   User,
-  Monitor,
   DataAnalysis,
   Bell,
   Key,
-  Shield,
+  Lock,
   Expand,
   Fold,
   Warning,
@@ -151,8 +150,8 @@ const { sidebarCollapsed, toggleSidebar } = useApp()
 
 // Icons mapping
 const iconComponents = {
-  Dashboard,
-  Box: Container,
+  Dashboard: Monitor,
+  Box: Files,
   Picture,
   Refresh,
   Document,
@@ -162,7 +161,7 @@ const iconComponents = {
   DataAnalysis,
   Bell,
   Key,
-  Shield,
+  Shield: Lock,
   Warning,
   SuccessFilled
 }

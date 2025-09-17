@@ -338,7 +338,7 @@
               <!-- Labels -->
               <div class="config-section" v-if="Object.keys(currentContainer.labels).length > 0">
                 <h3 class="section-title">
-                  <el-icon><Tag /></el-icon>
+                  <el-icon><Bookmark /></el-icon>
                   Labels
                 </h3>
                 <div class="labels-list">
@@ -491,7 +491,7 @@ import {
   Connection,
   FolderOpened,
   Share,
-  Tag,
+  Bookmark,
   Check,
   Close,
   SuccessFilled,

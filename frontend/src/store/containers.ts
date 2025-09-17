@@ -527,8 +527,10 @@ export const useContainerStore = defineStore('containers', () => {
     }
 
     if (currentContainer.value?.id === data.container) {
-      currentContainer.value.status = data.status
-      currentContainer.value.state = data.state
+      if (currentContainer.value) {
+        currentContainer.value.status = data.status
+        currentContainer.value.state = data.state
+      }
     }
 
     lastUpdate.value = new Date()
@@ -544,7 +546,9 @@ export const useContainerStore = defineStore('containers', () => {
     }
 
     if (currentContainer.value?.id === data.container) {
-      currentContainer.value.resourceUsage = data.stats
+      if (currentContainer.value) {
+        currentContainer.value.resourceUsage = data.stats
+      }
     }
   }
 

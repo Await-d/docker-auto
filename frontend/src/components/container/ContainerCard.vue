@@ -341,7 +341,7 @@ import {
   ArrowUp,
   ArrowDown,
   Connection,
-  Tag,
+  Bookmark,
   VideoPlay,
   VideoPause,
   Refresh,

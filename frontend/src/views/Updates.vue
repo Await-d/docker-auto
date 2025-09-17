@@ -5,7 +5,7 @@
       <div class="header-content">
         <div class="header-info">
           <h1 class="page-title">
-            <el-icon><UpdateFilled /></el-icon>
+            <el-icon><Refresh /></el-icon>
             Updates Center
           </h1>
           <p class="page-description">
@@ -50,7 +50,7 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="update-all">
-                  <el-icon><UpdateFilled /></el-icon>
+                  <el-icon><Refresh /></el-icon>
                   Update All Selected
                 </el-dropdown-item>
                 <el-dropdown-item command="schedule-all">
@@ -75,7 +75,7 @@
       <div class="quick-stats">
         <div class="stat-card">
           <div class="stat-icon total">
-            <el-icon><UpdateFilled /></el-icon>
+            <el-icon><Refresh /></el-icon>
           </div>
           <div class="stat-content">
             <span class="stat-value">{{ updateAnalytics.totalUpdatesAvailable }}</span>
@@ -416,7 +416,6 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  UpdateFilled,
   Refresh,
   Calendar,
   Setting,
@@ -442,6 +441,7 @@ import VersionComparison from '@/components/update/VersionComparison.vue'
 
 // Store
 import { useUpdatesStore } from '@/store/updates'
+import { storeToRefs } from 'pinia'
 import { useUpdateWebSocket } from '@/services/updateWebSocket'
 
 // Types
@@ -472,7 +472,7 @@ const {
   filteredUpdates,
   scheduledUpdatesCount,
   runningUpdatesCount
-} = updatesStore
+} = storeToRefs(updatesStore)
 
 // Local reactive state
 const searchQuery = ref('')
@@ -708,11 +708,11 @@ const applyQuickFilter = () => {
 const handleSearch = () => {
   if (searchQuery.value) {
     updatesStore.setFilters({
-      ...filters.value,
+      ...filters,
       containerName: searchQuery.value
     })
   } else {
-    const newFilters = { ...filters.value }
+    const newFilters = { ...filters }
     delete newFilters.containerName
     updatesStore.setFilters(newFilters)
   }
@@ -730,7 +730,7 @@ const toggleSortDirection = () => {
 
 const handleSizeFilter = () => {
   updatesStore.setFilters({
-    ...filters.value,
+    ...filters,
     size: {
       min: sizeRange.value[0] * 1024 * 1024, // Convert MB to bytes
       max: sizeRange.value[1] * 1024 * 1024
@@ -739,8 +739,8 @@ const handleSizeFilter = () => {
 }
 
 const applyFilters = () => {
-  updatesStore.setFilters(filters.value)
-  showFilters.value = false
+  updatesStore.setFilters(filters)
+  showFilters = false
 }
 
 const clearAllFilters = () => {
@@ -798,7 +798,7 @@ onMounted(async () => {
   }
 
   // Start auto-refresh if enabled
-  if (autoRefresh.value) {
+  if (autoRefresh) {
     updatesStore.startAutoRefresh()
   }
 })
@@ -810,7 +810,7 @@ onUnmounted(() => {
 })
 
 // Watch for auto-refresh changes
-watch(autoRefresh, (enabled) => {
+watch(() => autoRefresh, (enabled) => {
   if (enabled) {
     updatesStore.startAutoRefresh()
   } else {

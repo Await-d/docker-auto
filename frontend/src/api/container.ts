@@ -1,8 +1,7 @@
 /**
  * Container API service
  */
-import { http } from '@/utils/request'
-import type { ApiResponse } from '@/utils/request'
+import { get, post, put, del } from '@/utils/request'
 import type {
   Container,
   ContainerFormData,
@@ -61,94 +60,70 @@ export class ContainerAPI {
       params.append('sort', `${sort.field}:${sort.direction}`)
     }
 
-    const response = await http.get<ContainerListResponse>(
-      `${this.baseUrl}?${params.toString()}`
-    )
-
-    return response.data!
+    return get<ContainerListResponse>(`${this.baseUrl}?${params.toString()}`)
   }
 
   /**
    * Get container by ID
    */
   async getContainer(id: string): Promise<Container> {
-    const response = await http.get<Container>(`${this.baseUrl}/${id}`)
-    return response.data!
+    return get<Container>(`${this.baseUrl}/${id}`)
   }
 
   /**
    * Create new container
    */
   async createContainer(data: ContainerFormData): Promise<Container> {
-    const response = await http.post<Container>(this.baseUrl, data, {
-      showSuccess: true
-    })
-    return response.data!
+    return post<Container>(this.baseUrl, data)
   }
 
   /**
    * Update container configuration
    */
   async updateContainer(id: string, data: Partial<ContainerFormData>): Promise<Container> {
-    const response = await http.put<Container>(`${this.baseUrl}/${id}`, data, {
-      showSuccess: true
-    })
-    return response.data!
+    return put<Container>(`${this.baseUrl}/${id}`, data)
   }
 
   /**
    * Delete container
    */
   async deleteContainer(id: string, force = false): Promise<void> {
-    await http.delete(`${this.baseUrl}/${id}`, {
-      params: { force },
-      showSuccess: true
-    })
+    return del<void>(`${this.baseUrl}/${id}?force=${force}`)
   }
 
   /**
    * Start container
    */
   async startContainer(id: string): Promise<void> {
-    await http.post(`${this.baseUrl}/${id}/start`, null, {
-      showSuccess: true
-    })
+    return post<void>(`${this.baseUrl}/${id}/start`)
   }
 
   /**
    * Stop container
    */
   async stopContainer(id: string, timeout = 10): Promise<void> {
-    await http.post(`${this.baseUrl}/${id}/stop`, { timeout }, {
-      showSuccess: true
-    })
+    return post<void>(`${this.baseUrl}/${id}/stop`, { timeout })
   }
 
   /**
    * Restart container
    */
   async restartContainer(id: string, timeout = 10): Promise<void> {
-    await http.post(`${this.baseUrl}/${id}/restart`, { timeout }, {
-      showSuccess: true
-    })
+    return post<void>(`${this.baseUrl}/${id}/restart`, { timeout })
   }
 
   /**
    * Pause container
    */
   async pauseContainer(id: string): Promise<void> {
-    await http.post(`${this.baseUrl}/${id}/pause`, null, {
-      showSuccess: true
-    })
+    return post<void>(`${this.baseUrl}/${id}/pause`)
   }
 
   /**
    * Unpause container
    */
   async unpauseContainer(id: string): Promise<void> {
-    await http.post(`${this.baseUrl}/${id}/unpause`, null, {
-      showSuccess: true
-    })
+    return post<void>(`${this.baseUrl}/${id}/unpause`)
   }
 
   /**
@@ -172,18 +147,14 @@ export class ContainerAPI {
     if (options.until) params.append('until', options.until.toISOString())
     if (options.timestamps) params.append('timestamps', 'true')
 
-    const response = await http.get<ContainerLog[]>(
-      `${this.baseUrl}/${id}/logs?${params.toString()}`
-    )
-    return response.data!
+    return get<ContainerLog[]>(`${this.baseUrl}/${id}/logs?${params.toString()}`)
   }
 
   /**
    * Get container statistics
    */
   async getStats(id: string): Promise<ResourceMetrics> {
-    const response = await http.get<ResourceMetrics>(`${this.baseUrl}/${id}/stats`)
-    return response.data!
+    return get<ResourceMetrics>(`${this.baseUrl}/${id}/stats`)
   }
 
   /**
@@ -194,13 +165,7 @@ export class ContainerAPI {
     period: string = '1h',
     interval: string = '1m'
   ): Promise<ContainerStats[]> {
-    const response = await http.get<ContainerStats[]>(
-      `${this.baseUrl}/${id}/stats/history`,
-      {
-        params: { period, interval }
-      }
-    )
-    return response.data!
+    return get<ContainerStats[]>(`${this.baseUrl}/${id}/stats/history?period=${period}&interval=${interval}`)
   }
 
   /**
@@ -217,35 +182,28 @@ export class ContainerAPI {
       interactive?: boolean
     } = {}
   ): Promise<{ output: string; exitCode: number }> {
-    const response = await http.post<{ output: string; exitCode: number }>(
-      `${this.baseUrl}/${id}/exec`,
-      {
-        command,
-        ...options
-      }
-    )
-    return response.data!
+    return post<{ output: string; exitCode: number }>(`${this.baseUrl}/${id}/exec`, {
+      command,
+      ...options
+    })
   }
 
   /**
    * Get container inspect information
    */
   async inspectContainer(id: string): Promise<any> {
-    const response = await http.get<any>(`${this.baseUrl}/${id}/inspect`)
-    return response.data!
+    return get<any>(`${this.baseUrl}/${id}/inspect`)
   }
 
   /**
    * Update container image
    */
-  async updateContainer(id: string, options: {
+  async updateContainerImage(id: string, options: {
     pullPolicy?: 'always' | 'missing' | 'never'
     recreate?: boolean
     preserveVolumes?: boolean
   } = {}): Promise<void> {
-    await http.post(`${this.baseUrl}/${id}/update`, options, {
-      showSuccess: true
-    })
+    return post<void>(`${this.baseUrl}/${id}/update`, options)
   }
 
   /**
@@ -253,32 +211,21 @@ export class ContainerAPI {
    */
   async checkUpdates(id?: string): Promise<UpdateAvailable[]> {
     const url = id ? `${this.baseUrl}/${id}/updates` : `${this.baseUrl}/updates`
-    const response = await http.get<UpdateAvailable[]>(url)
-    return response.data!
+    return get<UpdateAvailable[]>(url)
   }
 
   /**
    * Perform bulk operations
    */
   async bulkOperation(operation: BulkOperation): Promise<BulkOperationResult> {
-    const response = await http.post<BulkOperationResult>(
-      `${this.baseUrl}/bulk`,
-      operation,
-      {
-        showSuccess: true
-      }
-    )
-    return response.data!
+    return post<BulkOperationResult>(`${this.baseUrl}/bulk`, operation)
   }
 
   /**
    * Export container configuration
    */
   async exportConfig(id: string, format: 'json' | 'yaml' | 'compose' = 'json'): Promise<string> {
-    const response = await http.get<string>(`${this.baseUrl}/${id}/export`, {
-      params: { format }
-    })
-    return response.data!
+    return get<string>(`${this.baseUrl}/${id}/export?format=${format}`)
   }
 
   /**
@@ -288,21 +235,14 @@ export class ContainerAPI {
     config: string,
     format: 'json' | 'yaml' | 'compose' = 'json'
   ): Promise<Container> {
-    const response = await http.post<Container>(`${this.baseUrl}/import`, {
-      config,
-      format
-    }, {
-      showSuccess: true
-    })
-    return response.data!
+    return post<Container>(`${this.baseUrl}/import`, { config, format })
   }
 
   /**
    * Get container templates
    */
   async getTemplates(): Promise<ContainerTemplate[]> {
-    const response = await http.get<ContainerTemplate[]>(`${this.baseUrl}/templates`)
-    return response.data!
+    return get<ContainerTemplate[]>(`${this.baseUrl}/templates`)
   }
 
   /**
@@ -312,14 +252,7 @@ export class ContainerAPI {
     id: string,
     template: Omit<ContainerTemplate, 'id' | 'createdAt' | 'createdBy'>
   ): Promise<ContainerTemplate> {
-    const response = await http.post<ContainerTemplate>(
-      `${this.baseUrl}/${id}/template`,
-      template,
-      {
-        showSuccess: true
-      }
-    )
-    return response.data!
+    return post<ContainerTemplate>(`${this.baseUrl}/${id}/template`, template)
   }
 
   /**
@@ -329,14 +262,7 @@ export class ContainerAPI {
     templateId: string,
     overrides?: Partial<ContainerFormData>
   ): Promise<Container> {
-    const response = await http.post<Container>(
-      `${this.baseUrl}/templates/${templateId}/create`,
-      overrides,
-      {
-        showSuccess: true
-      }
-    )
-    return response.data!
+    return post<Container>(`${this.baseUrl}/templates/${templateId}/create`, overrides)
   }
 
   /**
@@ -352,10 +278,7 @@ export class ContainerAPI {
     if (filters?.tag) params.append('tag', filters.tag)
     if (filters?.registry) params.append('registry', filters.registry)
 
-    const response = await http.get<ContainerImage[]>(
-      `/api/images?${params.toString()}`
-    )
-    return response.data!
+    return get<ContainerImage[]>(`/api/images?${params.toString()}`)
   }
 
   /**
@@ -366,33 +289,21 @@ export class ContainerAPI {
     tag: string = 'latest',
     registry?: string
   ): Promise<void> {
-    await http.post('/api/images/pull', {
-      image,
-      tag,
-      registry
-    }, {
-      showSuccess: true
-    })
+    return post<void>('/api/images/pull', { image, tag, registry })
   }
 
   /**
    * Check for image updates
    */
   async checkImageUpdates(images?: string[]): Promise<ImageUpdateCheck[]> {
-    const response = await http.post<ImageUpdateCheck[]>('/api/images/check-updates', {
-      images
-    })
-    return response.data!
+    return post<ImageUpdateCheck[]>('/api/images/check-updates', { images })
   }
 
   /**
    * Get container health check history
    */
   async getHealthHistory(id: string, limit = 50): Promise<any[]> {
-    const response = await http.get<any[]>(`${this.baseUrl}/${id}/health`, {
-      params: { limit }
-    })
-    return response.data!
+    return get<any[]>(`${this.baseUrl}/${id}/health?limit=${limit}`)
   }
 
   /**
@@ -405,9 +316,7 @@ export class ContainerAPI {
     retries: number
     startPeriod: number
   }): Promise<void> {
-    await http.put(`${this.baseUrl}/${id}/health`, healthCheck, {
-      showSuccess: true
-    })
+    return put<void>(`${this.baseUrl}/${id}/health`, healthCheck)
   }
 
   /**
@@ -426,8 +335,7 @@ export class ContainerAPI {
       ? `${this.baseUrl}/${id}/events?${params.toString()}`
       : `${this.baseUrl}/events?${params.toString()}`
 
-    const response = await http.get<any[]>(url)
-    return response.data!
+    return get<any[]>(url)
   }
 
   /**
@@ -438,14 +346,7 @@ export class ContainerAPI {
     compression?: 'none' | 'gzip' | 'bzip2'
     name?: string
   } = {}): Promise<{ backupId: string; size: number }> {
-    const response = await http.post<{ backupId: string; size: number }>(
-      `${this.baseUrl}/${id}/backup`,
-      options,
-      {
-        showSuccess: true
-      }
-    )
-    return response.data!
+    return post<{ backupId: string; size: number }>(`${this.baseUrl}/${id}/backup`, options)
   }
 
   /**
@@ -458,14 +359,7 @@ export class ContainerAPI {
       restoreVolumes?: boolean
     } = {}
   ): Promise<Container> {
-    const response = await http.post<Container>(
-      `${this.baseUrl}/restore/${backupId}`,
-      options,
-      {
-        showSuccess: true
-      }
-    )
-    return response.data!
+    return post<Container>(`${this.baseUrl}/restore/${backupId}`, options)
   }
 }
 

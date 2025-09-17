@@ -1,7 +1,7 @@
 /**
  * Updates API service
  */
-import { http } from './http'
+import { get, post, put, del } from '@/utils/request'
 import type {
   ContainerUpdate,
   UpdateHistoryItem,
@@ -18,6 +18,7 @@ import type {
   SecurityPatch,
   UpdateStrategy
 } from '@/types/updates'
+
 
 export interface CheckUpdatesResponse {
   updates: ContainerUpdate[]
@@ -72,7 +73,7 @@ export const updatesAPI = {
     if (containerId) params.set('containerId', containerId)
     if (force) params.set('force', 'true')
 
-    return http.get(`/api/updates/check?${params}`)
+    return get<CheckUpdatesResponse>(`/api/updates/check?${params}`)
   },
 
   /**
@@ -106,140 +107,140 @@ export const updatesAPI = {
       params.set('sortOrder', sort.direction)
     }
 
-    return http.get(`/api/updates/history?${params}`)
+    return get<UpdateHistoryResponse>(`/api/updates/history?${params}`)
   },
 
   /**
    * Get running updates
    */
   async getRunningUpdates(): Promise<RunningUpdate[]> {
-    return http.get('/api/updates/running')
+    return get<RunningUpdate[]>('/api/updates/running')
   },
 
   /**
    * Get scheduled updates
    */
   async getScheduledUpdates(): Promise<ScheduledUpdate[]> {
-    return http.get('/api/updates/scheduled')
+    return get<ScheduledUpdate[]>('/api/updates/scheduled')
   },
 
   /**
    * Start a single container update
    */
   async startUpdate(updateId: string, options?: StartUpdateRequest): Promise<StartUpdateResponse> {
-    return http.post(`/api/updates/${updateId}/start`, options)
+    return post<StartUpdateResponse>(`/api/updates/${updateId}/start`, options)
   },
 
   /**
    * Start bulk update operation
    */
   async startBulkUpdate(operation: BulkUpdateOperation): Promise<{ operationId: string; queuedUpdates: number }> {
-    return http.post('/api/updates/bulk', operation)
+    return post<{ operationId: string; queuedUpdates: number }>('/api/updates/bulk', operation)
   },
 
   /**
    * Schedule an update
    */
-  async scheduleUpdate(updateId: string, request: ScheduleUpdateRequest): Promise<ScheduledUpdate> {
-    return http.post(`/api/updates/${updateId}/schedule`, request)
+  async scheduleUpdate(updateId: string, scheduleRequest: ScheduleUpdateRequest): Promise<ScheduledUpdate> {
+    return post<ScheduledUpdate>(`/api/updates/${updateId}/schedule`, scheduleRequest)
   },
 
   /**
    * Cancel a running update
    */
   async cancelUpdate(runningUpdateId: string): Promise<void> {
-    return http.post(`/api/updates/running/${runningUpdateId}/cancel`)
+    return post<void>(`/api/updates/running/${runningUpdateId}/cancel`)
   },
 
   /**
    * Cancel a scheduled update
    */
   async cancelScheduledUpdate(scheduledUpdateId: string): Promise<void> {
-    return http.delete(`/api/updates/scheduled/${scheduledUpdateId}`)
+    return del<void>(`/api/updates/scheduled/${scheduledUpdateId}`)
   },
 
   /**
    * Rollback an update
    */
   async rollbackUpdate(operation: RollbackOperation): Promise<{ id: string; status: string }> {
-    return http.post('/api/updates/rollback', operation)
+    return post<{ id: string; status: string }>('/api/updates/rollback', operation)
   },
 
   /**
    * Ignore an update
    */
   async ignoreUpdate(updateId: string, reason?: string): Promise<void> {
-    return http.post(`/api/updates/${updateId}/ignore`, { reason })
+    return post<void>(`/api/updates/${updateId}/ignore`, { reason })
   },
 
   /**
    * Unignore an update
    */
   async unignoreUpdate(updateId: string): Promise<void> {
-    return http.post(`/api/updates/${updateId}/unignore`)
+    return post<void>(`/api/updates/${updateId}/unignore`)
   },
 
   /**
    * Get update policies
    */
   async getUpdatePolicies(): Promise<UpdatePolicy[]> {
-    return http.get('/api/updates/policies')
+    return get<UpdatePolicy[]>('/api/updates/policies')
   },
 
   /**
    * Create a new update policy
    */
   async createPolicy(policy: Partial<UpdatePolicy>): Promise<UpdatePolicy> {
-    return http.post('/api/updates/policies', policy)
+    return post<UpdatePolicy>('/api/updates/policies', policy)
   },
 
   /**
    * Update an existing policy
    */
   async updatePolicy(policyId: string, policy: Partial<UpdatePolicy>): Promise<UpdatePolicy> {
-    return http.put(`/api/updates/policies/${policyId}`, policy)
+    return put<UpdatePolicy>(`/api/updates/policies/${policyId}`, policy)
   },
 
   /**
    * Delete an update policy
    */
   async deletePolicy(policyId: string): Promise<void> {
-    return http.delete(`/api/updates/policies/${policyId}`)
+    return del<void>(`/api/updates/policies/${policyId}`)
   },
 
   /**
    * Apply a policy to containers
    */
   async applyPolicy(policyId: string, containerIds: string[]): Promise<{ applied: number; skipped: number }> {
-    return http.post(`/api/updates/policies/${policyId}/apply`, { containerIds })
+    return post<{ applied: number; skipped: number }>(`/api/updates/policies/${policyId}/apply`, { containerIds })
   },
 
   /**
    * Get update templates
    */
   async getUpdateTemplates(): Promise<UpdateTemplate[]> {
-    return http.get('/api/updates/templates')
+    return get<UpdateTemplate[]>('/api/updates/templates')
   },
 
   /**
    * Create update template
    */
   async createTemplate(template: Partial<UpdateTemplate>): Promise<UpdateTemplate> {
-    return http.post('/api/updates/templates', template)
+    return post<UpdateTemplate>('/api/updates/templates', template)
   },
 
   /**
    * Update template
    */
   async updateTemplate(templateId: string, template: Partial<UpdateTemplate>): Promise<UpdateTemplate> {
-    return http.put(`/api/updates/templates/${templateId}`, template)
+    return put<UpdateTemplate>(`/api/updates/templates/${templateId}`, template)
   },
 
   /**
    * Delete template
    */
   async deleteTemplate(templateId: string): Promise<void> {
-    return http.delete(`/api/updates/templates/${templateId}`)
+    return del<void>(`/api/updates/templates/${templateId}`)
   },
 
   /**
@@ -250,7 +251,7 @@ export const updatesAPI = {
     fromVersion: string,
     toVersion: string
   ): Promise<VersionComparison> {
-    return http.post(`/api/updates/compare`, {
+    return post<VersionComparison>(`/api/updates/compare`, {
       containerId,
       fromVersion,
       toVersion
@@ -271,7 +272,7 @@ export const updatesAPI = {
       toVersion
     })
 
-    return http.get(`/api/updates/security-patches?${params}`)
+    return get<SecurityPatch[]>(`/api/updates/security-patches?${params}`)
   },
 
   /**
@@ -286,14 +287,22 @@ export const updatesAPI = {
       details?: any
     }>
   }> {
-    return http.post(`/api/updates/${updateId}/test`)
+    return post<{
+      passed: boolean
+      results: Array<{
+        test: string
+        status: 'passed' | 'failed' | 'warning'
+        message: string
+        details?: any
+      }>
+    }>(`/api/updates/${updateId}/test`)
   },
 
   /**
    * Get update analytics
    */
   async getAnalytics(period = '30d'): Promise<UpdateAnalytics> {
-    return http.get(`/api/updates/analytics?period=${period}`)
+    return get<UpdateAnalytics>(`/api/updates/analytics?period=${period}`)
   },
 
   /**
@@ -341,14 +350,14 @@ export const updatesAPI = {
    * Get update settings
    */
   async getSettings(): Promise<any> {
-    return http.get('/api/updates/settings')
+    return get<any>('/api/updates/settings')
   },
 
   /**
    * Update settings
    */
   async updateSettings(settings: any): Promise<any> {
-    return http.put('/api/updates/settings', settings)
+    return put<any>('/api/updates/settings', settings)
   },
 
   /**
@@ -366,21 +375,32 @@ export const updatesAPI = {
     }>
     total: number
   }> {
-    return http.get(`/api/updates/notifications?page=${page}&pageSize=${pageSize}`)
+    return get<{
+      notifications: Array<{
+        id: string
+        type: 'info' | 'warning' | 'error' | 'success'
+        title: string
+        message: string
+        timestamp: string
+        read: boolean
+        data?: any
+      }>
+      total: number
+    }>(`/api/updates/notifications?page=${page}&pageSize=${pageSize}`)
   },
 
   /**
    * Mark notification as read
    */
   async markNotificationRead(notificationId: string): Promise<void> {
-    return http.post(`/api/updates/notifications/${notificationId}/read`)
+    return post<void>(`/api/updates/notifications/${notificationId}/read`)
   },
 
   /**
    * Clear all notifications
    */
   async clearNotifications(): Promise<void> {
-    return http.delete('/api/updates/notifications')
+    return del<void>('/api/updates/notifications')
   },
 
   /**
@@ -406,7 +426,14 @@ export const updatesAPI = {
     if (options?.follow) params.set('follow', 'true')
     if (options?.since) params.set('since', options.since)
 
-    return http.get(`/api/updates/${updateId}/logs?${params}`)
+    return get<{
+      logs: Array<{
+        timestamp: string
+        level: 'debug' | 'info' | 'warn' | 'error'
+        message: string
+        source?: string
+      }>
+    }>(`/api/updates/${updateId}/logs?${params}`)
   },
 
   /**
@@ -422,7 +449,16 @@ export const updatesAPI = {
       timestamp: string
     }>
   }> {
-    return http.get(`/api/containers/${containerId}/health`)
+    return get<{
+      status: 'healthy' | 'unhealthy' | 'starting'
+      checks: Array<{
+        name: string
+        status: 'passed' | 'failed' | 'warning'
+        message: string
+        duration: number
+        timestamp: string
+      }>
+    }>(`/api/containers/${containerId}/health`)
   },
 
   /**
@@ -438,7 +474,12 @@ export const updatesAPI = {
     warnings: string[]
     recommendations: string[]
   }> {
-    return http.post('/api/updates/validate', config)
+    return post<{
+      valid: boolean
+      errors: string[]
+      warnings: string[]
+      recommendations: string[]
+    }>('/api/updates/validate', config)
   },
 
   /**
@@ -457,7 +498,19 @@ export const updatesAPI = {
       reason: string
     }>
   }> {
-    return http.get(`/api/updates/${updateId}/dependencies`)
+    return get<{
+      dependencies: Array<{
+        containerId: string
+        containerName: string
+        relationship: 'depends_on' | 'linked' | 'network' | 'volume'
+        required: boolean
+      }>
+      conflicts: Array<{
+        containerId: string
+        containerName: string
+        reason: string
+      }>
+    }>(`/api/updates/${updateId}/dependencies`)
   },
 
   /**
@@ -483,6 +536,25 @@ export const updatesAPI = {
       }>
     }
   }> {
-    return http.post(`/api/updates/${updateId}/simulate`)
+    return post<{
+      simulation: {
+        steps: Array<{
+          name: string
+          description: string
+          estimatedDuration: number
+          riskLevel: 'low' | 'medium' | 'high'
+          reversible: boolean
+        }>
+        totalEstimatedTime: number
+        overallRiskLevel: 'low' | 'medium' | 'high'
+        requiredDowntime: number
+        potentialIssues: Array<{
+          issue: string
+          probability: number
+          impact: 'low' | 'medium' | 'high'
+          mitigation: string
+        }>
+      }
+    }>(`/api/updates/${updateId}/simulate`)
   }
 }

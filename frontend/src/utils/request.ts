@@ -17,7 +17,7 @@ import {
   NOTIFICATION_TYPES
 } from './constants'
 import { TokenManager, AuthUtils } from './auth'
-import type { AuthResponse, TokenRefreshResponse } from '@/types/auth'
+import type { TokenRefreshResponse } from '@/types/auth'
 
 /**
  * Request/Response data interfaces
@@ -300,7 +300,7 @@ class HttpRequest {
   async request<T = any>(config: RequestOptions): Promise<ApiResponse<T>> {
     try {
       // Add metadata to config for interceptors
-      config.metadata = {
+      ;(config as any).metadata = {
         showLoading: config.showLoading ?? true,
         showError: config.showError ?? true,
         showSuccess: config.showSuccess ?? false
@@ -475,11 +475,34 @@ class HttpRequest {
 // Create and export a singleton instance
 export const http = new HttpRequest()
 
-// Export convenient methods
-export const { get, post, put, patch, delete: del, upload, download, request } = http
+// Export convenient methods that extract data directly
+export const get = async <T>(url: string, config?: RequestOptions): Promise<T> => {
+  const response = await http.get<T>(url, config)
+  return response.data!
+}
 
-// Export types
-export type { ApiResponse, ApiError, RequestOptions }
+export const post = async <T>(url: string, data?: any, config?: RequestOptions): Promise<T> => {
+  const response = await http.post<T>(url, data, config)
+  return response.data!
+}
+
+export const put = async <T>(url: string, data?: any, config?: RequestOptions): Promise<T> => {
+  const response = await http.put<T>(url, data, config)
+  return response.data!
+}
+
+export const patch = async <T>(url: string, data?: any, config?: RequestOptions): Promise<T> => {
+  const response = await http.patch<T>(url, data, config)
+  return response.data!
+}
+
+export const del = async <T>(url: string, config?: RequestOptions): Promise<T> => {
+  const response = await http.delete<T>(url, config)
+  return response.data!
+}
+
+// Export the original methods for advanced usage
+export const { upload, download, request } = http
 
 // Extend AxiosRequestConfig to include metadata
 declare module 'axios' {

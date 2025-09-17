@@ -450,28 +450,28 @@ const availableUpdate = computed(() => {
 const updateAvailable = computed(() => !!availableUpdate.value)
 
 const statusIcon = computed(() => {
-  if (updateAvailable.value) {
+  if (updateAvailable.value && availableUpdate.value) {
     return availableUpdate.value.critical ? Warning : Download
   }
   return SuccessFilled
 })
 
 const statusIconClass = computed(() => {
-  if (updateAvailable.value) {
+  if (updateAvailable.value && availableUpdate.value) {
     return availableUpdate.value.critical ? 'status-critical' : 'status-update'
   }
   return 'status-up-to-date'
 })
 
 const statusTitle = computed(() => {
-  if (updateAvailable.value) {
+  if (updateAvailable.value && availableUpdate.value) {
     return availableUpdate.value.critical ? 'Critical Update Available' : 'Update Available'
   }
   return 'Up to Date'
 })
 
 const statusDescription = computed(() => {
-  if (updateAvailable.value) {
+  if (updateAvailable.value && availableUpdate.value) {
     return `Version ${availableUpdate.value.availableVersion} is available`
   }
   return 'Container is running the latest version'

@@ -663,7 +663,7 @@ import {
   Connection,
   FolderOpened,
   Setting,
-  Tag
+  Bookmark
 } from '@element-plus/icons-vue'
 
 import type { Container, ContainerFormData, PortMapping, VolumeMount } from '@/types/container'
