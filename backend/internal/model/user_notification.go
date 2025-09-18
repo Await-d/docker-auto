@@ -13,7 +13,7 @@ type UserNotification struct {
 	Type      string                 `json:"type" gorm:"not null;size:50;index:idx_notifications_type"`
 	Title     string                 `json:"title" gorm:"not null;size:255"`
 	Message   string                 `json:"message" gorm:"type:text;not null"`
-	Data      map[string]interface{} `json:"data,omitempty" gorm:"type:jsonb;default:'{}'"`
+	Data      JSONMap `json:"data,omitempty" gorm:"type:text;default:'{}'"`
 	IsRead    bool                   `json:"is_read" gorm:"not null;default:false;index:idx_notifications_is_read"`
 	ReadAt    *time.Time             `json:"read_at,omitempty"`
 	CreatedAt time.Time              `json:"created_at" gorm:"index:idx_notifications_created_at,sort:desc"`

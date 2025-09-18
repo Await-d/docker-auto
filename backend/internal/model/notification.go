@@ -81,7 +81,7 @@ type Notification struct {
 	Title    string               `json:"title"`
 	Message  string               `json:"message"`
 	Priority NotificationPriority `json:"priority"`
-	Data     map[string]interface{} `json:"data,omitempty"`
+	Data     JSONMap `json:"data,omitempty" gorm:"type:text;default:'{}'"`
 }
 
 // NotificationEvent represents different types of notification events
