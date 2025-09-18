@@ -50,7 +50,7 @@ services:
       - DB_DEBUG=true
 
       # JWT
-      - JWT_SECRET=development-jwt-secret-key-do-not-use-in-production
+      - JWT_SECRET=development-jwt-secret-key-32-chars-minimum-required-for-security
       - JWT_EXPIRE_HOURS=24
       - JWT_REFRESH_DAYS=7
 
@@ -67,7 +67,7 @@ services:
       # Mount logs directory
       - ./logs:/app/logs
     ports:
-      - "80:80"
+      - "80:8080"
     networks:
       - docker-auto-network
     depends_on:
@@ -75,7 +75,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health", "&&", "curl", "-f", "http://localhost/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
