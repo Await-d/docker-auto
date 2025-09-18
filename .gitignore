@@ -18,6 +18,8 @@ config.production.yml
 *.exe~
 *.dll
 *.so
+backend/docker-auto-server*
+backend/frontend/
 *.dylib
 /backend/bin/
 /backend/dist/

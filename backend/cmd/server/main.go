@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,6 +17,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
+
+// frontendFS is defined in embed.go or nonembed.go based on build tags
 
 // @title Docker Auto Update System API
 // @version 1.0
@@ -149,14 +152,62 @@ func setupRouter(cfg *config.Config, logger *logrus.Logger) *gin.Engine {
 
 	router := gin.New()
 
-	// Setup API routes
-	// TODO: Uncomment when API package is implemented
-	// api.SetupRoutes(router, services, logger, cfg)
+	// Setup middleware
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
 
-	// Temporary health check endpoint
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
-	})
+	// Setup API routes
+	apiGroup := router.Group("/api/v1")
+	{
+		// Health check endpoint
+		apiGroup.GET("/health", func(c *gin.Context) {
+			c.JSON(200, gin.H{"status": "ok", "version": "2.3.0"})
+		})
+
+		// TODO: Add other API routes here
+		// apiGroup.GET("/containers", handlers.GetContainers)
+		// apiGroup.POST("/containers/:id/update", handlers.UpdateContainer)
+	}
+
+	// Setup static file serving from embedded filesystem
+	setupStaticFiles(router, logger)
 
 	return router
+}
+
+func setupStaticFiles(router *gin.Engine, logger *logrus.Logger) {
+	// Get the embedded filesystem for the dist directory
+	distFS, err := fs.Sub(frontendFS, "frontend/dist")
+	if err != nil {
+		logger.Warnf("Failed to create sub filesystem for frontend: %v", err)
+		return
+	}
+
+	// Serve static files
+	router.StaticFS("/assets", http.FS(distFS))
+
+	// Handle SPA routing - serve index.html for all non-API routes
+	router.NoRoute(func(c *gin.Context) {
+		// Skip API routes
+		if c.Request.URL.Path[:4] == "/api" {
+			c.JSON(404, gin.H{"error": "API endpoint not found"})
+			return
+		}
+
+		// Try to serve the requested file
+		file, err := distFS.Open(c.Request.URL.Path[1:]) // Remove leading slash
+		if err == nil {
+			defer file.Close()
+			stat, err := file.Stat()
+			if err == nil && !stat.IsDir() {
+				c.FileFromFS(c.Request.URL.Path[1:], http.FS(distFS))
+				return
+			}
+		}
+
+		// Serve index.html for SPA routing
+		c.FileFromFS("index.html", http.FS(distFS))
+	})
+
+	logger.Info("Static file serving configured with embedded frontend")
 }
