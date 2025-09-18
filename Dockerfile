@@ -28,11 +28,11 @@ RUN go mod download
 # Copy backend source
 COPY backend/ ./
 
-# Copy frontend build to backend for embedding
-COPY --from=frontend-builder /app/dist ./frontend/dist
+# Copy frontend build to backend for embedding (relative to cmd/server)
+COPY --from=frontend-builder /app/dist ./cmd/server/frontend/dist
 
 # Debug: List directory structure to verify files are copied correctly
-RUN ls -la ./frontend/dist/ || echo "Frontend dist directory not found"
+RUN ls -la ./cmd/server/frontend/dist/ || echo "Frontend dist directory not found"
 
 # Build backend with embedded frontend
 RUN CGO_ENABLED=0 GOOS=linux go build \
