@@ -26,7 +26,7 @@ type User struct {
 	ActivityLogs         []ActivityLog             `json:"-" gorm:"foreignKey:UserID"`
 	UpdateHistories      []UpdateHistory           `json:"-" gorm:"foreignKey:CreatedBy"`
 	ScheduledTasks       []ScheduledTask           `json:"-" gorm:"foreignKey:CreatedBy"`
-	Notifications        []Notification            `json:"-" gorm:"foreignKey:UserID"`
+	Notifications        []UserNotification        `json:"-" gorm:"foreignKey:UserID"`
 	NotificationSettings *UserNotificationSettings `json:"notification_settings,omitempty" gorm:"foreignKey:UserID"`
 }
 
