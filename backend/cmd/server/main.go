@@ -59,10 +59,11 @@ func main() {
 
 	logger.Info("Starting Docker Auto Update System...")
 
-	// Initialize database
+	// Initialize database (optional for standalone mode)
 	_, err = setupDatabase(cfg, logger)
 	if err != nil {
-		logger.Fatalf("Failed to setup database: %v", err)
+		logger.Warnf("Database setup failed (continuing without database): %v", err)
+		logger.Info("Running in standalone mode without database persistence")
 	}
 
 	// Initialize Redis (TODO: Implement Redis setup when needed)

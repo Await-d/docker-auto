@@ -2,32 +2,7 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: docker-auto-postgres
-    environment:
-      POSTGRES_DB: dockerauto
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
-      TZ: Asia/Shanghai
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    ports:
-      - "5432:5432"
-    networks:
-      - docker-auto-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dockerauto"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  # Unified Docker Auto Service
+  # Docker Auto Service
   docker-auto:
     build:
       context: .
@@ -40,14 +15,14 @@ services:
       - LOG_LEVEL=debug
       - LOG_FORMAT=json
 
-      # Database
-      - DB_HOST=postgres
+      # Database (external or not required)
+      - DB_HOST=localhost
       - DB_PORT=5432
       - DB_NAME=dockerauto
-      - DB_USER=postgres
+      - DB_USER=dockerauto
       - DB_PASSWORD=password
       - DB_SSL_MODE=disable
-      - DB_DEBUG=true
+      - DB_DEBUG=false
 
       # JWT
       - JWT_SECRET=development-jwt-secret-key-32-chars-minimum-required-for-security
@@ -70,9 +45,6 @@ services:
       - "80:8080"
     networks:
       - docker-auto-network
-    depends_on:
-      postgres:
-        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
@@ -87,7 +59,4 @@ networks:
     driver: bridge
     name: docker-auto-network
 
-volumes:
-  postgres_data:
-    driver: local
-    name: docker-auto-postgres-data
+# No volumes needed for standalone service
