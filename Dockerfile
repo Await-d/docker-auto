@@ -31,6 +31,9 @@ COPY backend/ ./
 # Copy frontend build to backend for embedding
 COPY --from=frontend-builder /app/dist ./frontend/dist
 
+# Debug: List directory structure to verify files are copied correctly
+RUN ls -la ./frontend/dist/ || echo "Frontend dist directory not found"
+
 # Build backend with embedded frontend
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -tags embed \
