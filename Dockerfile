@@ -20,9 +20,6 @@ WORKDIR /app
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
 
-# Copy frontend build to backend for embedding
-COPY --from=frontend-builder /app/dist /app/frontend/dist
-
 # Copy go mod files for better caching
 COPY backend/go.mod backend/go.sum ./backend/
 WORKDIR /app/backend
@@ -30,6 +27,9 @@ RUN go mod download
 
 # Copy backend source
 COPY backend/ ./
+
+# Copy frontend build to backend for embedding
+COPY --from=frontend-builder /app/dist ./frontend/dist
 
 # Build backend with embedded frontend
 RUN CGO_ENABLED=0 GOOS=linux go build \
