@@ -189,7 +189,7 @@ func setupStaticFiles(router *gin.Engine, logger *logrus.Logger) {
 	// Handle SPA routing - serve index.html for all non-API routes
 	router.NoRoute(func(c *gin.Context) {
 		// Skip API routes
-		if c.Request.URL.Path[:4] == "/api" {
+		if len(c.Request.URL.Path) >= 4 && c.Request.URL.Path[:4] == "/api" {
 			c.JSON(404, gin.H{"error": "API endpoint not found"})
 			return
 		}

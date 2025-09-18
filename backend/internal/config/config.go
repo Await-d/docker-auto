@@ -204,8 +204,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("CACHE_CONFIG_TTL_MINUTES", 5)
 	v.SetDefault("CACHE_CLEANUP_INTERVAL_MINUTES", 5)
 
-	// JWT defaults
-	v.SetDefault("JWT_SECRET", "your-super-secret-jwt-key")
+	// JWT defaults (will be validated later)
+	v.SetDefault("JWT_SECRET", "")
 	v.SetDefault("JWT_EXPIRE_HOURS", 24)
 	v.SetDefault("JWT_REFRESH_DAYS", 7)
 
@@ -253,8 +253,12 @@ func validate(config *Config) error {
 		return fmt.Errorf("invalid port: %d", config.Port)
 	}
 
-	if config.JWT.Secret == "" || config.JWT.Secret == "your-super-secret-jwt-key" {
-		return fmt.Errorf("JWT secret must be set and not use default value")
+	if config.JWT.Secret == "" {
+		return fmt.Errorf("JWT secret is required (set JWT_SECRET environment variable)")
+	}
+
+	if len(config.JWT.Secret) < 32 {
+		return fmt.Errorf("JWT secret must be at least 32 characters long")
 	}
 
 	if config.Database.Host == "" {
