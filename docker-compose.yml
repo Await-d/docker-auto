@@ -58,5 +58,3 @@ networks:
   docker-auto-network:
     driver: bridge
     name: docker-auto-network
-
-# No volumes needed for standalone service

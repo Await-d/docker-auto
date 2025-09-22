@@ -77,7 +77,7 @@ const props = withDefaults(defineProps<Props>(), {
   limit: 1,
   disabled: false,
   size: "default",
-  placeholder: "Select file",
+  placeholder: "选择文件",
   showFileList: true,
   showTip: true,
   maxSize: 10,
@@ -93,16 +93,16 @@ const buttonText = computed(() => {
     return props.modelValue &&
       Array.isArray(props.modelValue) &&
       props.modelValue.length > 0
-      ? "Change Files"
-      : "Select Files";
+      ? "更换文件"
+      : "选择文件";
   }
-  return props.modelValue ? "Change File" : props.placeholder;
+  return props.modelValue ? "更换文件" : props.placeholder;
 });
 
 const tipText = computed(() => {
   const acceptText =
-    props.accept !== "*" ? `Accepted: ${props.accept}` : "All file types";
-  const sizeText = `Max size: ${props.maxSize}MB`;
+    props.accept !== "*" ? `支持的类型：${props.accept}` : "所有文件类型";
+  const sizeText = `最大大小：${props.maxSize}MB`;
   return `${acceptText}, ${sizeText}`;
 });
 
@@ -122,7 +122,7 @@ const handleChange = (uploadFile: UploadFile, _uploadFiles: UploadFiles) => {
   // Validate file size
   const fileSizeMB = uploadFile.raw.size / 1024 / 1024;
   if (fileSizeMB > props.maxSize) {
-    error.value = `File size exceeds ${props.maxSize}MB limit`;
+    error.value = `文件大小超过 ${props.maxSize}MB 限制`;
     emit("error", error.value);
     return;
   }
@@ -146,7 +146,7 @@ const handleChange = (uploadFile: UploadFile, _uploadFiles: UploadFiles) => {
   };
 
   reader.onerror = () => {
-    error.value = "Failed to read file";
+    error.value = "文件读取失败";
     emit("error", error.value);
   };
 
@@ -177,7 +177,7 @@ const handleRemove = (uploadFile: UploadFile, uploadFiles: UploadFiles) => {
 };
 
 const handleExceed = () => {
-  ElMessage.warning(`Maximum ${props.limit} file(s) allowed`);
+  ElMessage.warning(`最多允许 ${props.limit} 个文件`);
 };
 
 const clearFile = () => {

@@ -15,13 +15,13 @@
         <template #header>
           <div class="section-header">
             <el-icon><InfoFilled /></el-icon>
-            <span>System Information</span>
+            <span>系统信息</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Version">
+            <el-form-item label="版本">
               <el-input
                 :value="systemInfo.version"
                 readonly
@@ -29,13 +29,13 @@
               >
                 <template #suffix>
                   <el-tag
-type="success" size="small"> Current </el-tag>
+type="success" size="small"> 当前版本 </el-tag>
                 </template>
               </el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Build Date">
+            <el-form-item label="构建日期">
               <el-input
                 :value="formatDate(systemInfo.buildDate)"
                 readonly
@@ -47,7 +47,7 @@ type="success" size="small"> Current </el-tag>
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Runtime">
+            <el-form-item label="运行时">
               <el-input
                 :value="systemInfo.runtime"
                 readonly
@@ -56,7 +56,7 @@ type="success" size="small"> Current </el-tag>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Platform">
+            <el-form-item label="平台">
               <el-input
                 :value="systemInfo.platform"
                 readonly
@@ -68,7 +68,7 @@ type="success" size="small"> Current </el-tag>
 
         <el-row :gutter="24">
           <el-col :span="24">
-            <el-form-item label="Installation Path">
+            <el-form-item label="安装路径">
               <el-input
                 :value="systemInfo.installPath"
                 readonly
@@ -84,16 +84,16 @@ type="success" size="small"> Current </el-tag>
         <template #header>
           <div class="section-header">
             <el-icon><Setting /></el-icon>
-            <span>General Settings</span>
+            <span>常规设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="System Name" prop="systemName" required>
+            <el-form-item label="系统名称" prop="systemName" required>
               <el-input
                 v-model="formData.systemName"
-                placeholder="Enter system name"
+                placeholder="输入系统名称"
                 maxlength="100"
                 show-word-limit
                 @input="handleFieldChange('systemName', $event)"
@@ -101,10 +101,10 @@ type="success" size="small"> Current </el-tag>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Default Timezone" prop="timezone" required>
+            <el-form-item label="默认时区" prop="timezone" required>
               <el-select
                 v-model="formData.timezone"
-                placeholder="Select timezone"
+                placeholder="选择时区"
                 filterable
                 @change="handleFieldChange('timezone', $event)"
               >
@@ -121,12 +121,12 @@ type="success" size="small"> Current </el-tag>
 
         <el-row :gutter="24">
           <el-col :span="24">
-            <el-form-item label="System Description" prop="systemDescription">
+            <el-form-item label="系统描述" prop="systemDescription">
               <el-input
                 v-model="formData.systemDescription"
                 type="textarea"
                 :rows="3"
-                placeholder="Enter system description"
+                placeholder="输入系统描述"
                 maxlength="500"
                 show-word-limit
                 @input="handleFieldChange('systemDescription', $event)"
@@ -137,10 +137,10 @@ type="success" size="small"> Current </el-tag>
 
         <el-row :gutter="24">
           <el-col :span="8">
-            <el-form-item label="Language" prop="language" required>
+            <el-form-item label="语言" prop="language" required>
               <el-select
                 v-model="formData.language"
-                placeholder="Select language"
+                placeholder="选择语言"
                 @change="handleFieldChange('language', $event)"
               >
                 <el-option
@@ -158,10 +158,10 @@ type="success" size="small"> Current </el-tag>
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Date Format" prop="dateFormat" required>
+            <el-form-item label="日期格式" prop="dateFormat" required>
               <el-select
                 v-model="formData.dateFormat"
-                placeholder="Select date format"
+                placeholder="选择日期格式"
                 @change="handleFieldChange('dateFormat', $event)"
               >
                 <el-option
@@ -179,10 +179,10 @@ type="success" size="small"> Current </el-tag>
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Time Format" prop="timeFormat" required>
+            <el-form-item label="时间格式" prop="timeFormat" required>
               <el-select
                 v-model="formData.timeFormat"
-                placeholder="Select time format"
+                placeholder="选择时间格式"
                 @change="handleFieldChange('timeFormat', $event)"
               >
                 <el-option
@@ -207,14 +207,14 @@ type="success" size="small"> Current </el-tag>
         <template #header>
           <div class="section-header">
             <el-icon><Clock /></el-icon>
-            <span>Session Settings</span>
+            <span>会话设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Session Timeout"
+              label="会话超时"
               prop="sessionTimeout"
               required
             >
@@ -226,21 +226,21 @@ type="success" size="small"> Current </el-tag>
                   :step="5"
                   @change="handleFieldChange('sessionTimeout', $event)"
                 />
-                <span class="timeout-unit">minutes</span>
+                <span class="timeout-unit">分钟</span>
               </div>
               <div class="field-help">
-                Session will expire after this period of inactivity
+                用户无活动后会话将过期的时间
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Auto Logout Warning">
+            <el-form-item label="自动登出警告">
               <el-switch
                 v-model="formData.autoLogoutWarning"
                 @change="handleFieldChange('autoLogoutWarning', $event)"
               />
               <div class="field-help">
-Show warning before session expires
+在会话过期前显示警告
 </div>
             </el-form-item>
           </el-col>
@@ -252,14 +252,14 @@ Show warning before session expires
         <template #header>
           <div class="section-header">
             <el-icon><Monitor /></el-icon>
-            <span>Performance Settings</span>
+            <span>性能设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="8">
             <el-form-item
-              label="Max Concurrent Operations"
+              label="最大并发操作数"
               prop="maxConcurrentOperations"
               required
             >
@@ -270,13 +270,13 @@ Show warning before session expires
                 @change="handleFieldChange('maxConcurrentOperations', $event)"
               />
               <div class="field-help">
-                Maximum number of operations running simultaneously
+                同时运行的最大操作数量
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item
-              label="Request Timeout"
+              label="请求超时时间"
               prop="requestTimeout"
               required
             >
@@ -288,16 +288,16 @@ Show warning before session expires
                   :step="5"
                   @change="handleFieldChange('requestTimeout', $event)"
                 />
-                <span class="timeout-unit">seconds</span>
+                <span class="timeout-unit">秒</span>
               </div>
               <div class="field-help">
-Timeout for API requests
+API请求的超时时间
 </div>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item
-label="Cache TTL" prop="cacheTtl"
+label="缓存生存时间" prop="cacheTtl"
 required
 >
               <div class="timeout-input">
@@ -307,10 +307,10 @@ required
                   :max="1440"
                   @change="handleFieldChange('cacheTtl', $event)"
                 />
-                <span class="timeout-unit">minutes</span>
+                <span class="timeout-unit">分钟</span>
               </div>
               <div class="field-help">
-Time to live for cached data
+缓存数据的生存时间
 </div>
             </el-form-item>
           </el-col>
@@ -319,11 +319,11 @@ Time to live for cached data
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-label="Resource Usage Limits" prop="resourceLimits"
+label="资源使用限制" prop="resourceLimits"
 >
               <div class="resource-limits">
                 <div class="limit-item">
-                  <label>CPU Limit (%)</label>
+                  <label>CPU限制 (%)</label>
                   <el-slider
                     v-model="resourceLimitsCpu"
                     :min="10"
@@ -334,7 +334,7 @@ label="Resource Usage Limits" prop="resourceLimits"
                   />
                 </div>
                 <div class="limit-item">
-                  <label>Memory Limit (%)</label>
+                  <label>内存限制 (%)</label>
                   <el-slider
                     v-model="resourceLimitsMemory"
                     :min="10"
@@ -349,7 +349,7 @@ label="Resource Usage Limits" prop="resourceLimits"
           </el-col>
           <el-col :span="12">
             <el-form-item
-label="Log Retention" prop="logRetention"
+label="日志保留时间" prop="logRetention"
 required
 >
               <div class="timeout-input">
@@ -359,10 +359,10 @@ required
                   :max="365"
                   @change="handleFieldChange('logRetention', $event)"
                 />
-                <span class="timeout-unit">days</span>
+                <span class="timeout-unit">天</span>
               </div>
               <div class="field-help">
-How long to keep system logs
+系统日志的保留时长
 </div>
             </el-form-item>
           </el-col>
@@ -374,30 +374,30 @@ How long to keep system logs
         <template #header>
           <div class="section-header">
             <el-icon><Tools /></el-icon>
-            <span>Maintenance Settings</span>
+            <span>维护设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Auto Cleanup">
+            <el-form-item label="自动清理">
               <el-switch
                 v-model="formData.autoCleanup"
                 @change="handleFieldChange('autoCleanup', $event)"
               />
               <div class="field-help">
-                Automatically clean up temporary files and logs
+                自动清理临时文件和日志
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Auto Updates">
+            <el-form-item label="自动更新">
               <el-switch
                 v-model="formData.autoUpdates"
                 @change="handleFieldChange('autoUpdates', $event)"
               />
               <div class="field-help">
-                Automatically update system components
+                自动更新系统组件
               </div>
             </el-form-item>
           </el-col>
@@ -406,11 +406,11 @@ How long to keep system logs
         <el-row :gutter="24">
           <el-col :span="24">
             <el-form-item
-label="Maintenance Window" prop="maintenanceWindow"
+label="维护时间窗口" prop="maintenanceWindow"
 >
               <div class="maintenance-window">
                 <div class="window-item">
-                  <label>Start Time</label>
+                  <label>开始时间</label>
                   <el-time-picker
                     v-model="maintenanceWindowStart"
                     format="HH:mm"
@@ -419,7 +419,7 @@ label="Maintenance Window" prop="maintenanceWindow"
                   />
                 </div>
                 <div class="window-item">
-                  <label>End Time</label>
+                  <label>结束时间</label>
                   <el-time-picker
                     v-model="maintenanceWindowEnd"
                     format="HH:mm"
@@ -428,18 +428,18 @@ label="Maintenance Window" prop="maintenanceWindow"
                   />
                 </div>
                 <div class="window-item">
-                  <label>Days</label>
+                  <label>维护日期</label>
                   <el-checkbox-group
                     v-model="maintenanceWindowDays"
                     @change="handleMaintenanceWindowChange"
                   >
-                    <el-checkbox :label="0"> Sun </el-checkbox>
-                    <el-checkbox :label="1"> Mon </el-checkbox>
-                    <el-checkbox :label="2"> Tue </el-checkbox>
-                    <el-checkbox :label="3"> Wed </el-checkbox>
-                    <el-checkbox :label="4"> Thu </el-checkbox>
-                    <el-checkbox :label="5"> Fri </el-checkbox>
-                    <el-checkbox :label="6"> Sat </el-checkbox>
+                    <el-checkbox :label="0"> 周日 </el-checkbox>
+                    <el-checkbox :label="1"> 周一 </el-checkbox>
+                    <el-checkbox :label="2"> 周二 </el-checkbox>
+                    <el-checkbox :label="3"> 周三 </el-checkbox>
+                    <el-checkbox :label="4"> 周四 </el-checkbox>
+                    <el-checkbox :label="5"> 周五 </el-checkbox>
+                    <el-checkbox :label="6"> 周六 </el-checkbox>
                   </el-checkbox-group>
                 </div>
               </div>
@@ -641,7 +641,7 @@ const timeFormats = ref([
 
 const formRules = computed(() => ({
   systemName: [
-    { required: true, message: "System name is required", trigger: "blur" },
+    { required: true, message: "系统名称是必填项", trigger: "blur" },
     {
       validator: (
         _rule: any,
@@ -649,7 +649,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value.length < 3 || value.length > 100) {
-          callback(new Error("Length should be 3 to 100 characters"));
+          callback(new Error("长度应在3到100个字符之间"));
         } else {
           callback();
         }
@@ -658,19 +658,19 @@ const formRules = computed(() => ({
     },
   ],
   timezone: [
-    { required: true, message: "Timezone is required", trigger: "change" },
+    { required: true, message: "时区是必选项", trigger: "change" },
   ],
   language: [
-    { required: true, message: "Language is required", trigger: "change" },
+    { required: true, message: "语言是必选项", trigger: "change" },
   ],
   dateFormat: [
-    { required: true, message: "Date format is required", trigger: "change" },
+    { required: true, message: "日期格式是必选项", trigger: "change" },
   ],
   timeFormat: [
-    { required: true, message: "Time format is required", trigger: "change" },
+    { required: true, message: "时间格式是必选项", trigger: "change" },
   ],
   sessionTimeout: [
-    { required: true, message: "Session timeout is required", trigger: "blur" },
+    { required: true, message: "会话超时是必填项", trigger: "blur" },
     {
       validator: (
         _rule: any,
@@ -678,7 +678,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 5 || value > 1440) {
-          callback(new Error("Must be between 5 and 1440 minutes"));
+          callback(new Error("必须在5到1440分钟之间"));
         } else {
           callback();
         }
@@ -689,7 +689,7 @@ const formRules = computed(() => ({
   maxConcurrentOperations: [
     {
       required: true,
-      message: "Max concurrent operations is required",
+      message: "最大并发操作数是必填项",
       trigger: "blur",
     },
     {
@@ -699,7 +699,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 1 || value > 100) {
-          callback(new Error("Must be between 1 and 100"));
+          callback(new Error("必须在1到100之间"));
         } else {
           callback();
         }
@@ -708,7 +708,7 @@ const formRules = computed(() => ({
     },
   ],
   requestTimeout: [
-    { required: true, message: "Request timeout is required", trigger: "blur" },
+    { required: true, message: "请求超时是必填项", trigger: "blur" },
     {
       validator: (
         _rule: any,
@@ -716,7 +716,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 5 || value > 300) {
-          callback(new Error("Must be between 5 and 300 seconds"));
+          callback(new Error("必须在5到300秒之间"));
         } else {
           callback();
         }
@@ -725,7 +725,7 @@ const formRules = computed(() => ({
     },
   ],
   cacheTtl: [
-    { required: true, message: "Cache TTL is required", trigger: "blur" },
+    { required: true, message: "缓存生存时间是必填项", trigger: "blur" },
     {
       validator: (
         _rule: any,
@@ -733,7 +733,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 1 || value > 1440) {
-          callback(new Error("Must be between 1 and 1440 minutes"));
+          callback(new Error("必须在1到1440分钟之间"));
         } else {
           callback();
         }
@@ -742,7 +742,7 @@ const formRules = computed(() => ({
     },
   ],
   logRetention: [
-    { required: true, message: "Log retention is required", trigger: "blur" },
+    { required: true, message: "日志保留时间是必填项", trigger: "blur" },
     {
       validator: (
         _rule: any,
@@ -750,7 +750,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 1 || value > 365) {
-          callback(new Error("Must be between 1 and 365 days"));
+          callback(new Error("必须在1到365天之间"));
         } else {
           callback();
         }
@@ -798,7 +798,7 @@ watch(
 onMounted(() => {
   // Load system info
   // This would typically come from an API call
-  console.log("SystemConfig mounted");
+  console.log("系统配置组件已挂载");
 });
 </script>
 
@@ -915,6 +915,29 @@ onMounted(() => {
         .el-checkbox {
           margin-right: 0;
         }
+      }
+    }
+  }
+}
+
+// Large screen optimizations
+@media (min-width: 1200px) {
+  .system-config {
+    .config-section {
+      :deep(.el-card__body) {
+        padding: 32px;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .system-config {
+    .config-section {
+      :deep(.el-card__body) {
+        padding: 20px;
       }
     }
   }

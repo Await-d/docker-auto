@@ -9,45 +9,44 @@
     >
       <el-tabs v-model="activeTab" type="border-card">
         <!-- Basic Configuration -->
-        <el-tab-pane label="Basic" name="basic">
+        <el-tab-pane label="基础配置" name="basic">
           <div class="form-section">
-            <h3 class="section-title">Container Information</h3>
+            <h3 class="section-title">容器信息</h3>
 
-            <el-form-item label="Container Name" prop="name" required>
+            <el-form-item label="容器名称" prop="name" required>
               <el-input
                 v-model="formData.name"
-                placeholder="Enter container name"
+                placeholder="输入容器名称"
                 :disabled="isEditMode"
               />
               <div class="form-help">
-                Must be unique and contain only alphanumeric characters,
-                hyphens, and underscores
+                必须唯一且只能包含字母数字字符、连字符和下划线
               </div>
             </el-form-item>
 
-            <el-form-item label="Image" prop="image" required>
+            <el-form-item label="镜像" prop="image" required>
               <div class="image-input-group">
                 <el-autocomplete
                   v-model="formData.image"
                   :fetch-suggestions="searchImages"
-                  placeholder="nginx, postgres, node, etc."
+                  placeholder="nginx, postgres, node 等"
                   style="flex: 1"
                 />
                 <el-input
                   v-model="formData.tag"
-                  placeholder="Tag"
+                  placeholder="标签"
                   style="width: 120px"
                 />
               </div>
               <div class="form-help">
-                Image name and tag (e.g., nginx:latest, postgres:13)
+                镜像名称和标签 (例如：nginx:latest, postgres:13)
               </div>
             </el-form-item>
 
-            <el-form-item label="Registry">
+            <el-form-item label="镜像仓库">
               <el-select
                 v-model="formData.registry"
-                placeholder="Select registry (optional)"
+                placeholder="选择镜像仓库 (可选)"
                 clearable
               >
                 <el-option
@@ -59,57 +58,57 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="Command">
+            <el-form-item label="启动命令">
               <el-input
                 v-model="commandString"
                 type="textarea"
                 :rows="2"
-                placeholder="Override default command (one per line)"
+                placeholder="覆盖默认命令 (每行一个)"
               />
               <div class="form-help">
-                Custom command to run in the container (optional)
+                在容器中运行的自定义命令 (可选)
               </div>
             </el-form-item>
 
-            <el-form-item label="Working Directory">
+            <el-form-item label="工作目录">
               <el-input
                 v-model="formData.securityOptions.workingDir"
                 placeholder="/app"
               />
             </el-form-item>
 
-            <el-form-item label="User">
+            <el-form-item label="用户">
               <el-input
                 v-model="formData.securityOptions.user"
-                placeholder="1000:1000 or username"
+                placeholder="1000:1000 或用户名"
               />
             </el-form-item>
 
-            <el-form-item label="Restart Policy">
+            <el-form-item label="重启策略">
               <el-select v-model="formData.restartPolicy">
-                <el-option label="No restart" value="no" />
-                <el-option label="Always restart" value="always" />
+                <el-option label="不重启" value="no" />
+                <el-option label="总是重启" value="always" />
                 <el-option
-                  label="Restart unless stopped"
+                  label="除非手动停止否则重启"
                   value="unless-stopped"
                 />
-                <el-option label="Restart on failure" value="on-failure" />
+                <el-option label="失败时重启" value="on-failure" />
               </el-select>
             </el-form-item>
           </div>
         </el-tab-pane>
 
-        <!-- Ports -->
-        <el-tab-pane label="Ports" name="ports">
+        <!-- 端口映射 -->
+        <el-tab-pane label="端口映射" name="ports">
           <div class="form-section">
             <div class="section-header">
-              <h3 class="section-title">Port Mappings</h3>
+              <h3 class="section-title">端口映射</h3>
               <el-button
 type="primary" size="small"
 @click="addPort"
 >
                 <el-icon><Plus /></el-icon>
-                Add Port
+                添加端口
               </el-button>
             </div>
 
@@ -117,9 +116,9 @@ type="primary" size="small"
               <el-icon class="empty-icon">
                 <Connection />
               </el-icon>
-              <p>No port mappings configured</p>
+              <p>未配置端口映射</p>
               <el-button type="primary" @click="addPort">
-                Add First Port
+                添加第一个端口
               </el-button>
             </div>
 
@@ -134,7 +133,7 @@ type="primary" size="small"
                   :rules="portRules.hostPort"
                   class="port-field"
                 >
-                  <template #label> Host Port </template>
+                  <template #label> 主机端口 </template>
                   <el-input-number
                     v-model="port.hostPort"
                     :min="1"
@@ -148,7 +147,7 @@ type="primary" size="small"
                   :rules="portRules.containerPort"
                   class="port-field"
                 >
-                  <template #label> Container Port </template>
+                  <template #label> 容器端口 </template>
                   <el-input-number
                     v-model="port.containerPort"
                     :min="1"
@@ -158,7 +157,7 @@ type="primary" size="small"
                 </el-form-item>
 
                 <el-form-item class="port-field">
-                  <template #label> Protocol </template>
+                  <template #label> 协议 </template>
                   <el-select v-model="port.protocol">
                     <el-option label="TCP" value="tcp" />
                     <el-option label="UDP" value="udp" />
@@ -166,7 +165,7 @@ type="primary" size="small"
                 </el-form-item>
 
                 <el-form-item class="port-field">
-                  <template #label> Host IP </template>
+                  <template #label> 主机IP </template>
                   <el-input
                     v-model="port.hostIp"
                     placeholder="0.0.0.0 (optional)"
@@ -205,17 +204,17 @@ type="primary" size="small"
           </div>
         </el-tab-pane>
 
-        <!-- Volumes -->
-        <el-tab-pane label="Volumes" name="volumes">
+        <!-- 数据卷 -->
+        <el-tab-pane label="数据卷" name="volumes">
           <div class="form-section">
             <div class="section-header">
-              <h3 class="section-title">Volume Mounts</h3>
+              <h3 class="section-title">数据卷挂载</h3>
               <el-button
 type="primary" size="small"
 @click="addVolume"
 >
                 <el-icon><Plus /></el-icon>
-                Add Volume
+                添加数据卷
               </el-button>
             </div>
 
@@ -223,9 +222,9 @@ type="primary" size="small"
               <el-icon class="empty-icon">
                 <FolderOpened />
               </el-icon>
-              <p>No volume mounts configured</p>
+              <p>未配置数据卷挂载</p>
               <el-button type="primary" @click="addVolume">
-                Add First Volume
+                添加第一个数据卷
               </el-button>
             </div>
 
@@ -240,10 +239,10 @@ type="primary" size="small"
                   :rules="volumeRules.source"
                   class="volume-field"
                 >
-                  <template #label> Source </template>
+                  <template #label> 源路径 </template>
                   <el-input
                     v-model="volume.source"
-                    placeholder="/host/path or volume-name"
+                    placeholder="/主机路径 或 数据卷名称"
                   />
                 </el-form-item>
 
@@ -252,26 +251,26 @@ type="primary" size="small"
                   :rules="volumeRules.target"
                   class="volume-field"
                 >
-                  <template #label> Target </template>
+                  <template #label> 目标路径 </template>
                   <el-input
                     v-model="volume.target"
-                    placeholder="/container/path"
+                    placeholder="/容器路径"
                   />
                 </el-form-item>
 
                 <el-form-item class="volume-field">
-                  <template #label> Type </template>
+                  <template #label> 类型 </template>
                   <el-select v-model="volume.type">
-                    <el-option label="Bind Mount" value="bind" />
-                    <el-option label="Named Volume" value="volume" />
-                    <el-option label="Tmpfs" value="tmpfs" />
+                    <el-option label="绑定挂载" value="bind" />
+                    <el-option label="命名数据卷" value="volume" />
+                    <el-option label="临时文件系统" value="tmpfs" />
                   </el-select>
                 </el-form-item>
 
                 <el-form-item class="volume-field">
-                  <template #label> Options </template>
+                  <template #label> 选项 </template>
                   <el-checkbox v-model="volume.readOnly">
-                    Read Only
+                    只读
                   </el-checkbox>
                 </el-form-item>
 
@@ -289,18 +288,18 @@ type="primary" size="small"
           </div>
         </el-tab-pane>
 
-        <!-- Environment -->
-        <el-tab-pane label="Environment" name="environment">
+        <!-- 环境变量 -->
+        <el-tab-pane label="环境变量" name="environment">
           <div class="form-section">
             <div class="section-header">
-              <h3 class="section-title">Environment Variables</h3>
+              <h3 class="section-title">环境变量</h3>
               <el-button
                 type="primary"
                 size="small"
                 @click="addEnvironmentVariable"
               >
                 <el-icon><Plus /></el-icon>
-                Add Variable
+                添加变量
               </el-button>
             </div>
 
@@ -308,9 +307,9 @@ type="primary" size="small"
               <el-icon class="empty-icon">
                 <Setting />
               </el-icon>
-              <p>No environment variables configured</p>
+              <p>未配置环境变量</p>
               <el-button type="primary" @click="addEnvironmentVariable">
-                Add First Variable
+                添加第一个变量
               </el-button>
             </div>
 
@@ -321,25 +320,25 @@ type="primary" size="small"
                 class="env-item"
               >
                 <el-form-item class="env-field">
-                  <template #label> Key </template>
+                  <template #label> 键名 </template>
                   <el-input
-v-model="env.key" placeholder="VARIABLE_NAME"
+v-model="env.key" placeholder="变量名称"
 />
                 </el-form-item>
 
                 <el-form-item class="env-field">
-                  <template #label> Value </template>
+                  <template #label> 值 </template>
                   <el-input
                     v-model="env.value"
                     :type="env.sensitive ? 'password' : 'text'"
-                    placeholder="value"
+                    placeholder="值"
                   />
                 </el-form-item>
 
                 <el-form-item class="env-field">
-                  <template #label> Options </template>
+                  <template #label> 选项 </template>
                   <el-checkbox v-model="env.sensitive">
-Sensitive
+敏感信息
 </el-checkbox>
                 </el-form-item>
 
@@ -356,7 +355,7 @@ Sensitive
             </div>
 
             <div class="env-templates">
-              <h4>Environment Templates</h4>
+              <h4>环境变量模板</h4>
               <div class="template-buttons">
                 <el-button size="small" @click="addEnvTemplate('node')">
                   Node.js
@@ -375,17 +374,17 @@ Sensitive
           </div>
         </el-tab-pane>
 
-        <!-- Labels -->
-        <el-tab-pane label="Labels" name="labels">
+        <!-- 标签 -->
+        <el-tab-pane label="标签" name="labels">
           <div class="form-section">
             <div class="section-header">
-              <h3 class="section-title">Container Labels</h3>
+              <h3 class="section-title">容器标签</h3>
               <el-button
 type="primary" size="small"
 @click="addLabel"
 >
                 <el-icon><Plus /></el-icon>
-                Add Label
+                添加标签
               </el-button>
             </div>
 
@@ -393,9 +392,9 @@ type="primary" size="small"
               <el-icon class="empty-icon">
                 <Tag />
               </el-icon>
-              <p>No labels configured</p>
+              <p>未配置标签</p>
               <el-button type="primary" @click="addLabel">
-                Add First Label
+                添加第一个标签
               </el-button>
             </div>
 
@@ -406,16 +405,16 @@ type="primary" size="small"
                 class="label-item"
               >
                 <el-form-item class="label-field">
-                  <template #label> Key </template>
+                  <template #label> 键名 </template>
                   <el-input
 v-model="label.key" placeholder="app.name"
 />
                 </el-form-item>
 
                 <el-form-item class="label-field">
-                  <template #label> Value </template>
+                  <template #label> 值 </template>
                   <el-input
-v-model="label.value" placeholder="my-app"
+v-model="label.value" placeholder="我的应用"
 />
                 </el-form-item>
 
@@ -433,12 +432,12 @@ v-model="label.value" placeholder="my-app"
           </div>
         </el-tab-pane>
 
-        <!-- Resources -->
-        <el-tab-pane label="Resources" name="resources">
+        <!-- 资源限制 -->
+        <el-tab-pane label="资源限制" name="resources">
           <div class="form-section">
-            <h3 class="section-title">Resource Limits</h3>
+            <h3 class="section-title">资源限制</h3>
 
-            <el-form-item label="CPU Limit">
+            <el-form-item label="CPU限制">
               <el-input-number
                 v-model="formData.resourceLimits.cpuLimit"
                 :min="0"
@@ -447,11 +446,11 @@ v-model="label.value" placeholder="my-app"
                 placeholder="1.0"
               />
               <div class="form-help">
-                Number of CPU cores (e.g., 1.5 for 1.5 cores)
+                CPU核数 (例如：1.5 表示1.5个核)
               </div>
             </el-form-item>
 
-            <el-form-item label="Memory Limit">
+            <el-form-item label="内存限制">
               <el-input-number
                 v-model="formData.resourceLimits.memoryLimit"
                 :min="0"
@@ -459,11 +458,11 @@ v-model="label.value" placeholder="my-app"
                 placeholder="512"
               />
               <div class="form-help">
-Memory limit in MB
+内存限制（MB）
 </div>
             </el-form-item>
 
-            <el-form-item label="Swap Limit">
+            <el-form-item label="交换区限制">
               <el-input-number
                 v-model="formData.resourceLimits.swapLimit"
                 :min="0"
@@ -471,29 +470,29 @@ Memory limit in MB
                 placeholder="1024"
               />
               <div class="form-help">
-Swap limit in MB (optional)
+交换区限制（MB）（可选）
 </div>
             </el-form-item>
 
-            <h3 class="section-title">Security Options</h3>
+            <h3 class="section-title">安全选项</h3>
 
             <el-form-item>
               <el-checkbox v-model="formData.securityOptions.readOnly">
-                Read-only filesystem
+                只读文件系统
               </el-checkbox>
             </el-form-item>
 
             <el-form-item>
               <el-checkbox v-model="formData.securityOptions.privileged">
-                Privileged mode
+                特权模式
               </el-checkbox>
             </el-form-item>
 
-            <el-form-item label="Capabilities to Add">
+            <el-form-item label="添加的权限">
               <el-select
                 v-model="formData.securityOptions.capAdd"
                 multiple
-                placeholder="Select capabilities"
+                placeholder="选择权限"
               >
                 <el-option label="NET_ADMIN" value="NET_ADMIN" />
                 <el-option label="SYS_ADMIN" value="SYS_ADMIN" />
@@ -502,11 +501,11 @@ Swap limit in MB (optional)
               </el-select>
             </el-form-item>
 
-            <el-form-item label="Capabilities to Drop">
+            <el-form-item label="移除的权限">
               <el-select
                 v-model="formData.securityOptions.capDrop"
                 multiple
-                placeholder="Select capabilities"
+                placeholder="选择权限"
               >
                 <el-option label="ALL" value="ALL" />
                 <el-option label="NET_RAW" value="NET_RAW" />
@@ -516,19 +515,19 @@ Swap limit in MB (optional)
           </div>
         </el-tab-pane>
 
-        <!-- Health Check -->
-        <el-tab-pane label="Health Check" name="health">
+        <!-- 健康检查 -->
+        <el-tab-pane label="健康检查" name="health">
           <div class="form-section">
-            <h3 class="section-title">Health Check Configuration</h3>
+            <h3 class="section-title">健康检查配置</h3>
 
             <el-form-item>
               <el-checkbox v-model="healthCheckEnabled">
-                Enable health check
+                启用健康检查
               </el-checkbox>
             </el-form-item>
 
             <div v-if="healthCheckEnabled">
-              <el-form-item label="Command" required>
+              <el-form-item label="命令" required>
                 <el-input
                   v-model="healthCheckCommand"
                   type="textarea"
@@ -536,11 +535,11 @@ Swap limit in MB (optional)
                   placeholder="curl -f http://localhost:8080/health || exit 1"
                 />
                 <div class="form-help">
-                  Command to run for health check (one per line)
+                  健康检查运行命令（每行一个）
                 </div>
               </el-form-item>
 
-              <el-form-item label="Interval (seconds)">
+              <el-form-item label="间隔时间（秒）">
                 <el-input-number
                   v-model="formData.healthCheck!.interval"
                   :min="1"
@@ -548,7 +547,7 @@ Swap limit in MB (optional)
                 />
               </el-form-item>
 
-              <el-form-item label="Timeout (seconds)">
+              <el-form-item label="超时时间（秒）">
                 <el-input-number
                   v-model="formData.healthCheck!.timeout"
                   :min="1"
@@ -556,7 +555,7 @@ Swap limit in MB (optional)
                 />
               </el-form-item>
 
-              <el-form-item label="Retries">
+              <el-form-item label="重试次数">
                 <el-input-number
                   v-model="formData.healthCheck!.retries"
                   :min="1"
@@ -564,72 +563,72 @@ Swap limit in MB (optional)
                 />
               </el-form-item>
 
-              <el-form-item label="Start Period (seconds)">
+              <el-form-item label="启动等待时间（秒）">
                 <el-input-number
                   v-model="formData.healthCheck!.startPeriod"
                   :min="0"
                   placeholder="60"
                 />
                 <div class="form-help">
-                  Grace period before health checks start
+                  健康检查启动前的宽限期
                 </div>
               </el-form-item>
             </div>
           </div>
         </el-tab-pane>
 
-        <!-- Update Policy -->
-        <el-tab-pane label="Updates" name="updates">
+        <!-- 更新策略 -->
+        <el-tab-pane label="更新策略" name="updates">
           <div class="form-section">
-            <h3 class="section-title">Update Policy</h3>
+            <h3 class="section-title">更新策略</h3>
 
             <el-form-item>
               <el-checkbox v-model="formData.updatePolicy.enabled">
-                Enable automatic updates
+                启用自动更新
               </el-checkbox>
             </el-form-item>
 
             <div v-if="formData.updatePolicy.enabled">
-              <el-form-item label="Update Strategy">
+              <el-form-item label="更新策略">
                 <el-select v-model="formData.updatePolicy.strategy">
-                  <el-option label="Recreate" value="recreate" />
-                  <el-option label="Rolling Update" value="rolling" />
-                  <el-option label="Blue-Green" value="blue-green" />
+                  <el-option label="重新创建" value="recreate" />
+                  <el-option label="滚动更新" value="rolling" />
+                  <el-option label="蓝绿部署" value="blue-green" />
                 </el-select>
               </el-form-item>
 
               <el-form-item>
                 <el-checkbox v-model="formData.updatePolicy.autoUpdate">
-                  Auto-update when new versions are available
+                  有新版本时自动更新
                 </el-checkbox>
               </el-form-item>
 
               <el-form-item
                 v-if="formData.updatePolicy.autoUpdate"
-                label="Schedule"
+                label="计划时间"
               >
                 <el-input
                   v-model="formData.updatePolicy.schedule"
-                  placeholder="0 2 * * 0 (Every Sunday at 2 AM)"
+                  placeholder="0 2 * * 0 (每周日凌晨2点)"
                 />
                 <div class="form-help">
-                  Cron expression for scheduled updates
+                  定时更新的Cron表达式
                 </div>
               </el-form-item>
 
               <el-form-item>
                 <el-checkbox v-model="formData.updatePolicy.notifyOnUpdate">
-                  Send notifications for updates
+                  发送更新通知
                 </el-checkbox>
               </el-form-item>
 
               <el-form-item>
                 <el-checkbox v-model="formData.updatePolicy.rollbackOnFailure">
-                  Rollback on update failure
+                  更新失败时回滚
                 </el-checkbox>
               </el-form-item>
 
-              <el-form-item label="Max Retries">
+              <el-form-item label="最大重试次数">
                 <el-input-number
                   v-model="formData.updatePolicy.maxUpdateRetries"
                   :min="0"
@@ -637,7 +636,7 @@ Swap limit in MB (optional)
                 />
               </el-form-item>
 
-              <el-form-item label="Update Timeout (minutes)">
+              <el-form-item label="更新超时时间（分钟）">
                 <el-input-number
                   v-model="formData.updatePolicy.updateTimeout"
                   :min="1"
@@ -652,16 +651,16 @@ Swap limit in MB (optional)
       <!-- Form Actions -->
       <div class="form-actions">
         <el-button @click="$emit('cancel')">
-Cancel
+取消
 </el-button>
         <el-button @click="resetForm">
-Reset
+重置
 </el-button>
         <el-button
 type="primary" @click="handleSubmit"
 :loading="submitting"
 >
-          {{ isEditMode ? "Update" : "Create" }} Container
+          {{ isEditMode ? "更新" : "创建" }} 容器
         </el-button>
       </div>
     </el-form>

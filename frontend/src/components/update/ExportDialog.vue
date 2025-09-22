@@ -1,12 +1,12 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Export Update History"
+    title="导出更新历史"
     width="50%"
     :before-close="handleClose"
   >
     <el-form :model="exportForm" label-width="120px">
-      <el-form-item label="Export Format">
+      <el-form-item label="导出格式">
         <el-radio-group v-model="exportForm.format">
           <el-radio value="csv"> CSV </el-radio>
           <el-radio value="json"> JSON </el-radio>
@@ -14,63 +14,63 @@
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item label="Date Range">
+      <el-form-item label="日期范围">
         <el-date-picker
           v-model="exportForm.dateRange"
           type="daterange"
-          range-separator="To"
-          start-placeholder="Start date"
-          end-placeholder="End date"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
           value-format="YYYY-MM-DD"
           style="width: 100%"
         />
       </el-form-item>
 
-      <el-form-item label="Status Filter">
+      <el-form-item label="状态筛选">
         <el-checkbox-group v-model="exportForm.statusFilter">
-          <el-checkbox value="completed"> Completed </el-checkbox>
-          <el-checkbox value="failed"> Failed </el-checkbox>
-          <el-checkbox value="cancelled"> Cancelled </el-checkbox>
-          <el-checkbox value="running"> Running </el-checkbox>
+          <el-checkbox value="completed"> 已完成 </el-checkbox>
+          <el-checkbox value="failed"> 失败 </el-checkbox>
+          <el-checkbox value="cancelled"> 已取消 </el-checkbox>
+          <el-checkbox value="running"> 运行中 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Include Fields">
+      <el-form-item label="包含字段">
         <el-checkbox-group v-model="exportForm.includeFields">
-          <el-checkbox value="container"> Container Name </el-checkbox>
-          <el-checkbox value="versions"> Version Information </el-checkbox>
-          <el-checkbox value="timestamps"> Timestamps </el-checkbox>
-          <el-checkbox value="duration"> Duration </el-checkbox>
-          <el-checkbox value="errors"> Error Details </el-checkbox>
-          <el-checkbox value="logs"> Logs Summary </el-checkbox>
+          <el-checkbox value="container"> 容器名称 </el-checkbox>
+          <el-checkbox value="versions"> 版本信息 </el-checkbox>
+          <el-checkbox value="timestamps"> 时间戳 </el-checkbox>
+          <el-checkbox value="duration"> 持续时间 </el-checkbox>
+          <el-checkbox value="errors"> 错误详情 </el-checkbox>
+          <el-checkbox value="logs"> 日志摘要 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Options">
+      <el-form-item label="选项">
         <el-checkbox v-model="exportForm.includeHeaders">
-          Include Headers
+          包含表头
         </el-checkbox>
         <br>
         <el-checkbox v-model="exportForm.compressOutput">
-          Compress Output
+          压缩输出
         </el-checkbox>
       </el-form-item>
     </el-form>
 
     <el-alert
-title="Export Preview" type="info"
+title="导出预览" type="info"
 :closable="false" show-icon
 >
       <template #default>
-        <p><strong>Records to export:</strong> {{ estimatedRecords }}</p>
-        <p><strong>Estimated file size:</strong> {{ estimatedSize }}</p>
-        <p><strong>Export will include:</strong> {{ selectedFieldsText }}</p>
+        <p><strong>待导出记录：</strong> {{ estimatedRecords }}</p>
+        <p><strong>预估文件大小：</strong> {{ estimatedSize }}</p>
+        <p><strong>导出将包括：</strong> {{ selectedFieldsText }}</p>
       </template>
     </el-alert>
 
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="handleClose">Cancel</el-button>
+        <el-button @click="handleClose">取消</el-button>
         <el-button
           type="primary"
           :loading="exporting"
@@ -78,7 +78,7 @@ title="Export Preview" type="info"
           @click="handleExport"
         >
           <el-icon><Download /></el-icon>
-          Export
+          导出
         </el-button>
       </span>
     </template>
@@ -167,12 +167,12 @@ const estimatedSize = computed(() => {
 
 const selectedFieldsText = computed(() => {
   const fieldLabels: Record<string, string> = {
-    container: "Container Names",
-    versions: "Version Info",
-    timestamps: "Timestamps",
-    duration: "Duration",
-    errors: "Error Details",
-    logs: "Logs Summary",
+    container: "容器名称",
+    versions: "版本信息",
+    timestamps: "时间戳",
+    duration: "持续时间",
+    errors: "错误详情",
+    logs: "日志摘要",
   };
 
   return exportForm.value.includeFields
@@ -191,12 +191,12 @@ const handleExport = async () => {
     emit("export", { ...exportForm.value });
 
     ElMessage.success(
-      `Export completed! ${estimatedRecords.value} records exported.`,
+      `导出完成！已导出 ${estimatedRecords.value} 条记录。`,
     );
     handleClose();
   } catch (error) {
-    ElMessage.error("Export failed. Please try again.");
-    console.error("Export error:", error);
+    ElMessage.error("导出失败。请重试。");
+    console.error("导出错误:", error);
   } finally {
     exporting.value = false;
   }

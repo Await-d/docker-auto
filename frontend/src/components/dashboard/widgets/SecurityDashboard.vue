@@ -4,31 +4,31 @@
       <el-icon :size="48">
         <Lock />
       </el-icon>
-      <h3>Security Dashboard</h3>
+      <h3>安全仪表盘</h3>
       <p>
-        Security status and vulnerability monitoring will be displayed here.
+        安全状态和漏洞监控将在此处显示。
       </p>
       <div class="mock-data">
         <div class="security-metric">
-          <span class="metric-label">Security Score</span>
+          <span class="metric-label">安全评分</span>
           <span class="metric-value good">85%</span>
         </div>
         <div class="security-metric">
-          <span class="metric-label">Vulnerabilities</span>
-          <span class="metric-value warning">3 Medium</span>
+          <span class="metric-label">漏洞</span>
+          <span class="metric-value warning">3个中等</span>
         </div>
         <div class="security-metric">
-          <span class="metric-label">Last Scan</span>
-          <span class="metric-value">2h ago</span>
+          <span class="metric-label">最后扫描</span>
+          <span class="metric-value">2小时前</span>
         </div>
         <div class="security-status">
           <div class="status-item">
             <el-icon><SuccessFilled /></el-icon>
-            <span>SSL Certificates Valid</span>
+            <span>SSL证书有效</span>
           </div>
           <div class="status-item">
             <el-icon><Warning /></el-icon>
-            <span>Outdated Dependencies</span>
+            <span>依赖项过时</span>
           </div>
         </div>
       </div>

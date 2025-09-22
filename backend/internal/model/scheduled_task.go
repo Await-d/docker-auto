@@ -48,11 +48,13 @@ type TaskExecutionLog struct {
 type TaskType string
 
 const (
-	TaskTypeImageCheck    TaskType = "image_check"
-	TaskTypeContainerUpdate TaskType = "container_update"
-	TaskTypeCleanup       TaskType = "cleanup"
-	TaskTypeBackup        TaskType = "backup"
-	TaskTypeHealthCheck   TaskType = "health_check"
+	TaskTypeImageCheck        TaskType = "image_check"
+	TaskTypeContainerUpdate   TaskType = "container_update"
+	TaskTypeCleanup           TaskType = "cleanup"
+	TaskTypeBackup            TaskType = "backup"
+	TaskTypeHealthCheck       TaskType = "health_check"
+	TaskTypeImageCleanup      TaskType = "image_cleanup"
+	TaskTypeSystemMaintenance TaskType = "system_maintenance"
 )
 
 // ExecutionStatus defines task execution status
@@ -252,6 +254,8 @@ func GetValidTaskTypes() []TaskType {
 		TaskTypeCleanup,
 		TaskTypeBackup,
 		TaskTypeHealthCheck,
+		TaskTypeImageCleanup,
+		TaskTypeSystemMaintenance,
 	}
 }
 

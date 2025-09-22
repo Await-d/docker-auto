@@ -1,44 +1,44 @@
 <template>
   <div class="security-dashboard-config">
     <el-form :model="localConfig" label-width="120px" size="small">
-      <el-form-item label="Security Checks">
+      <el-form-item label="安全检查">
         <el-checkbox-group v-model="localConfig.securityChecks">
           <el-checkbox label="vulnerabilities">
-            Vulnerability Scans
+            漏洞扫描
           </el-checkbox>
-          <el-checkbox label="malware"> Malware Detection </el-checkbox>
-          <el-checkbox label="compliance"> Compliance Checks </el-checkbox>
-          <el-checkbox label="access"> Access Monitoring </el-checkbox>
+          <el-checkbox label="malware"> 恶意软件检测 </el-checkbox>
+          <el-checkbox label="compliance"> 合规性检查 </el-checkbox>
+          <el-checkbox label="access"> 访问监控 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Severity Levels">
+      <el-form-item label="严重程度">
         <el-checkbox-group v-model="localConfig.severityLevels">
-          <el-checkbox label="critical"> Critical </el-checkbox>
-          <el-checkbox label="high"> High </el-checkbox>
-          <el-checkbox label="medium"> Medium </el-checkbox>
-          <el-checkbox label="low"> Low </el-checkbox>
+          <el-checkbox label="critical"> 严重 </el-checkbox>
+          <el-checkbox label="high"> 高 </el-checkbox>
+          <el-checkbox label="medium"> 中等 </el-checkbox>
+          <el-checkbox label="low"> 低 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Scan Interval">
+      <el-form-item label="扫描间隔">
         <el-select v-model="localConfig.scanInterval" style="width: 100%">
-          <el-option label="Every Hour" :value="3600000" />
-          <el-option label="Every 6 Hours" :value="21600000" />
-          <el-option label="Daily" :value="86400000" />
-          <el-option label="Weekly" :value="604800000" />
+          <el-option label="每小时" :value="3600000" />
+          <el-option label="每6小时" :value="21600000" />
+          <el-option label="每日" :value="86400000" />
+          <el-option label="每周" :value="604800000" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Auto Remediation">
+      <el-form-item label="自动修复">
         <el-switch v-model="localConfig.autoRemediation" />
       </el-form-item>
 
-      <el-form-item label="Alert Notifications">
+      <el-form-item label="警报通知">
         <el-switch v-model="localConfig.alertNotifications" />
       </el-form-item>
 
-      <el-form-item label="Show Risk Score">
+      <el-form-item label="显示风险评分">
         <el-switch v-model="localConfig.showRiskScore" />
       </el-form-item>
     </el-form>

@@ -11,6 +11,8 @@ import (
 	"docker-auto/internal/model"
 	"docker-auto/internal/repository"
 	"docker-auto/pkg/docker"
+	"docker-auto/pkg/security"
+	dockerTypes "docker-auto/pkg/types"
 
 	"github.com/docker/docker/api/types"
 	"github.com/sirupsen/logrus"
@@ -22,6 +24,8 @@ type ContainerService struct {
 	updateHistoryRepo repository.UpdateHistoryRepository
 	activityRepo      repository.ActivityLogRepository
 	dockerClient      *docker.DockerClient
+	dockerManager     *docker.ClientManager
+	updateEngine      *docker.UpdateEngine
 	cache             *CacheService
 	config            *config.Config
 	userService       *UserService
@@ -33,15 +37,23 @@ func NewContainerService(
 	updateHistoryRepo repository.UpdateHistoryRepository,
 	activityRepo repository.ActivityLogRepository,
 	dockerClient *docker.DockerClient,
+	dockerManager *docker.ClientManager,
 	cache *CacheService,
 	config *config.Config,
 	userService *UserService,
 ) *ContainerService {
+	var updateEngine *docker.UpdateEngine
+	if dockerManager != nil {
+		updateEngine = docker.NewUpdateEngine(dockerManager, logrus.StandardLogger())
+	}
+
 	return &ContainerService{
 		containerRepo:     containerRepo,
 		updateHistoryRepo: updateHistoryRepo,
 		activityRepo:      activityRepo,
 		dockerClient:      dockerClient,
+		dockerManager:     dockerManager,
+		updateEngine:      updateEngine,
 		cache:             cache,
 		config:            config,
 		userService:       userService,
@@ -569,22 +581,43 @@ func (s *ContainerService) UpdateContainerImage(ctx context.Context, userID int6
 		return nil, fmt.Errorf("failed to create update history: %w", err)
 	}
 
-	// TODO: Implement actual image update logic based on strategy
-	// This is a placeholder - real implementation would:
-	// 1. Pull new image
-	// 2. Create backup if requested
-	// 3. Apply update strategy (recreate/rolling/blue-green)
-	// 4. Update container record
-	// 5. Update history with results
+	// Convert UpdateImageRequest to UpdateContainerRequest for the update engine
+	updateReq := &UpdateContainerRequest{
+		Strategy:           req.Strategy,
+		NewImage:           req.NewImage,
+		RollbackOnFailure:  req.Backup, // Use backup flag as rollback indicator
+		CreateBackup:       req.Backup,
+		HealthCheckTimeout: 30, // Default 30 seconds
+		Config: map[string]interface{}{
+			"Image": req.NewImage,
+		},
+	}
 
-	// For now, just mark as completed
+	// Implement actual container update using Docker update engine
+	err = s.performContainerUpdate(ctx, container, updateReq, updateHistory)
+	if err != nil {
+		// Update history with failure
+		updateHistory.Status = model.UpdateStatusFailed
+		updateHistory.ErrorMessage = err.Error()
+		completedAt := time.Now()
+		updateHistory.CompletedAt = &completedAt
+
+		// Save the updated history using repository
+		if updateErr := s.updateHistoryRepo.Update(ctx, updateHistory); updateErr != nil {
+			logrus.WithError(updateErr).WithField("update_id", updateHistory.ID).Warn("Failed to update history record with failure")
+		}
+
+		return nil, fmt.Errorf("container update failed: %w", err)
+	}
+
+	// Update history with success
 	updateHistory.Status = model.UpdateStatusCompleted
-	updateHistory.CompletedAt = &time.Time{}
-	*updateHistory.CompletedAt = time.Now()
-	updateHistory.NewImage = container.GetFullImageName() // Placeholder
+	updateHistory.NewImage = req.NewImage
+	completedAt := time.Now()
+	updateHistory.CompletedAt = &completedAt
 
-	if err := s.updateHistoryRepo.Create(ctx, updateHistory); err != nil {
-		logrus.WithError(err).WithField("update_id", updateHistory.ID).Warn("Failed to update history record")
+	if err := s.updateHistoryRepo.Update(ctx, updateHistory); err != nil {
+		logrus.WithError(err).WithField("update_id", updateHistory.ID).Warn("Failed to update history record with success")
 	}
 
 	// Log activity
@@ -796,4 +829,181 @@ func (s *ContainerService) SyncContainerStatus(ctx context.Context) error {
 	return nil
 }
 
-// Helper methods will be continued in the next part due to length...
+// performContainerUpdate performs the actual container update using the update engine
+func (s *ContainerService) performContainerUpdate(ctx context.Context, container *model.Container, req *UpdateContainerRequest, updateHistory *model.UpdateHistory) error {
+	if s.updateEngine == nil {
+		return fmt.Errorf("update engine not available")
+	}
+
+	// Convert model strategy to docker strategy
+	var strategy dockerTypes.UpdateStrategy
+	switch req.Strategy {
+	case "recreate":
+		strategy = dockerTypes.UpdateStrategyRecreate
+	case "rolling":
+		strategy = dockerTypes.UpdateStrategyRolling
+	case "blue_green":
+		strategy = dockerTypes.UpdateStrategyBlueGreen
+	case "canary":
+		strategy = dockerTypes.UpdateStrategyCanary
+	default:
+		strategy = dockerTypes.UpdateStrategyRecreate
+	}
+
+	// Build update options
+	updateOptions := &dockerTypes.ContainerUpdateOptions{
+		Strategy:           strategy,
+		NewImage:           req.NewImage,
+		RollbackOnFailure:  req.RollbackOnFailure,
+		HealthCheckTimeout: time.Duration(req.HealthCheckTimeout) * time.Second,
+		BackupConfig: &dockerTypes.BackupConfig{
+			Enabled:     req.CreateBackup,
+			BackupImage: fmt.Sprintf("%s_backup_%s", container.Image, time.Now().Format("20060102150405")),
+		},
+		NotificationConfig: &dockerTypes.NotificationConfig{
+			Enabled:   true,
+			OnSuccess: true,
+			OnFailure: true,
+			OnRollback: true,
+		},
+	}
+
+	// Add strategy-specific configuration
+	if strategy == dockerTypes.UpdateStrategyRolling && req.RollingConfig != nil {
+		updateOptions.RollingConfig = &dockerTypes.RollingUpdateConfig{
+			MaxUnavailable: req.RollingConfig.MaxUnavailable,
+			MaxSurge:       req.RollingConfig.MaxSurge,
+			BatchSize:      req.RollingConfig.BatchSize,
+			BatchDelay:     time.Duration(req.RollingConfig.BatchDelay) * time.Second,
+		}
+	}
+
+	if strategy == dockerTypes.UpdateStrategyBlueGreen && req.BlueGreenConfig != nil {
+		updateOptions.BlueGreenConfig = &dockerTypes.BlueGreenConfig{
+			NetworkName:   req.BlueGreenConfig.NetworkName,
+			WarmupTime:    time.Duration(req.BlueGreenConfig.WarmupTime) * time.Second,
+			TestEndpoints: req.BlueGreenConfig.TestEndpoints,
+		}
+	}
+
+	if strategy == dockerTypes.UpdateStrategyCanary && req.CanaryConfig != nil {
+		updateOptions.CanaryConfig = &dockerTypes.CanaryConfig{
+			TrafficPercent:   req.CanaryConfig.TrafficPercent,
+			CanaryDuration:   time.Duration(req.CanaryConfig.CanaryDuration) * time.Second,
+			MetricsThreshold: req.CanaryConfig.MetricsThreshold,
+			AutoPromote:      req.CanaryConfig.AutoPromote,
+		}
+	}
+
+	// Create user context
+	var userID int64
+	if updateHistory.CreatedBy != nil {
+		userID = int64(*updateHistory.CreatedBy)
+	}
+
+	userContext := &security.DockerUserContext{
+		UserID:   userID,
+		Username: "system", // This would come from the authenticated user
+		Role:     "admin",   // This would come from user role
+		ClientIP: "internal",
+	}
+
+	// Get user info if available
+	if updateHistory.CreatedBy != nil {
+		if user, err := s.userService.GetUserByID(ctx, int64(*updateHistory.CreatedBy)); err == nil {
+			userContext.Username = user.Username
+			userContext.Role = string(user.Role)
+		}
+	}
+
+	// Execute the update
+	updateResult, err := s.updateEngine.UpdateContainer(
+		ctx,
+		container.ContainerID,
+		updateOptions,
+		userContext,
+	)
+
+	if err != nil {
+		return fmt.Errorf("update engine failed: %w", err)
+	}
+
+	// Log update steps
+	for _, step := range updateResult.Steps {
+		logrus.WithFields(logrus.Fields{
+			"container_id": container.ID,
+			"step_name":    step.Name,
+			"step_status":  step.Status,
+			"step_duration": step.Duration,
+		}).Info("Update step completed")
+
+		if step.Error != "" {
+			logrus.WithFields(logrus.Fields{
+				"container_id": container.ID,
+				"step_name":    step.Name,
+				"error":        step.Error,
+			}).Error("Update step failed")
+		}
+	}
+
+	// Update container record with new information
+	if updateResult.Success {
+		container.Image = req.NewImage
+		container.ContainerID = updateResult.ContainerID
+		container.UpdatedAt = time.Now()
+
+		if err := s.containerRepo.Update(ctx, container); err != nil {
+			logrus.WithError(err).WithField("container_id", container.ID).Warn("Failed to update container record")
+		}
+
+		// Update history with additional information
+		updateHistory.NewImage = updateResult.NewImage
+		if updateResult.BackupCreated {
+			updateHistory.BackupCreated = true
+			// Store backup image info in metadata
+			metadataMap := make(map[string]interface{})
+			if updateHistory.Metadata != "" {
+				json.Unmarshal([]byte(updateHistory.Metadata), &metadataMap)
+			}
+			metadataMap["backup_image"] = updateOptions.BackupConfig.BackupImage
+			if metadataBytes, err := json.Marshal(metadataMap); err == nil {
+				updateHistory.Metadata = string(metadataBytes)
+			}
+		}
+		if updateResult.RolledBack {
+			// Store rollback reason in error message
+			if updateHistory.ErrorMessage == "" {
+				updateHistory.ErrorMessage = updateResult.Error
+			} else {
+				updateHistory.ErrorMessage += "; Rollback: " + updateResult.Error
+			}
+		}
+	}
+
+	if !updateResult.Success {
+		return fmt.Errorf("container update failed: %s", updateResult.Error)
+	}
+
+	return nil
+}
+
+// Helper methods for container operations
+func (s *ContainerService) getUserContext(userID int64) *security.DockerUserContext {
+	ctx := context.Background()
+	user, err := s.userService.GetUserByID(ctx, userID)
+	if err != nil {
+		return &security.DockerUserContext{
+			UserID:   userID,
+			Username: fmt.Sprintf("user_%d", userID),
+			Role:     "viewer",
+			ClientIP: "unknown",
+		}
+	}
+
+	return &security.DockerUserContext{
+		UserID:   userID,
+		Username: user.Username,
+		Role:     string(user.Role),
+		ClientIP: "internal",
+	}
+}

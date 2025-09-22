@@ -1,14 +1,14 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Schedule Updates"
+    title="计划更新"
     width="800px"
     :before-close="handleClose"
   >
     <div class="scheduler-container">
       <!-- Selected Updates Summary -->
       <div v-if="selectedUpdates.length > 0" class="selected-summary">
-        <h4>Selected Updates ({{ selectedUpdates.length }})</h4>
+        <h4>已选择的更新 ({{ selectedUpdates.length }})</h4>
         <div class="updates-list">
           <div
             v-for="update in getSelectedUpdateDetails()"
@@ -39,23 +39,23 @@
           label-width="140px"
         >
           <!-- Schedule Type -->
-          <el-form-item label="Schedule Type" prop="scheduleType">
+          <el-form-item label="计划类型" prop="scheduleType">
             <el-radio-group v-model="scheduleForm.scheduleType">
-              <el-radio label="once"> One-time </el-radio>
-              <el-radio label="recurring"> Recurring </el-radio>
+              <el-radio label="once"> 一次性 </el-radio>
+              <el-radio label="recurring"> 重复 </el-radio>
             </el-radio-group>
           </el-form-item>
 
           <!-- Date and Time -->
           <el-form-item
             v-if="scheduleForm.scheduleType === 'once'"
-            label="Date & Time"
+            label="日期和时间"
             prop="scheduledAt"
           >
             <el-date-picker
               v-model="scheduleForm.scheduledAt"
               type="datetime"
-              placeholder="Select date and time"
+              placeholder="选择日期和时间"
               format="YYYY-MM-DD HH:mm"
               value-format="YYYY-MM-DD HH:mm:ss"
               :disabled-date="disabledDate"
@@ -66,27 +66,27 @@
           <!-- Recurring Pattern -->
           <el-form-item
             v-if="scheduleForm.scheduleType === 'recurring'"
-            label="Pattern"
+            label="重复模式"
             prop="recurringPattern"
           >
             <div class="recurring-options">
               <el-select
                 v-model="recurringType"
-                placeholder="Select pattern"
+                placeholder="选择模式"
                 style="width: 150px"
                 @change="updateRecurringPattern"
               >
-                <el-option label="Daily" value="daily" />
-                <el-option label="Weekly" value="weekly" />
-                <el-option label="Monthly" value="monthly" />
-                <el-option label="Custom" value="custom" />
+                <el-option label="每日" value="daily" />
+                <el-option label="每周" value="weekly" />
+                <el-option label="每月" value="monthly" />
+                <el-option label="自定义" value="custom" />
               </el-select>
 
               <!-- Daily Options -->
               <div v-if="recurringType === 'daily'" class="pattern-details">
                 <el-time-picker
                   v-model="dailyTime"
-                  placeholder="Select time"
+                  placeholder="选择时间"
                   format="HH:mm"
                   @change="updateRecurringPattern"
                 />
@@ -97,21 +97,21 @@
                 <el-select
                   v-model="weeklyDays"
                   multiple
-                  placeholder="Select days"
+                  placeholder="选择天数"
                   style="width: 200px"
                   @change="updateRecurringPattern"
                 >
-                  <el-option label="Monday" value="1" />
-                  <el-option label="Tuesday" value="2" />
-                  <el-option label="Wednesday" value="3" />
-                  <el-option label="Thursday" value="4" />
-                  <el-option label="Friday" value="5" />
-                  <el-option label="Saturday" value="6" />
-                  <el-option label="Sunday" value="0" />
+                  <el-option label="周一" value="1" />
+                  <el-option label="周二" value="2" />
+                  <el-option label="周三" value="3" />
+                  <el-option label="周四" value="4" />
+                  <el-option label="周五" value="5" />
+                  <el-option label="周六" value="6" />
+                  <el-option label="周日" value="0" />
                 </el-select>
                 <el-time-picker
                   v-model="weeklyTime"
-                  placeholder="Select time"
+                  placeholder="选择时间"
                   format="HH:mm"
                   @change="updateRecurringPattern"
                 />
@@ -142,11 +142,11 @@
           </el-form-item>
 
           <!-- Timezone -->
-          <el-form-item label="Timezone" prop="timezone">
+          <el-form-item label="时区" prop="timezone">
             <el-select
               v-model="scheduleForm.timezone"
               filterable
-              placeholder="Select timezone"
+              placeholder="选择时区"
               style="width: 100%"
             >
               <el-option
@@ -159,30 +159,30 @@
           </el-form-item>
 
           <!-- Update Strategy -->
-          <el-form-item label="Update Strategy" prop="strategy">
+          <el-form-item label="更新策略" prop="strategy">
             <el-select v-model="scheduleForm.strategy" style="width: 100%">
-              <el-option label="Recreate" value="recreate">
+              <el-option label="重新创建" value="recreate">
                 <div class="strategy-option">
-                  <span>Recreate</span>
-                  <small>Stop container, pull image, create new container</small>
+                  <span>重新创建</span>
+                  <small>停止容器，拉取镜像，创建新容器</small>
                 </div>
               </el-option>
-              <el-option label="Rolling Update" value="rolling">
+              <el-option label="滚动更新" value="rolling">
                 <div class="strategy-option">
-                  <span>Rolling Update</span>
-                  <small>Zero-downtime update using load balancer</small>
+                  <span>滚动更新</span>
+                  <small>使用负载均衡器进行零停机更新</small>
                 </div>
               </el-option>
-              <el-option label="Blue-Green" value="blue-green">
+              <el-option label="蓝绿部署" value="blue-green">
                 <div class="strategy-option">
-                  <span>Blue-Green</span>
-                  <small>Deploy alongside existing, switch when ready</small>
+                  <span>蓝绿部署</span>
+                  <small>与现有环境并行部署，准备就绪后切换</small>
                 </div>
               </el-option>
-              <el-option label="Canary" value="canary">
+              <el-option label="金丝雀部署" value="canary">
                 <div class="strategy-option">
-                  <span>Canary</span>
-                  <small>Gradual rollout with monitoring</small>
+                  <span>金丝雀部署</span>
+                  <small>带监控的渐进式发布</small>
                 </div>
               </el-option>
             </el-select>
@@ -191,37 +191,37 @@
           <!-- Advanced Options -->
           <el-form-item>
             <el-checkbox v-model="scheduleForm.rollbackOnFailure">
-              Rollback automatically on failure
+              失败时自动回滚
             </el-checkbox>
           </el-form-item>
 
           <el-form-item>
             <el-checkbox v-model="scheduleForm.runTests">
-              Run tests before update
+              更新前运行测试
             </el-checkbox>
           </el-form-item>
 
           <!-- Notification Settings -->
-          <el-form-item label="Notifications">
+          <el-form-item label="通知设置">
             <div class="notification-settings">
               <el-checkbox v-model="scheduleForm.notifications.enabled">
-                Enable notifications
+                启用通知
               </el-checkbox>
 
               <div
                 v-if="scheduleForm.notifications.enabled"
                 class="notification-options"
               >
-                <el-form-item label="Notify Before">
+                <el-form-item label="提前通知">
                   <el-select
                     v-model="scheduleForm.notifyBefore"
                     style="width: 150px"
                   >
-                    <el-option label="5 minutes" :value="300000" />
-                    <el-option label="15 minutes" :value="900000" />
-                    <el-option label="30 minutes" :value="1800000" />
-                    <el-option label="1 hour" :value="3600000" />
-                    <el-option label="2 hours" :value="7200000" />
+                    <el-option label="5分钟" :value="300000" />
+                    <el-option label="15分钟" :value="900000" />
+                    <el-option label="30分钟" :value="1800000" />
+                    <el-option label="1小时" :value="3600000" />
+                    <el-option label="2小时" :value="7200000" />
                   </el-select>
                 </el-form-item>
 
@@ -244,45 +244,45 @@
           </el-form-item>
 
           <!-- Dependencies -->
-          <el-form-item v-if="hasDependencies" label="Dependencies">
+          <el-form-item v-if="hasDependencies" label="依赖关系">
             <div class="dependencies-info">
               <el-alert
-                title="Some containers have dependencies"
+                title="某些容器存在依赖关系"
                 type="warning"
                 :closable="false"
                 show-icon
               />
               <el-checkbox v-model="scheduleForm.respectDependencies">
-                Update containers in dependency order
+                按依赖顺序更新容器
               </el-checkbox>
               <el-select
                 v-model="scheduleForm.dependencyStrategy"
                 style="width: 200px"
                 :disabled="!scheduleForm.respectDependencies"
               >
-                <el-option label="Strict Order" value="strict" />
-                <el-option label="Loose Order" value="loose" />
-                <el-option label="Ignore Dependencies" value="ignore" />
+                <el-option label="严格顺序" value="strict" />
+                <el-option label="宽松顺序" value="loose" />
+                <el-option label="忽略依赖" value="ignore" />
               </el-select>
             </div>
           </el-form-item>
 
           <!-- Preview -->
-          <el-form-item label="Preview">
+          <el-form-item label="预览">
             <div class="schedule-preview">
               <div class="preview-item">
-                <strong>Next Execution:</strong>
+                <strong>下次执行：</strong>
                 <span>{{ getNextExecutionTime() }}</span>
               </div>
               <div
                 v-if="scheduleForm.scheduleType === 'recurring'"
                 class="preview-item"
               >
-                <strong>Pattern:</strong>
+                <strong>模式：</strong>
                 <span>{{ getPatternDescription() }}</span>
               </div>
               <div class="preview-item">
-                <strong>Estimated Duration:</strong>
+                <strong>预估持续时间：</strong>
                 <span>{{ getEstimatedDuration() }}</span>
               </div>
             </div>
@@ -292,7 +292,7 @@
 
       <!-- Calendar View -->
       <div v-if="scheduleForm.scheduleType === 'once'" class="calendar-view">
-        <h4>Calendar</h4>
+        <h4>日历</h4>
         <el-calendar v-model="calendarValue">
           <template #date-cell="{ data }">
             <div class="calendar-day">
@@ -314,14 +314,14 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose"> Cancel </el-button>
+        <el-button @click="handleClose"> 取消 </el-button>
         <el-button
           type="primary"
           :loading="scheduling"
           :disabled="!isFormValid"
           @click="handleSchedule"
         >
-          Schedule Update{{ selectedUpdates.length > 1 ? "s" : "" }}
+          计划更新{{ selectedUpdates.length > 1 ? "" : "" }}
         </el-button>
       </div>
     </template>
@@ -561,7 +561,7 @@ const getNextExecutionTime = () => {
     // This is simplified - in reality you'd use a cron library
     return calculateNextCronExecution(scheduleForm.value.recurringPattern);
   }
-  return "Not configured";
+  return "未配置";
 };
 
 const calculateNextCronExecution = (_pattern: string): string => {
@@ -576,7 +576,7 @@ const getPatternDescription = () => {
   if (scheduleForm.value.recurringPattern) {
     return cronDescription.value || scheduleForm.value.recurringPattern;
   }
-  return "Not configured";
+  return "未配置";
 };
 
 const getEstimatedDuration = () => {
@@ -627,13 +627,13 @@ const handleSchedule = async () => {
     await Promise.all(promises);
 
     ElMessage.success(
-      `Successfully scheduled ${props.selectedUpdates.length} update(s)`,
+      `成功计划了 ${props.selectedUpdates.length} 个更新`,
     );
     emit("scheduled");
     handleClose();
   } catch (error) {
-    console.error("Failed to schedule updates:", error);
-    ElMessage.error("Failed to schedule updates");
+    console.error("计划更新失败:", error);
+    ElMessage.error("计划更新失败");
   } finally {
     scheduling.value = false;
   }

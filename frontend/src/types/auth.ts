@@ -16,18 +16,19 @@ export type {
  * Extended user information interface
  */
 export interface UserInfo {
-  id: string | number;
+  id: number;
   username: string;
   email: string;
   firstName?: string;
   lastName?: string;
   avatar?: string;
   role: string;
-  permissions: readonly string[];
-  isActive: boolean;
-  lastLoginAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  permissions?: readonly string[];
+  is_active: boolean;
+  email_notifications?: boolean;
+  last_login_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 /**
@@ -133,18 +134,20 @@ export interface PasswordChangeForm {
 }
 
 /**
- * Authentication response interface
+ * Login response data interface (used as generic type for ApiResponse<T>)
  */
-export interface AuthResponse {
-  success: boolean;
-  message?: string;
-  data?: {
-    user: UserInfo;
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
+export interface LoginResponseData {
+  user: UserInfo;
+  token_info: {
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+    expires_in: number;
+    expires_at: string;
+    session_id: string;
+    permissions: string[];
+    user_info: UserInfo;
   };
-  error?: string;
 }
 
 /**
@@ -319,7 +322,7 @@ export interface AuthContext {
   user: UserInfo | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginForm) => Promise<AuthResponse>;
+  login: (credentials: LoginForm) => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
   updateProfile: (data: ProfileUpdateForm) => Promise<boolean>;

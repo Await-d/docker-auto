@@ -11,7 +11,7 @@
       >
         <div class="status-dot" />
         <span class="status-text">{{
-          isConnected ? "Live" : "Disconnected"
+          isConnected ? "实时" : "已断开连接"
         }}</span>
       </div>
       <div class="controls">
@@ -22,10 +22,10 @@
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="1m"> 1 Minute </el-dropdown-item>
-              <el-dropdown-item command="5m"> 5 Minutes </el-dropdown-item>
-              <el-dropdown-item command="15m"> 15 Minutes </el-dropdown-item>
-              <el-dropdown-item command="1h"> 1 Hour </el-dropdown-item>
+              <el-dropdown-item command="1m"> 1分钟 </el-dropdown-item>
+              <el-dropdown-item command="5m"> 5分钟 </el-dropdown-item>
+              <el-dropdown-item command="15m"> 15分钟 </el-dropdown-item>
+              <el-dropdown-item command="1h"> 1小时 </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -89,13 +89,13 @@
 v-if="displayMode !== 'minimal'" class="charts-section"
 >
       <div class="chart-container cpu-chart">
-        <div class="chart-title">CPU Usage</div>
+        <div class="chart-title">CPU使用率</div>
         <canvas
 ref="cpuChartRef" width="300" height="100" />
       </div>
 
       <div class="chart-container memory-chart">
-        <div class="chart-title">Memory Usage</div>
+        <div class="chart-title">内存使用率</div>
         <canvas
 ref="memoryChartRef" width="300" height="100" />
       </div>
@@ -106,10 +106,10 @@ ref="memoryChartRef" width="300" height="100" />
 v-if="displayMode !== 'compact'" class="activity-feed"
 >
       <div class="feed-header">
-        <span class="feed-title">Live Activity</span>
+        <span class="feed-title">实时活动</span>
         <el-button size="small" type="text" @click="clearFeed">
           <el-icon><Delete /></el-icon>
-          Clear
+          清除
         </el-button>
       </div>
       <div
@@ -146,8 +146,8 @@ v-if="event.source" class="event-source"
 v-if="displayMode === 'detailed'" class="container-activity"
 >
       <div class="activity-header">
-        <span class="activity-title">Container Events</span>
-        <span class="activity-count">{{ containerEvents.length }} events</span>
+        <span class="activity-title">容器事件</span>
+        <span class="activity-count">{{ containerEvents.length }} 事件</span>
       </div>
       <div class="activity-list">
         <div
@@ -183,7 +183,7 @@ v-if="activeAlerts.length > 0" class="system-alerts"
         <el-icon class="alert-icon">
           <Warning />
         </el-icon>
-        <span class="alerts-title">Active Alerts</span>
+        <span class="alerts-title">活跃警报</span>
         <el-badge :value="activeAlerts.length" type="danger" />
       </div>
       <div class="alerts-list">
@@ -254,6 +254,7 @@ import {
   CircleCloseFilled,
   InfoFilled,
 } from "@element-plus/icons-vue";
+import { monitoringAPI } from "@/api/monitoring";
 
 // Used in dynamic components and conditionally
 // @ts-ignore: _dynamicIcons is intentionally unused - exists to prevent unused import warnings
@@ -413,15 +414,15 @@ const maxDataPoints = computed(() => {
 const timeRangeLabel = computed(() => {
   switch (timeRange.value) {
     case "1m":
-      return "1 Minute";
+      return "1分钟";
     case "5m":
-      return "5 Minutes";
+      return "5分钟";
     case "15m":
-      return "15 Minutes";
+      return "15分钟";
     case "1h":
-      return "1 Hour";
+      return "1小时";
     default:
-      return "5 Minutes";
+      return "5分钟";
   }
 });
 
@@ -443,8 +444,70 @@ const memoryTrend = computed(() => {
 });
 
 // Methods
+const fetchRealTimeData = async () => {
+  try {
+    // Get current metrics
+    const metrics = await monitoringAPI.getCurrentMetrics();
+
+    previousMetrics.value = { ...currentMetrics.value };
+    currentMetrics.value = {
+      cpu: metrics.cpu,
+      memory: metrics.memory,
+      network: metrics.network,
+      disk: metrics.disk,
+    };
+
+    // Add to chart data
+    cpuHistory.value.push(currentMetrics.value.cpu);
+    memoryHistory.value.push(memoryPercentage.value);
+
+    // Trim data to max points
+    if (cpuHistory.value.length > maxDataPoints.value) {
+      cpuHistory.value = cpuHistory.value.slice(-maxDataPoints.value);
+    }
+    if (memoryHistory.value.length > maxDataPoints.value) {
+      memoryHistory.value = memoryHistory.value.slice(-maxDataPoints.value);
+    }
+
+    // Update connection status
+    isConnected.value = true;
+  } catch (error) {
+    console.error("Failed to fetch real-time metrics:", error);
+    isConnected.value = false;
+  }
+};
+
+const fetchActivityFeed = async () => {
+  try {
+    const events = await monitoringAPI.getActivityEvents(10);
+    activityFeed.value = events.map(event => ({
+      id: event.id,
+      type: event.type,
+      message: event.description,
+      source: event.source || "system",
+      timestamp: new Date(event.timestamp)
+    }));
+  } catch (error) {
+    console.error("Failed to fetch activity feed:", error);
+  }
+};
+
+const fetchActiveAlerts = async () => {
+  try {
+    const alerts = await monitoringAPI.getActiveAlerts();
+    activeAlerts.value = alerts.map(alert => ({
+      id: alert.id,
+      severity: alert.severity,
+      message: alert.message,
+      timestamp: new Date(alert.timestamp)
+    }));
+  } catch (error) {
+    console.error("Failed to fetch active alerts:", error);
+  }
+};
+
 const generateMockData = () => {
-  // Simulate realistic metrics with some variation
+  // Fallback mock data generation when API is unavailable
   const cpuVariation = (Math.random() - 0.5) * 10;
   const memoryVariation = (Math.random() - 0.5) * 0.1;
   const networkVariation = (Math.random() - 0.5) * 0.5;
@@ -719,14 +782,33 @@ const dismissAlert = (alertId: string) => {
 };
 
 const startUpdates = () => {
-  updateInterval.value = setInterval(() => {
+  updateInterval.value = setInterval(async () => {
     if (!isPaused.value) {
-      generateMockData();
-      emit("data-updated", {
-        metrics: currentMetrics.value,
-        activityFeed: activityFeed.value,
-        alerts: activeAlerts.value,
-      });
+      try {
+        // Try to fetch real-time data first
+        await fetchRealTimeData();
+
+        // Fetch activity feed and alerts less frequently
+        if (Date.now() % 5000 < 1000) { // Every 5 seconds
+          await fetchActivityFeed();
+          await fetchActiveAlerts();
+        }
+
+        emit("data-updated", {
+          metrics: currentMetrics.value,
+          activityFeed: activityFeed.value,
+          alerts: activeAlerts.value,
+        });
+      } catch (error) {
+        // Fallback to mock data if API is unavailable
+        console.warn("API unavailable, using mock data:", error);
+        generateMockData();
+        emit("data-updated", {
+          metrics: currentMetrics.value,
+          activityFeed: activityFeed.value,
+          alerts: activeAlerts.value,
+        });
+      }
     }
   }, 1000);
 
@@ -738,12 +820,26 @@ const startUpdates = () => {
 };
 
 // Lifecycle hooks
-onMounted(() => {
+onMounted(async () => {
   startUpdates();
 
-  // Initialize with some data
-  for (let i = 0; i < 30; i++) {
-    generateMockData();
+  // Initialize with real data or fallback to mock data
+  try {
+    await fetchRealTimeData();
+    await fetchActivityFeed();
+    await fetchActiveAlerts();
+
+    // Initialize chart history with current data
+    for (let i = 0; i < 30; i++) {
+      cpuHistory.value.push(currentMetrics.value.cpu);
+      memoryHistory.value.push(memoryPercentage.value);
+    }
+  } catch (error) {
+    console.warn("Failed to initialize with real data, using mock data:", error);
+    // Initialize with mock data
+    for (let i = 0; i < 30; i++) {
+      generateMockData();
+    }
   }
 
   nextTick(() => {

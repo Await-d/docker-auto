@@ -5,6 +5,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { ElMessage, ElNotification } from "element-plus";
 import { updatesAPI } from "@/api/updates";
+import { downloadBlob, generateFilename, exportWithProgress } from "@/utils/export";
 import type {
   ContainerUpdate,
   UpdateHistoryItem,
@@ -143,7 +144,7 @@ export const useUpdatesStore = defineStore("updates", () => {
   const hasSelection = computed(() => selectedUpdates.value.size > 0);
 
   const filteredUpdates = computed(() => {
-    let result = availableUpdates.value;
+    let result = availableUpdates.value || [];
 
     if (filters.value.updateType?.length) {
       result = result.filter((u) =>
@@ -193,24 +194,25 @@ export const useUpdatesStore = defineStore("updates", () => {
     checkingUpdates.value = true;
     try {
       const updates = await updatesAPI.checkUpdates(containerId, force);
-      availableUpdates.value = updates.updates;
-      totalUpdates.value = updates.total;
+      availableUpdates.value = updates?.updates || [];
+      totalUpdates.value = updates?.total || 0;
       lastUpdateCheck.value = new Date();
 
-      // Update analytics
-      updateAnalytics.value.totalUpdatesAvailable = updates.total;
-      updateAnalytics.value.securityUpdates = updates.updates.filter(
-        (u) => u.updateType === "security" || u.securityPatches.length > 0,
+      // Update analytics - ensure updates.updates exists
+      const updatesList = updates?.updates || [];
+      updateAnalytics.value.totalUpdatesAvailable = updates?.total || 0;
+      updateAnalytics.value.securityUpdates = updatesList.filter(
+        (u) => u.updateType === "security" || (u.securityPatches && u.securityPatches.length > 0),
       ).length;
-      updateAnalytics.value.criticalUpdates = updates.updates.filter(
+      updateAnalytics.value.criticalUpdates = updatesList.filter(
         (u) => u.riskLevel === "high",
       ).length;
 
-      if (updates.total > 0 && updateSettings.value.enableNotifications) {
+      if ((updates?.total || 0) > 0 && updateSettings.value.enableNotifications) {
         ElNotification({
-          title: "Updates Available",
-          message: `${updates.total} container update(s) available`,
-          type: updates.updates.some((u) => u.updateType === "security")
+          title: "有可用更新",
+          message: `${updates?.total || 0} 个容器更新可用`,
+          type: updatesList.some((u) => u.updateType === "security")
             ? "warning"
             : "info",
           duration: 5000,
@@ -220,7 +222,7 @@ export const useUpdatesStore = defineStore("updates", () => {
       return updates;
     } catch (error) {
       console.error("Failed to check updates:", error);
-      ElMessage.error("Failed to check for updates");
+      ElMessage.error("检查更新失败");
       throw error;
     } finally {
       checkingUpdates.value = false;
@@ -280,7 +282,7 @@ export const useUpdatesStore = defineStore("updates", () => {
       return response;
     } catch (error) {
       console.error("Failed to fetch update history:", error);
-      ElMessage.error("Failed to load update history");
+      ElMessage.error("加载更新历史失败");
       throw error;
     } finally {
       loadingHistory.value = false;
@@ -353,15 +355,15 @@ export const useUpdatesStore = defineStore("updates", () => {
       }
 
       ElNotification({
-        title: "Update Started",
-        message: `Update for "${update.containerName}" has been initiated`,
+        title: "更新已开始",
+        message: `容器 "${update.containerName}" 的更新已启动`,
         type: "info",
       });
 
       return result;
     } catch (error) {
       console.error("Failed to start update:", error);
-      ElMessage.error(`Failed to start update for ${update.containerName}`);
+      ElMessage.error(`启动容器 ${update.containerName} 更新失败`);
       throw error;
     } finally {
       setUpdateLoading(update.containerId, false);
@@ -392,8 +394,8 @@ export const useUpdatesStore = defineStore("updates", () => {
       const result = await updatesAPI.startBulkUpdate(operation);
 
       ElNotification({
-        title: "Bulk Update Started",
-        message: `Bulk update operation started for ${updateIds.length} container(s)`,
+        title: "批量更新已开始",
+        message: `已启动 ${updateIds.length} 个容器的批量更新操作`,
         type: "info",
       });
 
@@ -406,7 +408,7 @@ export const useUpdatesStore = defineStore("updates", () => {
       return result;
     } catch (error) {
       console.error("Failed to start bulk update:", error);
-      ElMessage.error("Failed to start bulk update operation");
+      ElMessage.error("启动批量更新操作失败");
       throw error;
     }
   }
@@ -439,11 +441,11 @@ export const useUpdatesStore = defineStore("updates", () => {
         update.scheduledAt = scheduledAt.toISOString();
       }
 
-      ElMessage.success("Update scheduled successfully");
+      ElMessage.success("更新计划设置成功");
       return result;
     } catch (error) {
       console.error("Failed to schedule update:", error);
-      ElMessage.error("Failed to schedule update");
+      ElMessage.error("设置更新计划失败");
       throw error;
     }
   }
@@ -465,10 +467,10 @@ export const useUpdatesStore = defineStore("updates", () => {
         runningUpdates.value.splice(index, 1);
       }
 
-      ElMessage.success("Update cancelled successfully");
+      ElMessage.success("更新取消成功");
     } catch (error) {
       console.error("Failed to cancel update:", error);
-      ElMessage.error("Failed to cancel update");
+      ElMessage.error("取消更新失败");
       throw error;
     }
   }
@@ -507,15 +509,15 @@ export const useUpdatesStore = defineStore("updates", () => {
       totalHistoryItems.value++;
 
       ElNotification({
-        title: "Rollback Started",
-        message: `Rolling back "${historyItem.containerName}" to version ${rollback.targetVersion}`,
+        title: "回滚已开始",
+        message: `正在将 "${historyItem.containerName}" 回滚到版本 ${rollback.targetVersion}`,
         type: "warning",
       });
 
       return result;
     } catch (error) {
       console.error("Failed to rollback update:", error);
-      ElMessage.error("Failed to rollback update");
+      ElMessage.error("回滚更新失败");
       throw error;
     }
   }
@@ -531,11 +533,11 @@ export const useUpdatesStore = defineStore("updates", () => {
       update.ignoredAt = new Date().toISOString();
 
       ElMessage.success(
-        `Update for "${update.containerName}" has been ignored`,
+        `容器 "${update.containerName}" 的更新已被忽略`,
       );
     } catch (error) {
       console.error("Failed to ignore update:", error);
-      ElMessage.error("Failed to ignore update");
+      ElMessage.error("忽略更新失败");
       throw error;
     }
   }
@@ -563,7 +565,7 @@ export const useUpdatesStore = defineStore("updates", () => {
   async function fetchRunningUpdates() {
     try {
       const running = await updatesAPI.getRunningUpdates();
-      runningUpdates.value = running;
+      runningUpdates.value = running || [];
       return running;
     } catch (error) {
       console.error("Failed to fetch running updates:", error);
@@ -665,7 +667,12 @@ export const useUpdatesStore = defineStore("updates", () => {
       const analytics = await updatesAPI.getAnalytics(period);
       updateAnalytics.value = { ...updateAnalytics.value, ...analytics };
       return analytics;
-    } catch (error) {
+    } catch (error: any) {
+      // If the API endpoint doesn't exist (404), just log and continue
+      if (error.code === 404) {
+        console.warn("Update analytics API not implemented yet");
+        return updateAnalytics.value;
+      }
       console.error("Failed to fetch update analytics:", error);
       throw error;
     }
@@ -675,25 +682,16 @@ export const useUpdatesStore = defineStore("updates", () => {
     format: "csv" | "json" | "excel",
     filters?: UpdateFilter,
   ) {
-    try {
-      const blob = await updatesAPI.exportHistory(format, filters);
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `update-history-${new Date().toISOString().split("T")[0]}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      ElMessage.success(`Update history exported as ${format.toUpperCase()}`);
-    } catch (error) {
-      console.error("Failed to export update history:", error);
-      ElMessage.error("Failed to export update history");
-      throw error;
-    }
+    await exportWithProgress(async () => {
+      try {
+        const blob = await updatesAPI.exportHistory(format, filters);
+        const filename = generateFilename("update-history", format === "excel" ? "xlsx" : format);
+        downloadBlob(blob, filename);
+      } catch (error) {
+        console.error("Failed to export update history:", error);
+        throw new Error("导出更新历史失败");
+      }
+    }, `正在导出${format.toUpperCase()}格式的更新历史...`);
   }
 
   // Selection management

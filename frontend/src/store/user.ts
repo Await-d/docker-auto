@@ -1,9 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, readonly } from "vue";
 import { ElMessage } from "element-plus";
-import type { User, LoginRequest, LoginResponse } from "@/types/user";
-// Note: API functions would be imported from actual API module
-// import { login as apiLogin, getCurrentUser as apiGetCurrentUser, logout as apiLogout } from '@/api/user'
+import type { User, LoginRequest } from "@/types/user";
+import { userAPI } from "@/api/user";
 import { TokenManager } from "@/utils/auth";
 import router from "@/router";
 
@@ -14,28 +13,19 @@ export const useUserStore = defineStore("user", () => {
   // Login action
   const login = async (loginData: LoginRequest): Promise<void> => {
     try {
-      // TODO: Implement actual API call
-      const response: LoginResponse = {
-        token: "mock-token",
-        refresh_token: "mock-refresh-token",
-        expires_in: 3600,
-        user: {
-          id: 1,
-          username: loginData.username,
-          email: "user@example.com",
-          role: "operator",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      };
+      const response = await userAPI.login(loginData);
+
+      // Store tokens
       token.value = response.token;
       TokenManager.setAccessToken(response.token);
+      if (response.refresh_token) {
+        TokenManager.setRefreshToken(response.refresh_token);
+      }
 
-      // Get user info after login
-      await getCurrentUser();
+      // Store user info
+      user.value = response.user;
 
-      ElMessage.success("登录成功");
+      // Login success message is handled by auth store
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
@@ -45,16 +35,7 @@ export const useUserStore = defineStore("user", () => {
   // Get current user info
   const getCurrentUser = async (): Promise<void> => {
     try {
-      // TODO: Implement actual API call
-      const userData: User = {
-        id: 1,
-        username: "mock-user",
-        email: "user@example.com",
-        role: "operator",
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      const userData = await userAPI.getCurrentUser();
       user.value = userData;
     } catch (error) {
       console.error("Failed to get user info:", error);
@@ -68,7 +49,7 @@ export const useUserStore = defineStore("user", () => {
   const logout = async (): Promise<void> => {
     try {
       if (token.value) {
-        // TODO: Implement actual API call
+        await userAPI.logout();
       }
     } catch (error) {
       console.error("Logout API failed:", error);
@@ -116,6 +97,29 @@ export const useUserStore = defineStore("user", () => {
     return user.value?.role === role;
   };
 
+  // Update user profile
+  const updateProfile = async (profileData: import("@/types/user").UpdateProfileRequest): Promise<void> => {
+    try {
+      const updatedUser = await userAPI.updateProfile(profileData);
+      user.value = updatedUser;
+      ElMessage.success("用户资料更新成功");
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      throw error;
+    }
+  };
+
+  // Change password
+  const changePassword = async (passwordData: import("@/types/user").ChangePasswordRequest): Promise<void> => {
+    try {
+      await userAPI.changePassword(passwordData);
+      ElMessage.success("密码修改成功");
+    } catch (error) {
+      console.error("Failed to change password:", error);
+      throw error;
+    }
+  };
+
   // Initialize store (called when app starts)
   const initialize = async (): Promise<void> => {
     if (token.value) {
@@ -134,6 +138,8 @@ export const useUserStore = defineStore("user", () => {
     login,
     getCurrentUser,
     logout,
+    updateProfile,
+    changePassword,
     hasPermission,
     hasRole,
     initialize,

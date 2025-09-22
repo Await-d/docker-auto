@@ -3,21 +3,21 @@
  */
 
 // API Base URL
-export const API_BASE_URL = "/api";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 // Authentication endpoints
 export const AUTH_ENDPOINTS = {
-  LOGIN: "/auth/login",
-  LOGOUT: "/auth/logout",
-  REFRESH: "/auth/refresh",
-  PROFILE: "/auth/profile",
+  LOGIN: "/api/auth/login",
+  LOGOUT: "/api/auth/logout",
+  REFRESH: "/api/auth/refresh",
+  PROFILE: "/api/auth/me",
 } as const;
 
 // System endpoints
 export const SYSTEM_ENDPOINTS = {
-  HEALTH: "/system/health",
-  CONFIG: "/system/config",
-  STATS: "/system/stats",
+  HEALTH: "/api/health",
+  CONFIG: "/api/system/config",
+  STATS: "/api/system/stats",
 } as const;
 
 // Docker endpoints
@@ -74,43 +74,43 @@ export const MENU_ITEMS = {
   [USER_ROLES.ADMIN]: [
     {
       path: "/dashboard",
-      title: "Dashboard",
+      title: "仪表盘",
       icon: "Dashboard",
       permission: PERMISSIONS.READ,
     },
     {
       path: "/containers",
-      title: "Containers",
+      title: "容器管理",
       icon: "Box",
       permission: PERMISSIONS.READ,
     },
     {
       path: "/images",
-      title: "Images",
+      title: "镜像管理",
       icon: "Picture",
       permission: PERMISSIONS.READ,
     },
     {
       path: "/updates",
-      title: "Updates",
+      title: "更新管理",
       icon: "Refresh",
       permission: PERMISSIONS.WRITE,
     },
     {
       path: "/logs",
-      title: "Logs",
+      title: "日志查看",
       icon: "Document",
       permission: PERMISSIONS.READ,
     },
     {
       path: "/settings",
-      title: "Settings",
+      title: "系统设置",
       icon: "Setting",
       permission: PERMISSIONS.ADMIN,
     },
     {
       path: "/users",
-      title: "Users",
+      title: "用户管理",
       icon: "User",
       permission: PERMISSIONS.ADMIN,
     },
@@ -118,31 +118,31 @@ export const MENU_ITEMS = {
   [USER_ROLES.OPERATOR]: [
     {
       path: "/dashboard",
-      title: "Dashboard",
+      title: "仪表盘",
       icon: "Dashboard",
       permission: PERMISSIONS.READ,
     },
     {
       path: "/containers",
-      title: "Containers",
+      title: "容器管理",
       icon: "Box",
       permission: PERMISSIONS.READ,
     },
     {
       path: "/images",
-      title: "Images",
+      title: "镜像管理",
       icon: "Picture",
       permission: PERMISSIONS.READ,
     },
     {
       path: "/updates",
-      title: "Updates",
+      title: "更新管理",
       icon: "Refresh",
       permission: PERMISSIONS.WRITE,
     },
     {
       path: "/logs",
-      title: "Logs",
+      title: "日志查看",
       icon: "Document",
       permission: PERMISSIONS.READ,
     },
@@ -150,25 +150,25 @@ export const MENU_ITEMS = {
   [USER_ROLES.VIEWER]: [
     {
       path: "/dashboard",
-      title: "Dashboard",
+      title: "仪表盘",
       icon: "Dashboard",
       permission: PERMISSIONS.READ,
     },
     {
       path: "/containers",
-      title: "Containers",
+      title: "容器管理",
       icon: "Box",
       permission: PERMISSIONS.READ,
     },
     {
       path: "/images",
-      title: "Images",
+      title: "镜像管理",
       icon: "Picture",
       permission: PERMISSIONS.READ,
     },
     {
       path: "/logs",
-      title: "Logs",
+      title: "日志查看",
       icon: "Document",
       permission: PERMISSIONS.READ,
     },

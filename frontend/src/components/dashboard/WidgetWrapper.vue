@@ -3,7 +3,7 @@
     class="widget-wrapper"
     :class="{ 'edit-mode': isEditMode, loading: isLoading, error: hasError }"
   >
-    <!-- Widget Header -->
+    <!-- 小部件头部 -->
     <div
 v-if="showHeader" class="widget-header"
 >
@@ -62,26 +62,26 @@ v-if="isEditMode" @command="handleAction"
             <el-dropdown-menu>
               <el-dropdown-item command="refresh">
                 <el-icon><Refresh /></el-icon>
-                Refresh
+                刷新
               </el-dropdown-item>
               <el-dropdown-item
                 v-if="widget.configurable !== false"
                 command="configure"
               >
                 <el-icon><Setting /></el-icon>
-                Configure
+                配置
               </el-dropdown-item>
               <el-dropdown-item command="duplicate">
                 <el-icon><CopyDocument /></el-icon>
-                Duplicate
+                复制
               </el-dropdown-item>
               <el-dropdown-item command="export">
                 <el-icon><Download /></el-icon>
-                Export Data
+                导出数据
               </el-dropdown-item>
               <el-dropdown-item divided command="remove">
                 <el-icon><Delete /></el-icon>
-                Remove
+                删除
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -89,9 +89,9 @@ v-if="isEditMode" @command="handleAction"
       </div>
     </div>
 
-    <!-- Widget Content -->
+    <!-- 小部件内容 -->
     <div class="widget-content" :style="contentStyle">
-      <!-- Loading State -->
+      <!-- 加载状态 -->
       <div v-if="isLoading" class="widget-loading">
         <el-skeleton animated>
           <template #template>
@@ -117,42 +117,42 @@ v-if="isEditMode" @command="handleAction"
         </el-skeleton>
       </div>
 
-      <!-- Error State -->
+      <!-- 错误状态 -->
       <div v-else-if="hasError" class="widget-error">
         <div class="error-content">
           <el-icon class="error-icon" :size="32">
             <Warning />
           </el-icon>
-          <h4 class="error-title">Widget Error</h4>
+          <h4 class="error-title">小部件错误</h4>
           <p class="error-message">
             {{ errorMessage }}
           </p>
           <div class="error-actions">
             <el-button size="small" @click="refreshWidget">
               <el-icon><Refresh /></el-icon>
-              Retry
+              重试
             </el-button>
             <el-button size="small" type="text" @click="showErrorDetails">
-              View Details
+              查看详情
             </el-button>
           </div>
         </div>
       </div>
 
-      <!-- Offline State -->
+      <!-- 离线状态 -->
       <div v-else-if="isOffline" class="widget-offline">
         <div class="offline-content">
           <el-icon class="offline-icon" :size="32">
             <Warning />
           </el-icon>
-          <h4 class="offline-title">Offline</h4>
+          <h4 class="offline-title">离线</h4>
           <p class="offline-message">
-            This widget requires an internet connection
+            该小部件需要互联网连接
           </p>
         </div>
       </div>
 
-      <!-- Widget Component -->
+      <!-- 小部件组件 -->
       <component
         :is="widgetComponent"
         v-else
@@ -167,7 +167,7 @@ v-if="isEditMode" @command="handleAction"
         @metrics-updated="onMetricsUpdated"
       />
 
-      <!-- Edit Mode Overlay -->
+      <!-- 编辑模式覆盖层 -->
       <div v-if="isEditMode" class="edit-overlay">
         <div class="edit-handles">
           <div class="resize-handle resize-handle-se" />
@@ -179,7 +179,7 @@ v-if="isEditMode" @command="handleAction"
       </div>
     </div>
 
-    <!-- Widget Footer -->
+    <!-- 小部件底部 -->
     <div
 v-if="showFooter" class="widget-footer"
 >
@@ -187,25 +187,25 @@ v-if="showFooter" class="widget-footer"
         <span
 v-if="lastUpdated" class="last-updated"
 >
-          Updated {{ formatRelativeTime(lastUpdated) }}
+          更新于 {{ formatRelativeTime(lastUpdated) }}
         </span>
         <span
 v-if="widget.refreshInterval > 0" class="refresh-interval"
 >
-          Refreshes every {{ formatDuration(widget.refreshInterval) }}
+          每 {{ formatDuration(widget.refreshInterval) }} 刷新一次
         </span>
       </div>
 
       <div
 v-if="showMetrics && metrics" class="widget-metrics"
 >
-        <el-tooltip content="Load Time" placement="top">
+        <el-tooltip content="加载时间" placement="top">
           <span class="metric">
             <el-icon><Timer /></el-icon>
             {{ formatDuration(metrics.loadTime) }}
           </span>
         </el-tooltip>
-        <el-tooltip content="Data Size" placement="top">
+        <el-tooltip content="数据大小" placement="top">
           <span class="metric">
             <el-icon><Document /></el-icon>
             {{ formatBytes(metrics.dataSize) }}
@@ -213,7 +213,7 @@ v-if="showMetrics && metrics" class="widget-metrics"
         </el-tooltip>
         <el-tooltip
           v-if="metrics.errorCount > 0"
-          content="Error Count"
+          content="错误数量"
           placement="top"
         >
           <span class="metric error-metric">
@@ -227,12 +227,12 @@ v-if="showMetrics && metrics" class="widget-metrics"
     <!-- Error Details Dialog -->
     <el-dialog
       v-model="errorDetailsVisible"
-      title="Widget Error Details"
+      title="小部件错误详情"
       width="600px"
     >
       <div class="error-details">
         <div class="error-summary">
-          <h4>Error Summary</h4>
+          <h4>错误概要</h4>
           <p>{{ errorMessage }}</p>
         </div>
 
@@ -259,8 +259,8 @@ v-if="errorStack" class="error-stack"
               <span>{{ widget.component }}</span>
             </div>
             <div class="context-item">
-              <strong>Last Updated:</strong>
-              <span>{{ lastUpdated ? formatDate(lastUpdated) : "Never" }}</span>
+              <strong>最后更新：</strong>
+              <span>{{ lastUpdated ? formatDate(lastUpdated) : "从未" }}</span>
             </div>
           </div>
         </div>
@@ -278,7 +278,7 @@ type="primary" @click="refreshWidget"
           </el-button>
           <el-button @click="copyErrorToClipboard">
             <el-icon><CopyDocument /></el-icon>
-            Copy Error
+            复制错误
           </el-button>
         </div>
       </div>
@@ -416,7 +416,7 @@ const statusClass = computed(() => ({
 const statusTooltip = computed(() => {
   switch (widgetStatus.value) {
     case WidgetStatus.LOADING:
-      return "Loading...";
+      return "加载中...";
     case WidgetStatus.LOADED:
       return "Data loaded successfully";
     case WidgetStatus.ERROR:
@@ -445,7 +445,7 @@ const refreshWidget = async () => {
     emit("refresh", props.widget.id);
   } catch (error) {
     console.error("Failed to refresh widget:", error);
-    ElMessage.error("Failed to refresh widget");
+    ElMessage.error("刷新小部件失败");
   } finally {
     isRefreshing.value = false;
   }

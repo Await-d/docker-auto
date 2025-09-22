@@ -1,14 +1,15 @@
 package controller
 
 import (
-	"net/http"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	"docker-auto/internal/middleware"
 	"docker-auto/internal/service"
-	"docker-auto/pkg/registry"
+	"docker-auto/pkg/docker"
+	"docker-auto/pkg/security"
+	dockerTypes "docker-auto/pkg/types"
 	"docker-auto/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -17,15 +18,17 @@ import (
 
 // ImageController handles image-related HTTP requests
 type ImageController struct {
-	imageService *service.ImageService
-	logger       *logrus.Logger
+	imageService   *service.ImageService
+	dockerManager  *docker.ClientManager
+	logger         *logrus.Logger
 }
 
 // NewImageController creates a new image controller
-func NewImageController(imageService *service.ImageService, logger *logrus.Logger) *ImageController {
+func NewImageController(imageService *service.ImageService, dockerManager *docker.ClientManager, logger *logrus.Logger) *ImageController {
 	return &ImageController{
-		imageService: imageService,
-		logger:       logger,
+		imageService:  imageService,
+		dockerManager: dockerManager,
+		logger:        logger,
 	}
 }
 
@@ -199,16 +202,59 @@ func (ic *ImageController) PullImage(c *gin.Context) {
 
 	rb := utils.NewResponseBuilder(c)
 
-	// For now, this would be a placeholder as we need to integrate with Docker client
-	// In a real implementation, you'd use the Docker client to pull the image
-	ic.logger.WithFields(logrus.Fields{
-		"image": imageName,
-		"tag":   req.Tag,
-		"force": req.Force,
-	}).Info("Image pull requested (placeholder implementation)")
+	// Get Docker client manager
+	dockerManager, err := ic.getDockerManager()
+	if err != nil {
+		ic.logger.WithError(err).Error("Failed to get Docker manager")
+		rb.InternalServerError("Docker service unavailable")
+		return
+	}
 
-	// TODO: Implement actual image pulling using Docker client
-	rb.Error(http.StatusNotImplemented, "Image pulling not yet implemented")
+	// Get user context from middleware
+	userContext := ic.getUserContext(c)
+
+	// Prepare registry authentication
+	var auth *dockerTypes.RegistryAuth
+	if req.RegistryURL != "" {
+		// Get authentication for the registry
+		// This would typically come from configuration or user settings
+		auth = ic.getRegistryAuth(req.RegistryURL)
+	}
+
+	// Start image pull
+	pullProgress, err := dockerManager.PullImage(
+		c.Request.Context(),
+		imageName,
+		req.Tag,
+		auth,
+		req.Force,
+		userContext,
+	)
+	if err != nil {
+		ic.logger.WithError(err).WithFields(logrus.Fields{
+			"image": imageName,
+			"tag":   req.Tag,
+		}).Error("Failed to start image pull")
+		rb.InternalServerError("Failed to start image pull: " + err.Error())
+		return
+	}
+
+	ic.logger.WithFields(logrus.Fields{
+		"image":  imageName,
+		"tag":    req.Tag,
+		"force":  req.Force,
+		"status": pullProgress.Status,
+	}).Info("Image pull started successfully")
+
+	// Return pull progress information
+	rb.Success(map[string]interface{}{
+		"message":        "Image pull started",
+		"image":          pullProgress.ImageName,
+		"status":         pullProgress.Status,
+		"progress_id":    pullProgress.ImageName, // Can be used to track progress
+		"start_time":     pullProgress.StartTime,
+		"force":          req.Force,
+	})
 }
 
 // RemoveImage godoc
@@ -242,16 +288,68 @@ func (ic *ImageController) RemoveImage(c *gin.Context) {
 
 	rb := utils.NewResponseBuilder(c)
 
-	// For now, this would be a placeholder as we need to integrate with Docker client
-	// In a real implementation, you'd use the Docker client to remove the image
-	ic.logger.WithFields(logrus.Fields{
-		"image": imageName,
-		"tag":   tag,
-		"force": force,
-	}).Info("Image removal requested (placeholder implementation)")
+	// Get Docker client manager
+	dockerManager, err := ic.getDockerManager()
+	if err != nil {
+		ic.logger.WithError(err).Error("Failed to get Docker manager")
+		rb.InternalServerError("Docker service unavailable")
+		return
+	}
 
-	// TODO: Implement actual image removal using Docker client
-	rb.Error(http.StatusNotImplemented, "Image removal not yet implemented")
+	// Get user context from middleware
+	userContext := ic.getUserContext(c)
+
+	// Remove image
+	removeResult, err := dockerManager.RemoveImage(
+		c.Request.Context(),
+		imageName,
+		tag,
+		force,
+		userContext,
+	)
+	if err != nil {
+		ic.logger.WithError(err).WithFields(logrus.Fields{
+			"image": imageName,
+			"tag":   tag,
+			"force": force,
+		}).Error("Failed to remove image")
+
+		// Check if it's a permission error
+		if strings.Contains(err.Error(), "permission denied") {
+			rb.Forbidden("Permission denied: " + err.Error())
+			return
+		}
+
+		// Check if it's a dependency error
+		if strings.Contains(err.Error(), "dependencies") {
+			rb.BadRequest("Cannot remove image: " + err.Error())
+			return
+		}
+
+		rb.InternalServerError("Failed to remove image: " + err.Error())
+		return
+	}
+
+	ic.logger.WithFields(logrus.Fields{
+		"image":     imageName,
+		"tag":       tag,
+		"force":     force,
+		"success":   removeResult.Success,
+		"deleted":   len(removeResult.Deleted),
+		"untagged":  len(removeResult.Untagged),
+	}).Info("Image removal completed")
+
+	// Return removal result
+	rb.Success(map[string]interface{}{
+		"message":          "Image removed successfully",
+		"image":            removeResult.ImageName,
+		"image_id":         removeResult.ImageID,
+		"deleted":          removeResult.Deleted,
+		"untagged":         removeResult.Untagged,
+		"dependency_info":  removeResult.DependencyInfo,
+		"force":            removeResult.Force,
+		"success":          removeResult.Success,
+	})
 }
 
 // SearchImages godoc
@@ -616,4 +714,48 @@ func (ic *ImageController) GetImageSecurityIssues(c *gin.Context) {
 	}
 
 	rb.Success(updateInfo.SecurityIssues)
+}
+
+// getDockerManager returns the Docker client manager
+func (ic *ImageController) getDockerManager() (*docker.ClientManager, error) {
+	if ic.dockerManager == nil {
+		return nil, fmt.Errorf("Docker manager not initialized")
+	}
+	return ic.dockerManager, nil
+}
+
+// getUserContext extracts user context from gin context
+func (ic *ImageController) getUserContext(c *gin.Context) *security.DockerUserContext {
+	// Try to get user from middleware
+	if userID, exists := c.Get("user_id"); exists {
+		if username, exists := c.Get("username"); exists {
+			if role, exists := c.Get("role"); exists {
+				return &security.DockerUserContext{
+					UserID:    userID.(int64),
+					Username:  username.(string),
+					Role:      role.(string),
+					ClientIP:  c.ClientIP(),
+					SessionID: c.GetHeader("X-Session-ID"),
+				}
+			}
+		}
+	}
+
+	// Return default context for unauthenticated requests
+	return &security.DockerUserContext{
+		UserID:   0,
+		Username: "anonymous",
+		Role:     "viewer",
+		ClientIP: c.ClientIP(),
+	}
+}
+
+// getRegistryAuth returns authentication for a registry
+func (ic *ImageController) getRegistryAuth(registryURL string) *dockerTypes.RegistryAuth {
+	// This would typically load from configuration or user settings
+	// For now, return basic auth structure
+	return &dockerTypes.RegistryAuth{
+		ServerAddress: registryURL,
+		// Username, Password would be loaded from secure storage
+	}
 }

@@ -15,14 +15,14 @@
         <template #header>
           <div class="section-header">
             <el-icon><Monitor /></el-icon>
-            <span>System Monitoring</span>
+            <span>系统监控</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Health Check Interval"
+              label="健康检查间隔"
               prop="systemMonitoring.healthCheckInterval"
               required
             >
@@ -34,18 +34,18 @@
                   :step="30"
                   @change="updateSystemMonitoring"
                 />
-                <span class="timeout-unit">seconds</span>
+                <span class="timeout-unit">秒</span>
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Alerting Enabled">
+            <el-form-item label="启用警报">
               <el-switch
                 v-model="formData.systemMonitoring.alertingEnabled"
                 @change="updateSystemMonitoring"
               />
               <div class="field-help">
-                Send alerts when thresholds are exceeded
+                当阈值被超出时发送警报
               </div>
             </el-form-item>
           </el-col>
@@ -54,7 +54,7 @@
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="CPU Warning Threshold"
+              label="CPU警告阈值"
               prop="systemMonitoring.resourceThresholds.cpuWarning"
             >
               <div class="percentage-input">
@@ -73,7 +73,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item
-              label="Memory Warning Threshold"
+              label="内存警告阈值"
               prop="systemMonitoring.resourceThresholds.memoryWarning"
             >
               <div class="percentage-input">
@@ -98,16 +98,16 @@
         <template #header>
           <div class="section-header">
             <el-icon><Document /></el-icon>
-            <span>Logging Configuration</span>
+            <span>日志配置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Log Level" prop="logging.level" required>
+            <el-form-item label="日志级别" prop="logging.level" required>
               <el-select
                 v-model="formData.logging.level"
-                placeholder="Select log level"
+                placeholder="选择日志级别"
                 @change="updateLogging"
               >
                 <el-option label="Debug" value="debug" />
@@ -184,7 +184,7 @@ Use structured JSON logging format
         </template>
 
         <div
-          v-if="formData.externalIntegrations.length === 0"
+          v-if="!formData.externalIntegrations || formData.externalIntegrations.length === 0"
           class="empty-state"
         >
           <el-empty description="No integrations configured">
@@ -196,7 +196,7 @@ Use structured JSON logging format
 
         <div v-else class="integrations-list">
           <div
-            v-for="(integration, index) in formData.externalIntegrations"
+            v-for="(integration, index) in (formData.externalIntegrations || [])"
             :key="integration.id"
             class="integration-item"
           >
@@ -305,6 +305,22 @@ const formData = ref<MonitoringSettings>({
   externalIntegrations: [],
 } as any);
 
+// Initialize form data from props
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = {
+        ...formData.value, // Keep existing defaults
+        ...newValue, // Override with new values
+        // Ensure required arrays are always present
+        externalIntegrations: newValue.externalIntegrations || [],
+      };
+    }
+  },
+  { immediate: true, deep: true },
+);
+
 const hasChanges = computed(() => {
   return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
 });
@@ -341,6 +357,11 @@ const generateId = (): string => {
 };
 
 const addIntegration = () => {
+  // Ensure externalIntegrations array exists
+  if (!formData.value.externalIntegrations) {
+    formData.value.externalIntegrations = [];
+  }
+  
   const newIntegration: ExternalIntegration = {
     id: generateId(),
     type: "prometheus",
@@ -354,8 +375,10 @@ const addIntegration = () => {
 };
 
 const removeIntegration = (index: number) => {
-  formData.value.externalIntegrations.splice(index, 1);
-  updateIntegrations();
+  if (formData.value.externalIntegrations && formData.value.externalIntegrations.length > index) {
+    formData.value.externalIntegrations.splice(index, 1);
+    updateIntegrations();
+  }
 };
 
 const updateSystemMonitoring = () => {

@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -728,18 +729,496 @@ func (s *CronScheduler) executeTaskWithHooks(ctx context.Context, execution *Tas
 
 // parseTaskParameters parses task parameters from JSON
 func (s *CronScheduler) parseTaskParameters(task *model.ScheduledTask) (*TaskParameters, error) {
-	// TODO: Implement parameter parsing based on task type
 	params := &TaskParameters{
-		TaskType: task.Type,
-		Timeout:  s.config.TaskTimeout,
+		TaskType:   task.Type,
+		Timeout:    s.config.TaskTimeout,
 		MaxRetries: s.config.MaxRetries,
 		RetryDelay: s.config.RetryDelay,
+		Parameters: make(map[string]interface{}),
 	}
 
-	// Parse target containers
-	// Implementation depends on how target containers are stored in the database
+	// Parse target containers from JSON string
+	if task.TargetContainers != "" && task.TargetContainers != "[]" {
+		var containerIDs []int64
+		if err := json.Unmarshal([]byte(task.TargetContainers), &containerIDs); err != nil {
+			return nil, fmt.Errorf("failed to parse target containers: %w", err)
+		}
+		params.TargetContainers = containerIDs
+	}
+
+	// Parse additional parameters from JSON string
+	if task.Parameters != "" && task.Parameters != "{}" {
+		var taskParams map[string]interface{}
+		if err := json.Unmarshal([]byte(task.Parameters), &taskParams); err != nil {
+			return nil, fmt.Errorf("failed to parse task parameters: %w", err)
+		}
+
+		// Extract and validate known parameters
+		if err := s.extractKnownParameters(params, taskParams); err != nil {
+			return nil, fmt.Errorf("failed to extract known parameters: %w", err)
+		}
+
+		// Store remaining parameters
+		params.Parameters = taskParams
+	}
+
+	// Apply task-type specific parameter parsing and validation
+	if err := s.applyTaskTypeSpecificParsing(params, task); err != nil {
+		return nil, fmt.Errorf("failed to apply task-type specific parsing: %w", err)
+	}
+
+	// Validate parameters
+	if err := s.validateTaskParameters(params, task); err != nil {
+		return nil, fmt.Errorf("invalid task parameters: %w", err)
+	}
 
 	return params, nil
+}
+
+// extractKnownParameters extracts known parameters from the task parameters map
+func (s *CronScheduler) extractKnownParameters(params *TaskParameters, taskParams map[string]interface{}) error {
+	// Extract timeout
+	if timeoutVal, exists := taskParams["timeout"]; exists {
+		switch v := timeoutVal.(type) {
+		case string:
+			if duration, err := time.ParseDuration(v); err == nil {
+				params.Timeout = duration
+				delete(taskParams, "timeout")
+			}
+		case float64:
+			params.Timeout = time.Duration(v) * time.Second
+			delete(taskParams, "timeout")
+		case int:
+			params.Timeout = time.Duration(v) * time.Second
+			delete(taskParams, "timeout")
+		}
+	}
+
+	// Extract max retries
+	if retriesVal, exists := taskParams["max_retries"]; exists {
+		switch v := retriesVal.(type) {
+		case float64:
+			params.MaxRetries = int(v)
+			delete(taskParams, "max_retries")
+		case int:
+			params.MaxRetries = v
+			delete(taskParams, "max_retries")
+		}
+	}
+
+	// Extract retry delay
+	if delayVal, exists := taskParams["retry_delay"]; exists {
+		switch v := delayVal.(type) {
+		case string:
+			if duration, err := time.ParseDuration(v); err == nil {
+				params.RetryDelay = duration
+				delete(taskParams, "retry_delay")
+			}
+		case float64:
+			params.RetryDelay = time.Duration(v) * time.Second
+			delete(taskParams, "retry_delay")
+		case int:
+			params.RetryDelay = time.Duration(v) * time.Second
+			delete(taskParams, "retry_delay")
+		}
+	}
+
+	return nil
+}
+
+// applyTaskTypeSpecificParsing applies task-type specific parameter parsing
+func (s *CronScheduler) applyTaskTypeSpecificParsing(params *TaskParameters, task *model.ScheduledTask) error {
+	switch task.Type {
+	case model.TaskTypeContainerUpdate:
+		return s.parseContainerUpdateParameters(params)
+	case model.TaskTypeImageCleanup:
+		return s.parseImageCleanupParameters(params)
+	case model.TaskTypeHealthCheck:
+		return s.parseHealthCheckParameters(params)
+	case model.TaskTypeBackup:
+		return s.parseBackupParameters(params)
+	case model.TaskTypeSystemMaintenance:
+		return s.parseSystemMaintenanceParameters(params)
+	default:
+		// For unknown task types, use generic parsing
+		return s.parseGenericParameters(params)
+	}
+}
+
+// parseContainerUpdateParameters parses parameters specific to container update tasks
+func (s *CronScheduler) parseContainerUpdateParameters(params *TaskParameters) error {
+	// Set default values for container update
+	if params.Parameters == nil {
+		params.Parameters = make(map[string]interface{})
+	}
+
+	// Update strategy: all, selective, staged
+	if _, exists := params.Parameters["update_strategy"]; !exists {
+		params.Parameters["update_strategy"] = "selective"
+	}
+
+	// Auto restart containers after update
+	if _, exists := params.Parameters["auto_restart"]; !exists {
+		params.Parameters["auto_restart"] = true
+	}
+
+	// Backup before update
+	if _, exists := params.Parameters["backup_before_update"]; !exists {
+		params.Parameters["backup_before_update"] = false
+	}
+
+	// Pull policy: always, missing, never
+	if _, exists := params.Parameters["pull_policy"]; !exists {
+		params.Parameters["pull_policy"] = "missing"
+	}
+
+	// Maximum concurrent updates
+	if _, exists := params.Parameters["max_concurrent"]; !exists {
+		params.Parameters["max_concurrent"] = 3
+	}
+
+	// Rollback on failure
+	if _, exists := params.Parameters["rollback_on_failure"]; !exists {
+		params.Parameters["rollback_on_failure"] = false
+	}
+
+	return nil
+}
+
+// parseImageCleanupParameters parses parameters specific to image cleanup tasks
+func (s *CronScheduler) parseImageCleanupParameters(params *TaskParameters) error {
+	if params.Parameters == nil {
+		params.Parameters = make(map[string]interface{})
+	}
+
+	// Remove unused images older than X days
+	if _, exists := params.Parameters["max_age_days"]; !exists {
+		params.Parameters["max_age_days"] = 7
+	}
+
+	// Remove dangling images
+	if _, exists := params.Parameters["remove_dangling"]; !exists {
+		params.Parameters["remove_dangling"] = true
+	}
+
+	// Remove unused images
+	if _, exists := params.Parameters["remove_unused"]; !exists {
+		params.Parameters["remove_unused"] = false
+	}
+
+	// Preserve recent images
+	if _, exists := params.Parameters["keep_recent"]; !exists {
+		params.Parameters["keep_recent"] = 3
+	}
+
+	// Exclude patterns
+	if _, exists := params.Parameters["exclude_patterns"]; !exists {
+		params.Parameters["exclude_patterns"] = []string{}
+	}
+
+	return nil
+}
+
+// parseHealthCheckParameters parses parameters specific to health check tasks
+func (s *CronScheduler) parseHealthCheckParameters(params *TaskParameters) error {
+	if params.Parameters == nil {
+		params.Parameters = make(map[string]interface{})
+	}
+
+	// Health check timeout
+	if _, exists := params.Parameters["check_timeout"]; !exists {
+		params.Parameters["check_timeout"] = "30s"
+	}
+
+	// Restart unhealthy containers
+	if _, exists := params.Parameters["restart_unhealthy"]; !exists {
+		params.Parameters["restart_unhealthy"] = false
+	}
+
+	// Number of retries before marking as failed
+	if _, exists := params.Parameters["health_retries"]; !exists {
+		params.Parameters["health_retries"] = 3
+	}
+
+	// Send notifications on failure
+	if _, exists := params.Parameters["notify_on_failure"]; !exists {
+		params.Parameters["notify_on_failure"] = true
+	}
+
+	return nil
+}
+
+// parseBackupParameters parses parameters specific to backup tasks
+func (s *CronScheduler) parseBackupParameters(params *TaskParameters) error {
+	if params.Parameters == nil {
+		params.Parameters = make(map[string]interface{})
+	}
+
+	// Backup type: volumes, containers, images, all
+	if _, exists := params.Parameters["backup_type"]; !exists {
+		params.Parameters["backup_type"] = "volumes"
+	}
+
+	// Compression level (0-9)
+	if _, exists := params.Parameters["compression_level"]; !exists {
+		params.Parameters["compression_level"] = 6
+	}
+
+	// Include logs
+	if _, exists := params.Parameters["include_logs"]; !exists {
+		params.Parameters["include_logs"] = false
+	}
+
+	// Storage location
+	if _, exists := params.Parameters["storage_path"]; !exists {
+		params.Parameters["storage_path"] = "/var/lib/docker-auto/backups"
+	}
+
+	// Retention policy (days)
+	if _, exists := params.Parameters["retention_days"]; !exists {
+		params.Parameters["retention_days"] = 30
+	}
+
+	return nil
+}
+
+// parseSystemMaintenanceParameters parses parameters for system maintenance tasks
+func (s *CronScheduler) parseSystemMaintenanceParameters(params *TaskParameters) error {
+	if params.Parameters == nil {
+		params.Parameters = make(map[string]interface{})
+	}
+
+	// Maintenance actions
+	if _, exists := params.Parameters["actions"]; !exists {
+		params.Parameters["actions"] = []string{"cleanup_logs", "prune_system"}
+	}
+
+	// Log cleanup max age
+	if _, exists := params.Parameters["log_max_age_days"]; !exists {
+		params.Parameters["log_max_age_days"] = 7
+	}
+
+	// System prune options
+	if _, exists := params.Parameters["prune_volumes"]; !exists {
+		params.Parameters["prune_volumes"] = false
+	}
+
+	if _, exists := params.Parameters["prune_networks"]; !exists {
+		params.Parameters["prune_networks"] = true
+	}
+
+	return nil
+}
+
+// parseGenericParameters provides default parsing for unknown task types
+func (s *CronScheduler) parseGenericParameters(params *TaskParameters) error {
+	if params.Parameters == nil {
+		params.Parameters = make(map[string]interface{})
+	}
+
+	// Add generic default parameters
+	if _, exists := params.Parameters["notify_on_completion"]; !exists {
+		params.Parameters["notify_on_completion"] = false
+	}
+
+	if _, exists := params.Parameters["notify_on_failure"]; !exists {
+		params.Parameters["notify_on_failure"] = true
+	}
+
+	return nil
+}
+
+// validateTaskParameters validates the parsed task parameters
+func (s *CronScheduler) validateTaskParameters(params *TaskParameters, task *model.ScheduledTask) error {
+	// Validate timeout
+	if params.Timeout <= 0 {
+		return fmt.Errorf("timeout must be positive, got: %v", params.Timeout)
+	}
+
+	if params.Timeout > 24*time.Hour {
+		return fmt.Errorf("timeout cannot exceed 24 hours, got: %v", params.Timeout)
+	}
+
+	// Validate retry settings
+	if params.MaxRetries < 0 {
+		return fmt.Errorf("max retries cannot be negative, got: %d", params.MaxRetries)
+	}
+
+	if params.MaxRetries > 10 {
+		return fmt.Errorf("max retries cannot exceed 10, got: %d", params.MaxRetries)
+	}
+
+	if params.RetryDelay < 0 {
+		return fmt.Errorf("retry delay cannot be negative, got: %v", params.RetryDelay)
+	}
+
+	// Validate target containers
+	if len(params.TargetContainers) > 100 {
+		return fmt.Errorf("too many target containers, maximum 100 allowed, got: %d", len(params.TargetContainers))
+	}
+
+	// Task-specific validation
+	return s.validateTaskTypeSpecificParameters(params, task)
+}
+
+// validateTaskTypeSpecificParameters performs task-type specific validation
+func (s *CronScheduler) validateTaskTypeSpecificParameters(params *TaskParameters, task *model.ScheduledTask) error {
+	switch task.Type {
+	case model.TaskTypeContainerUpdate:
+		return s.validateContainerUpdateParameters(params)
+	case model.TaskTypeImageCleanup:
+		return s.validateImageCleanupParameters(params)
+	case model.TaskTypeHealthCheck:
+		return s.validateHealthCheckParameters(params)
+	case model.TaskTypeBackup:
+		return s.validateBackupParameters(params)
+	case model.TaskTypeSystemMaintenance:
+		return s.validateSystemMaintenanceParameters(params)
+	default:
+		return nil // No specific validation for unknown types
+	}
+}
+
+// validateContainerUpdateParameters validates container update parameters
+func (s *CronScheduler) validateContainerUpdateParameters(params *TaskParameters) error {
+	if strategy, exists := params.Parameters["update_strategy"]; exists {
+		if str, ok := strategy.(string); ok {
+			if str != "all" && str != "selective" && str != "staged" {
+				return fmt.Errorf("invalid update_strategy: %s, must be one of: all, selective, staged", str)
+			}
+		}
+	}
+
+	if pullPolicy, exists := params.Parameters["pull_policy"]; exists {
+		if str, ok := pullPolicy.(string); ok {
+			if str != "always" && str != "missing" && str != "never" {
+				return fmt.Errorf("invalid pull_policy: %s, must be one of: always, missing, never", str)
+			}
+		}
+	}
+
+	if maxConcurrent, exists := params.Parameters["max_concurrent"]; exists {
+		if val, ok := maxConcurrent.(float64); ok {
+			if val < 1 || val > 20 {
+				return fmt.Errorf("max_concurrent must be between 1 and 20, got: %v", val)
+			}
+		}
+	}
+
+	return nil
+}
+
+// validateImageCleanupParameters validates image cleanup parameters
+func (s *CronScheduler) validateImageCleanupParameters(params *TaskParameters) error {
+	if maxAge, exists := params.Parameters["max_age_days"]; exists {
+		if val, ok := maxAge.(float64); ok {
+			if val < 0 {
+				return fmt.Errorf("max_age_days cannot be negative, got: %v", val)
+			}
+		}
+	}
+
+	if keepRecent, exists := params.Parameters["keep_recent"]; exists {
+		if val, ok := keepRecent.(float64); ok {
+			if val < 0 {
+				return fmt.Errorf("keep_recent cannot be negative, got: %v", val)
+			}
+		}
+	}
+
+	return nil
+}
+
+// validateHealthCheckParameters validates health check parameters
+func (s *CronScheduler) validateHealthCheckParameters(params *TaskParameters) error {
+	if timeout, exists := params.Parameters["check_timeout"]; exists {
+		if str, ok := timeout.(string); ok {
+			if _, err := time.ParseDuration(str); err != nil {
+				return fmt.Errorf("invalid check_timeout format: %s, must be a valid duration", str)
+			}
+		}
+	}
+
+	if retries, exists := params.Parameters["health_retries"]; exists {
+		if val, ok := retries.(float64); ok {
+			if val < 0 || val > 10 {
+				return fmt.Errorf("health_retries must be between 0 and 10, got: %v", val)
+			}
+		}
+	}
+
+	return nil
+}
+
+// validateBackupParameters validates backup parameters
+func (s *CronScheduler) validateBackupParameters(params *TaskParameters) error {
+	if backupType, exists := params.Parameters["backup_type"]; exists {
+		if str, ok := backupType.(string); ok {
+			validTypes := []string{"volumes", "containers", "images", "all"}
+			isValid := false
+			for _, validType := range validTypes {
+				if str == validType {
+					isValid = true
+					break
+				}
+			}
+			if !isValid {
+				return fmt.Errorf("invalid backup_type: %s, must be one of: %v", str, validTypes)
+			}
+		}
+	}
+
+	if compression, exists := params.Parameters["compression_level"]; exists {
+		if val, ok := compression.(float64); ok {
+			if val < 0 || val > 9 {
+				return fmt.Errorf("compression_level must be between 0 and 9, got: %v", val)
+			}
+		}
+	}
+
+	if retention, exists := params.Parameters["retention_days"]; exists {
+		if val, ok := retention.(float64); ok {
+			if val < 1 || val > 365 {
+				return fmt.Errorf("retention_days must be between 1 and 365, got: %v", val)
+			}
+		}
+	}
+
+	return nil
+}
+
+// validateSystemMaintenanceParameters validates system maintenance parameters
+func (s *CronScheduler) validateSystemMaintenanceParameters(params *TaskParameters) error {
+	if actions, exists := params.Parameters["actions"]; exists {
+		if actionList, ok := actions.([]interface{}); ok {
+			validActions := map[string]bool{
+				"cleanup_logs":     true,
+				"prune_system":     true,
+				"prune_images":     true,
+				"prune_containers": true,
+				"prune_volumes":    true,
+				"prune_networks":   true,
+				"update_system":    true,
+			}
+			for _, action := range actionList {
+				if str, ok := action.(string); ok {
+					if !validActions[str] {
+						return fmt.Errorf("invalid maintenance action: %s", str)
+					}
+				}
+			}
+		}
+	}
+
+	if maxAge, exists := params.Parameters["log_max_age_days"]; exists {
+		if val, ok := maxAge.(float64); ok {
+			if val < 1 || val > 365 {
+				return fmt.Errorf("log_max_age_days must be between 1 and 365, got: %v", val)
+			}
+		}
+	}
+
+	return nil
 }
 
 // saveExecutionLog saves task execution log to database

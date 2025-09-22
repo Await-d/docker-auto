@@ -17,6 +17,7 @@ type RouterConfig struct {
 	Config              *config.Config
 	Logger              *logrus.Logger
 	UserService         *service.UserService
+	AuthService         *service.AuthService
 	ContainerService    *service.ContainerService
 	ImageService        *service.ImageService
 	NotificationService *service.NotificationService
@@ -44,17 +45,10 @@ func setupGlobalMiddleware(router *gin.Engine, cfg *RouterConfig) {
 	router.Use(middleware.LoggerMiddleware(cfg.Logger))
 
 	// CORS middleware
-	corsConfig := middleware.CORSConfig{
-		AllowedOrigins:   []string{"*"}, // Configure based on environment
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}
-	router.Use(middleware.CORSMiddleware(corsConfig))
+	router.Use(middleware.CORSMiddleware(cfg.Config))
 
 	// Error handling middleware
-	router.Use(middleware.ErrorHandlerMiddleware(cfg.Logger))
+	router.Use(middleware.ErrorHandlerMiddleware())
 
 	// Recovery middleware
 	router.Use(gin.Recovery())
@@ -84,12 +78,13 @@ func setupAPIRoutes(router *gin.Engine, cfg *RouterConfig) {
 	api := router.Group("/api")
 
 	// Apply rate limiting to API endpoints
-	rateLimitConfig := middleware.RateLimitConfig{
-		Requests: 100, // requests per window
-		Window:   time.Minute,
-		KeyFunc:  middleware.ClientIPKeyFunc,
+	rateLimitConfig := &middleware.RateLimitConfig{
+		Limit:   100, // requests per window
+		Window:  time.Minute,
+		KeyFunc: middleware.IPBasedKeyFunction,
 	}
-	api.Use(middleware.RateLimitMiddleware(rateLimitConfig))
+	rateLimiter := middleware.NewRateLimiterWithConfig(rateLimitConfig)
+	api.Use(middleware.RateLimitMiddleware(rateLimiter))
 
 	// Setup authentication routes (no auth required)
 	setupAuthRoutes(api, cfg)
@@ -100,7 +95,7 @@ func setupAPIRoutes(router *gin.Engine, cfg *RouterConfig) {
 
 // setupAuthRoutes configures authentication-related routes
 func setupAuthRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
-	userController := NewUserController(cfg.UserService, cfg.Logger)
+	userController := NewUserController(cfg.UserService, cfg.AuthService, cfg.Logger)
 
 	auth := api.Group("/auth")
 	{
@@ -133,6 +128,7 @@ func setupAuthenticatedRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
 	setupImageRoutes(protected, cfg)
 	setupUpdateRoutes(protected, cfg)
 	setupSystemRoutes(protected, cfg)
+	setupLogRoutes(protected, cfg)
 	setupRegistryRoutes(protected, cfg)
 	setupNotificationRoutes(protected, cfg)
 	setupWebSocketRoutes(api, cfg)
@@ -140,7 +136,7 @@ func setupAuthenticatedRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
 
 // setupUserRoutes configures user management routes
 func setupUserRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
-	userController := NewUserController(cfg.UserService, cfg.Logger)
+	userController := NewUserController(cfg.UserService, cfg.AuthService, cfg.Logger)
 
 	users := api.Group("/users")
 	{
@@ -210,7 +206,7 @@ func setupContainerRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
 
 // setupImageRoutes configures image management routes
 func setupImageRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
-	imageController := NewImageController(cfg.ImageService, cfg.Logger)
+	imageController := NewImageController(cfg.ImageService, nil, cfg.Logger) // TODO: Add proper Docker client manager
 
 	images := api.Group("/images")
 	{
@@ -287,7 +283,11 @@ func setupSystemRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
 
 		// System operations (admin only)
 		system.POST("/restart", middleware.RequireAdmin(), systemController.RestartService)
+
+		// Log management (admin only)
 		system.GET("/logs", middleware.RequireAdmin(), systemController.GetLogs)
+		system.GET("/logs/stats", middleware.RequireAdmin(), systemController.GetLogStatistics)
+		system.GET("/logs/files", middleware.RequireAdmin(), systemController.GetLogFiles)
 	}
 }
 
@@ -475,6 +475,43 @@ func setupWebSocketRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
 		wsManagement.POST("/cleanup", middleware.RequireAdmin(), func(c *gin.Context) {
 			cfg.WebSocketManager.CleanupInactiveConnections()
 			c.JSON(200, gin.H{"message": "Cleanup completed"})
+		})
+	}
+}
+
+// setupLogRoutes configures dedicated log management routes
+func setupLogRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
+	systemController := NewSystemController(cfg.Logger)
+
+	logs := api.Group("/logs")
+	{
+		// Main logs endpoint (matches frontend expectation)
+		logs.GET("", middleware.RequireAdmin(), systemController.GetLogs)
+
+		// Log statistics and management
+		logs.GET("/stats", middleware.RequireAdmin(), systemController.GetLogStatistics)
+		logs.GET("/files", middleware.RequireAdmin(), systemController.GetLogFiles)
+
+		// Additional endpoints to match frontend API expectations
+		logs.GET("/application", middleware.RequireAdmin(), systemController.GetLogs)
+		logs.GET("/audit", middleware.RequireAdmin(), systemController.GetLogs)
+		logs.GET("/errors", middleware.RequireAdmin(), func(c *gin.Context) {
+			// Add level=error to query parameters
+			c.Request.URL.RawQuery += "&level=error"
+			systemController.GetLogs(c)
+		})
+
+		// Log search endpoint
+		logs.GET("/search", middleware.RequireAdmin(), systemController.GetLogs)
+
+		// Export functionality (placeholder)
+		logs.GET("/export", middleware.RequireAdmin(), func(c *gin.Context) {
+			c.JSON(501, gin.H{"error": "Export functionality not yet implemented"})
+		})
+
+		// Cleanup functionality (placeholder)
+		logs.POST("/cleanup", middleware.RequireAdmin(), func(c *gin.Context) {
+			c.JSON(501, gin.H{"error": "Cleanup functionality not yet implemented"})
 		})
 	}
 }

@@ -60,6 +60,8 @@ type NotificationServiceInterface interface {
 	BroadcastNotification(ctx context.Context, notificationType NotificationType, title, message string, data map[string]interface{}) error
 	RegisterTemplate(templateID string, notificationType NotificationType, title, message string) error
 	GetNotificationsByType(ctx context.Context, userID int64, notificationType NotificationType, limit, offset int) ([]*model.UserNotification, error)
+	GetNotificationStats(ctx context.Context, userID int64) (map[string]interface{}, error)
+	CleanupOldNotifications(ctx context.Context, retentionDays int) error
 }
 
 // NewNotificationService creates a new notification service

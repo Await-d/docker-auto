@@ -4,20 +4,20 @@
       <el-icon :size="48">
         <Bell />
       </el-icon>
-      <h3>Notification Center</h3>
-      <p>Live notifications and alerts will be displayed here.</p>
+      <h3>通知中心</h3>
+      <p>实时通知和警报将在此处显示。</p>
       <div class="mock-data">
         <div class="notification-item warning">
           <el-icon><Warning /></el-icon>
-          <span>High CPU usage detected</span>
+          <span>检测到高CPU使用率</span>
         </div>
         <div class="notification-item info">
           <el-icon><InfoFilled /></el-icon>
-          <span>Backup completed successfully</span>
+          <span>备份已成功完成</span>
         </div>
         <div class="notification-item success">
           <el-icon><SuccessFilled /></el-icon>
-          <span>All systems operational</span>
+          <span>所有系统运行正常</span>
         </div>
       </div>
     </div>

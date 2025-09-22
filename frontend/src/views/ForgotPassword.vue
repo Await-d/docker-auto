@@ -3,10 +3,10 @@
     <div class="forgot-password-container">
       <el-card>
         <template #header>
-          <h2>Forgot Password</h2>
+          <h2>忘记密码</h2>
         </template>
-        <p>Password reset functionality coming soon...</p>
-        <el-button @click="$router.push('/login')"> Back to Login </el-button>
+        <p>密码重置功能即将推出...</p>
+        <el-button @click="$router.push('/login')"> 返回登录 </el-button>
       </el-card>
     </div>
   </div>

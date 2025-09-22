@@ -6,10 +6,10 @@
         <div class="title-section">
           <h1 class="page-title">
             <el-icon><Box /></el-icon>
-            Containers
+            容器管理
           </h1>
           <p class="page-subtitle">
-            Manage your Docker containers and their lifecycle
+            管理您的 Docker 容器及其生命周期
           </p>
         </div>
 
@@ -20,7 +20,7 @@
             @click="showCreateDialog = true"
           >
             <el-icon><Plus /></el-icon>
-            New Container
+            新建容器
           </el-button>
 
           <el-dropdown @command="handleHeaderAction">
@@ -31,19 +31,19 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="refresh">
                   <el-icon><Refresh /></el-icon>
-                  Refresh
+                  刷新
                 </el-dropdown-item>
                 <el-dropdown-item command="check-updates">
                   <el-icon><Download /></el-icon>
-                  Check Updates
+                  检查更新
                 </el-dropdown-item>
                 <el-dropdown-item command="templates">
                   <el-icon><Document /></el-icon>
-                  Templates
+                  模板
                 </el-dropdown-item>
                 <el-dropdown-item command="export">
                   <el-icon><Upload /></el-icon>
-                  Export Config
+                  导出配置
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -61,7 +61,7 @@
             <div class="stat-value">
               {{ runningContainers.length }}
             </div>
-            <div class="stat-label">Running</div>
+            <div class="stat-label">运行中</div>
           </div>
         </div>
 
@@ -73,7 +73,7 @@
             <div class="stat-value">
               {{ stoppedContainers.length }}
             </div>
-            <div class="stat-label">Stopped</div>
+            <div class="stat-label">已停止</div>
           </div>
         </div>
 
@@ -85,7 +85,7 @@
             <div class="stat-value">
               {{ containersWithUpdates.length }}
             </div>
-            <div class="stat-label">Updates Available</div>
+            <div class="stat-label">可用更新</div>
           </div>
         </div>
 
@@ -97,7 +97,7 @@
             <div class="stat-value">
               {{ unhealthyContainers.length }}
             </div>
-            <div class="stat-label">Unhealthy</div>
+            <div class="stat-label">不健康</div>
           </div>
         </div>
       </div>
@@ -110,7 +110,7 @@
           <!-- Search -->
           <el-input
             v-model="searchQuery"
-            placeholder="Search containers..."
+            placeholder="搜索容器..."
             :prefix-icon="Search"
             clearable
             class="search-input"
@@ -119,17 +119,17 @@
           <!-- Quick Filters -->
           <el-select
             v-model="statusFilter"
-            placeholder="Status"
+            placeholder="状态"
             multiple
             collapse-tags
             collapse-tags-tooltip
             clearable
             class="status-filter"
           >
-            <el-option label="Running" value="running" />
-            <el-option label="Stopped" value="exited" />
-            <el-option label="Paused" value="paused" />
-            <el-option label="Restarting" value="restarting" />
+            <el-option label="运行中" value="running" />
+            <el-option label="已停止" value="exited" />
+            <el-option label="已暂停" value="paused" />
+            <el-option label="重启中" value="restarting" />
           </el-select>
 
           <!-- Advanced Filters Toggle -->
@@ -138,7 +138,7 @@
             @click="showFilters = !showFilters"
           >
             <el-icon><Filter /></el-icon>
-            Filters
+            过滤器
           </el-button>
         </div>
 
@@ -159,29 +159,29 @@ v-if="hasSelection" @command="handleBulkAction"
 >
             <el-button type="warning">
               <el-icon><Operation /></el-icon>
-              Bulk Actions ({{ selectedContainers.size }})
+              批量操作 ({{ selectedContainers.size }})
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="start">
                   <el-icon><VideoPlay /></el-icon>
-                  Start Selected
+                  启动所选
                 </el-dropdown-item>
                 <el-dropdown-item command="stop">
                   <el-icon><VideoPause /></el-icon>
-                  Stop Selected
+                  停止所选
                 </el-dropdown-item>
                 <el-dropdown-item command="restart">
                   <el-icon><Refresh /></el-icon>
-                  Restart Selected
+                  重启所选
                 </el-dropdown-item>
                 <el-dropdown-item command="update">
                   <el-icon><Download /></el-icon>
-                  Update Selected
+                  更新所选
                 </el-dropdown-item>
                 <el-dropdown-item command="delete" divided>
                   <el-icon><Delete /></el-icon>
-                  Delete Selected
+                  删除所选
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -194,19 +194,19 @@ v-if="hasSelection" @command="handleBulkAction"
         <div v-show="showFilters" class="advanced-filters">
           <div class="filters-grid">
             <div class="filter-group">
-              <label>Image</label>
+              <label>镜像</label>
               <el-input
                 v-model="imageFilter"
-                placeholder="Filter by image..."
+                placeholder="按镜像过滤..."
                 clearable
               />
             </div>
 
             <div class="filter-group">
-              <label>Registry</label>
+              <label>注册表</label>
               <el-select
                 v-model="registryFilter"
-                placeholder="Select registry"
+                placeholder="选择注册表"
                 clearable
               >
                 <el-option
@@ -219,7 +219,7 @@ v-if="hasSelection" @command="handleBulkAction"
             </div>
 
             <div class="filter-group">
-              <label>Labels</label>
+              <label>标签</label>
               <el-input
                 v-model="labelFilter"
                 placeholder="key=value"
@@ -228,15 +228,15 @@ v-if="hasSelection" @command="handleBulkAction"
             </div>
 
             <div class="filter-group">
-              <label>Update Policy</label>
+              <label>更新策略</label>
               <el-select
                 v-model="updatePolicyFilter"
-                placeholder="Select policy"
+                placeholder="选择策略"
                 clearable
               >
-                <el-option label="Auto Update" value="auto" />
-                <el-option label="Manual Update" value="manual" />
-                <el-option label="Disabled" value="disabled" />
+                <el-option label="自动更新" value="auto" />
+                <el-option label="手动更新" value="manual" />
+                <el-option label="已禁用" value="disabled" />
               </el-select>
             </div>
           </div>
@@ -245,10 +245,10 @@ v-if="hasSelection" @command="handleBulkAction"
             <el-button
 type="primary" @click="applyFilters"
 >
-              Apply Filters
+              应用过滤器
             </el-button>
             <el-button @click="clearAllFilters">
-Clear All
+清除全部
 </el-button>
           </div>
         </div>
@@ -265,22 +265,22 @@ Clear All
             :indeterminate="hasSelection && !isAllSelected"
             @change="selectAll"
           >
-            Select All ({{ containers.length }})
+            全选 ({{ containers.length }})
           </el-checkbox>
 
           <div class="sort-controls">
-            <span>Sort by:</span>
+            <span>排序方式:</span>
             <el-select
               :model-value="sortConfig.field"
               size="small"
               @update:model-value="handleSortChange"
             >
-              <el-option label="Name" value="name" />
-              <el-option label="Status" value="status" />
-              <el-option label="Created" value="createdAt" />
-              <el-option label="Updated" value="updatedAt" />
-              <el-option label="CPU Usage" value="cpu" />
-              <el-option label="Memory Usage" value="memory" />
+              <el-option label="名称" value="name" />
+              <el-option label="状态" value="status" />
+              <el-option label="创建时间" value="createdAt" />
+              <el-option label="更新时间" value="updatedAt" />
+              <el-option label="CPU 使用率" value="cpu" />
+              <el-option label="内存使用率" value="memory" />
             </el-select>
 
             <el-button
@@ -319,7 +319,7 @@ size="small" @click="toggleSortDirection"
           >
             <el-table-column type="selection" width="55" />
 
-            <el-table-column prop="name" label="Name" min-width="200">
+            <el-table-column prop="name" label="名称" min-width="200">
               <template #default="{ row }">
                 <div class="container-name">
                   <el-tag
@@ -328,7 +328,7 @@ size="small" @click="toggleSortDirection"
                     effect="dark"
                     class="status-tag"
                   >
-                    {{ row.status }}
+                    {{ translateStatus(row.status) }}
                   </el-tag>
                   <span
 class="name-link" @click="goToContainer(row.id)"
@@ -339,7 +339,7 @@ class="name-link" @click="goToContainer(row.id)"
               </template>
             </el-table-column>
 
-            <el-table-column prop="image" label="Image" min-width="250">
+            <el-table-column prop="image" label="镜像" min-width="250">
               <template #default="{ row }">
                 <div class="image-info">
                   <span class="image-name">{{ row.image }}</span>
@@ -350,7 +350,7 @@ class="name-link" @click="goToContainer(row.id)"
               </template>
             </el-table-column>
 
-            <el-table-column label="Resources" min-width="150">
+            <el-table-column label="资源" min-width="150">
               <template #default="{ row }">
                 <div class="resource-info">
                   <div class="resource-item">
@@ -360,7 +360,7 @@ class="name-link" @click="goToContainer(row.id)"
                     }}</span>
                   </div>
                   <div class="resource-item">
-                    <span class="resource-label">Memory:</span>
+                    <span class="resource-label">内存:</span>
                     <span class="resource-value">{{
                       formatPercentage(row.resourceUsage.memory.percentage)
                     }}</span>
@@ -369,17 +369,17 @@ class="name-link" @click="goToContainer(row.id)"
               </template>
             </el-table-column>
 
-            <el-table-column label="Health" width="100">
+            <el-table-column label="健康状态" width="100">
               <template #default="{ row }">
                 <el-tag
 :type="getHealthType(row.health.status)" size="small"
 >
-                  {{ row.health.status }}
+                  {{ translateHealthStatus(row.health.status) }}
                 </el-tag>
               </template>
             </el-table-column>
 
-            <el-table-column label="Updates" width="80">
+            <el-table-column label="更新" width="80">
               <template #default="{ row }">
                 <el-badge
                   v-if="hasAvailableUpdate(row.id)"
@@ -391,13 +391,13 @@ class="name-link" @click="goToContainer(row.id)"
               </template>
             </el-table-column>
 
-            <el-table-column label="Created" width="120">
+            <el-table-column label="创建时间" width="120">
               <template #default="{ row }">
                 {{ formatDate(row.createdAt) }}
               </template>
             </el-table-column>
 
-            <el-table-column label="Actions" width="200" fixed="right">
+            <el-table-column label="操作" width="200" fixed="right">
               <template #default="{ row }">
                 <div class="table-actions">
                   <el-button-group size="small">
@@ -439,23 +439,23 @@ class="name-link" @click="goToContainer(row.id)"
                       <el-dropdown-menu>
                         <el-dropdown-item command="logs">
                           <el-icon><Document /></el-icon>
-                          View Logs
+                          查看日志
                         </el-dropdown-item>
                         <el-dropdown-item command="terminal">
                           <el-icon><Monitor /></el-icon>
-                          Terminal
+                          终端
                         </el-dropdown-item>
                         <el-dropdown-item command="update">
                           <el-icon><Download /></el-icon>
-                          Update
+                          更新
                         </el-dropdown-item>
                         <el-dropdown-item command="edit">
                           <el-icon><Edit /></el-icon>
-                          Edit
+                          编辑
                         </el-dropdown-item>
                         <el-dropdown-item command="delete" divided>
                           <el-icon><Delete /></el-icon>
-                          Delete
+                          删除
                         </el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
@@ -471,15 +471,15 @@ class="name-link" @click="goToContainer(row.id)"
           <div class="empty-icon">
             <el-icon><Box /></el-icon>
           </div>
-          <h3>No containers found</h3>
-          <p>Create your first container to get started</p>
+          <h3>未找到容器</h3>
+          <p>创建您的第一个容器以开始使用</p>
           <el-button
             v-if="hasPermission('container:create')"
             type="primary"
             @click="showCreateDialog = true"
           >
             <el-icon><Plus /></el-icon>
-            Create Container
+            创建容器
           </el-button>
         </div>
       </el-loading-directive>
@@ -501,7 +501,7 @@ class="name-link" @click="goToContainer(row.id)"
     <!-- Create Container Dialog -->
     <el-dialog
       v-model="showCreateDialog"
-      title="Create New Container"
+      title="创建新容器"
       width="80%"
       :before-close="handleCreateDialogClose"
     >
@@ -515,7 +515,7 @@ class="name-link" @click="goToContainer(row.id)"
     <!-- Edit Container Dialog -->
     <el-dialog
       v-model="showEditDialog"
-      title="Edit Container"
+      title="编辑容器"
       width="80%"
       :before-close="handleEditDialogClose"
     >
@@ -530,7 +530,7 @@ class="name-link" @click="goToContainer(row.id)"
     <!-- Log Viewer Dialog -->
     <el-dialog
       v-model="showLogsDialog"
-      :title="`Logs - ${logsContainer?.name}`"
+      :title="`日志 - ${logsContainer?.name}`"
       width="90%"
       fullscreen
     >
@@ -644,6 +644,19 @@ function getStatusType(
   return types[status] || "info";
 }
 
+function translateStatus(status: string): string {
+  const translations: Record<string, string> = {
+    running: "运行中",
+    exited: "已停止",
+    paused: "已暂停",
+    restarting: "重启中",
+    removing: "删除中",
+    dead: "已终止",
+    created: "已创建",
+  };
+  return translations[status] || status;
+}
+
 function getHealthType(
   health: string,
 ): "success" | "info" | "warning" | "primary" | "danger" {
@@ -657,6 +670,16 @@ function getHealthType(
     none: "info",
   };
   return types[health] || "info";
+}
+
+function translateHealthStatus(health: string): string {
+  const translations: Record<string, string> = {
+    healthy: "健康",
+    unhealthy: "不健康",
+    starting: "启动中",
+    none: "无",
+  };
+  return translations[health] || health;
 }
 
 function formatPercentage(value: number) {
@@ -688,7 +711,7 @@ function handleBulkAction(command: string) {
   const selectedIds = Array.from(selectedContainers.value);
 
   if (selectedIds.length === 0) {
-    ElMessage.warning("No containers selected");
+    ElMessage.warning("未选择容器");
     return;
   }
 
@@ -699,18 +722,18 @@ function handleBulkAction(command: string) {
         containers: selectedIds,
       });
     } catch (error) {
-      console.error("Bulk operation failed:", error);
+      console.error("批量操作失败:", error);
     }
   };
 
   if (command === "delete") {
     ElMessageBox.confirm(
-      `Are you sure you want to delete ${selectedIds.length} container(s)?`,
-      "Confirm Deletion",
+      `确定要删除 ${selectedIds.length} 个容器吗?`,
+      "确认删除",
       {
         type: "warning",
-        confirmButtonText: "Delete",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "删除",
+        cancelButtonText: "取消",
       },
     ).then(confirmAction);
   } else {
@@ -746,12 +769,12 @@ function handleContainerAction(action: string, containerId: string) {
       break;
     case "delete":
       ElMessageBox.confirm(
-        `Are you sure you want to delete container "${container.name}"?`,
-        "Confirm Deletion",
+        `确定要删除容器 "${container.name}" 吗?`,
+        "确认删除",
         {
           type: "warning",
-          confirmButtonText: "Delete",
-          cancelButtonText: "Cancel",
+          confirmButtonText: "删除",
+          cancelButtonText: "取消",
         },
       ).then(() => {
         containerStore.deleteContainer(containerId);
@@ -831,7 +854,7 @@ function handleCreateContainer(
 ) {
   // Ensure we have complete data for creation
   if (!data.name || !data.image) {
-    throw new Error("Container name and image are required");
+    throw new Error("容器名称和镜像是必需的");
   }
 
   containerStore.createContainer(data as ContainerFormData).then(() => {
@@ -849,15 +872,21 @@ function handleEditContainer(data: Partial<ContainerFormData>) {
 }
 
 function handleCreateDialogClose(done: () => void) {
-  ElMessageBox.confirm("Discard changes and close?")
+  ElMessageBox.confirm("放弃更改并关闭?")
     .then(() => done())
-    .catch(() => {});
+    .catch(() => {
+      // User cancelled the dialog close
+      console.log('User cancelled closing dialog');
+    });
 }
 
 function handleEditDialogClose(done: () => void) {
-  ElMessageBox.confirm("Discard changes and close?")
+  ElMessageBox.confirm("放弃更改并关闭?")
     .then(() => done())
-    .catch(() => {});
+    .catch(() => {
+      // User cancelled the dialog close
+      console.log('User cancelled closing dialog');
+    });
 }
 
 function startAutoRefresh() {

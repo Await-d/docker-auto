@@ -306,9 +306,11 @@ func (t *ContainerUpdaterTask) hasUpdatesAvailable(ctx context.Context, containe
 
 // findContainersNeedingUpdates finds all containers that need updates
 func (t *ContainerUpdaterTask) findContainersNeedingUpdates(ctx context.Context, params *ContainerUpdateParameters) []*model.Container {
+	policy := model.UpdatePolicyAuto
+	status := model.ContainerStatusRunning
 	filter := &model.ContainerFilter{
-		UpdatePolicy: &model.UpdatePolicyAuto,
-		Status:       model.ContainerStatusRunning,
+		UpdatePolicy: policy,
+		Status:       status,
 		Limit:        1000,
 	}
 
@@ -473,10 +475,10 @@ func (t *ContainerUpdaterTask) updateSingleContainer(ctx context.Context, contai
 
 	// Create update history record
 	updateHistory := &model.UpdateHistory{
-		ContainerID: int64(container.ID),
+		ContainerID: container.ID,
 		OldImage:    container.GetFullImageName(),
-		Status:      model.UpdateStatusInProgress,
-		Strategy:    params.UpdateStrategy,
+		Status:      model.UpdateStatus("in_progress"),
+		Strategy:    model.UpdateStrategy(params.UpdateStrategy),
 		StartedAt:   startTime,
 	}
 
@@ -505,10 +507,10 @@ func (t *ContainerUpdaterTask) updateSingleContainer(ctx context.Context, contai
 	// Update history record
 	if updateHistory != nil && t.updateHistoryRepo != nil {
 		if result.Success {
-			updateHistory.Status = model.UpdateStatusCompleted
+			updateHistory.Status = "completed"
 			updateHistory.NewImage = result.NewVersion
 		} else {
-			updateHistory.Status = model.UpdateStatusFailed
+			updateHistory.Status = "failed"
 			updateHistory.ErrorMessage = result.Error
 		}
 		completedAt := time.Now()
@@ -586,7 +588,7 @@ func (t *ContainerUpdaterTask) processResults(ctx context.Context, results *Cont
 }
 
 // sendSuccessNotification sends a notification for successful updates
-func (t *ContainerUpdaterTask) sendSuccessNotification(ctx context.Context, results *ContainerUpdateResult) {
+func (t *ContainerUpdaterTask) sendSuccessNotification(ctx context.Context, results *ContainerUpdateTaskResult) {
 	if t.notificationService == nil {
 		return
 	}
@@ -610,7 +612,7 @@ func (t *ContainerUpdaterTask) sendSuccessNotification(ctx context.Context, resu
 }
 
 // sendFailureNotification sends a notification for failed updates
-func (t *ContainerUpdaterTask) sendFailureNotification(ctx context.Context, results *ContainerUpdateResult) {
+func (t *ContainerUpdaterTask) sendFailureNotification(ctx context.Context, results *ContainerUpdateTaskResult) {
 	if t.notificationService == nil {
 		return
 	}

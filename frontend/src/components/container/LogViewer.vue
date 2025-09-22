@@ -12,19 +12,19 @@
             <el-icon>
               <VideoPlay v-if="!isFollowing" /><VideoPause v-else />
             </el-icon>
-            {{ isFollowing ? "Following" : "Follow" }}
+            {{ isFollowing ? "跟随中" : "跟随" }}
           </el-button>
 
           <el-button
 :loading="loading" @click="refreshLogs"
 >
             <el-icon><Refresh /></el-icon>
-            Refresh
+            刷新
           </el-button>
 
           <el-button @click="clearLogs">
             <el-icon><Delete /></el-icon>
-            Clear
+            清空
           </el-button>
         </el-button-group>
       </div>
@@ -37,17 +37,17 @@
           clearable
           @change="filterLogs"
         >
-          <el-option label="All Levels" value="" />
-          <el-option label="Debug" value="debug" />
-          <el-option label="Info" value="info" />
-          <el-option label="Warning" value="warn" />
-          <el-option label="Error" value="error" />
-          <el-option label="Fatal" value="fatal" />
+          <el-option label="所有级别" value="" />
+          <el-option label="调试" value="debug" />
+          <el-option label="信息" value="info" />
+          <el-option label="警告" value="warn" />
+          <el-option label="错误" value="error" />
+          <el-option label="致命错误" value="fatal" />
         </el-select>
 
         <el-input
           v-model="searchQuery"
-          placeholder="Search logs..."
+          placeholder="搜索日志..."
           size="small"
           clearable
           style="width: 200px"
@@ -62,15 +62,15 @@
       <div class="control-group">
         <el-select
           v-model="tailLines"
-          placeholder="Lines"
+          placeholder="行数"
           size="small"
           @change="changeTailLines"
         >
-          <el-option label="50 lines" :value="50" />
-          <el-option label="100 lines" :value="100" />
-          <el-option label="500 lines" :value="500" />
-          <el-option label="1000 lines" :value="1000" />
-          <el-option label="All lines" :value="0" />
+          <el-option label="50行" :value="50" />
+          <el-option label="100行" :value="100" />
+          <el-option label="500行" :value="500" />
+          <el-option label="1000行" :value="1000" />
+          <el-option label="所有行" :value="0" />
         </el-select>
 
         <el-checkbox
@@ -78,14 +78,14 @@
           size="small"
           @change="toggleTimestamps"
         >
-          Timestamps
+          时间戳
         </el-checkbox>
 
         <el-checkbox
 v-model="wrapLines" size="small"
 @change="toggleWrapLines"
 >
-          Wrap Lines
+          自动换行
         </el-checkbox>
       </div>
 
@@ -93,21 +93,21 @@ v-model="wrapLines" size="small"
         <el-dropdown @command="handleAction">
           <el-button size="small">
             <el-icon><MoreFilled /></el-icon>
-            Actions
+            操作
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="download">
                 <el-icon><Download /></el-icon>
-                Download Logs
+                下载日志
               </el-dropdown-item>
               <el-dropdown-item command="copy">
                 <el-icon><CopyDocument /></el-icon>
-                Copy Visible Logs
+                复制可见日志
               </el-dropdown-item>
               <el-dropdown-item command="share">
                 <el-icon><Share /></el-icon>
-                Share Log Link
+                分享日志链接
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -120,19 +120,19 @@ v-model="wrapLines" size="small"
 v-if="containerLogs.length > 0" class="log-stats"
 >
       <div class="stat-item">
-        <span class="stat-label">Total Lines:</span>
+        <span class="stat-label">总行数：</span>
         <span class="stat-value">{{ formatNumber(containerLogs.length) }}</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">Filtered:</span>
+        <span class="stat-label">过滤后：</span>
         <span class="stat-value">{{ formatNumber(filteredLogs.length) }}</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">Errors:</span>
+        <span class="stat-label">错误数：</span>
         <span class="stat-value error-count">{{ errorCount }}</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">Last Update:</span>
+        <span class="stat-label">最后更新：</span>
         <span class="stat-value">{{ formatTime(lastUpdate) }}</span>
       </div>
     </div>
@@ -146,7 +146,7 @@ ref="logContentRef" class="log-content"
         <el-icon class="loading-spinner">
           <Loading />
         </el-icon>
-        <span>Loading logs...</span>
+        <span>加载日志中...</span>
       </div>
 
       <!-- Empty State -->
@@ -154,8 +154,8 @@ ref="logContentRef" class="log-content"
         <el-icon class="empty-icon">
           <Document />
         </el-icon>
-        <h3>No logs available</h3>
-        <p>This container hasn't generated any logs yet.</p>
+        <h3>暂无日志</h3>
+        <p>此容器尚未生成任何日志。</p>
       </div>
 
       <!-- No Results -->
@@ -163,8 +163,8 @@ ref="logContentRef" class="log-content"
         <el-icon class="empty-icon">
           <Search />
         </el-icon>
-        <h3>No matching logs</h3>
-        <p>No logs match your current filters.</p>
+        <h3>无匹配日志</h3>
+        <p>没有日志匹配您当前的过滤条件。</p>
       </div>
 
       <!-- Log Lines -->
@@ -208,7 +208,7 @@ ref="logContentRef" class="log-content"
       <div v-if="!isAtBottom && isFollowing" class="scroll-indicator">
         <el-button size="small" @click="scrollToBottom">
           <el-icon><ArrowDown /></el-icon>
-          Scroll to bottom
+          滚动到底部
         </el-button>
       </div>
     </div>
@@ -218,10 +218,10 @@ ref="logContentRef" class="log-content"
 v-if="containerLogs.length > 0" class="log-footer"
 >
       <div class="footer-info">
-        <span>Line {{ currentLine }} of
-          {{ formatNumber(filteredLogs.length) }}</span>
+        <span>第 {{ currentLine }} 行，共
+          {{ formatNumber(filteredLogs.length) }} 行</span>
         <span v-if="selectedLinesCount > 0">
-          | {{ selectedLinesCount }} lines selected
+          | 已选择 {{ selectedLinesCount }} 行
         </span>
       </div>
 
@@ -393,7 +393,7 @@ async function refreshLogs() {
     }
   } catch (error) {
     console.error("Failed to refresh logs:", error);
-    ElMessage.error("Failed to refresh logs");
+    ElMessage.error("刷新日志失败");
   } finally {
     loading.value = false;
   }
@@ -402,7 +402,7 @@ async function refreshLogs() {
 function clearLogs() {
   logs.value.set(props.containerId, []);
   highlightedLines.value.clear();
-  ElMessage.success("Logs cleared");
+  ElMessage.success("日志已清空");
 }
 
 function toggleFollow() {
@@ -580,10 +580,10 @@ async function downloadLogs() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    ElMessage.success("Logs downloaded successfully");
+    ElMessage.success("日志下载成功");
   } catch (error) {
     console.error("Failed to download logs:", error);
-    ElMessage.error("Failed to download logs");
+    ElMessage.error("下载日志失败");
   }
 }
 
@@ -603,10 +603,10 @@ async function copyLogs() {
       .join("\n");
 
     await navigator.clipboard.writeText(logText);
-    ElMessage.success("Logs copied to clipboard");
+    ElMessage.success("日志已复制到剪贴板");
   } catch (error) {
     console.error("Failed to copy logs:", error);
-    ElMessage.error("Failed to copy logs");
+    ElMessage.error("复制日志失败");
   }
 }
 

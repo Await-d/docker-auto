@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	dockerTypes "docker-auto/pkg/types"
+
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
@@ -226,7 +228,7 @@ type LogConfig struct {
 type ContainerUpdateConfig struct {
 	Image         string             `json:"image"`
 	Tag           string             `json:"tag"`
-	Strategy      UpdateStrategy     `json:"strategy"`
+	Strategy      dockerTypes.UpdateStrategy `json:"strategy"`
 	HealthCheck   *HealthCheckConfig `json:"health_check,omitempty"`
 	Rollback      bool               `json:"rollback"`
 	Timeout       time.Duration      `json:"timeout"`
@@ -236,15 +238,6 @@ type ContainerUpdateConfig struct {
 	RestartPolicy string             `json:"restart_policy,omitempty"`
 }
 
-// UpdateStrategy defines container update strategies
-type UpdateStrategy string
-
-const (
-	UpdateStrategyRecreate    UpdateStrategy = "recreate"
-	UpdateStrategyRolling     UpdateStrategy = "rolling"
-	UpdateStrategyBlueGreen   UpdateStrategy = "blue_green"
-	UpdateStrategyCanary      UpdateStrategy = "canary"
-)
 
 // RestartPolicy defines container restart policies
 type RestartPolicy string
@@ -546,12 +539,12 @@ func (c *ContainerCreateConfig) GetFullImageName() string {
 }
 
 // GetValidUpdateStrategies returns all valid update strategies
-func GetValidUpdateStrategies() []UpdateStrategy {
-	return []UpdateStrategy{
-		UpdateStrategyRecreate,
-		UpdateStrategyRolling,
-		UpdateStrategyBlueGreen,
-		UpdateStrategyCanary,
+func GetValidUpdateStrategies() []dockerTypes.UpdateStrategy {
+	return []dockerTypes.UpdateStrategy{
+		dockerTypes.UpdateStrategyRecreate,
+		dockerTypes.UpdateStrategyRolling,
+		dockerTypes.UpdateStrategyBlueGreen,
+		dockerTypes.UpdateStrategyCanary,
 	}
 }
 

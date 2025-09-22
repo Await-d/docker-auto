@@ -1,14 +1,14 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="Widget Configuration"
+    title="小部件配置"
     width="800px"
     :modal="true"
     class="widget-config-dialog"
     @update:model-value="$emit('update:modelValue', $event)"
   >
     <div v-if="widget" class="config-container">
-      <!-- Widget Info -->
+      <!-- 小部件信息 -->
       <div class="widget-info-section">
         <div class="widget-header">
           <div class="widget-icon">
@@ -23,10 +23,10 @@
         </div>
       </div>
 
-      <!-- Configuration Tabs -->
+      <!-- 配置选项卡 -->
       <el-tabs v-model="activeTab" class="config-tabs">
-        <!-- General Settings -->
-        <el-tab-pane label="General" name="general">
+        <!-- 通用设置 -->
+        <el-tab-pane label="通用" name="general">
           <div class="config-section">
             <el-form
               ref="generalFormRef"
@@ -34,114 +34,114 @@
               :rules="generalRules"
               label-width="140px"
             >
-              <el-form-item label="Widget Title" prop="title">
+              <el-form-item label="小部件标题" prop="title">
                 <el-input
                   v-model="generalConfig.title"
-                  placeholder="Enter widget title"
+                  placeholder="输入小部件标题"
                   clearable
                 />
               </el-form-item>
 
-              <el-form-item label="Refresh Interval" prop="refreshInterval">
+              <el-form-item label="刷新间隔" prop="refreshInterval">
                 <el-select
                   v-model="generalConfig.refreshInterval"
-                  placeholder="Select refresh interval"
+                  placeholder="选择刷新间隔"
                 >
-                  <el-option label="Never" :value="0" />
-                  <el-option label="5 seconds" :value="5000" />
-                  <el-option label="10 seconds" :value="10000" />
-                  <el-option label="30 seconds" :value="30000" />
-                  <el-option label="1 minute" :value="60000" />
-                  <el-option label="5 minutes" :value="300000" />
-                  <el-option label="15 minutes" :value="900000" />
-                  <el-option label="30 minutes" :value="1800000" />
-                  <el-option label="1 hour" :value="3600000" />
+                  <el-option label="从不" :value="0" />
+                  <el-option label="5秒" :value="5000" />
+                  <el-option label="10秒" :value="10000" />
+                  <el-option label="30秒" :value="30000" />
+                  <el-option label="1分钟" :value="60000" />
+                  <el-option label="5分钟" :value="300000" />
+                  <el-option label="15分钟" :value="900000" />
+                  <el-option label="30分钟" :value="1800000" />
+                  <el-option label="1小时" :value="3600000" />
                 </el-select>
               </el-form-item>
 
-              <el-form-item label="Enable Widget">
+              <el-form-item label="启用小部件">
                 <el-switch
                   v-model="generalConfig.enabled"
-                  active-text="Enabled"
-                  inactive-text="Disabled"
+                  active-text="已启用"
+                  inactive-text="已禁用"
                 />
               </el-form-item>
 
-              <el-form-item label="Draggable">
+              <el-form-item label="可拖动">
                 <el-switch
                   v-model="generalConfig.draggable"
-                  active-text="Yes"
-                  inactive-text="No"
+                  active-text="是"
+                  inactive-text="否"
                 />
               </el-form-item>
 
-              <el-form-item label="Resizable">
+              <el-form-item label="可调整大小">
                 <el-switch
                   v-model="generalConfig.resizable"
-                  active-text="Yes"
-                  inactive-text="No"
+                  active-text="是"
+                  inactive-text="否"
                 />
               </el-form-item>
             </el-form>
           </div>
         </el-tab-pane>
 
-        <!-- Appearance Settings -->
-        <el-tab-pane label="Appearance" name="appearance">
+        <!-- 外观设置 -->
+        <el-tab-pane label="外观" name="appearance">
           <div class="config-section">
             <el-form
               ref="appearanceFormRef"
               :model="appearanceConfig"
               label-width="140px"
             >
-              <el-form-item label="Theme">
+              <el-form-item label="主题">
                 <el-radio-group v-model="appearanceConfig.theme">
-                  <el-radio label="auto"> Auto </el-radio>
-                  <el-radio label="light"> Light </el-radio>
-                  <el-radio label="dark"> Dark </el-radio>
+                  <el-radio label="auto"> 自动 </el-radio>
+                  <el-radio label="light"> 浅色 </el-radio>
+                  <el-radio label="dark"> 深色 </el-radio>
                 </el-radio-group>
               </el-form-item>
 
-              <el-form-item label="Display Mode">
+              <el-form-item label="显示模式">
                 <el-select
                   v-model="appearanceConfig.displayMode"
-                  placeholder="Select display mode"
+                  placeholder="选择显示模式"
                 >
-                  <el-option label="Default" value="default" />
-                  <el-option label="Compact" value="compact" />
-                  <el-option label="Detailed" value="detailed" />
-                  <el-option label="Minimal" value="minimal" />
+                  <el-option label="默认" value="default" />
+                  <el-option label="紧凑" value="compact" />
+                  <el-option label="详细" value="detailed" />
+                  <el-option label="精简" value="minimal" />
                 </el-select>
               </el-form-item>
 
-              <el-form-item label="Show Header">
+              <el-form-item label="显示头部">
                 <el-switch
                   v-model="appearanceConfig.showHeader"
-                  active-text="Yes"
-                  inactive-text="No"
+                  active-text="是"
+                  inactive-text="否"
                 />
               </el-form-item>
 
-              <el-form-item label="Show Footer">
+              <el-form-item label="显示底部">
                 <el-switch
                   v-model="appearanceConfig.showFooter"
-                  active-text="Yes"
-                  inactive-text="No"
+                  active-text="是"
+                  inactive-text="否"
                 />
               </el-form-item>
 
-              <el-form-item label="Animation">
+              <el-form-item label="动画效果">
                 <el-switch
                   v-model="appearanceConfig.animations"
-                  active-text="Enabled"
-                  inactive-text="Disabled"
+                  active-text="已启用"
+                  inactive-text="已禁用"
                 />
               </el-form-item>
             </el-form>
           </div>
         </el-tab-pane>
 
-        <!-- Widget-Specific Settings -->
+        <!-- 小部件专用设置 -->
         <el-tab-pane
           v-if="hasSpecificSettings"
           :label="specificTabLabel"
@@ -160,19 +160,19 @@
         <el-tab-pane label="Data & Filters" name="data">
           <div class="config-section">
             <el-form ref="dataFormRef" :model="dataConfig" label-width="140px">
-              <el-form-item label="Data Source">
+              <el-form-item label="数据源">
                 <el-select
                   v-model="dataConfig.dataSource"
-                  placeholder="Select data source"
+                  placeholder="选择数据源"
                 >
                   <el-option label="API" value="api" />
                   <el-option label="WebSocket" value="websocket" />
-                  <el-option label="Local Storage" value="localStorage" />
-                  <el-option label="Mock Data" value="mock" />
+                  <el-option label="本地存储" value="localStorage" />
+                  <el-option label="模拟数据" value="mock" />
                 </el-select>
               </el-form-item>
 
-              <el-form-item label="Cache Duration">
+              <el-form-item label="缓存时间">
                 <el-input-number
                   v-model="dataConfig.cacheDuration"
                   :min="0"
@@ -183,7 +183,7 @@
                 <span class="input-suffix">ms</span>
               </el-form-item>
 
-              <el-form-item label="Max Data Points">
+              <el-form-item label="最大数据点数">
                 <el-input-number
                   v-model="dataConfig.maxDataPoints"
                   :min="10"
@@ -193,21 +193,21 @@
                 />
               </el-form-item>
 
-              <el-form-item label="Date Range">
+              <el-form-item label="日期范围">
                 <el-select
                   v-model="dataConfig.dateRange"
-                  placeholder="Select date range"
+                  placeholder="选择日期范围"
                 >
-                  <el-option label="Last Hour" value="1h" />
-                  <el-option label="Last 6 Hours" value="6h" />
-                  <el-option label="Last 24 Hours" value="24h" />
-                  <el-option label="Last 7 Days" value="7d" />
-                  <el-option label="Last 30 Days" value="30d" />
-                  <el-option label="Custom" value="custom" />
+                  <el-option label="最近一小时" value="1h" />
+                  <el-option label="最近6小时" value="6h" />
+                  <el-option label="最近24小时" value="24h" />
+                  <el-option label="最近7天" value="7d" />
+                  <el-option label="最近30天" value="30d" />
+                  <el-option label="自定义" value="custom" />
                 </el-select>
               </el-form-item>
 
-              <el-form-item label="Filters">
+              <el-form-item label="过滤器">
                 <key-value-editor
                   v-model="dataConfig.filters"
                   placeholder-key="Filter Key"
@@ -219,14 +219,14 @@
         </el-tab-pane>
 
         <!-- Advanced Settings -->
-        <el-tab-pane label="Advanced" name="advanced">
+        <el-tab-pane label="高级" name="advanced">
           <div class="config-section">
             <el-form
               ref="advancedFormRef"
               :model="advancedConfig"
               label-width="140px"
             >
-              <el-form-item label="Error Handling">
+              <el-form-item label="错误处理">
                 <el-radio-group v-model="advancedConfig.errorHandling">
                   <el-radio label="retry"> Retry on Error </el-radio>
                   <el-radio label="fallback"> Show Fallback </el-radio>
@@ -234,7 +234,7 @@
                 </el-radio-group>
               </el-form-item>
 
-              <el-form-item label="Retry Attempts">
+              <el-form-item label="重试次数">
                 <el-input-number
                   v-model="advancedConfig.retryAttempts"
                   :min="0"
@@ -243,7 +243,7 @@
                 />
               </el-form-item>
 
-              <el-form-item label="Retry Delay">
+              <el-form-item label="重试延迟">
                 <el-input-number
                   v-model="advancedConfig.retryDelay"
                   :min="1000"
@@ -254,7 +254,7 @@
                 <span class="input-suffix">ms</span>
               </el-form-item>
 
-              <el-form-item label="Debug Mode">
+              <el-form-item label="调试模式">
                 <el-switch
                   v-model="advancedConfig.debugMode"
                   active-text="Enabled"
@@ -262,7 +262,7 @@
                 />
               </el-form-item>
 
-              <el-form-item label="Performance Monitoring">
+              <el-form-item label="性能监控">
                 <el-switch
                   v-model="advancedConfig.performanceMonitoring"
                   active-text="Enabled"
@@ -270,16 +270,16 @@
                 />
               </el-form-item>
 
-              <el-form-item label="Custom CSS">
+              <el-form-item label="自定义CSS">
                 <el-input
                   v-model="advancedConfig.customCSS"
                   type="textarea"
                   :rows="4"
-                  placeholder="Enter custom CSS rules"
+                  placeholder="输入自定义CSS规则"
                 />
               </el-form-item>
 
-              <el-form-item label="Custom Properties">
+              <el-form-item label="自定义属性">
                 <key-value-editor
                   v-model="advancedConfig.customProperties"
                   placeholder-key="Property Name"
@@ -291,14 +291,14 @@
         </el-tab-pane>
 
         <!-- Permissions -->
-        <el-tab-pane label="Permissions" name="permissions">
+        <el-tab-pane label="权限" name="permissions">
           <div class="config-section">
             <el-form
               ref="permissionsFormRef"
               :model="permissionsConfig"
               label-width="140px"
             >
-              <el-form-item label="Required Permissions">
+              <el-form-item label="所需权限">
                 <el-checkbox-group v-model="permissionsConfig.permissions">
                   <el-checkbox label="dashboard:read">
                     Dashboard Read
@@ -321,18 +321,18 @@
                 </el-checkbox-group>
               </el-form-item>
 
-              <el-form-item label="Minimum Role">
+              <el-form-item label="最低角色">
                 <el-select
                   v-model="permissionsConfig.minimumRole"
-                  placeholder="Select minimum role"
+                  placeholder="选择最低角色"
                 >
-                  <el-option label="User" value="user" />
-                  <el-option label="Operator" value="operator" />
-                  <el-option label="Admin" value="admin" />
+                  <el-option label="用户" value="user" />
+                  <el-option label="操作员" value="operator" />
+                  <el-option label="管理员" value="admin" />
                 </el-select>
               </el-form-item>
 
-              <el-form-item label="Hide if No Access">
+              <el-form-item label="无权限时隐藏">
                 <el-switch
                   v-model="permissionsConfig.hideIfNoAccess"
                   active-text="Yes"
@@ -369,7 +369,7 @@ v-if="showPreview" class="preview-section"
           <el-button
 type="text" @click="resetToDefaults"
 >
-            Reset to Defaults
+            恢复默认设置
           </el-button>
           <el-button type="text"
 @click="loadPreset"
@@ -378,11 +378,11 @@ Load Preset
 </el-button>
         </div>
         <div class="footer-right">
-          <el-button @click="closeDialog"> Cancel </el-button>
+          <el-button @click="closeDialog"> 取消 </el-button>
           <el-button
 type="primary" @click="saveAndClose"
 >
-            Save Changes
+            保存更改
           </el-button>
         </div>
       </div>
@@ -672,11 +672,11 @@ const resetToDefaults = async () => {
   try {
     await ElMessageBox.confirm(
       "This will reset all settings to their default values. Continue?",
-      "Reset to Defaults",
+      "恢复默认设置",
       {
         type: "warning",
-        confirmButtonText: "Reset",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "重置",
+        cancelButtonText: "取消",
       },
     );
 
@@ -704,8 +704,8 @@ const loadPreset = async () => {
       "Load Preset",
       {
         inputValue: presets[0],
-        confirmButtonText: "Load",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "加载",
+        cancelButtonText: "取消",
       },
     );
 

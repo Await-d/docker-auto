@@ -22,14 +22,46 @@ type CreateContainerRequest struct {
 
 // UpdateContainerRequest represents a request to update container configuration
 type UpdateContainerRequest struct {
-	Config       map[string]interface{} `json:"config,omitempty"`
-	UpdatePolicy *string                `json:"update_policy,omitempty" validate:"omitempty,oneof=auto manual scheduled disabled"`
-	RegistryURL  *string                `json:"registry_url,omitempty" validate:"omitempty,url"`
-	RegistryAuth *RegistryAuth          `json:"registry_auth,omitempty"`
+	Config             map[string]interface{} `json:"config,omitempty"`
+	Strategy           string                 `json:"strategy,omitempty" validate:"omitempty,oneof=recreate rolling blue_green"`
+	NewImage           string                 `json:"new_image,omitempty"`
+	RollbackOnFailure  bool                   `json:"rollback_on_failure,omitempty"`
+	HealthCheckTimeout int                    `json:"health_check_timeout,omitempty"`
+	CreateBackup       bool                   `json:"create_backup,omitempty"`
+	RollingConfig      *RollingUpdateConfig   `json:"rolling_config,omitempty"`
+	BlueGreenConfig    *BlueGreenConfig       `json:"blue_green_config,omitempty"`
+	CanaryConfig       *CanaryConfig          `json:"canary_config,omitempty"`
+	UpdatePolicy       *string                `json:"update_policy,omitempty" validate:"omitempty,oneof=auto manual scheduled disabled"`
+	RegistryURL        *string                `json:"registry_url,omitempty" validate:"omitempty,url"`
+	RegistryAuth       *RegistryAuth          `json:"registry_auth,omitempty"`
+}
+
+// RollingUpdateConfig represents rolling update configuration
+type RollingUpdateConfig struct {
+	MaxUnavailable int `json:"max_unavailable,omitempty"`
+	MaxSurge       int `json:"max_surge,omitempty"`
+	BatchSize      int `json:"batch_size,omitempty"`
+	BatchDelay     int `json:"batch_delay,omitempty"` // seconds
+}
+
+// BlueGreenConfig represents blue-green deployment configuration
+type BlueGreenConfig struct {
+	NetworkName   string   `json:"network_name,omitempty"`
+	WarmupTime    int      `json:"warmup_time,omitempty"` // seconds
+	TestEndpoints []string `json:"test_endpoints,omitempty"`
+}
+
+// CanaryConfig represents canary deployment configuration
+type CanaryConfig struct {
+	TrafficPercent   int            `json:"traffic_percent,omitempty"`
+	CanaryDuration   int            `json:"canary_duration,omitempty"` // seconds
+	MetricsThreshold map[string]float64 `json:"metrics_threshold,omitempty"`
+	AutoPromote      bool           `json:"auto_promote,omitempty"`
 }
 
 // UpdateImageRequest represents a request to update container image
 type UpdateImageRequest struct {
+	NewImage string `json:"new_image" binding:"required" validate:"required"`
 	Strategy string `json:"strategy,omitempty" validate:"omitempty,oneof=recreate rolling blue_green"`
 	Force    bool   `json:"force,omitempty"`
 	Backup   bool   `json:"backup,omitempty"`

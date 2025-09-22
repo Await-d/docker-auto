@@ -118,6 +118,8 @@ export const useContainerStore = defineStore("containers", () => {
     if (page) currentPage.value = page;
 
     loading.value = true;
+    console.log("正在获取容器数据，页码:", currentPage.value);
+
     try {
       const response = await containerAPI.getContainers(
         currentPage.value,
@@ -126,15 +128,19 @@ export const useContainerStore = defineStore("containers", () => {
         sortConfig.value,
       );
 
-      containers.value = response.containers;
-      totalContainers.value = response.total;
+      console.log("容器API响应:", response);
+      console.log("容器数量:", response?.containers?.length || 0);
+      console.log("总容器数:", response?.total || 0);
+
+      containers.value = response.containers || [];
+      totalContainers.value = response.total || 0;
       lastUpdate.value = new Date();
 
       // Clear selection if containers changed
       selectedContainers.value.clear();
     } catch (error) {
       console.error("Failed to fetch containers:", error);
-      ElMessage.error("Failed to load containers");
+      ElMessage.error("加载容器失败");
     } finally {
       loading.value = false;
     }
@@ -155,7 +161,7 @@ export const useContainerStore = defineStore("containers", () => {
       return container;
     } catch (error) {
       console.error("Failed to fetch container:", error);
-      ElMessage.error("Failed to load container details");
+      ElMessage.error("加载容器详情失败");
       throw error;
     } finally {
       loadingDetails.value = false;
@@ -169,8 +175,8 @@ export const useContainerStore = defineStore("containers", () => {
       totalContainers.value++;
 
       ElNotification({
-        title: "Container Created",
-        message: `Container "${container.name}" has been created successfully`,
+        title: "容器已创建",
+        message: `容器 "${container.name}" 已成功创建`,
         type: "success",
       });
 
@@ -197,8 +203,8 @@ export const useContainerStore = defineStore("containers", () => {
       }
 
       ElNotification({
-        title: "Container Updated",
-        message: `Container "${container.name}" has been updated successfully`,
+        title: "容器已更新",
+        message: `容器 "${container.name}" 已成功更新`,
         type: "success",
       });
 
@@ -221,8 +227,8 @@ export const useContainerStore = defineStore("containers", () => {
         totalContainers.value--;
 
         ElNotification({
-          title: "Container Deleted",
-          message: `Container "${container.name}" has been deleted`,
+          title: "容器已删除",
+          message: `容器 "${container.name}" 已被删除`,
           type: "success",
         });
       }
@@ -271,10 +277,10 @@ export const useContainerStore = defineStore("containers", () => {
       // Refresh container status
       await fetchContainer(id);
 
-      ElMessage.success(`Container ${operation} operation completed`);
+      ElMessage.success(`容器 ${operation} 操作完成`);
     } catch (error) {
       console.error(`Failed to ${operation} container:`, error);
-      ElMessage.error(`Failed to ${operation} container`);
+      ElMessage.error(`${operation} 容器失败`);
       throw error;
     } finally {
       setOperationLoading(id, false);
@@ -293,14 +299,14 @@ export const useContainerStore = defineStore("containers", () => {
 
       if (failed === 0) {
         ElNotification({
-          title: "Bulk Operation Completed",
-          message: `Successfully ${operation.action}ed ${successful} containers`,
+          title: "批量操作完成",
+          message: `成功${operation.action}了 ${successful} 个容器`,
           type: "success",
         });
       } else {
         ElNotification({
-          title: "Bulk Operation Completed with Errors",
-          message: `${successful}/${total} containers processed successfully`,
+          title: "批量操作完成但有错误",
+          message: `${successful}/${total} 个容器处理成功`,
           type: "warning",
         });
       }
@@ -311,7 +317,7 @@ export const useContainerStore = defineStore("containers", () => {
       return result;
     } catch (error) {
       console.error("Bulk operation failed:", error);
-      ElMessage.error("Bulk operation failed");
+      ElMessage.error("批量操作失败");
       throw error;
     } finally {
       loadingBulk.value = false;
@@ -325,8 +331,8 @@ export const useContainerStore = defineStore("containers", () => {
 
       if (updates.length > 0) {
         ElNotification({
-          title: "Updates Available",
-          message: `${updates.length} container(s) have available updates`,
+          title: "有可用更新",
+          message: `${updates.length} 个容器有可用更新`,
           type: "info",
         });
       }
@@ -334,7 +340,7 @@ export const useContainerStore = defineStore("containers", () => {
       return updates;
     } catch (error) {
       console.error("Failed to check updates:", error);
-      ElMessage.error("Failed to check for updates");
+      ElMessage.error("检查更新失败");
       throw error;
     }
   }
@@ -377,7 +383,7 @@ export const useContainerStore = defineStore("containers", () => {
       return containerLogs;
     } catch (error) {
       console.error("Failed to fetch logs:", error);
-      ElMessage.error("Failed to load container logs");
+      ElMessage.error("加载容器日志失败");
       throw error;
     }
   }
@@ -419,7 +425,7 @@ export const useContainerStore = defineStore("containers", () => {
       return containerTemplates;
     } catch (error) {
       console.error("Failed to fetch templates:", error);
-      ElMessage.error("Failed to load container templates");
+      ElMessage.error("加载容器模板失败");
       throw error;
     }
   }
@@ -437,8 +443,8 @@ export const useContainerStore = defineStore("containers", () => {
       totalContainers.value++;
 
       ElNotification({
-        title: "Container Created from Template",
-        message: `Container "${container.name}" has been created successfully`,
+        title: "从模板创建容器",
+        message: `容器 "${container.name}" 已成功创建`,
         type: "success",
       });
 

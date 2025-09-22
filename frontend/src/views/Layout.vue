@@ -22,7 +22,7 @@
           <Loading
             v-if="pageLoading"
             type="spinner"
-            text="Loading..."
+            text="加载中..."
             overlay
           />
 
@@ -44,14 +44,14 @@ v-if="showFooter" class="app-footer"
         <div class="footer-content">
           <div class="footer-left">
             <span class="copyright">
-              © {{ currentYear }} Docker Auto-Update System
+              © {{ currentYear }} Docker 自动更新系统
             </span>
             <span class="version">v{{ appVersion }}</span>
           </div>
 
           <div class="footer-right">
             <el-link href="/docs" target="_blank" type="primary">
-              Documentation
+              文档
             </el-link>
             <el-divider direction="vertical" />
             <el-link href="/api"
@@ -61,7 +61,7 @@ API
 </el-link>
             <el-divider direction="vertical" />
             <el-link href="/support" target="_blank" type="primary">
-              Support
+              支持
             </el-link>
           </div>
         </div>
@@ -253,15 +253,15 @@ onUnmounted(() => {
   overflow: hidden;
   background: var(--el-bg-color-page);
 
-  &.layout-mobile {
-    .main-container {
-      margin-left: 0;
-    }
-  }
-
   &.layout-collapsed {
     .main-container {
       margin-left: 64px;
+    }
+  }
+
+  &.layout-mobile {
+    .main-container {
+      margin-left: 0;
     }
   }
 }
@@ -278,16 +278,13 @@ onUnmounted(() => {
 }
 
 .main-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
   margin-left: 260px;
   transition: margin-left 0.3s ease;
+  height: 100vh;
   min-width: 0;
-
-  @media (max-width: 1024px) {
-    margin-left: 0;
-  }
+  flex: 1;
 }
 
 .page-content {
@@ -295,12 +292,37 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Important for flex children to allow shrinking */
 
   .content-wrapper {
     flex: 1;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 20px;
     position: relative;
+    min-height: 0; /* Important for flex children to allow shrinking */
+
+    // Smooth scrolling
+    scroll-behavior: smooth;
+    
+    // Better scrollbar on webkit browsers
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: var(--el-fill-color-lighter);
+      border-radius: 4px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: var(--el-border-color-darker);
+      border-radius: 4px;
+      
+      &:hover {
+        background: var(--el-border-color-dark);
+      }
+    }
 
     @media (max-width: 768px) {
       padding: 12px;

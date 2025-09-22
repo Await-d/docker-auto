@@ -22,6 +22,9 @@ type Config struct {
 	// Cache settings
 	Cache CacheConfig `mapstructure:",squash"`
 
+	// Redis settings
+	Redis RedisConfig `mapstructure:",squash"`
+
 	// JWT settings
 	JWT JWTConfig `mapstructure:",squash"`
 
@@ -48,6 +51,8 @@ type Config struct {
 }
 
 type DatabaseConfig struct {
+	Type     string `mapstructure:"DB_TYPE"`     // sqlite, postgres, mysql
+	Path     string `mapstructure:"DB_PATH"`     // for sqlite
 	Host     string `mapstructure:"DB_HOST"`
 	Port     int    `mapstructure:"DB_PORT"`
 	Name     string `mapstructure:"DB_NAME"`
@@ -69,6 +74,37 @@ type CacheConfig struct {
 	ConfigCacheTTLMinutes int  `mapstructure:"CACHE_CONFIG_TTL_MINUTES"`
 	CleanupIntervalMinutes int `mapstructure:"CACHE_CLEANUP_INTERVAL_MINUTES"`
 	Enabled               bool `mapstructure:"CACHE_ENABLED"`
+}
+
+type RedisConfig struct {
+	Enabled        bool   `mapstructure:"REDIS_ENABLED"`
+	Host           string `mapstructure:"REDIS_HOST"`
+	Port           int    `mapstructure:"REDIS_PORT"`
+	Password       string `mapstructure:"REDIS_PASSWORD"`
+	DB             int    `mapstructure:"REDIS_DB"`
+	PoolSize       int    `mapstructure:"REDIS_POOL_SIZE"`
+	MinIdleConns   int    `mapstructure:"REDIS_MIN_IDLE_CONNS"`
+	MaxRetries     int    `mapstructure:"REDIS_MAX_RETRIES"`
+	DialTimeout    int    `mapstructure:"REDIS_DIAL_TIMEOUT"`    // seconds
+	ReadTimeout    int    `mapstructure:"REDIS_READ_TIMEOUT"`    // seconds
+	WriteTimeout   int    `mapstructure:"REDIS_WRITE_TIMEOUT"`   // seconds
+	IdleTimeout    int    `mapstructure:"REDIS_IDLE_TIMEOUT"`    // seconds
+
+	// Cluster settings
+	ClusterMode    bool     `mapstructure:"REDIS_CLUSTER_MODE"`
+	ClusterAddrs   []string `mapstructure:"REDIS_CLUSTER_ADDRS"`
+
+	// Sentinel settings
+	SentinelMode   bool     `mapstructure:"REDIS_SENTINEL_MODE"`
+	MasterName     string   `mapstructure:"REDIS_MASTER_NAME"`
+	SentinelAddrs  []string `mapstructure:"REDIS_SENTINEL_ADDRS"`
+
+	// TLS settings
+	TLSEnabled     bool   `mapstructure:"REDIS_TLS_ENABLED"`
+	TLSCertFile    string `mapstructure:"REDIS_TLS_CERT_FILE"`
+	TLSKeyFile     string `mapstructure:"REDIS_TLS_KEY_FILE"`
+	TLSCACertFile  string `mapstructure:"REDIS_TLS_CA_CERT_FILE"`
+	TLSSkipVerify  bool   `mapstructure:"REDIS_TLS_SKIP_VERIFY"`
 }
 
 type JWTConfig struct {
@@ -98,16 +134,58 @@ type NotificationConfig struct {
 
 type EmailConfig struct {
 	Enabled    bool   `mapstructure:"EMAIL_ENABLED"`
+	Provider   string `mapstructure:"EMAIL_PROVIDER"` // smtp, ses, sendgrid, mailgun
 	SMTPHost   string `mapstructure:"SMTP_HOST"`
 	SMTPPort   int    `mapstructure:"SMTP_PORT"`
 	Username   string `mapstructure:"SMTP_USERNAME"`
 	Password   string `mapstructure:"SMTP_PASSWORD"`
 	From       string `mapstructure:"SMTP_FROM"`
+
+	// AWS SES configuration
+	AWSRegion     string `mapstructure:"AWS_REGION"`
+	AWSAccessKey  string `mapstructure:"AWS_ACCESS_KEY"`
+	AWSSecretKey  string `mapstructure:"AWS_SECRET_KEY"`
+
+	// SendGrid configuration
+	SendGridAPIKey string `mapstructure:"SENDGRID_API_KEY"`
+
+	// Mailgun configuration
+	MailgunDomain string `mapstructure:"MAILGUN_DOMAIN"`
+	MailgunAPIKey string `mapstructure:"MAILGUN_API_KEY"`
+
+	// Email template settings
+	TemplateDir    string `mapstructure:"EMAIL_TEMPLATE_DIR"`
+	DefaultLocale  string `mapstructure:"EMAIL_DEFAULT_LOCALE"`
+
+	// Queue settings
+	QueueSize     int `mapstructure:"EMAIL_QUEUE_SIZE"`
+	WorkerCount   int `mapstructure:"EMAIL_WORKER_COUNT"`
+	RetryAttempts int `mapstructure:"EMAIL_RETRY_ATTEMPTS"`
+	RetryDelay    int `mapstructure:"EMAIL_RETRY_DELAY"` // seconds
 }
 
 type WebhookConfig struct {
 	Enabled bool   `mapstructure:"WEBHOOK_ENABLED"`
 	URL     string `mapstructure:"WEBHOOK_URL"`
+
+	// Security settings
+	Secret       string `mapstructure:"WEBHOOK_SECRET"`
+	SignatureHeader string `mapstructure:"WEBHOOK_SIGNATURE_HEADER"`
+	VerifySSL    bool   `mapstructure:"WEBHOOK_VERIFY_SSL"`
+
+	// Retry settings
+	RetryAttempts int    `mapstructure:"WEBHOOK_RETRY_ATTEMPTS"`
+	RetryDelay    int    `mapstructure:"WEBHOOK_RETRY_DELAY"` // seconds
+	Timeout       int    `mapstructure:"WEBHOOK_TIMEOUT"`     // seconds
+
+	// Queue settings
+	QueueSize   int `mapstructure:"WEBHOOK_QUEUE_SIZE"`
+	WorkerCount int `mapstructure:"WEBHOOK_WORKER_COUNT"`
+
+	// Rate limiting
+	RateLimit         int `mapstructure:"WEBHOOK_RATE_LIMIT"`         // requests per minute
+	RateLimitBurst    int `mapstructure:"WEBHOOK_RATE_LIMIT_BURST"`   // burst size
+	RateLimitWindow   int `mapstructure:"WEBHOOK_RATE_LIMIT_WINDOW"`  // window size in seconds
 }
 
 type WeChatConfig struct {
@@ -186,6 +264,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("LOG_FORMAT", "json")
 
 	// Database defaults
+	v.SetDefault("DB_TYPE", "sqlite")
+	v.SetDefault("DB_PATH", "./data/docker-auto.db")
 	v.SetDefault("DB_HOST", "localhost")
 	v.SetDefault("DB_PORT", 5432)
 	v.SetDefault("DB_NAME", "dockerauto")
@@ -203,6 +283,24 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("CACHE_IMAGE_TTL_HOURS", 6)
 	v.SetDefault("CACHE_CONFIG_TTL_MINUTES", 5)
 	v.SetDefault("CACHE_CLEANUP_INTERVAL_MINUTES", 5)
+
+	// Redis defaults
+	v.SetDefault("REDIS_ENABLED", false)
+	v.SetDefault("REDIS_HOST", "localhost")
+	v.SetDefault("REDIS_PORT", 6379)
+	v.SetDefault("REDIS_PASSWORD", "")
+	v.SetDefault("REDIS_DB", 0)
+	v.SetDefault("REDIS_POOL_SIZE", 10)
+	v.SetDefault("REDIS_MIN_IDLE_CONNS", 5)
+	v.SetDefault("REDIS_MAX_RETRIES", 3)
+	v.SetDefault("REDIS_DIAL_TIMEOUT", 5)
+	v.SetDefault("REDIS_READ_TIMEOUT", 3)
+	v.SetDefault("REDIS_WRITE_TIMEOUT", 3)
+	v.SetDefault("REDIS_IDLE_TIMEOUT", 300)
+	v.SetDefault("REDIS_CLUSTER_MODE", false)
+	v.SetDefault("REDIS_SENTINEL_MODE", false)
+	v.SetDefault("REDIS_TLS_ENABLED", false)
+	v.SetDefault("REDIS_TLS_SKIP_VERIFY", false)
 
 	// JWT defaults (will be validated later)
 	v.SetDefault("JWT_SECRET", "")
@@ -222,8 +320,27 @@ func setDefaults(v *viper.Viper) {
 
 	// Notification defaults
 	v.SetDefault("EMAIL_ENABLED", false)
+	v.SetDefault("EMAIL_PROVIDER", "smtp")
 	v.SetDefault("SMTP_PORT", 587)
+	v.SetDefault("EMAIL_TEMPLATE_DIR", "./templates/email")
+	v.SetDefault("EMAIL_DEFAULT_LOCALE", "en")
+	v.SetDefault("EMAIL_QUEUE_SIZE", 1000)
+	v.SetDefault("EMAIL_WORKER_COUNT", 5)
+	v.SetDefault("EMAIL_RETRY_ATTEMPTS", 3)
+	v.SetDefault("EMAIL_RETRY_DELAY", 60)
+
 	v.SetDefault("WEBHOOK_ENABLED", false)
+	v.SetDefault("WEBHOOK_SIGNATURE_HEADER", "X-Hub-Signature-256")
+	v.SetDefault("WEBHOOK_VERIFY_SSL", true)
+	v.SetDefault("WEBHOOK_RETRY_ATTEMPTS", 3)
+	v.SetDefault("WEBHOOK_RETRY_DELAY", 60)
+	v.SetDefault("WEBHOOK_TIMEOUT", 30)
+	v.SetDefault("WEBHOOK_QUEUE_SIZE", 1000)
+	v.SetDefault("WEBHOOK_WORKER_COUNT", 5)
+	v.SetDefault("WEBHOOK_RATE_LIMIT", 100)
+	v.SetDefault("WEBHOOK_RATE_LIMIT_BURST", 10)
+	v.SetDefault("WEBHOOK_RATE_LIMIT_WINDOW", 60)
+
 	v.SetDefault("WECHAT_ENABLED", false)
 
 	// Security defaults
@@ -290,14 +407,29 @@ func contains(slice []string, item string) bool {
 
 // GetDSN returns database connection string for PostgreSQL
 func (c *Config) GetDSN() string {
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		c.Database.Host,
-		c.Database.Port,
-		c.Database.User,
-		c.Database.Password,
-		c.Database.Name,
-		c.Database.SSLMode,
-	)
+	switch c.Database.Type {
+	case "postgres":
+		return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+			c.Database.Host,
+			c.Database.Port,
+			c.Database.User,
+			c.Database.Password,
+			c.Database.Name,
+			c.Database.SSLMode,
+		)
+	case "mysql":
+		return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			c.Database.User,
+			c.Database.Password,
+			c.Database.Host,
+			c.Database.Port,
+			c.Database.Name,
+		)
+	case "sqlite":
+		return c.Database.Path
+	default:
+		return ""
+	}
 }
 
 // IsCacheEnabled returns true if caching is enabled

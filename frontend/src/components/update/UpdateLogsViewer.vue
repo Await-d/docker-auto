@@ -2,15 +2,15 @@
   <div class="logs-viewer">
     <div class="logs-header">
       <div class="logs-info">
-        <span class="logs-count">{{ logs.length }} log entries</span>
+        <span class="logs-count">{{ logs.length }} 条日志记录</span>
         <el-tag size="small" effect="plain">
           {{ updateId }}
         </el-tag>
       </div>
       <div class="logs-controls">
-        <el-checkbox v-model="autoScroll"> Auto-scroll </el-checkbox>
+        <el-checkbox v-model="autoScroll"> 自动滚动 </el-checkbox>
         <el-button size="small" :icon="Refresh" @click="refreshLogs">
-          Refresh
+          刷新
         </el-button>
       </div>
     </div>
@@ -32,7 +32,7 @@
       </div>
 
       <div v-if="logs.length === 0" class="empty-logs">
-        <el-empty description="No logs available" />
+        <el-empty description="暂无日志" />
       </div>
     </div>
   </div>

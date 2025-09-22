@@ -3,7 +3,11 @@ package metrics
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -40,6 +44,10 @@ type PerformanceCollector struct {
 	// Control channels
 	stopCh            chan struct{}
 	done              chan struct{}
+
+	// CPU monitoring
+	lastCPUTime       uint64
+	lastCPUTimeStamp  time.Time
 }
 
 // SystemMetrics tracks system-level performance
@@ -288,11 +296,107 @@ func (pc *PerformanceCollector) collectSystemMetrics() {
 	}
 }
 
-// getCPUUsage calculates CPU usage percentage (simplified)
+// getCPUUsage calculates real CPU usage percentage using /proc/stat
 func (pc *PerformanceCollector) getCPUUsage() float64 {
-	// This is a simplified CPU usage calculation
-	// In production, you would use more sophisticated methods
-	return float64(runtime.NumGoroutine()) * 0.1 // Placeholder calculation
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+
+	// Read current CPU time from /proc/stat
+	currentCPUTime, err := pc.readCPUTime()
+	if err != nil {
+		logrus.WithError(err).Warn("Failed to read CPU time, falling back to goroutine count")
+		// Fallback to a reasonable estimation based on system load
+		return pc.getEstimatedCPUUsage()
+	}
+
+	currentTime := time.Now()
+
+	// Calculate CPU usage if we have previous measurement
+	if pc.lastCPUTime > 0 && !pc.lastCPUTimeStamp.IsZero() {
+		timeDelta := currentTime.Sub(pc.lastCPUTimeStamp).Seconds()
+		if timeDelta > 0 {
+			cpuTimeDelta := currentCPUTime - pc.lastCPUTime
+
+			// Convert to percentage (CPU time is in USER_HZ, typically 100Hz)
+			// CPU usage = (delta_cpu_time / delta_wall_time) * 100
+			cpuUsage := (float64(cpuTimeDelta) / (timeDelta * 100.0)) * 100.0
+
+			// Clamp between 0 and 100
+			if cpuUsage < 0 {
+				cpuUsage = 0
+			} else if cpuUsage > 100 {
+				cpuUsage = 100
+			}
+
+			// Update last values
+			pc.lastCPUTime = currentCPUTime
+			pc.lastCPUTimeStamp = currentTime
+
+			return cpuUsage
+		}
+	}
+
+	// First measurement or invalid delta, store current values
+	pc.lastCPUTime = currentCPUTime
+	pc.lastCPUTimeStamp = currentTime
+
+	// Return estimated CPU usage for first measurement
+	return pc.getEstimatedCPUUsage()
+}
+
+// readCPUTime reads CPU time from /proc/stat
+func (pc *PerformanceCollector) readCPUTime() (uint64, error) {
+	data, err := ioutil.ReadFile("/proc/stat")
+	if err != nil {
+		return 0, err
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "cpu ") {
+			fields := strings.Fields(line)
+			if len(fields) < 5 {
+				continue
+			}
+
+			// Parse CPU times: user, nice, system, idle, iowait, irq, softirq, steal
+			var totalTime uint64
+			for i := 1; i < len(fields) && i < 9; i++ {
+				if val, err := strconv.ParseUint(fields[i], 10, 64); err == nil {
+					totalTime += val
+				}
+			}
+
+			return totalTime, nil
+		}
+	}
+
+	return 0, fmt.Errorf("cpu line not found in /proc/stat")
+}
+
+// getEstimatedCPUUsage provides an estimation based on system metrics
+func (pc *PerformanceCollector) getEstimatedCPUUsage() float64 {
+	// Use a combination of goroutines and memory stats for estimation
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+
+	// Base estimation on goroutine count and GC activity
+	goroutines := float64(runtime.NumGoroutine())
+	gcCPUFraction := memStats.GCCPUFraction * 100
+
+	// Estimate CPU usage: base load + GC overhead
+	// This is a heuristic - adjust multipliers based on your application
+	baseLoad := goroutines * 0.5 // Each goroutine contributes ~0.5% CPU when active
+	if baseLoad > 50 {
+		baseLoad = 50 // Cap base load at 50%
+	}
+
+	totalEstimate := baseLoad + gcCPUFraction
+	if totalEstimate > 100 {
+		totalEstimate = 100
+	}
+
+	return totalEstimate
 }
 
 // takeSnapshot creates a performance snapshot

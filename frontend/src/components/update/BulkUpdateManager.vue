@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Bulk Update Manager"
+    title="批量更新管理器"
     width="900px"
     :before-close="handleClose"
   >
@@ -9,15 +9,15 @@
       <!-- Selected Updates Summary -->
       <div class="updates-summary">
         <div class="summary-header">
-          <h4>Selected Updates ({{ selectedUpdates.length }})</h4>
+          <h4>已选择的更新 ({{ selectedUpdates.length }})</h4>
           <div class="summary-stats">
             <el-tag type="danger" size="small">
-              {{ criticalCount }} Critical
+              {{ criticalCount }} 关键
             </el-tag>
             <el-tag type="warning" size="small">
-              {{ securityCount }} Security
+              {{ securityCount }} 安全
             </el-tag>
-            <span class="total-size">Total: {{ formatTotalSize() }}</span>
+            <span class="total-size">总计: {{ formatTotalSize() }}</span>
           </div>
         </div>
 
@@ -54,27 +54,27 @@ ref="formRef" :model="bulkForm"
 label-width="160px"
 >
         <!-- Update Strategy -->
-        <el-form-item label="Execution Strategy">
+        <el-form-item label="执行策略">
           <el-radio-group
             v-model="bulkForm.strategy"
             @change="updateEstimation"
           >
             <el-radio label="sequential">
               <div class="strategy-option">
-                <span>Sequential</span>
-                <small>Update containers one after another</small>
+                <span>顺序执行</span>
+                <small>逐个更新容器</small>
               </div>
             </el-radio>
             <el-radio label="parallel">
               <div class="strategy-option">
-                <span>Parallel</span>
-                <small>Update multiple containers simultaneously</small>
+                <span>并行执行</span>
+                <small>同时更新多个容器</small>
               </div>
             </el-radio>
             <el-radio label="rolling">
               <div class="strategy-option">
-                <span>Rolling</span>
-                <small>Gradual update with health checks</small>
+                <span>滚动更新</span>
+                <small>带健康检查的渐进式更新</small>
               </div>
             </el-radio>
           </el-radio-group>
@@ -83,7 +83,7 @@ label-width="160px"
         <!-- Concurrency -->
         <el-form-item
           v-if="bulkForm.strategy === 'parallel'"
-          label="Max Concurrent"
+          label="最大并发数"
         >
           <el-input-number
             v-model="bulkForm.maxConcurrent"
@@ -91,43 +91,43 @@ label-width="160px"
             :max="Math.min(selectedUpdates.length, 10)"
             @change="updateEstimation"
           />
-          <span class="form-help">Maximum number of containers to update simultaneously</span>
+          <span class="form-help">同时更新的最大容器数量</span>
         </el-form-item>
 
         <!-- Dependency Handling -->
-        <el-form-item v-if="hasDependencies" label="Dependencies">
+        <el-form-item v-if="hasDependencies" label="依赖关系">
           <el-checkbox v-model="bulkForm.respectDependencies">
-            Respect container dependencies
+            遵守容器依赖关系
           </el-checkbox>
           <el-select
             v-if="bulkForm.respectDependencies"
             v-model="bulkForm.dependencyStrategy"
             style="width: 200px; margin-left: 12px"
           >
-            <el-option label="Strict Order" value="strict" />
-            <el-option label="Best Effort" value="loose" />
+            <el-option label="严格顺序" value="strict" />
+            <el-option label="尽力而为" value="loose" />
           </el-select>
         </el-form-item>
 
         <!-- Error Handling -->
-        <el-form-item label="Error Handling">
+        <el-form-item label="错误处理">
           <el-checkbox v-model="bulkForm.continueOnError">
-            Continue on individual failures
+            在个别失败时继续
           </el-checkbox>
           <el-checkbox v-model="bulkForm.rollbackOnFailure">
-            Auto-rollback failed updates
+            自动回滚失败的更新
           </el-checkbox>
         </el-form-item>
 
         <!-- Testing -->
-        <el-form-item label="Pre-Update Testing">
+        <el-form-item label="更新前测试">
           <el-checkbox v-model="bulkForm.runTests">
-            Run health checks before updating
+            更新前运行健康检查
           </el-checkbox>
         </el-form-item>
 
         <!-- Execution Order Preview -->
-        <el-form-item v-if="executionOrder.length > 0" label="Execution Order">
+        <el-form-item v-if="executionOrder.length > 0" label="执行顺序">
           <div class="execution-preview">
             <div
               v-for="(batch, index) in executionOrder"
@@ -135,9 +135,9 @@ label-width="160px"
               class="execution-batch"
             >
               <div class="batch-header">
-                <span>Batch {{ index + 1 }}</span>
+                <span>批次 {{ index + 1 }}</span>
                 <el-tag size="small" effect="plain">
-                  {{ batch.length }} container{{ batch.length > 1 ? "s" : "" }}
+                  {{ batch.length }} 个容器
                 </el-tag>
               </div>
               <div class="batch-containers">
@@ -154,30 +154,30 @@ label-width="160px"
         </el-form-item>
 
         <!-- Time Estimation -->
-        <el-form-item label="Estimated Time">
+        <el-form-item label="预估时间">
           <div class="time-estimation">
             <div class="time-breakdown">
               <div class="time-item">
-                <span class="time-label">Download:</span>
+                <span class="time-label">下载：</span>
                 <span class="time-value">{{
                   formatDuration(estimation.downloadTime)
                 }}</span>
               </div>
               <div class="time-item">
-                <span class="time-label">Update:</span>
+                <span class="time-label">更新：</span>
                 <span class="time-value">{{
                   formatDuration(estimation.updateTime)
                 }}</span>
               </div>
               <div class="time-item total">
-                <span class="time-label">Total:</span>
+                <span class="time-label">总计：</span>
                 <span class="time-value">{{
                   formatDuration(estimation.totalTime)
                 }}</span>
               </div>
             </div>
             <div class="time-range">
-              Estimated completion: {{ getCompletionTime() }}
+              预计完成时间：{{ getCompletionTime() }}
             </div>
           </div>
         </el-form-item>
@@ -185,7 +185,7 @@ label-width="160px"
 
       <!-- Risk Assessment -->
       <div class="risk-assessment">
-        <h4>Risk Assessment</h4>
+        <h4>风险评估</h4>
         <div class="risk-items">
           <div
             v-for="risk in riskAssessment"
@@ -211,7 +211,7 @@ label-width="160px"
 
       <!-- Progress Preview (if running) -->
       <div v-if="isRunning" class="bulk-progress">
-        <h4>Update Progress</h4>
+        <h4>更新进度</h4>
         <div class="overall-progress">
           <el-progress
             :percentage="overallProgress"
@@ -219,8 +219,8 @@ label-width="160px"
             status=""
           />
           <div class="progress-stats">
-            <span>{{ completedCount }} completed, {{ failedCount }} failed,
-              {{ remainingCount }} remaining</span>
+            <span>{{ completedCount }} 已完成，{{ failedCount }} 失败，
+              {{ remainingCount }} 剩余</span>
           </div>
         </div>
 
@@ -243,20 +243,20 @@ label-width="160px"
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose"> Cancel </el-button>
+        <el-button @click="handleClose"> 取消 </el-button>
         <el-button
           v-if="!isRunning"
           type="primary"
           :loading="starting"
           @click="handleStart"
         >
-          Start Bulk Update
+          开始批量更新
         </el-button>
         <el-button
 v-else type="danger"
 @click="handleStop"
 >
-          Stop All Updates
+          停止所有更新
         </el-button>
       </div>
     </template>
@@ -551,11 +551,11 @@ const getCompletionTime = () => {
 const handleStart = async () => {
   try {
     await ElMessageBox.confirm(
-      `Are you sure you want to start bulk update for ${props.selectedUpdates.length} containers?`,
-      "Confirm Bulk Update",
+      `您确定要为 ${props.selectedUpdates.length} 个容器开始批量更新吗？`,
+      "确认批量更新",
       {
-        confirmButtonText: "Start Updates",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "开始更新",
+        cancelButtonText: "取消",
         type: "warning",
       },
     );
@@ -571,12 +571,12 @@ const handleStart = async () => {
     isRunning.value = true;
     initializeProgress();
 
-    ElMessage.success("Bulk update started successfully");
+    ElMessage.success("批量更新已成功开始");
     emit("bulk-update-started");
   } catch (error) {
     if (error !== "cancel") {
-      console.error("Failed to start bulk update:", error);
-      ElMessage.error("Failed to start bulk update");
+      console.error("启动批量更新失败:", error);
+      ElMessage.error("启动批量更新失败");
     }
   } finally {
     starting.value = false;
@@ -586,11 +586,11 @@ const handleStart = async () => {
 const handleStop = async () => {
   try {
     await ElMessageBox.confirm(
-      "Are you sure you want to stop all running updates?",
-      "Stop Bulk Update",
+      "您确定要停止所有运行中的更新吗？",
+      "停止批量更新",
       {
-        confirmButtonText: "Stop All",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "停止全部",
+        cancelButtonText: "取消",
         type: "warning",
       },
     );

@@ -7,7 +7,7 @@
           type="text"
           :icon="Expand"
           class="sidebar-toggle"
-          :title="sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
+          :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
           @click="toggleSidebar"
         />
 
@@ -49,13 +49,13 @@
         </el-badge>
 
         <!-- Theme toggle -->
-        <el-tooltip content="Toggle Theme" placement="bottom">
+        <el-tooltip content="切换主题" placement="bottom">
           <el-button type="text" :icon="themeIcon" @click="toggleTheme" />
         </el-tooltip>
 
         <!-- Full screen toggle -->
         <el-tooltip
-          :content="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'"
+          :content="isFullscreen ? '退出全屏' : '进入全屏'"
           placement="bottom"
         >
           <el-button
@@ -82,16 +82,16 @@ placement="bottom-end" @command="handleUserCommand"
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="profile" :icon="User">
-                Profile
+                个人资料
               </el-dropdown-item>
               <el-dropdown-item command="settings" :icon="Setting">
-                Settings
+                设置
               </el-dropdown-item>
               <el-dropdown-item command="help" :icon="QuestionFilled">
-                Help
+                帮助
               </el-dropdown-item>
               <el-dropdown-item divided command="logout" :icon="SwitchButton">
-                Logout
+                退出登录
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -102,17 +102,17 @@ placement="bottom-end" @command="handleUserCommand"
     <!-- Notifications drawer -->
     <el-drawer
       v-model="notificationDrawer"
-      title="Notifications"
+      title="通知"
       direction="rtl"
       size="400px"
     >
       <div class="notifications-content">
         <div class="notifications-header">
           <el-button size="small" type="primary" @click="markAllAsRead">
-            Mark All as Read
+            全部标记为已读
           </el-button>
           <el-button size="small" @click="clearAllNotifications">
-            Clear All
+            清空全部
           </el-button>
         </div>
 
@@ -150,7 +150,7 @@ placement="bottom-end" @command="handleUserCommand"
 
           <el-empty
             v-if="notifications.length === 0"
-            description="No notifications"
+            description="暂无通知"
           />
         </div>
       </div>
@@ -183,25 +183,25 @@ import {
   CircleCheckFilled,
   CircleClose,
 } from "@element-plus/icons-vue";
-import { useAuth } from "@/store/auth";
-import { useApp, type Notification } from "@/store/app";
+import { useAuth, useAuthStore } from "@/store/auth";
+import { useApp, useAppStore, type Notification } from "@/store/app";
 import { storeToRefs } from "pinia";
 
 // Composables
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuth();
-const appStore = useApp();
+const authStore = useAuthStore(); // Use the actual Pinia store
+const appStore = useAppStore(); // Use the actual Pinia store
 
 // Reactive refs from stores
 const { user } = storeToRefs(authStore);
-const { userDisplayName, userAvatar } = authStore;
+const { userDisplayName, userAvatar } = useAuth(); // Use the composable for computed values
 const { sidebarCollapsed, theme, notifications } = storeToRefs(appStore);
 
 // Store methods
 const { logout } = authStore;
 const { toggleSidebar, toggleTheme, removeNotification, clearNotifications } =
-  appStore;
+  useApp(); // Use the composable for methods
 
 // Reactive state
 const notificationDrawer = ref(false);
@@ -218,10 +218,10 @@ const breadcrumbs = computed(() => {
   }));
 
   // Add home breadcrumb if not already present
-  if (crumbs.length > 0 && crumbs[0].path !== "/") {
+    if (crumbs.length > 0 && crumbs[0].path !== "/") {
     crumbs.unshift({
       path: "/",
-      title: "Dashboard",
+      title: "仪表盘",
       icon: "House",
     });
   }
@@ -277,13 +277,13 @@ const systemStatusIcon = computed(() => {
 const systemStatusText = computed(() => {
   switch (systemStatus.value) {
     case "healthy":
-      return "System Healthy";
+      return "系统正常";
     case "warning":
-      return "System Warning";
+      return "系统警告";
     case "error":
-      return "System Error";
+      return "系统错误";
     default:
-      return "System Status";
+      return "系统状态";
   }
 });
 
@@ -357,10 +357,12 @@ const handleFullscreenChange = () => {
 // System status simulation (replace with actual API call)
 const checkSystemStatus = async () => {
   try {
-    // Simulate API call
-    const response = await fetch("/api/system/health");
-    const data = await response.json();
-    systemStatus.value = data.status || "healthy";
+    const { get } = await import('@/utils/request');
+    const data = await get("/api/health", {
+      showLoading: false,
+      showError: false,
+    });
+    systemStatus.value = (data as any)?.status || "healthy";
   } catch (error) {
     systemStatus.value = "error";
   }

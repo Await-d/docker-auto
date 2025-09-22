@@ -15,33 +15,33 @@
         <template #header>
           <div class="section-header">
             <el-icon><Lock /></el-icon>
-            <span>Access Control</span>
+            <span>访问控制</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="IP Whitelist">
+            <el-form-item label="IP白名单">
               <KeyValueEditor
                 v-model="ipWhitelistObject"
-                title="IP Whitelist"
-                item-name="IP Range"
-                key-label="Name"
+                title="IP白名单"
+                item-name="IP范围"
+                key-label="名称"
                 value-label="IP/CIDR"
-                key-placeholder="Office Network"
+                key-placeholder="办公网络"
                 value-placeholder="192.168.1.0/24"
                 @change="updateIpWhitelist"
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Rate Limiting">
+            <el-form-item label="限率控制">
               <el-switch
                 v-model="formData.accessControl.rateLimiting.enabled"
                 @change="updateAccessControl"
               />
               <div class="field-help">
-Limit API requests per IP
+限制每个IP的API请求数
 </div>
             </el-form-item>
           </el-col>
@@ -53,13 +53,13 @@ Limit API requests per IP
         <template #header>
           <div class="section-header">
             <el-icon><Document /></el-icon>
-            <span>Audit Settings</span>
+            <span>审计设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="8">
-            <el-form-item label="Enable Auditing">
+            <el-form-item label="启用审计">
               <el-switch
                 v-model="formData.auditSettings.enabled"
                 @change="updateAuditSettings"
@@ -68,7 +68,7 @@ Limit API requests per IP
           </el-col>
           <el-col :span="8">
             <el-form-item
-              label="Retention Days"
+              label="保留天数"
               prop="auditSettings.retentionDays"
             >
               <el-input-number
@@ -81,7 +81,7 @@ Limit API requests per IP
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Export Enabled">
+            <el-form-item label="启用导出">
               <el-switch
                 v-model="formData.auditSettings.exportEnabled"
                 :disabled="!formData.auditSettings.enabled"
@@ -97,20 +97,20 @@ Limit API requests per IP
         <template #header>
           <div class="section-header">
             <el-icon><Key /></el-icon>
-            <span>Encryption</span>
+            <span>加密</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Encryption Algorithm"
+              label="加密算法"
               prop="encryption.algorithm"
               required
             >
               <el-select
                 v-model="formData.encryption.algorithm"
-                placeholder="Select algorithm"
+                placeholder="选择算法"
                 @change="updateEncryption"
               >
                 <el-option label="AES-256-GCM" value="AES-256-GCM" />
@@ -122,13 +122,13 @@ Limit API requests per IP
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Key Rotation">
+            <el-form-item label="密钥轮换">
               <el-switch
                 v-model="formData.encryption.keyRotationEnabled"
                 @change="updateEncryption"
               />
               <div class="field-help">
-Automatically rotate encryption keys
+自动轮换加密密钥
 </div>
             </el-form-item>
           </el-col>
@@ -140,13 +140,13 @@ Automatically rotate encryption keys
         <template #header>
           <div class="section-header">
             <el-icon><Connection /></el-icon>
-            <span>API Security</span>
+            <span>API安全</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="8">
-            <el-form-item label="API Keys Enabled">
+            <el-form-item label="启用API密钥">
               <el-switch
                 v-model="formData.apiSecurity.apiKeysEnabled"
                 @change="updateApiSecurity"
@@ -154,7 +154,7 @@ Automatically rotate encryption keys
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Request Signing">
+            <el-form-item label="请求签名">
               <el-switch
                 v-model="formData.apiSecurity.requestSigning"
                 @change="updateApiSecurity"
@@ -162,7 +162,7 @@ Automatically rotate encryption keys
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Webhook Verification">
+            <el-form-item label="Webhook验证">
               <el-switch
                 v-model="formData.apiSecurity.webhookVerification"
                 @change="updateApiSecurity"
@@ -247,7 +247,7 @@ const formRules = computed(() => ({
   "encryption.algorithm": [
     {
       required: true,
-      message: "Encryption algorithm is required",
+      message: "加密算法为必填项",
       trigger: "change",
     },
   ],

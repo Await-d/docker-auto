@@ -54,6 +54,7 @@ const (
 	NotificationTypeSecurityUpdate   NotificationType = "security_update"
 	NotificationTypeSystemMaintenance NotificationType = "system_maintenance"
 	NotificationTypeContainerUpdate   NotificationType = "container_update"
+	NotificationTypeHealthCheck      NotificationType = "health_check"
 )
 
 // NotificationStatus defines notification status
@@ -73,6 +74,16 @@ const (
 	NotificationPriorityNormal NotificationPriority = "normal"
 	NotificationPriorityHigh   NotificationPriority = "high"
 	NotificationPriorityCritical NotificationPriority = "critical"
+)
+
+// NotificationLevel defines notification severity levels
+type NotificationLevel string
+
+const (
+	NotificationLevelInfo     NotificationLevel = "info"
+	NotificationLevelWarning  NotificationLevel = "warning"
+	NotificationLevelError    NotificationLevel = "error"
+	NotificationLevelCritical NotificationLevel = "critical"
 )
 
 // Notification represents a runtime notification (not stored in database)

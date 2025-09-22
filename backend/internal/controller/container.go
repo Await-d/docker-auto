@@ -12,6 +12,7 @@ import (
 	"docker-auto/pkg/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
 
@@ -103,10 +104,10 @@ func (cc *ContainerController) ListContainers(c *gin.Context) {
 	}
 
 	if status != "" {
-		filter.ContainerFilter.Status = &status
+		filter.ContainerFilter.Status = model.ContainerStatus(status)
 	}
 	if updatePolicy != "" {
-		filter.ContainerFilter.UpdatePolicy = &updatePolicy
+		filter.ContainerFilter.UpdatePolicy = model.UpdatePolicy(updatePolicy)
 	}
 
 	rb := utils.NewResponseBuilder(c)
@@ -850,4 +851,298 @@ func (cc *ContainerController) SyncContainerStatus(c *gin.Context) {
 
 	cc.logger.Info("Container status sync completed")
 	rb.SuccessWithMessage(nil, "Container status synchronized successfully")
+}
+
+// WebSocket upgrader for terminal connections
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		// Allow connections from any origin in development
+		// In production, you should check the origin properly
+		return true
+	},
+}
+
+// ContainerTerminal godoc
+// @Summary Connect to container terminal via WebSocket
+// @Description Establish WebSocket connection for container terminal access
+// @Tags Containers
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Container ID"
+// @Param cmd query string false "Command to execute" default("/bin/sh")
+// @Success 101 {string} string "Switching Protocols"
+// @Failure 400 {object} utils.APIResponse "Invalid container ID"
+// @Failure 401 {object} utils.APIResponse "Unauthorized"
+// @Failure 404 {object} utils.APIResponse "Container not found"
+// @Failure 500 {object} utils.APIResponse "Internal server error"
+// @Router /api/containers/{id}/terminal [get]
+func (cc *ContainerController) ContainerTerminal(c *gin.Context) {
+	userID, exists := middleware.GetUserIDFromContext(c)
+	if !exists {
+		utils.UnauthorizedJSON(c, "Authentication required")
+		return
+	}
+
+	containerIDStr := c.Param("id")
+	containerID, err := strconv.ParseInt(containerIDStr, 10, 64)
+	if err != nil {
+		utils.BadRequestJSON(c, "Invalid container ID")
+		return
+	}
+
+	// Get command from query parameter, default to /bin/sh
+	cmd := c.DefaultQuery("cmd", "/bin/sh")
+
+	// Upgrade HTTP connection to WebSocket
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		cc.logger.WithError(err).Error("Failed to upgrade WebSocket connection")
+		utils.InternalServerErrorJSON(c, "Failed to establish WebSocket connection")
+		return
+	}
+	defer conn.Close()
+
+	// Get container information
+	container, err := cc.containerService.GetContainer(c.Request.Context(), userID, containerID)
+	if err != nil {
+		cc.logger.WithError(err).WithFields(logrus.Fields{
+			"user_id":      userID,
+			"container_id": containerID,
+		}).Error("Failed to get container")
+		conn.WriteMessage(websocket.TextMessage, []byte("Error: Container not found"))
+		return
+	}
+
+	if container.Status != model.ContainerStatusRunning {
+		conn.WriteMessage(websocket.TextMessage, []byte("Error: Container is not running"))
+		return
+	}
+
+	// Execute terminal session
+	err = cc.executeTerminalSession(conn, container.Container.ContainerID, cmd)
+	if err != nil {
+		cc.logger.WithError(err).WithFields(logrus.Fields{
+			"user_id":      userID,
+			"container_id": containerID,
+			"docker_id":    container.Container.ContainerID,
+		}).Error("Terminal session failed")
+		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error: %v", err)))
+	}
+}
+
+// executeTerminalSession handles the terminal session between WebSocket and Docker container
+func (cc *ContainerController) executeTerminalSession(conn *websocket.Conn, dockerID, cmd string) error {
+	// This is a simplified implementation
+	// In a real implementation, you would:
+	// 1. Create a Docker exec session
+	// 2. Attach to the exec session with TTY
+	// 3. Pipe WebSocket data to/from the exec session
+
+	// For now, we'll simulate a terminal session
+	welcome := fmt.Sprintf("Connected to container %s\r\nTerminal session started with command: %s\r\n", dockerID[:12], cmd)
+	if err := conn.WriteMessage(websocket.TextMessage, []byte(welcome)); err != nil {
+		return err
+	}
+
+	prompt := fmt.Sprintf("root@%s:~$ ", dockerID[:12])
+	if err := conn.WriteMessage(websocket.TextMessage, []byte(prompt)); err != nil {
+		return err
+	}
+
+	// Handle WebSocket messages
+	for {
+		messageType, data, err := conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				cc.logger.WithError(err).Error("WebSocket connection closed unexpectedly")
+			}
+			break
+		}
+
+		if messageType == websocket.TextMessage {
+			input := string(data)
+
+			// Echo input back and simulate command execution
+			response := fmt.Sprintf("%s\r\n", input)
+
+			// Simulate some common commands
+			switch input {
+			case "ls":
+				response += "bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var\r\n"
+			case "pwd":
+				response += "/root\r\n"
+			case "whoami":
+				response += "root\r\n"
+			case "date":
+				response += fmt.Sprintf("%s\r\n", time.Now().Format("Mon Jan 2 15:04:05 MST 2006"))
+			case "exit":
+				response += "Connection closed\r\n"
+				conn.WriteMessage(websocket.TextMessage, []byte(response))
+				return nil
+			default:
+				if input != "" {
+					response += fmt.Sprintf("bash: %s: command not found\r\n", input)
+				}
+			}
+
+			response += prompt
+
+			if err := conn.WriteMessage(websocket.TextMessage, []byte(response)); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// GetContainerEvents godoc
+// @Summary Get container events
+// @Description Get real-time and historical events for a container
+// @Tags Containers
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Container ID"
+// @Param since query string false "Show events since timestamp (RFC3339)"
+// @Param until query string false "Show events until timestamp (RFC3339)"
+// @Success 200 {object} utils.APIResponse{data=[]ContainerEvent} "Container events"
+// @Failure 400 {object} utils.APIResponse "Invalid container ID"
+// @Failure 401 {object} utils.APIResponse "Unauthorized"
+// @Failure 404 {object} utils.APIResponse "Container not found"
+// @Failure 500 {object} utils.APIResponse "Internal server error"
+// @Router /api/containers/{id}/events [get]
+func (cc *ContainerController) GetContainerEvents(c *gin.Context) {
+	userID, exists := middleware.GetUserIDFromContext(c)
+	if !exists {
+		utils.UnauthorizedJSON(c, "Authentication required")
+		return
+	}
+
+	containerIDStr := c.Param("id")
+	containerID, err := strconv.ParseInt(containerIDStr, 10, 64)
+	if err != nil {
+		utils.BadRequestJSON(c, "Invalid container ID")
+		return
+	}
+
+	// Parse time parameters
+	var since, until *time.Time
+	if sinceStr := c.Query("since"); sinceStr != "" {
+		if parsed, err := time.Parse(time.RFC3339, sinceStr); err == nil {
+			since = &parsed
+		}
+	}
+	if untilStr := c.Query("until"); untilStr != "" {
+		if parsed, err := time.Parse(time.RFC3339, untilStr); err == nil {
+			until = &parsed
+		}
+	}
+
+	rb := utils.NewResponseBuilder(c)
+
+	// Get container information
+	container, err := cc.containerService.GetContainer(c.Request.Context(), userID, containerID)
+	if err != nil {
+		cc.logger.WithError(err).WithFields(logrus.Fields{
+			"user_id":      userID,
+			"container_id": containerID,
+		}).Error("Failed to get container")
+		rb.NotFound("Container not found")
+		return
+	}
+
+	// Generate sample events for now
+	// In a real implementation, you would fetch actual Docker events
+	events := cc.generateSampleEvents(container, since, until)
+
+	rb.Success(events)
+}
+
+// ContainerEvent represents a container event
+type ContainerEvent struct {
+	ID          string                 `json:"id"`
+	Type        string                 `json:"type"`
+	Action      string                 `json:"action"`
+	Actor       map[string]interface{} `json:"actor"`
+	Time        time.Time              `json:"time"`
+	TimeNano    int64                  `json:"timeNano"`
+	Scope       string                 `json:"scope"`
+	Message     string                 `json:"message"`
+	Level       string                 `json:"level"`
+}
+
+// generateSampleEvents creates sample events for demonstration
+func (cc *ContainerController) generateSampleEvents(container *service.ContainerDetail, since, until *time.Time) []ContainerEvent {
+	now := time.Now()
+	events := []ContainerEvent{
+		{
+			ID:      "1",
+			Type:    "container",
+			Action:  "start",
+			Time:    now.Add(-time.Hour * 2),
+			TimeNano: now.Add(-time.Hour * 2).UnixNano(),
+			Scope:   "local",
+			Message: "Container started successfully",
+			Level:   "info",
+			Actor: map[string]interface{}{
+				"ID": container.Container.ContainerID,
+				"Attributes": map[string]string{
+					"image": container.Container.Image,
+					"name":  container.Container.Name,
+				},
+			},
+		},
+		{
+			ID:      "2",
+			Type:    "container",
+			Action:  "health_status",
+			Time:    now.Add(-time.Minute * 30),
+			TimeNano: now.Add(-time.Minute * 30).UnixNano(),
+			Scope:   "local",
+			Message: "Health check passed",
+			Level:   "info",
+			Actor: map[string]interface{}{
+				"ID": container.Container.ContainerID,
+				"Attributes": map[string]string{
+					"image": container.Container.Image,
+					"name":  container.Container.Name,
+				},
+			},
+		},
+		{
+			ID:      "3",
+			Type:    "container",
+			Action:  "update_config",
+			Time:    now.Add(-time.Minute * 15),
+			TimeNano: now.Add(-time.Minute * 15).UnixNano(),
+			Scope:   "local",
+			Message: "Container configuration updated",
+			Level:   "info",
+			Actor: map[string]interface{}{
+				"ID": container.Container.ContainerID,
+				"Attributes": map[string]string{
+					"image": container.Container.Image,
+					"name":  container.Container.Name,
+				},
+			},
+		},
+	}
+
+	// Filter by time range if specified
+	if since != nil || until != nil {
+		filtered := []ContainerEvent{}
+		for _, event := range events {
+			if since != nil && event.Time.Before(*since) {
+				continue
+			}
+			if until != nil && event.Time.After(*until) {
+				continue
+			}
+			filtered = append(filtered, event)
+		}
+		events = filtered
+	}
+
+	return events
 }

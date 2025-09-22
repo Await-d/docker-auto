@@ -7,19 +7,18 @@
         </el-icon>
       </div>
       <h1 class="error-title">500</h1>
-      <h2 class="error-subtitle">Server Error</h2>
+      <h2 class="error-subtitle">服务器错误</h2>
       <p class="error-description">
-        Something went wrong on our servers. Please try again later or contact
-        support if the problem persists.
+        我们的服务器出现了问题。请稍后重试，如果问题持续存在，请联系技术支持。
       </p>
       <div class="error-actions">
         <el-button type="primary" @click="reload">
           <el-icon><Refresh /></el-icon>
-          Reload Page
+          刷新页面
         </el-button>
         <el-button @click="goHome">
           <el-icon><House /></el-icon>
-          Go Home
+          返回首页
         </el-button>
       </div>
     </div>

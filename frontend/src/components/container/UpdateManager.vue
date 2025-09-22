@@ -1,6 +1,6 @@
 <template>
   <div class="update-manager">
-    <!-- Update Status -->
+    <!-- 更新状态 -->
     <div class="update-status">
       <div class="status-header">
         <div class="status-info">
@@ -20,24 +20,24 @@
             @click="checkForUpdates"
           >
             <el-icon><Refresh /></el-icon>
-            Check for Updates
+            检查更新
           </el-button>
         </div>
       </div>
 
-      <!-- Update Available -->
+      <!-- 有可用更新 -->
       <div v-if="updateAvailable" class="update-available">
         <div class="update-info">
           <div class="version-comparison">
             <div class="version-item current">
-              <span class="version-label">Current Version</span>
+              <span class="version-label">当前版本</span>
               <span class="version-value">{{ currentVersion }}</span>
             </div>
             <el-icon class="arrow-icon">
               <ArrowRight />
             </el-icon>
             <div class="version-item new">
-              <span class="version-label">Available Version</span>
+              <span class="version-label">可用版本</span>
               <span class="version-value">{{
                 availableUpdate!.availableVersion
               }}</span>
@@ -77,12 +77,12 @@ type="danger" size="small"> Critical </el-tag>
             @click="showUpdateDialog = true"
           >
             <el-icon><Download /></el-icon>
-            Update Now
+            立即更新
           </el-button>
           <el-button :disabled="updating"
 @click="scheduleUpdate">
             <el-icon><Clock /></el-icon>
-            Schedule Update
+            计划更新
           </el-button>
           <el-dropdown @command="handleMoreAction">
             <el-button>
@@ -92,11 +92,11 @@ type="danger" size="small"> Critical </el-tag>
               <el-dropdown-menu>
                 <el-dropdown-item command="release-notes">
                   <el-icon><Document /></el-icon>
-                  View Release Notes
+                  查看发布说明
                 </el-dropdown-item>
                 <el-dropdown-item command="ignore">
                   <el-icon><Close /></el-icon>
-                  Ignore This Update
+                  忽略此更新
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -108,7 +108,7 @@ type="danger" size="small"> Critical </el-tag>
     <!-- Update History -->
     <div class="update-history">
       <div class="history-header">
-        <h4>Update History</h4>
+        <h4>更新历史</h4>
         <el-button size="small" @click="refreshHistory">
           <el-icon><Refresh /></el-icon>
           Refresh
@@ -120,7 +120,7 @@ type="danger" size="small"> Critical </el-tag>
           <el-icon class="no-history-icon">
             <DocumentRemove />
           </el-icon>
-          <p>No update history available</p>
+          <p>暂无更新历史</p>
         </div>
 
         <div
@@ -210,7 +210,7 @@ v-if="updateSchedule" class="setting-item"
     <!-- Update Dialog -->
     <el-dialog
       v-model="showUpdateDialog"
-      title="Update Container"
+      title="更新容器"
       width="600px"
       :before-close="handleUpdateDialogClose"
     >
@@ -220,7 +220,7 @@ v-if="updateSchedule" class="setting-item"
             <el-icon><Download /></el-icon>
           </div>
           <div class="confirmation-text">
-            <h3>Confirm Update</h3>
+            <h3>确认更新</h3>
             <p>
               Are you sure you want to update {{ containerName }} from
               {{ currentVersion }} to {{ availableUpdate?.availableVersion }}?
@@ -229,33 +229,33 @@ v-if="updateSchedule" class="setting-item"
         </div>
 
         <div class="update-options">
-          <h4>Update Options</h4>
+          <h4>更新选项</h4>
           <el-form :model="updateOptions" label-width="140px">
-            <el-form-item label="Update Strategy">
+            <el-form-item label="更新策略">
               <el-select v-model="updateOptions.strategy">
-                <el-option label="Recreate" value="recreate" />
-                <el-option label="Rolling Update" value="rolling" />
-                <el-option label="Blue-Green" value="blue-green" />
+                <el-option label="重新创建" value="recreate" />
+                <el-option label="滚动更新" value="rolling" />
+                <el-option label="蓝绿部署" value="blue-green" />
               </el-select>
             </el-form-item>
 
-            <el-form-item label="Pull Policy">
+            <el-form-item label="拉取策略">
               <el-select v-model="updateOptions.pullPolicy">
-                <el-option label="Always" value="always" />
-                <el-option label="If Not Present" value="missing" />
-                <el-option label="Never" value="never" />
+                <el-option label="始终" value="always" />
+                <el-option label="不存在时" value="missing" />
+                <el-option label="从不" value="never" />
               </el-select>
             </el-form-item>
 
             <el-form-item>
               <el-checkbox v-model="updateOptions.preserveVolumes">
-                Preserve volumes
+                保留数据卷
               </el-checkbox>
             </el-form-item>
 
             <el-form-item>
               <el-checkbox v-model="updateOptions.recreate">
-                Force recreate container
+                强制重新创建容器
               </el-checkbox>
             </el-form-item>
           </el-form>
@@ -278,7 +278,7 @@ v-if="updateSchedule" class="setting-item"
           <el-button
 :disabled="updating" @click="showUpdateDialog = false"
 >
-            Cancel
+            取消
           </el-button>
           <el-button
             type="primary"
@@ -287,7 +287,7 @@ v-if="updateSchedule" class="setting-item"
             @click="performUpdate"
           >
             <el-icon><Download /></el-icon>
-            Update Container
+            更新容器
           </el-button>
         </div>
       </template>
@@ -296,15 +296,15 @@ v-if="updateSchedule" class="setting-item"
     <!-- Settings Dialog -->
     <el-dialog
       v-model="showSettingsDialog"
-      title="Update Settings"
+      title="更新设置"
       width="500px"
     >
       <el-form :model="settings" label-width="120px">
-        <el-form-item label="Auto Update">
+        <el-form-item label="自动更新">
           <el-switch v-model="settings.autoUpdate" />
         </el-form-item>
 
-        <el-form-item label="Strategy">
+        <el-form-item label="策略">
           <el-select v-model="settings.strategy">
             <el-option label="Recreate" value="recreate" />
             <el-option label="Rolling" value="rolling" />
@@ -313,23 +313,23 @@ v-if="updateSchedule" class="setting-item"
         </el-form-item>
 
         <el-form-item
-v-if="settings.autoUpdate" label="Schedule"
+v-if="settings.autoUpdate" label="计划表"
 >
           <el-input
             v-model="settings.schedule"
-            placeholder="0 2 * * 0 (Every Sunday at 2 AM)"
+            placeholder="0 2 * * 0 (每周日凌晨2点)"
           />
         </el-form-item>
 
         <el-form-item>
           <el-checkbox v-model="settings.notifyOnUpdate">
-            Send notifications
+            发送通知
           </el-checkbox>
         </el-form-item>
 
         <el-form-item>
           <el-checkbox v-model="settings.rollbackOnFailure">
-            Auto rollback on failure
+            失败时自动回滚
           </el-checkbox>
         </el-form-item>
       </el-form>
@@ -338,7 +338,7 @@ v-if="settings.autoUpdate" label="Schedule"
         <div class="dialog-footer">
           <el-button @click="showSettingsDialog = false"> Cancel </el-button>
           <el-button type="primary" @click="saveSettings">
-            Save Settings
+            保存设置
           </el-button>
         </div>
       </template>
@@ -347,7 +347,7 @@ v-if="settings.autoUpdate" label="Schedule"
     <!-- Release Notes Dialog -->
     <el-dialog
       v-model="showReleaseNotesDialog"
-      title="Release Notes"
+      title="发布说明"
       width="70%"
     >
       <div class="release-notes-content">
@@ -358,7 +358,7 @@ v-if="settings.autoUpdate" label="Schedule"
           />
         </div>
         <div v-else class="no-release-notes">
-          <p>No release notes available for this update.</p>
+          <p>此更新没有可用的发布说明。</p>
         </div>
       </div>
     </el-dialog>
@@ -492,17 +492,17 @@ const statusIconClass = computed(() => {
 const statusTitle = computed(() => {
   if (updateAvailable.value && availableUpdate.value) {
     return availableUpdate.value.critical
-      ? "Critical Update Available"
-      : "Update Available";
+      ? "有重要更新"
+      : "有可用更新";
   }
-  return "Up to Date";
+  return "已是最新";
 });
 
 const statusDescription = computed(() => {
   if (updateAvailable.value && availableUpdate.value) {
-    return `Version ${availableUpdate.value.availableVersion} is available`;
+    return `版本 ${availableUpdate.value.availableVersion} 已可用`;
   }
-  return "Container is running the latest version";
+  return "容器正在运行最新版本";
 });
 
 const autoUpdateEnabled = computed(() => settings.value.autoUpdate);
@@ -733,7 +733,10 @@ function handleUpdateDialogClose(done: () => void) {
       "Update is in progress. Are you sure you want to close?",
     )
       .then(() => done())
-      .catch(() => {});
+      .catch(() => {
+        // User cancelled the dialog close
+        console.log('User cancelled closing dialog');
+      });
   } else {
     done();
   }

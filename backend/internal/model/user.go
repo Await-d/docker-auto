@@ -17,6 +17,7 @@ type User struct {
 	EmailNotifications bool           `json:"email_notifications" gorm:"not null;default:true"`
 	AvatarURL          string         `json:"avatar_url,omitempty" gorm:"size:255"`
 	LastLoginAt        *time.Time     `json:"last_login_at,omitempty"`
+	Permissions        []string       `json:"permissions,omitempty" gorm:"-"` // Computed field, not stored in DB
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 
@@ -32,7 +33,7 @@ type User struct {
 
 // UserSession represents user refresh token sessions
 type UserSession struct {
-	ID           string    `json:"id" gorm:"primaryKey;type:uuid;default:uuid_generate_v4()"`
+	ID           string    `json:"id" gorm:"primaryKey;type:varchar(36)"`
 	UserID       int64     `json:"user_id" gorm:"not null;index:idx_user_sessions_user_id"`
 	RefreshToken string    `json:"-" gorm:"uniqueIndex:idx_user_sessions_refresh_token;not null;size:255"`
 	ExpiresAt    time.Time `json:"expires_at" gorm:"not null;index:idx_user_sessions_expires_at"`

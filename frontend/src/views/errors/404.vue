@@ -7,19 +7,18 @@
         </el-icon>
       </div>
       <h1 class="error-title">404</h1>
-      <h2 class="error-subtitle">Page Not Found</h2>
+      <h2 class="error-subtitle">页面未找到</h2>
       <p class="error-description">
-        The page you are looking for might have been removed, had its name
-        changed, or is temporarily unavailable.
+        您正在寻找的页面可能已被删除、重命名或暂时不可用。
       </p>
       <div class="error-actions">
         <el-button type="primary" @click="goHome">
           <el-icon><House /></el-icon>
-          Go Home
+          返回首页
         </el-button>
         <el-button @click="goBack">
           <el-icon><ArrowLeft /></el-icon>
-          Go Back
+          返回上页
         </el-button>
       </div>
     </div>

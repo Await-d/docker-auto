@@ -4,20 +4,20 @@
       <el-icon :size="48">
         <Document />
       </el-icon>
-      <h3>Recent Activities</h3>
-      <p>Timeline of recent system activities will be displayed here.</p>
+      <h3>最近活动</h3>
+      <p>最近系统活动的时间线将在此处显示。</p>
       <div class="mock-data">
         <div class="activity-item">
-          <span class="activity-time">2m ago</span>
-          <span class="activity-desc">Container started: web-server</span>
+          <span class="activity-time">2分钟前</span>
+          <span class="activity-desc">容器已启动: web-server</span>
         </div>
         <div class="activity-item">
-          <span class="activity-time">5m ago</span>
-          <span class="activity-desc">Update completed: nginx</span>
+          <span class="activity-time">5分钟前</span>
+          <span class="activity-desc">更新已完成: nginx</span>
         </div>
         <div class="activity-item">
-          <span class="activity-time">10m ago</span>
-          <span class="activity-desc">Backup created</span>
+          <span class="activity-time">10分钟前</span>
+          <span class="activity-desc">已创建备份</span>
         </div>
       </div>
     </div>

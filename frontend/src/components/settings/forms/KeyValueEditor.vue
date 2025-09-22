@@ -17,7 +17,7 @@
           @click="addPair"
         >
           <el-icon><Plus /></el-icon>
-          Add {{ itemName }}
+          添加{{ itemName }}
         </el-button>
       </div>
     </div>
@@ -25,14 +25,14 @@
     <div class="pairs-container">
       <div v-if="pairs.length === 0" class="empty-state">
         <el-empty
-          :description="`No ${itemName.toLowerCase()}s configured`"
+          :description="`未配置${itemName}`"
           :image-size="80"
         >
           <el-button
 type="primary" :disabled="disabled"
 @click="addPair"
 >
-            Add First {{ itemName }}
+            添加第一个{{ itemName }}
           </el-button>
         </el-empty>
       </div>
@@ -127,7 +127,7 @@ class="pair-item"
           </div>
 
           <div class="pair-actions">
-            <el-tooltip content="Duplicate" placement="top">
+            <el-tooltip content="复制" placement="top">
               <el-button
                 type="text"
                 size="small"
@@ -138,7 +138,7 @@ class="pair-item"
               </el-button>
             </el-tooltip>
 
-            <el-tooltip content="Remove" placement="top">
+            <el-tooltip content="删除" placement="top">
               <el-button
                 type="text"
                 size="small"
@@ -164,19 +164,19 @@ v-if="sortable && !disabled" class="drag-handle"
     <div v-if="pairs.length > 0 && showBulkActions" class="bulk-actions">
       <el-dropdown @command="handleBulkAction">
         <el-button type="text" size="small">
-          Bulk Actions
+          批量操作
           <el-icon><ArrowDown /></el-icon>
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="clear">
-Clear All
+清空全部
 </el-dropdown-item>
             <el-dropdown-item command="export">
-              Export as JSON
+              导出为JSON
             </el-dropdown-item>
             <el-dropdown-item command="import">
-              Import from JSON
+              从JSON导入
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -191,7 +191,7 @@ Clear All
     <!-- Import Dialog -->
     <el-dialog
       v-model="importDialogVisible"
-      :title="`Import ${itemName}s`"
+      :title="`导入${itemName}`"
       width="600px"
     >
       <div class="import-content">
@@ -199,8 +199,7 @@ Clear All
 type="info" :closable="false"
 show-icon class="import-info"
 >
-          Paste JSON data to import. This will replace all existing
-          {{ itemName.toLowerCase() }}s.
+          粘贴JSON数据进行导入。这将替换所有现有的{{ itemName }}。
         </el-alert>
 
         <el-input
@@ -218,13 +217,13 @@ show-icon class="import-info"
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="importDialogVisible = false"> Cancel </el-button>
+          <el-button @click="importDialogVisible = false"> 取消 </el-button>
           <el-button
             type="primary"
             :disabled="!importData.trim()"
             @click="confirmImport"
           >
-            Import
+            导入
           </el-button>
         </div>
       </template>
@@ -283,11 +282,11 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  itemName: "Item",
-  keyLabel: "Key",
-  valueLabel: "Value",
-  keyPlaceholder: "Enter key",
-  valuePlaceholder: "Enter value",
+  itemName: "项目",
+  keyLabel: "键",
+  valueLabel: "值",
+  keyPlaceholder: "输入键名",
+  valuePlaceholder: "输入值",
   valueType: "text",
   disabled: false,
   size: "default",
@@ -357,11 +356,11 @@ const removePair = async (index: number) => {
 
   try {
     await ElMessageBox.confirm(
-      `Remove ${props.itemName.toLowerCase()} "${pair.key}"?`,
-      "Confirm Removal",
+      `删除${props.itemName}"${pair.key}"？`,
+      "确认删除",
       {
-        confirmButtonText: "Remove",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "删除",
+        cancelButtonText: "取消",
         type: "warning",
       },
     );
@@ -404,16 +403,16 @@ const validatePair = (index: number) => {
 
   // Validate key
   if (props.requiredFields && !pair.key.trim()) {
-    pair.keyError = "Key is required";
+    pair.keyError = "键名必填";
   } else if (props.keyPattern && !props.keyPattern.test(pair.key)) {
-    pair.keyError = "Invalid key format";
+    pair.keyError = "键名格式无效";
   } else {
     // Check for duplicate keys
     const duplicateIndex = pairs.value.findIndex(
       (p, i) => i !== index && p.key.trim() === pair.key.trim(),
     );
     if (duplicateIndex !== -1) {
-      pair.keyError = "Duplicate key";
+      pair.keyError = "键名重复";
     }
   }
 
@@ -423,13 +422,13 @@ const validatePair = (index: number) => {
     props.valueType !== "boolean" &&
     (pair.value === "" || pair.value === null || pair.value === undefined)
   ) {
-    pair.valueError = "Value is required";
+    pair.valueError = "值必填";
   } else if (
     props.valuePattern &&
     typeof pair.value === "string" &&
     !props.valuePattern.test(pair.value)
   ) {
-    pair.valueError = "Invalid value format";
+    pair.valueError = "值格式无效";
   }
 };
 
@@ -454,11 +453,11 @@ const handleBulkAction = async (command: string) => {
 const clearAll = async () => {
   try {
     await ElMessageBox.confirm(
-      `Remove all ${props.itemName.toLowerCase()}s?`,
-      "Clear All",
+      `删除所有${props.itemName}？`,
+      "清空全部",
       {
-        confirmButtonText: "Clear All",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "清空全部",
+        cancelButtonText: "取消",
         type: "warning",
       },
     );
@@ -482,7 +481,7 @@ const exportData = () => {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 
-  ElMessage.success(`${props.itemName}s exported successfully`);
+  ElMessage.success(`${props.itemName}导出成功`);
 };
 
 const confirmImport = () => {
@@ -491,7 +490,7 @@ const confirmImport = () => {
     const data = JSON.parse(importData.value);
 
     if (typeof data !== "object" || Array.isArray(data)) {
-      throw new Error("Data must be a JSON object");
+      throw new Error("数据必须是JSON对象");
     }
 
     pairs.value = objectToPairs(data);
@@ -499,9 +498,9 @@ const confirmImport = () => {
     importDialogVisible.value = false;
     importData.value = "";
 
-    ElMessage.success(`${props.itemName}s imported successfully`);
+    ElMessage.success(`${props.itemName}导入成功`);
   } catch (error) {
-    importError.value = `Invalid JSON: ${(error as Error).message}`;
+    importError.value = `无效的JSON：${(error as Error).message}`;
   }
 };
 

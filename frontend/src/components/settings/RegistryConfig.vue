@@ -15,32 +15,32 @@
         <template #header>
           <div class="section-header">
             <el-icon><Upload /></el-icon>
-            <span>Registry Connections</span>
+            <span>注册表连接</span>
             <el-button type="primary" size="small" @click="addRegistry">
               <el-icon><Plus /></el-icon>
-              Add Registry
+              添加注册表
             </el-button>
           </div>
         </template>
 
-        <div v-if="formData.registries.length === 0" class="empty-state">
-          <el-empty description="No registries configured">
+        <div v-if="!formData.registries || formData.registries.length === 0" class="empty-state">
+          <el-empty description="未配置注册表">
             <el-button type="primary" @click="addRegistry">
-              Add First Registry
+              添加第一个注册表
             </el-button>
           </el-empty>
         </div>
 
         <div v-else class="registries-list">
           <div
-            v-for="(registry, index) in formData.registries"
+            v-for="(registry, index) in (formData.registries || [])"
             :key="registry.id"
             class="registry-item"
           >
             <div class="registry-header">
               <el-input
                 v-model="registry.name"
-                placeholder="Registry name"
+                placeholder="注册表名称"
                 class="registry-name"
                 @input="updateRegistry(index)"
               />
@@ -48,7 +48,7 @@
                 :type="registry.enabled ? 'success' : 'info'"
                 size="small"
               >
-                {{ registry.enabled ? "Enabled" : "Disabled" }}
+                {{ registry.enabled ? "已启用" : "已禁用" }}
               </el-tag>
               <el-switch
                 v-model="registry.enabled"
@@ -66,10 +66,10 @@
 
             <el-row :gutter="16">
               <el-col :span="8">
-                <el-form-item label="Type">
+                <el-form-item label="类型">
                   <el-select
                     v-model="registry.type"
-                    placeholder="Select type"
+                    placeholder="选择类型"
                     @change="updateRegistry(index)"
                   >
                     <el-option label="Docker Hub" value="dockerhub" />
@@ -94,20 +94,20 @@
 
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="Username">
+                <el-form-item label="用户名">
                   <el-input
                     v-model="registry.username"
-                    placeholder="Username (optional)"
+                    placeholder="用户名（可选）"
                     @input="updateRegistry(index)"
                   />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="Password/Token">
+                <el-form-item label="密码/令牌">
                   <el-input
                     v-model="registry.password"
                     type="password"
-                    placeholder="Password or access token"
+                    placeholder="密码或访问令牌"
                     show-password
                     @input="updateRegistry(index)"
                   />
@@ -123,14 +123,14 @@
         <template #header>
           <div class="section-header">
             <el-icon><Search /></el-icon>
-            <span>Image Search Settings</span>
+            <span>镜像搜索设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Search Result Limit"
+              label="搜索结果限制"
               prop="searchLimit"
               required
             >
@@ -143,10 +143,10 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Default Registry" prop="defaultRegistry">
+            <el-form-item label="默认注册表" prop="defaultRegistry">
               <el-select
                 v-model="formData.defaultRegistry"
-                placeholder="Select default registry"
+                placeholder="选择默认注册表"
                 @change="handleFieldChange('defaultRegistry', $event)"
               >
                 <el-option
@@ -162,26 +162,26 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Trust Policy" prop="trustPolicy" required>
+            <el-form-item label="信任策略" prop="trustPolicy" required>
               <el-select
                 v-model="formData.trustPolicy"
-                placeholder="Select trust policy"
+                placeholder="选择信任策略"
                 @change="handleFieldChange('trustPolicy', $event)"
               >
-                <el-option label="Always Trust" value="always" />
-                <el-option label="Signed Images Only" value="signed" />
-                <el-option label="Never Trust" value="never" />
+                <el-option label="始终信任" value="always" />
+                <el-option label="仅签名镜像" value="signed" />
+                <el-option label="从不信任" value="never" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Security Scanning">
+            <el-form-item label="安全扫描">
               <el-switch
                 v-model="formData.securityScanEnabled"
                 @change="handleFieldChange('securityScanEnabled', $event)"
               />
               <div class="field-help">
-                Enable security vulnerability scanning
+                启用安全漏洞扫描
               </div>
             </el-form-item>
           </el-col>
@@ -220,17 +220,33 @@ const formData = ref<RegistrySettings>({
   securityScanEnabled: true,
 } as any);
 
+// Initialize form data from props
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = {
+        ...formData.value, // Keep existing defaults
+        ...newValue, // Override with new values
+        // Ensure required arrays are always present
+        registries: newValue.registries || [],
+      };
+    }
+  },
+  { immediate: true, deep: true },
+);
+
 const hasChanges = computed(() => {
   return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
 });
 
 const enabledRegistries = computed(() => {
-  return formData.value.registries.filter((registry) => registry.enabled);
+  return (formData.value.registries || []).filter((registry) => registry.enabled);
 });
 
 const formRules = computed(() => ({
   searchLimit: [
-    { required: true, message: "Search limit is required", trigger: "blur" },
+    { required: true, message: "搜索限制为必填项", trigger: "blur" },
     {
       validator: (
         _rule: any,
@@ -238,7 +254,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 10 || value > 100) {
-          callback(new Error("Must be between 10 and 100"));
+          callback(new Error("必须在10到6100之间"));
         } else {
           callback();
         }
@@ -247,7 +263,7 @@ const formRules = computed(() => ({
     },
   ],
   trustPolicy: [
-    { required: true, message: "Trust policy is required", trigger: "change" },
+    { required: true, message: "信任策略为必填项", trigger: "change" },
   ],
 }));
 
@@ -256,9 +272,14 @@ const generateId = (): string => {
 };
 
 const addRegistry = () => {
+  // Ensure registries array exists
+  if (!formData.value.registries) {
+    formData.value.registries = [];
+  }
+  
   const newRegistry: DockerRegistry = {
     id: generateId(),
-    name: `Registry ${formData.value.registries.length + 1}`,
+    name: `注册表 ${formData.value.registries.length + 1}`,
     url: "",
     type: "generic",
     username: "",
@@ -273,8 +294,10 @@ const addRegistry = () => {
 };
 
 const removeRegistry = (index: number) => {
-  formData.value.registries.splice(index, 1);
-  updateRegistries();
+  if (formData.value.registries && formData.value.registries.length > index) {
+    formData.value.registries.splice(index, 1);
+    updateRegistries();
+  }
 };
 
 const updateRegistry = (_index: number) => {

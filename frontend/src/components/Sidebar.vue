@@ -110,7 +110,7 @@ v-if="user" class="user-card"
       </div>
 
       <el-tooltip
-        :content="sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
+        :content="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
         placement="right"
       >
         <el-button
@@ -128,23 +128,35 @@ v-if="user" class="user-card"
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { Box, Expand, Fold } from "@element-plus/icons-vue";
-import { useAuth } from "@/store/auth";
-import { useApp } from "@/store/app";
+import { useAuth, useAuthStore } from "@/store/auth";
+import { useApp, useAppStore } from "@/store/app";
 import { storeToRefs } from "pinia";
 
 // Composables
 const route = useRoute();
-const authStore = useAuth();
-const appStore = useApp();
+const authStore = useAuthStore(); // Use the actual Pinia store
+const appStore = useAppStore(); // Use the actual Pinia store
 
 // Reactive refs from stores
 const { user } = storeToRefs(authStore);
-const { userDisplayName, userAvatar } = authStore;
+const { userDisplayName, userAvatar } = useAuth(); // Use the composable for computed values
 const { sidebarCollapsed } = storeToRefs(appStore);
 
 // Store methods
 const { hasPermission, hasRole } = authStore;
-const { toggleSidebar } = appStore;
+const { toggleSidebar } = useApp(); // Use the composable for methods
+
+// Watch for user changes to ensure menu updates after auth initialization
+watch(
+  () => authStore.user,
+  (newUser) => {
+    if (newUser) {
+      // User loaded, menu will automatically update via computed property
+      console.log('User loaded, menu should update:', newUser.username);
+    }
+  },
+  { immediate: true }
+);
 
 interface MenuItem {
   path: string;
@@ -180,78 +192,53 @@ const userInitials = computed(() => {
 
 // Get menu items based on user role and permissions
 const menuItems = computed(() => {
-  if (!user.value) return [];
+  // Ensure auth store is initialized and user data is available
+  if (!user.value || !authStore.isAuthenticated) return [];
 
   const items: MenuItem[] = [
     {
       path: "/dashboard",
-      title: "Dashboard",
+      title: "仪表盘",
       icon: "Dashboard",
-      permission: "read",
+      permission: "system:read",
     },
     {
       path: "/containers",
-      title: "Containers",
+      title: "容器管理",
       icon: "Box",
       permission: "container:read",
       children: [
         {
           path: "/containers/running",
-          title: "Running",
+          title: "运行中",
           icon: "SuccessFilled",
           permission: "container:read",
         },
         {
           path: "/containers/stopped",
-          title: "Stopped",
+          title: "已停止",
           icon: "Warning",
-          permission: "container:read",
-        },
-        {
-          path: "/containers/all",
-          title: "All Containers",
-          icon: "Box",
           permission: "container:read",
         },
       ],
     },
     {
       path: "/images",
-      title: "Images",
+      title: "镜像管理",
       icon: "Picture",
       permission: "image:read",
     },
     {
       path: "/updates",
-      title: "Updates",
+      title: "更新管理",
       icon: "Refresh",
       permission: "update:read",
     },
     {
       path: "/logs",
-      title: "Logs",
+      title: "日志查看",
       icon: "Document",
-      permission: "log:read",
-    },
-    {
-      path: "/monitoring",
-      title: "Monitoring",
-      icon: "Monitor",
-      permission: "monitor:read",
-      children: [
-        {
-          path: "/monitoring/metrics",
-          title: "Metrics",
-          icon: "DataAnalysis",
-          permission: "monitor:read",
-        },
-        {
-          path: "/monitoring/alerts",
-          title: "Alerts",
-          icon: "Bell",
-          permission: "monitor:read",
-        },
-      ],
+      permission: "system:logs",
     },
   ];
 
@@ -260,35 +247,15 @@ const menuItems = computed(() => {
     items.push(
       {
         path: "/users",
-        title: "User Management",
+        title: "用户管理",
         icon: "User",
         role: "admin",
       },
       {
         path: "/settings",
-        title: "System Settings",
+        title: "系统设置",
         icon: "Setting",
         role: "admin",
-        children: [
-          {
-            path: "/settings/general",
-            title: "General",
-            icon: "Setting",
-            role: "admin",
-          },
-          {
-            path: "/settings/security",
-            title: "Security",
-            icon: "Shield",
-            role: "admin",
-          },
-          {
-            path: "/settings/api-keys",
-            title: "API Keys",
-            icon: "Key",
-            role: "admin",
-          },
-        ],
       },
     );
   }
@@ -357,7 +324,9 @@ updateBadges();
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
   z-index: 999;
 
   &.sidebar-collapsed {
@@ -405,12 +374,17 @@ updateBadges();
 .sidebar-content {
   flex: 1;
   overflow: hidden;
+  min-height: 0; /* Important for flex children to allow shrinking */
 
   .sidebar-scrollbar {
     height: 100%;
 
     :deep(.el-scrollbar__view) {
       padding: 8px 0;
+    }
+    
+    :deep(.el-scrollbar__wrap) {
+      overflow-x: hidden;
     }
   }
 

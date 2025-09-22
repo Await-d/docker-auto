@@ -1,46 +1,46 @@
 <template>
   <div class="update-details">
     <div class="details-section">
-      <h4>Update Information</h4>
+      <h4>更新信息</h4>
       <div class="detail-grid">
         <div class="detail-item">
-          <span class="label">Container:</span>
+          <span class="label">容器：</span>
           <span class="value">{{ update.containerName }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">Strategy:</span>
+          <span class="label">策略：</span>
           <span class="value">{{ update.strategy }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">Status:</span>
+          <span class="label">状态：</span>
           <el-tag :type="getStatusType(update.status)">
             {{ update.status }}
           </el-tag>
         </div>
         <div class="detail-item">
-          <span class="label">Progress:</span>
+          <span class="label">进度：</span>
           <span class="value">{{ update.progress }}%</span>
         </div>
       </div>
     </div>
 
     <div class="details-section">
-      <h4>Timing</h4>
+      <h4>时间信息</h4>
       <div class="detail-grid">
         <div class="detail-item">
-          <span class="label">Started:</span>
+          <span class="label">开始：</span>
           <span class="value">{{ formatDateTime(update.startedAt) }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">Elapsed:</span>
+          <span class="label">已经过：</span>
           <span class="value">{{ formatDuration(update.elapsedTime) }}</span>
         </div>
         <div v-if="update.remainingTime" class="detail-item">
-          <span class="label">Remaining:</span>
+          <span class="label">剩余：</span>
           <span class="value">{{ formatDuration(update.remainingTime) }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">Estimated:</span>
+          <span class="label">预估：</span>
           <span class="value">{{
             formatDuration(update.estimatedDuration)
           }}</span>
@@ -49,7 +49,7 @@
     </div>
 
     <div v-if="update.steps.length > 0" class="details-section">
-      <h4>Steps ({{ update.currentStep + 1 }} / {{ update.totalSteps }})</h4>
+      <h4>步骤 ({{ update.currentStep + 1 }} / {{ update.totalSteps }})</h4>
       <div class="steps-list">
         <div
           v-for="(step, index) in update.steps"
@@ -73,26 +73,26 @@
     </div>
 
     <div v-if="update.metrics" class="details-section">
-      <h4>Performance Metrics</h4>
+      <h4>性能指标</h4>
       <div class="metrics-grid">
         <div class="metric-item">
-          <span class="metric-label">Download Speed:</span>
+          <span class="metric-label">下载速度：</span>
           <span class="metric-value">{{
             formatSpeed(update.metrics.downloadSpeed)
           }}</span>
         </div>
         <div class="metric-item">
-          <span class="metric-label">CPU Usage:</span>
+          <span class="metric-label">CPU 使用率：</span>
           <span class="metric-value">{{ Math.round(update.metrics.cpuUsage) }}%</span>
         </div>
         <div class="metric-item">
-          <span class="metric-label">Memory Usage:</span>
+          <span class="metric-label">内存使用量：</span>
           <span class="metric-value">{{
             formatBytes(update.metrics.memoryUsage)
           }}</span>
         </div>
         <div class="metric-item">
-          <span class="metric-label">Network I/O:</span>
+          <span class="metric-label">网络 I/O：</span>
           <span class="metric-value">{{
             formatSpeed(update.metrics.networkIo)
           }}</span>

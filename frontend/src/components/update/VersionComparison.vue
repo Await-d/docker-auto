@@ -1,14 +1,14 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Version Comparison"
+    title="版本比较"
     width="800px"
     :before-close="handleClose"
   >
     <div class="version-comparison">
       <el-alert
-        title="Version Comparison Tool"
-        description="Compare container versions, view changelogs, and analyze differences. This is a simplified version - full implementation coming soon."
+        title="版本比较工具"
+        description="比较容器版本，查看更改日志，并分析差异。这是一个简化版本 - 完整实现即将推出。"
         type="info"
         show-icon
         :closable="false"
@@ -29,22 +29,22 @@
         </div>
 
         <div class="comparison-placeholder">
-          <el-empty description="Detailed comparison view coming soon">
-            <p>Container: {{ comparisonData.containerName }}</p>
-            <p>From: {{ comparisonData.fromVersion }}</p>
-            <p>To: {{ comparisonData.toVersion }}</p>
+          <el-empty description="详细比较视图即将推出">
+            <p>容器: {{ comparisonData.containerName }}</p>
+            <p>源版本: {{ comparisonData.fromVersion }}</p>
+            <p>目标版本: {{ comparisonData.toVersion }}</p>
           </el-empty>
         </div>
       </div>
 
       <div v-else class="no-data">
-        <el-empty description="No comparison data available" />
+        <el-empty description="没有可用的比较数据" />
       </div>
     </div>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose"> Close </el-button>
+        <el-button @click="handleClose"> 关闭 </el-button>
       </div>
     </template>
   </el-dialog>

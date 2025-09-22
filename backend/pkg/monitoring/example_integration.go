@@ -354,7 +354,7 @@ func ExampleUsage() {
 	}
 
 	// Example: Manual health check
-	_, err := om.HealthChecker.CheckHealth("docker")
+	_, err = om.HealthChecker.CheckHealth("docker")
 	if err != nil {
 		om.Logger.Error("Health check failed", err)
 	} else {

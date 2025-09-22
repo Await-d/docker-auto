@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Update Logs"
+    title="更新日志"
     width="80%"
     :before-close="handleClose"
   >
@@ -9,7 +9,7 @@
       <div class="logs-header">
         <el-row :gutter="16" align="middle">
           <el-col :span="12">
-            <h4 v-if="update">{{ update.containerName }} - Update Logs</h4>
+            <h4 v-if="update">{{ update.containerName }} - 更新日志</h4>
           </el-col>
           <el-col :span="12" class="text-right">
             <el-button-group>
@@ -17,7 +17,7 @@
 :icon="Download" size="small"
 @click="downloadLogs"
 >
-                Download
+                下载
               </el-button>
               <el-button
                 :icon="Refresh"
@@ -25,7 +25,7 @@
                 :loading="loading"
                 @click="refreshLogs"
               >
-                Refresh
+                刷新
               </el-button>
             </el-button-group>
           </el-col>
@@ -50,7 +50,7 @@
       </div>
 
       <div v-if="!logLines.length && !loading" class="empty-logs">
-        <el-empty description="No logs available" />
+        <el-empty description="暂无日志" />
       </div>
 
       <div v-if="loading" class="loading-logs">
@@ -60,7 +60,7 @@
 
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="handleClose">Close</el-button>
+        <el-button @click="handleClose">关闭</el-button>
       </span>
     </template>
   </el-dialog>
@@ -175,7 +175,7 @@ const refreshLogs = () => {
 
 const downloadLogs = () => {
   if (!logLines.value.length) {
-    ElMessage.warning("No logs to download");
+    ElMessage.warning("没有日志可下载");
     return;
   }
 
@@ -196,7 +196,7 @@ const downloadLogs = () => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  ElMessage.success("Logs downloaded successfully");
+  ElMessage.success("日志下载成功");
 };
 
 const handleClose = () => {

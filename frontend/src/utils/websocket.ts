@@ -11,13 +11,14 @@ export interface ClientMessage {
 
 export interface ServerMessage {
   type:
-    | "notification"
-    | "event"
-    | "pong"
-    | "error"
-    | "subscription_confirmed"
-    | "unsubscription_confirmed"
-    | "batch";
+  | "notification"
+  | "event"
+  | "pong"
+  | "error"
+  | "welcome"
+  | "subscription_confirmed"
+  | "unsubscription_confirmed"
+  | "batch";
   topic: string;
   data: any;
   timestamp: number;
@@ -330,12 +331,12 @@ export class WebSocketClient {
       compressionRatio:
         this.performanceMetrics.totalMessages > 0
           ? this.performanceMetrics.compressedMessages /
-            this.performanceMetrics.totalMessages
+          this.performanceMetrics.totalMessages
           : 0,
       batchingRatio:
         this.performanceMetrics.totalMessages > 0
           ? this.performanceMetrics.batchedMessages /
-            this.performanceMetrics.totalMessages
+          this.performanceMetrics.totalMessages
           : 0,
     };
   }
@@ -409,6 +410,9 @@ export class WebSocketClient {
       case "error":
         this.handleError(message);
         break;
+      case "welcome":
+        this.handleWelcome(message);
+        break;
       case "subscription_confirmed":
       case "unsubscription_confirmed":
         this.handleConfirmation(message);
@@ -479,6 +483,12 @@ export class WebSocketClient {
     if (message.messageId) {
       this.rejectPendingMessage(message.messageId, error);
     }
+  }
+
+  private handleWelcome(message: ServerMessage): void {
+    console.log("WebSocket welcome message received:", message.data);
+    // Welcome message handling - no specific action needed
+    // This is just to acknowledge the server's welcome message
   }
 
   private handleConfirmation(message: ServerMessage): void {

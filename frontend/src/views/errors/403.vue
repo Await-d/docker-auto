@@ -7,19 +7,18 @@
         </el-icon>
       </div>
       <h1 class="error-title">403</h1>
-      <h2 class="error-subtitle">Access Denied</h2>
+      <h2 class="error-subtitle">访问被拒绝</h2>
       <p class="error-description">
-        You don't have permission to access this resource. Please contact your
-        administrator if you believe this is an error.
+        您没有权限访问此资源。如果您认为这是一个错误，请联系您的管理员。
       </p>
       <div class="error-actions">
         <el-button type="primary" @click="goHome">
           <el-icon><House /></el-icon>
-          Go Home
+          返回首页
         </el-button>
         <el-button @click="goBack">
           <el-icon><ArrowLeft /></el-icon>
-          Go Back
+          返回上页
         </el-button>
       </div>
     </div>

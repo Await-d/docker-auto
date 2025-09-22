@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"net"
 	"net/mail"
 	"net/url"
@@ -265,15 +266,18 @@ func (v *Validator) Pattern(field string, value string, pattern *regexp.Regexp, 
 	}
 }
 
-// PasswordStrength validates password strength
+// PasswordStrength validates password strength with comprehensive security checks
 func (v *Validator) PasswordStrength(field string, value string) {
 	if value == "" {
 		return
 	}
 
+	// Basic character type validation
 	var hasLower, hasUpper, hasNumber, hasSpecial bool
+	var consecutiveChars, repeatedChars int
+	var prevChar rune
 
-	for _, char := range value {
+	for i, char := range value {
 		switch {
 		case unicode.IsLower(char):
 			hasLower = true
@@ -284,11 +288,28 @@ func (v *Validator) PasswordStrength(field string, value string) {
 		case unicode.IsPunct(char) || unicode.IsSymbol(char):
 			hasSpecial = true
 		}
+
+		// Check for consecutive characters
+		if i > 0 && char == prevChar+1 {
+			consecutiveChars++
+		}
+
+		// Check for repeated characters
+		if i > 0 && char == prevChar {
+			repeatedChars++
+		}
+
+		prevChar = char
 	}
 
-	if len(value) < 8 {
+	// Length validation
+	if len(value) < 12 {
+		v.AddError(field, "must be at least 12 characters long for strong security", nil)
+	} else if len(value) < 8 {
 		v.AddError(field, "must be at least 8 characters long", nil)
 	}
+
+	// Character type requirements
 	if !hasLower {
 		v.AddError(field, "must contain at least one lowercase letter", nil)
 	}
@@ -299,8 +320,366 @@ func (v *Validator) PasswordStrength(field string, value string) {
 		v.AddError(field, "must contain at least one number", nil)
 	}
 	if !hasSpecial {
-		v.AddError(field, "must contain at least one special character", nil)
+		v.AddError(field, "must contain at least one special character (!@#$%^&*)", nil)
 	}
+
+	// Pattern checks
+	if consecutiveChars > 2 {
+		v.AddError(field, "contains too many consecutive characters (abc, 123, etc.)", nil)
+	}
+
+	if repeatedChars > 2 {
+		v.AddError(field, "contains too many repeated characters", nil)
+	}
+
+	// Common weak patterns
+	if v.containsWeakPatterns(value) {
+		v.AddError(field, "contains common weak patterns", nil)
+	}
+
+	// Dictionary word check
+	if v.containsCommonWords(value) {
+		v.AddError(field, "contains common dictionary words", nil)
+	}
+
+	// Keyboard pattern check
+	if v.containsKeyboardPatterns(value) {
+		v.AddError(field, "contains keyboard patterns (qwerty, asdf, etc.)", nil)
+	}
+
+	// Personal information patterns
+	if v.containsPersonalInfoPatterns(value) {
+		v.AddError(field, "should not contain personal information patterns", nil)
+	}
+}
+
+// containsWeakPatterns checks for common weak password patterns
+func (v *Validator) containsWeakPatterns(password string) bool {
+	password = strings.ToLower(password)
+
+	// Common weak patterns
+	weakPatterns := []string{
+		"password", "123456", "qwerty", "admin", "root", "user",
+		"login", "welcome", "guest", "test", "demo", "temp",
+		"default", "secret", "pass", "pwd", "letmein",
+	}
+
+	for _, pattern := range weakPatterns {
+		if strings.Contains(password, pattern) {
+			return true
+		}
+	}
+
+	// Check for simple number sequences
+	sequences := []string{
+		"012", "123", "234", "345", "456", "567", "678", "789",
+		"987", "876", "765", "654", "543", "432", "321", "210",
+	}
+
+	for _, seq := range sequences {
+		if strings.Contains(password, seq) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// containsCommonWords checks for common dictionary words
+func (v *Validator) containsCommonWords(password string) bool {
+	password = strings.ToLower(password)
+
+	// Most common English words that appear in passwords
+	commonWords := []string{
+		"the", "and", "for", "are", "but", "not", "you", "all",
+		"can", "had", "her", "was", "one", "our", "out", "day",
+		"get", "has", "him", "his", "how", "man", "new", "now",
+		"old", "see", "two", "way", "who", "boy", "did", "its",
+		"let", "put", "say", "she", "too", "use", "love", "good",
+		"make", "time", "year", "work", "first", "right", "think",
+		"house", "world", "school", "family", "company", "system",
+	}
+
+	for _, word := range commonWords {
+		if len(word) >= 3 && strings.Contains(password, word) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// containsKeyboardPatterns checks for keyboard patterns
+func (v *Validator) containsKeyboardPatterns(password string) bool {
+	password = strings.ToLower(password)
+
+	// Common keyboard patterns
+	keyboardPatterns := []string{
+		"qwerty", "qwertyui", "asdf", "asdfgh", "zxcv", "zxcvbn",
+		"qazwsx", "wsxedc", "rfvtgb", "yhnujm", "ikol", "plmokn",
+		"qweqwe", "asdasd", "zxczxc", "poipoi", "mnbmnb",
+		"1qaz2wsx", "qweasd", "asdqwe", "zxcasd", "qwezxc",
+	}
+
+	for _, pattern := range keyboardPatterns {
+		if strings.Contains(password, pattern) {
+			return true
+		}
+	}
+
+	// Check for simple left-right patterns
+	leftRightPatterns := []string{
+		"aqsw", "swde", "derf", "frtg", "gtyk", "tyui", "yuio",
+		"uiop", "plko", "lkjh", "jhgf", "hgfd", "gfds", "fdsa",
+	}
+
+	for _, pattern := range leftRightPatterns {
+		if strings.Contains(password, pattern) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// containsPersonalInfoPatterns checks for personal information patterns
+func (v *Validator) containsPersonalInfoPatterns(password string) bool {
+	password = strings.ToLower(password)
+
+	// Common personal info patterns
+	personalPatterns := []string{
+		"name", "birth", "age", "phone", "email", "address",
+		"city", "state", "country", "zip", "postal", "ssn",
+		"social", "security", "license", "card", "bank",
+		"account", "mother", "father", "spouse", "child",
+		"pet", "dog", "cat", "car", "house", "street",
+	}
+
+	for _, pattern := range personalPatterns {
+		if strings.Contains(password, pattern) {
+			return true
+		}
+	}
+
+	// Check for date patterns (YYYY, MMDD, DDMM)
+	datePatterns := []string{
+		"1980", "1981", "1982", "1983", "1984", "1985", "1986", "1987", "1988", "1989",
+		"1990", "1991", "1992", "1993", "1994", "1995", "1996", "1997", "1998", "1999",
+		"2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009",
+		"2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019",
+		"2020", "2021", "2022", "2023", "2024",
+		"0101", "0201", "0301", "0401", "0501", "0601", "0701", "0801", "0901", "1001", "1101", "1201",
+		"1231", "1225", "0704", "1031", "0214", "0317", "0401", "1111", "1212",
+	}
+
+	for _, pattern := range datePatterns {
+		if strings.Contains(password, pattern) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// AdvancedPasswordStrength provides detailed password strength analysis
+type PasswordStrength struct {
+	Score       int      `json:"score"`        // 0-100
+	Level       string   `json:"level"`        // Weak, Fair, Good, Strong, Very Strong
+	Issues      []string `json:"issues"`       // List of issues found
+	Suggestions []string `json:"suggestions"`  // Suggestions for improvement
+	Entropy     float64  `json:"entropy"`      // Estimated entropy bits
+}
+
+// AnalyzePasswordStrength provides comprehensive password analysis
+func AnalyzePasswordStrength(password string) *PasswordStrength {
+	if password == "" {
+		return &PasswordStrength{
+			Score:   0,
+			Level:   "Very Weak",
+			Issues:  []string{"Password is empty"},
+			Suggestions: []string{"Create a password with at least 12 characters"},
+		}
+	}
+
+	analysis := &PasswordStrength{
+		Issues:      []string{},
+		Suggestions: []string{},
+	}
+
+	score := 0
+
+	// Length scoring
+	length := len(password)
+	if length >= 12 {
+		score += 25
+	} else if length >= 8 {
+		score += 15
+	} else {
+		analysis.Issues = append(analysis.Issues, "Password is too short")
+		analysis.Suggestions = append(analysis.Suggestions, "Use at least 12 characters for better security")
+	}
+
+	// Character variety scoring
+	var hasLower, hasUpper, hasNumber, hasSpecial bool
+	charTypes := 0
+
+	for _, char := range password {
+		switch {
+		case unicode.IsLower(char):
+			if !hasLower {
+				hasLower = true
+				charTypes++
+				score += 10
+			}
+		case unicode.IsUpper(char):
+			if !hasUpper {
+				hasUpper = true
+				charTypes++
+				score += 10
+			}
+		case unicode.IsNumber(char):
+			if !hasNumber {
+				hasNumber = true
+				charTypes++
+				score += 10
+			}
+		case unicode.IsPunct(char) || unicode.IsSymbol(char):
+			if !hasSpecial {
+				hasSpecial = true
+				charTypes++
+				score += 15
+			}
+		}
+	}
+
+	// Check for missing character types
+	if !hasLower {
+		analysis.Issues = append(analysis.Issues, "Missing lowercase letters")
+		analysis.Suggestions = append(analysis.Suggestions, "Add lowercase letters (a-z)")
+	}
+	if !hasUpper {
+		analysis.Issues = append(analysis.Issues, "Missing uppercase letters")
+		analysis.Suggestions = append(analysis.Suggestions, "Add uppercase letters (A-Z)")
+	}
+	if !hasNumber {
+		analysis.Issues = append(analysis.Issues, "Missing numbers")
+		analysis.Suggestions = append(analysis.Suggestions, "Add numbers (0-9)")
+	}
+	if !hasSpecial {
+		analysis.Issues = append(analysis.Issues, "Missing special characters")
+		analysis.Suggestions = append(analysis.Suggestions, "Add special characters (!@#$%^&*)")
+	}
+
+	// Pattern checks
+	validator := NewValidator()
+	if validator.containsWeakPatterns(password) {
+		score -= 15
+		analysis.Issues = append(analysis.Issues, "Contains common weak patterns")
+		analysis.Suggestions = append(analysis.Suggestions, "Avoid common words and sequences")
+	}
+
+	if validator.containsKeyboardPatterns(password) {
+		score -= 10
+		analysis.Issues = append(analysis.Issues, "Contains keyboard patterns")
+		analysis.Suggestions = append(analysis.Suggestions, "Avoid keyboard sequences like 'qwerty'")
+	}
+
+	if validator.containsPersonalInfoPatterns(password) {
+		score -= 10
+		analysis.Issues = append(analysis.Issues, "May contain personal information")
+		analysis.Suggestions = append(analysis.Suggestions, "Avoid dates, names, and personal information")
+	}
+
+	// Calculate entropy (simplified estimation)
+	analysis.Entropy = calculatePasswordEntropy(password)
+	if analysis.Entropy > 60 {
+		score += 10
+	} else if analysis.Entropy > 40 {
+		score += 5
+	}
+
+	// Ensure score is within bounds
+	if score < 0 {
+		score = 0
+	}
+	if score > 100 {
+		score = 100
+	}
+
+	analysis.Score = score
+
+	// Determine strength level
+	switch {
+	case score >= 90:
+		analysis.Level = "Very Strong"
+	case score >= 70:
+		analysis.Level = "Strong"
+	case score >= 50:
+		analysis.Level = "Good"
+	case score >= 30:
+		analysis.Level = "Fair"
+	default:
+		analysis.Level = "Weak"
+	}
+
+	// Add general suggestions if needed
+	if score < 70 {
+		if len(analysis.Suggestions) == 0 {
+			analysis.Suggestions = append(analysis.Suggestions, "Use a longer password with mixed character types")
+		}
+		analysis.Suggestions = append(analysis.Suggestions, "Consider using a passphrase with random words")
+	}
+
+	return analysis
+}
+
+// calculatePasswordEntropy estimates password entropy in bits
+func calculatePasswordEntropy(password string) float64 {
+	if len(password) == 0 {
+		return 0
+	}
+
+	// Character set size estimation
+	var charsetSize float64 = 0
+
+	hasLower := false
+	hasUpper := false
+	hasDigits := false
+	hasSpecial := false
+
+	for _, char := range password {
+		switch {
+		case unicode.IsLower(char):
+			hasLower = true
+		case unicode.IsUpper(char):
+			hasUpper = true
+		case unicode.IsDigit(char):
+			hasDigits = true
+		case unicode.IsPunct(char) || unicode.IsSymbol(char):
+			hasSpecial = true
+		}
+	}
+
+	if hasLower {
+		charsetSize += 26
+	}
+	if hasUpper {
+		charsetSize += 26
+	}
+	if hasDigits {
+		charsetSize += 10
+	}
+	if hasSpecial {
+		charsetSize += 32 // Approximate number of special characters
+	}
+
+	if charsetSize == 0 {
+		return 0
+	}
+
+	// Entropy = log2(charset_size^length)
+	// Simplified: length * log2(charset_size)
+	return float64(len(password)) * math.Log2(charsetSize)
 }
 
 // Helper functions

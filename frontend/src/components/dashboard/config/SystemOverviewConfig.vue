@@ -1,26 +1,26 @@
 <template>
   <div class="system-overview-config">
     <el-form :model="localConfig" label-width="120px" size="small">
-      <el-form-item label="Metrics Display">
+      <el-form-item label="指标显示">
         <el-checkbox-group v-model="localConfig.metrics">
-          <el-checkbox label="cpu"> CPU Usage </el-checkbox>
-          <el-checkbox label="memory"> Memory Usage </el-checkbox>
-          <el-checkbox label="disk"> Disk Usage </el-checkbox>
-          <el-checkbox label="network"> Network Activity </el-checkbox>
-          <el-checkbox label="containers"> Container Count </el-checkbox>
+          <el-checkbox label="cpu"> CPU使用率 </el-checkbox>
+          <el-checkbox label="memory"> 内存使用率 </el-checkbox>
+          <el-checkbox label="disk"> 磁盘使用率 </el-checkbox>
+          <el-checkbox label="network"> 网络活动 </el-checkbox>
+          <el-checkbox label="containers"> 容器数量 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Update Interval">
+      <el-form-item label="更新间隔">
         <el-select v-model="localConfig.updateInterval" style="width: 100%">
-          <el-option label="5 seconds" :value="5000" />
-          <el-option label="10 seconds" :value="10000" />
-          <el-option label="30 seconds" :value="30000" />
-          <el-option label="1 minute" :value="60000" />
+          <el-option label="5秒" :value="5000" />
+          <el-option label="10秒" :value="10000" />
+          <el-option label="30秒" :value="30000" />
+          <el-option label="1分钟" :value="60000" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Alert Thresholds">
+      <el-form-item label="警报阈值">
         <el-row :gutter="16">
           <el-col :span="12">
             <el-input-number
@@ -40,12 +40,12 @@
               :precision="0"
               style="width: 100%"
             />
-            <span class="threshold-label">Memory %</span>
+            <span class="threshold-label">内存 %</span>
           </el-col>
         </el-row>
       </el-form-item>
 
-      <el-form-item label="Show Details">
+      <el-form-item label="显示详情">
         <el-switch v-model="localConfig.showDetails" />
       </el-form-item>
     </el-form>

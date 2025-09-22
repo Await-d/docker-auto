@@ -1,38 +1,38 @@
 <template>
   <div class="quick-actions-config">
     <el-form :model="localConfig" label-width="120px" size="small">
-      <el-form-item label="Action Layout">
+      <el-form-item label="操作布局">
         <el-radio-group v-model="localConfig.layout">
-          <el-radio label="grid"> Grid Layout </el-radio>
-          <el-radio label="list"> List Layout </el-radio>
+          <el-radio label="grid"> 网格布局 </el-radio>
+          <el-radio label="list"> 列表布局 </el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item label="Available Actions">
+      <el-form-item label="可用操作">
         <el-checkbox-group v-model="localConfig.actions">
-          <el-checkbox label="start-all"> Start All Containers </el-checkbox>
-          <el-checkbox label="stop-all"> Stop All Containers </el-checkbox>
+          <el-checkbox label="start-all"> 启动所有容器 </el-checkbox>
+          <el-checkbox label="stop-all"> 停止所有容器 </el-checkbox>
           <el-checkbox label="restart-all">
-            Restart All Containers
+            重启所有容器
           </el-checkbox>
-          <el-checkbox label="cleanup"> System Cleanup </el-checkbox>
-          <el-checkbox label="backup"> Create Backup </el-checkbox>
+          <el-checkbox label="cleanup"> 系统清理 </el-checkbox>
+          <el-checkbox label="backup"> 创建备份 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Confirmation">
+      <el-form-item label="确认设置">
         <el-radio-group v-model="localConfig.confirmationLevel">
-          <el-radio label="none"> No Confirmation </el-radio>
-          <el-radio label="critical"> Critical Actions Only </el-radio>
-          <el-radio label="all"> All Actions </el-radio>
+          <el-radio label="none"> 无需确认 </el-radio>
+          <el-radio label="critical"> 仅关键操作 </el-radio>
+          <el-radio label="all"> 所有操作 </el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item label="Show Icons">
+      <el-form-item label="显示图标">
         <el-switch v-model="localConfig.showIcons" />
       </el-form-item>
 
-      <el-form-item label="Show Labels">
+      <el-form-item label="显示标签">
         <el-switch v-model="localConfig.showLabels" />
       </el-form-item>
     </el-form>

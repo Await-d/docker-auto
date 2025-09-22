@@ -7,7 +7,7 @@
     <div
 v-if="displayMode !== 'minimal'" class="primary-actions"
 >
-      <div class="section-title">Quick Actions</div>
+      <div class="section-title">快速操作</div>
       <div class="actions-grid">
         <div
           v-for="action in primaryActions"
@@ -47,7 +47,7 @@ v-if="action.badge" class="action-indicator"
     <div
 v-if="displayMode === 'detailed'" class="container-actions"
 >
-      <div class="section-title">Container Management</div>
+      <div class="section-title">容器管理</div>
       <div class="actions-row">
         <el-button-group size="small">
           <el-button
@@ -55,21 +55,21 @@ v-if="displayMode === 'detailed'" class="container-actions"
             @click="executeContainerAction('start-all')"
           >
             <el-icon><CaretRight /></el-icon>
-            Start All
+            全部启动
           </el-button>
           <el-button
             :loading="loadingActions.has('stop-all')"
             @click="executeContainerAction('stop-all')"
           >
             <el-icon><VideoPlay /></el-icon>
-            Stop All
+            全部停止
           </el-button>
           <el-button
             :loading="loadingActions.has('restart-all')"
             @click="executeContainerAction('restart-all')"
           >
             <el-icon><Refresh /></el-icon>
-            Restart All
+            全部重启
           </el-button>
         </el-button-group>
       </div>
@@ -78,7 +78,7 @@ v-if="displayMode === 'detailed'" class="container-actions"
     <!-- System Actions -->
     <div class="system-actions">
       <div
-v-if="displayMode !== 'minimal'" class="section-title">System</div>
+v-if="displayMode !== 'minimal'" class="section-title">系统</div>
       <div class="actions-row">
         <el-button-group size="small">
           <el-button
@@ -87,21 +87,21 @@ v-if="displayMode !== 'minimal'" class="section-title">System</div>
             @click="executeSystemAction('scan-updates')"
           >
             <el-icon><Search /></el-icon>
-            <span v-if="displayMode !== 'compact'">Scan Updates</span>
+            <span v-if="displayMode !== 'compact'">扫描更新</span>
           </el-button>
           <el-button
             :loading="loadingActions.has('cleanup')"
             @click="executeSystemAction('cleanup')"
           >
             <el-icon><Delete /></el-icon>
-            <span v-if="displayMode !== 'compact'">Cleanup</span>
+            <span v-if="displayMode !== 'compact'">清理</span>
           </el-button>
           <el-button
             :loading="loadingActions.has('backup')"
             @click="executeSystemAction('backup')"
           >
             <el-icon><Download /></el-icon>
-            <span v-if="displayMode !== 'compact'">Backup</span>
+            <span v-if="displayMode !== 'compact'">备份</span>
           </el-button>
         </el-button-group>
       </div>
@@ -111,7 +111,7 @@ v-if="displayMode !== 'minimal'" class="section-title">System</div>
     <div
 v-if="displayMode === 'detailed'" class="navigation-actions"
 >
-      <div class="section-title">Quick Navigation</div>
+      <div class="section-title">快速导航</div>
       <div class="nav-grid">
         <div
           v-for="nav in navigationItems"
@@ -148,10 +148,10 @@ v-if="nav.badge" class="nav-badge"
       class="custom-actions"
     >
       <div class="section-title">
-        Custom Actions
+        自定义操作
         <el-button size="small" type="text" @click="showCustomActionDialog">
           <el-icon><Plus /></el-icon>
-          Add
+          添加
         </el-button>
       </div>
       <div class="custom-list">
@@ -175,12 +175,12 @@ v-if="nav.badge" class="nav-badge"
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="edit"> Edit </el-dropdown-item>
+                <el-dropdown-item command="edit"> 编辑 </el-dropdown-item>
                 <el-dropdown-item command="duplicate">
-                  Duplicate
+                  复制
                 </el-dropdown-item>
                 <el-dropdown-item command="delete" divided>
-                  Delete
+                  删除
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -194,7 +194,7 @@ v-if="nav.badge" class="nav-badge"
       v-if="recentActions.length > 0 && displayMode === 'detailed'"
       class="recent-actions"
     >
-      <div class="section-title">Recent Actions</div>
+      <div class="section-title">最近操作</div>
       <div class="recent-list">
         <div
           v-for="action in recentActions.slice(0, 3)"
@@ -226,7 +226,7 @@ v-if="nav.badge" class="nav-badge"
     <div
 v-if="displayMode === 'detailed'" class="emergency-actions"
 >
-      <el-divider>Emergency</el-divider>
+      <el-divider>紧急操作</el-divider>
       <div class="emergency-buttons">
         <el-button
           :loading="loadingActions.has('maintenance-mode')"
@@ -235,7 +235,7 @@ v-if="displayMode === 'detailed'" class="emergency-actions"
           @click="executeEmergencyAction('maintenance-mode')"
         >
           <el-icon><Warning /></el-icon>
-          {{ maintenanceMode ? "Exit" : "Enter" }} Maintenance
+          {{ maintenanceMode ? "退出" : "进入" }}维护模式
         </el-button>
         <el-button
           :loading="loadingActions.has('emergency-stop')"
@@ -244,7 +244,7 @@ v-if="displayMode === 'detailed'" class="emergency-actions"
           @click="executeEmergencyAction('emergency-stop')"
         >
           <el-icon><SwitchButton /></el-icon>
-          Emergency Stop
+          紧急停止
         </el-button>
       </div>
     </div>
@@ -252,7 +252,7 @@ v-if="displayMode === 'detailed'" class="emergency-actions"
     <!-- Custom Action Dialog -->
     <el-dialog
       v-model="customActionDialogVisible"
-      title="Add Custom Action"
+      title="添加自定义操作"
       width="500px"
     >
       <el-form
@@ -261,33 +261,33 @@ v-if="displayMode === 'detailed'" class="emergency-actions"
         :rules="customActionRules"
         label-width="100px"
       >
-        <el-form-item label="Name" prop="name">
-          <el-input v-model="customActionForm.name" placeholder="Action name" />
+        <el-form-item label="名称" prop="name">
+          <el-input v-model="customActionForm.name" placeholder="操作名称" />
         </el-form-item>
-        <el-form-item label="Command" prop="command">
+        <el-form-item label="命令" prop="command">
           <el-input
             v-model="customActionForm.command"
-            placeholder="Command to execute"
+            placeholder="要执行的命令"
           />
         </el-form-item>
-        <el-form-item label="Icon" prop="icon">
-          <el-select v-model="customActionForm.icon" placeholder="Select icon">
-            <el-option label="Setting" value="Setting" />
-            <el-option label="Tools" value="Tools" />
-            <el-option label="Operation" value="Operation" />
-            <el-option label="Monitor" value="Monitor" />
+        <el-form-item label="图标" prop="icon">
+          <el-select v-model="customActionForm.icon" placeholder="选择图标">
+            <el-option label="设置" value="Setting" />
+            <el-option label="工具" value="Tools" />
+            <el-option label="操作" value="Operation" />
+            <el-option label="监控" value="Monitor" />
           </el-select>
         </el-form-item>
-        <el-form-item label="Confirmation">
+        <el-form-item label="需要确认">
           <el-switch v-model="customActionForm.requiresConfirmation" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="customActionDialogVisible = false">
-          Cancel
+          取消
         </el-button>
         <el-button
-type="primary" @click="saveCustomAction"> Save </el-button>
+type="primary" @click="saveCustomAction"> 保存 </el-button>
       </template>
     </el-dialog>
   </div>
@@ -373,10 +373,10 @@ const customActionForm = ref({
 
 const customActionRules = {
   name: [
-    { required: true, message: "Action name is required", trigger: "blur" },
+    { required: true, message: "操作名称是必需的", trigger: "blur" },
   ],
   command: [
-    { required: true, message: "Command is required", trigger: "blur" },
+    { required: true, message: "命令是必需的", trigger: "blur" },
   ],
 };
 
@@ -422,8 +422,8 @@ const recentActions = ref([
 const primaryActions = computed(() => [
   {
     id: "update-scan",
-    title: "Scan Updates",
-    description: "Check for new updates",
+    title: "扫描更新",
+    description: "检查新的更新",
     icon: "Search",
     type: "primary",
     badge: 3,
@@ -431,8 +431,8 @@ const primaryActions = computed(() => [
   },
   {
     id: "system-health",
-    title: "Health Check",
-    description: "Run system diagnostics",
+    title: "健康检查",
+    description: "运行系统诊断",
     icon: "Monitor",
     type: "info",
     badge: null,
@@ -440,8 +440,8 @@ const primaryActions = computed(() => [
   },
   {
     id: "container-prune",
-    title: "Cleanup System",
-    description: "Remove unused resources",
+    title: "清理系统",
+    description: "移除未使用的资源",
     icon: "Delete",
     type: "warning",
     badge: null,
@@ -449,8 +449,8 @@ const primaryActions = computed(() => [
   },
   {
     id: "backup-create",
-    title: "Create Backup",
-    description: "Backup system state",
+    title: "创建备份",
+    description: "备份系统状态",
     icon: "Download",
     type: "success",
     badge: null,
@@ -461,39 +461,39 @@ const primaryActions = computed(() => [
 const navigationItems = computed(() => [
   {
     path: "/containers",
-    label: "Containers",
+    label: "容器",
     icon: "Box",
     badge: 12,
     badgeType: "primary",
   },
   {
     path: "/images",
-    label: "Images",
+    label: "镜像",
     icon: "Picture",
     badge: null,
   },
   {
     path: "/monitoring",
-    label: "Monitoring",
+    label: "监控",
     icon: "DataAnalysis",
     badge: null,
   },
   {
     path: "/logs",
-    label: "Logs",
+    label: "日志",
     icon: "Document",
     badge: 5,
     badgeType: "warning",
   },
   {
     path: "/settings",
-    label: "Settings",
+    label: "设置",
     icon: "Setting",
     badge: null,
   },
   {
     path: "/users",
-    label: "Users",
+    label: "用户",
     icon: "User",
     badge: null,
   },

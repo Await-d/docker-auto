@@ -123,8 +123,8 @@ export interface WidgetDefinition {
 const defaultWidgets: WidgetDefinition[] = [
   {
     type: "system-overview",
-    name: "System Overview",
-    description: "Overall system health and key metrics",
+    name: "系统概览",
+    description: "系统整体健康状况和关键指标",
     component: "SystemOverview",
     icon: "Monitor",
     category: "system",
@@ -136,8 +136,8 @@ const defaultWidgets: WidgetDefinition[] = [
   },
   {
     type: "container-stats",
-    name: "Container Statistics",
-    description: "Container counts and status distribution",
+    name: "容器统计",
+    description: "容器数量和状态分布",
     component: "ContainerStats",
     icon: "Box",
     category: "containers",
@@ -149,8 +149,8 @@ const defaultWidgets: WidgetDefinition[] = [
   },
   {
     type: "update-activity",
-    name: "Update Activity",
-    description: "Recent updates and update statistics",
+    name: "更新活动",
+    description: "最近的更新和更新统计",
     component: "UpdateActivity",
     icon: "Refresh",
     category: "updates",
@@ -162,8 +162,8 @@ const defaultWidgets: WidgetDefinition[] = [
   },
   {
     type: "realtime-monitor",
-    name: "Real-time Monitor",
-    description: "Live system activity and performance metrics",
+    name: "实时监控",
+    description: "实时系统活动和性能指标",
     component: "RealtimeMonitor",
     icon: "DataLine",
     category: "monitoring",
@@ -175,8 +175,8 @@ const defaultWidgets: WidgetDefinition[] = [
   },
   {
     type: "health-monitor",
-    name: "Health Monitor",
-    description: "Service health and availability metrics",
+    name: "健康监控",
+    description: "服务健康状况和可用性指标",
     component: "HealthMonitor",
     icon: "CircleCheckFilled",
     category: "monitoring",
@@ -188,8 +188,8 @@ const defaultWidgets: WidgetDefinition[] = [
   },
   {
     type: "recent-activities",
-    name: "Recent Activities",
-    description: "Timeline of recent system activities",
+    name: "最近活动",
+    description: "最近系统活动的时间线",
     component: "RecentActivities",
     icon: "Document",
     category: "activities",
@@ -201,8 +201,8 @@ const defaultWidgets: WidgetDefinition[] = [
   },
   {
     type: "quick-actions",
-    name: "Quick Actions",
-    description: "Frequently used operations and shortcuts",
+    name: "快捷操作",
+    description: "常用操作和快捷方式",
     component: "QuickActions",
     icon: "Lightning",
     category: "actions",
@@ -214,8 +214,8 @@ const defaultWidgets: WidgetDefinition[] = [
   },
   {
     type: "notification-center",
-    name: "Notification Center",
-    description: "Live notifications and alerts",
+    name: "通知中心",
+    description: "实时通知和告警",
     component: "NotificationCenter",
     icon: "Bell",
     category: "notifications",
@@ -227,8 +227,8 @@ const defaultWidgets: WidgetDefinition[] = [
   },
   {
     type: "resource-charts",
-    name: "Resource Charts",
-    description: "Historical resource usage charts",
+    name: "资源图表",
+    description: "历史资源使用图表",
     component: "ResourceCharts",
     icon: "DataAnalysis",
     category: "monitoring",
@@ -240,8 +240,8 @@ const defaultWidgets: WidgetDefinition[] = [
   },
   {
     type: "security-dashboard",
-    name: "Security Dashboard",
-    description: "Security status and vulnerability monitoring",
+    name: "安全仪表盘",
+    description: "安全状态和漏洞监控",
     component: "SecurityDashboard",
     icon: "Lock",
     category: "security",
@@ -333,8 +333,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     return {
       id: `layout-${Date.now()}`,
-      name: "Default Dashboard",
-      description: "Default system dashboard layout",
+      name: "默认仪表盘",
+      description: "默认系统仪表盘布局",
       isDefault: true,
       isShared: false,
       createdBy: "system",

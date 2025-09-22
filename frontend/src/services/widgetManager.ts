@@ -1,12 +1,12 @@
 /**
- * Widget Manager Service - Handles widget lifecycle, data management, and communication
+ * 小部件管理服务 - 处理小部件生命周期、数据管理和通信
  */
 import { reactive } from "vue";
 import type { DashboardWidget } from "@/store/dashboard";
 import { useContainerWebSocket } from "@/services/containerWebSocket";
-import { useAuthStore } from "@/store/auth";
+// import { useAuthStore } from "@/store/auth"; // Unused import
 
-// Widget data refresh strategies
+// 小部件数据刷新策略
 export enum RefreshStrategy {
   INTERVAL = "interval",
   WEBSOCKET = "websocket",
@@ -14,7 +14,7 @@ export enum RefreshStrategy {
   ON_FOCUS = "on_focus",
 }
 
-// Widget status states
+// 小部件状态
 export enum WidgetStatus {
   LOADING = "loading",
   LOADED = "loaded",
@@ -22,7 +22,7 @@ export enum WidgetStatus {
   OFFLINE = "offline",
 }
 
-// Widget communication events
+// 小部件通信事件
 export interface WidgetEvent {
   type: string;
   source: string;
@@ -31,7 +31,7 @@ export interface WidgetEvent {
   timestamp: Date;
 }
 
-// Widget performance metrics
+// 小部件性能指标
 export interface WidgetMetrics {
   widgetId: string;
   loadTime: number;
@@ -42,7 +42,7 @@ export interface WidgetMetrics {
   refreshCount: number;
 }
 
-// Widget data cache entry
+// 小部件数据缓存条目
 export interface CacheEntry {
   data: any;
   timestamp: Date;
@@ -63,7 +63,7 @@ class WidgetManagerService {
   private maxCacheSize = 100;
   private maxEventHistory = 1000;
 
-  // Performance monitoring
+  // 性能监控
   private performanceObserver?: PerformanceObserver;
 
   constructor() {
@@ -72,7 +72,7 @@ class WidgetManagerService {
   }
 
   /**
-   * Initialize performance monitoring for widgets
+   * 初始化小部件性能监控
    */
   private initializePerformanceMonitoring() {
     if (typeof PerformanceObserver !== "undefined") {
@@ -92,11 +92,11 @@ class WidgetManagerService {
   }
 
   /**
-   * Setup global error handler for widgets
+   * 为小部件设置全局错误处理程序
    */
   private setupGlobalErrorHandler() {
     window.addEventListener("error", (event) => {
-      // Check if error is from a widget
+      // 检查错误是否来自小部件
       const target = event.target as any;
       if (target?.closest?.("[data-widget-id]")) {
         const widgetId = target.closest("[data-widget-id]").dataset.widgetId;
@@ -106,13 +106,13 @@ class WidgetManagerService {
   }
 
   /**
-   * Register a widget instance
+   * 注册小部件实例
    */
   registerWidget(widget: DashboardWidget): void {
     this.widgets.set(widget.id, widget);
     this.widgetStatus.set(widget.id, WidgetStatus.LOADING);
 
-    // Initialize metrics
+    // 初始化指标
     this.widgetMetrics.set(widget.id, {
       widgetId: widget.id,
       loadTime: 0,
@@ -123,7 +123,7 @@ class WidgetManagerService {
       refreshCount: 0,
     });
 
-    // Setup refresh strategy
+    // 设置刷新策略
     this.setupWidgetRefresh(widget);
 
     this.emitEvent({
@@ -135,19 +135,19 @@ class WidgetManagerService {
   }
 
   /**
-   * Unregister a widget instance
+   * 取消注册小部件实例
    */
   unregisterWidget(widgetId: string): void {
-    // Clear refresh interval
+    // 清除刷新间隔
     this.clearWidgetRefresh(widgetId);
 
-    // Clean up data
+    // 清理数据
     this.widgets.delete(widgetId);
     this.widgetStatus.delete(widgetId);
     this.widgetData.delete(widgetId);
     this.widgetMetrics.delete(widgetId);
 
-    // Clear cache entries
+    // 清除缓存条目
     this.clearWidgetCache(widgetId);
 
     this.emitEvent({
@@ -159,7 +159,7 @@ class WidgetManagerService {
   }
 
   /**
-   * Setup widget refresh strategy
+   * 设置小部件刷新策略
    */
   private setupWidgetRefresh(widget: DashboardWidget): void {
     this.clearWidgetRefresh(widget.id);
@@ -187,35 +187,35 @@ class WidgetManagerService {
   }
 
   /**
-   * Determine refresh strategy for widget
+   * 确定小部件的刷新策略
    */
   private getRefreshStrategy(widget: DashboardWidget): RefreshStrategy {
-    // High-frequency widgets use WebSocket
+    // 高频率小部件使用 WebSocket
     if (widget.refreshInterval <= 5000) {
       return RefreshStrategy.WEBSOCKET;
     }
 
-    // Interactive widgets use focus-based refresh
+    // 交互式小部件使用基于焦点的刷新
     if (["quick-actions", "notification-center"].includes(widget.type)) {
       return RefreshStrategy.ON_FOCUS;
     }
 
-    // Default to interval
+    // 默认使用间隔刷新
     return RefreshStrategy.INTERVAL;
   }
 
   /**
-   * Setup WebSocket-based refresh
+   * 设置基于 WebSocket 的刷新
    */
   private setupWebSocketRefresh(widget: DashboardWidget): void {
     const containerWS = useContainerWebSocket();
 
-    // Subscribe to relevant WebSocket events based on widget type
+    // 根据小部件类型订阅相关的 WebSocket 事件
     const events = this.getWebSocketEvents(widget.type);
 
     events.forEach((event) => {
-      // Note: Widget-specific WebSocket subscription would go here
-      // For now, use the general subscription methods based on event type
+      // 注意：小部件特定的 WebSocket 订阅将放在这里
+      // 目前，根据事件类型使用通用订阅方法
       if (event.includes("container")) {
         containerWS.subscribeToAll();
       }
@@ -223,7 +223,7 @@ class WidgetManagerService {
   }
 
   /**
-   * Get WebSocket events for widget type
+   * 获取小部件类型的 WebSocket 事件
    */
   private getWebSocketEvents(widgetType: string): string[] {
     const eventMap: Record<string, string[]> = {
@@ -246,7 +246,7 @@ class WidgetManagerService {
   }
 
   /**
-   * Setup focus-based refresh
+   * 设置基于焦点的刷新
    */
   private setupFocusRefresh(widget: DashboardWidget): void {
     const handleFocus = () => {
@@ -255,14 +255,14 @@ class WidgetManagerService {
 
     window.addEventListener("focus", handleFocus);
 
-    // Store cleanup function for later use
+    // 存储清理函数以便后续使用
     this.cleanupFunctions.set(widget.id, () => {
       window.removeEventListener("focus", handleFocus);
     });
   }
 
   /**
-   * Clear widget refresh mechanisms
+   * 清除小部件刷新机制
    */
   private clearWidgetRefresh(widgetId: string): void {
     const interval = this.refreshIntervals.get(widgetId);
@@ -273,7 +273,7 @@ class WidgetManagerService {
   }
 
   /**
-   * Refresh widget data
+   * 刷新小部件数据
    */
   async refreshWidget(widgetId: string, force = false): Promise<void> {
     const widget = this.widgets.get(widgetId);
@@ -284,7 +284,7 @@ class WidgetManagerService {
 
       const startTime = performance.now();
 
-      // Check cache first (unless forced)
+      // 首先检查缓存（除非强制）
       if (!force) {
         const cachedData = this.getCachedData(widgetId);
         if (cachedData) {
@@ -294,16 +294,16 @@ class WidgetManagerService {
         }
       }
 
-      // Fetch fresh data
+      // 获取新数据
       const data = await this.fetchWidgetData(widget);
 
       const loadTime = performance.now() - startTime;
 
-      // Update data and cache
+      // 更新数据和缓存
       this.updateWidgetData(widgetId, data);
       this.setCachedData(widgetId, data);
 
-      // Update metrics
+      // 更新指标
       this.updateMetrics(widgetId, {
         loadTime,
         dataSize: JSON.stringify(data).length,
@@ -325,52 +325,42 @@ class WidgetManagerService {
   }
 
   /**
-   * Fetch widget data from appropriate source
+   * 从适当的源获取小部件数据
    */
   private async fetchWidgetData(widget: DashboardWidget): Promise<any> {
-    const authStore = useAuthStore();
-
-    // Build API endpoint based on widget type
+    // 根据小部件类型构建 API 端点
     const endpoint = this.getWidgetEndpoint(widget.type);
 
-    const response = await fetch(endpoint, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-        "Content-Type": "application/json",
-      },
+    const { get } = await import('@/utils/request');
+    return await get(endpoint, {
+      showLoading: false,
+      showError: false,
     });
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch data for widget ${widget.type}: ${response.statusText}`,
-      );
-    }
-
-    return await response.json();
   }
 
+
   /**
-   * Get API endpoint for widget type
+   * 获取小部件类型的 API 端点
    */
   private getWidgetEndpoint(widgetType: string): string {
     const endpointMap: Record<string, string> = {
-      "system-overview": "/api/v1/dashboard/system-overview",
-      "container-stats": "/api/v1/dashboard/container-stats",
-      "update-activity": "/api/v1/dashboard/update-activity",
-      "realtime-monitor": "/api/v1/dashboard/realtime-metrics",
-      "health-monitor": "/api/v1/dashboard/health-status",
-      "recent-activities": "/api/v1/dashboard/recent-activities",
-      "quick-actions": "/api/v1/dashboard/quick-actions",
-      "notification-center": "/api/v1/dashboard/notifications",
-      "resource-charts": "/api/v1/dashboard/resource-metrics",
-      "security-dashboard": "/api/v1/dashboard/security-status",
+      "system-overview": "/api/dashboard/system-overview",
+      "container-stats": "/api/dashboard/container-stats",
+      "update-activity": "/api/dashboard/update-activity",
+      "realtime-monitor": "/api/dashboard/realtime-metrics",
+      "health-monitor": "/api/dashboard/health-status",
+      "recent-activities": "/api/dashboard/recent-activities",
+      "quick-actions": "/api/dashboard/quick-actions",
+      "notification-center": "/api/dashboard/notifications",
+      "resource-charts": "/api/dashboard/resource-metrics",
+      "security-dashboard": "/api/dashboard/security-status",
     };
 
-    return endpointMap[widgetType] || "/api/v1/dashboard/generic";
+    return endpointMap[widgetType] || "/api/dashboard/generic";
   }
 
   /**
-   * Update widget data
+   * 更新小部件数据
    */
   updateWidgetData(widgetId: string, data: any): void {
     this.widgetData.set(widgetId, data);
@@ -384,28 +374,28 @@ class WidgetManagerService {
   }
 
   /**
-   * Get widget data
+   * 获取小部件数据
    */
   getWidgetData(widgetId: string): any {
     return this.widgetData.get(widgetId);
   }
 
   /**
-   * Get widget status
+   * 获取小部件状态
    */
   getWidgetStatus(widgetId: string): WidgetStatus {
     return this.widgetStatus.get(widgetId) || WidgetStatus.LOADING;
   }
 
   /**
-   * Handle widget errors
+   * 处理小部件错误
    */
   private handleWidgetError(widgetId: string, error: any): void {
-    console.error(`Widget ${widgetId} error:`, error);
+    console.error(`小部件 ${widgetId} 错误:`, error);
 
     this.widgetStatus.set(widgetId, WidgetStatus.ERROR);
 
-    // Update error metrics
+    // 更新错误指标
     const metrics = this.widgetMetrics.get(widgetId);
     if (metrics) {
       metrics.errorCount++;
@@ -421,7 +411,7 @@ class WidgetManagerService {
   }
 
   /**
-   * Cache management
+   * 缓存管理
    */
   private getCachedData(widgetId: string): any | null {
     const entry = this.widgetCache.get(widgetId);
@@ -439,7 +429,7 @@ class WidgetManagerService {
   }
 
   private setCachedData(widgetId: string, data: any, ttl = 30000): void {
-    // Implement LRU cache eviction
+    // 实现 LRU 缓存清除
     if (this.widgetCache.size >= this.maxCacheSize) {
       const oldestKey = this.widgetCache.keys().next().value;
       if (oldestKey) {
@@ -460,7 +450,7 @@ class WidgetManagerService {
   }
 
   /**
-   * Update widget metrics
+   * 更新小部件指标
    */
   private updateMetrics(
     widgetId: string,
@@ -473,19 +463,19 @@ class WidgetManagerService {
   }
 
   /**
-   * Event bus for widget communication
+   * 小部件通信的事件总线
    */
   private emitEvent(event: WidgetEvent): void {
     this.eventBus.push(event);
 
-    // Limit event history
+    // 限制事件历史
     if (this.eventBus.length > this.maxEventHistory) {
       this.eventBus.splice(0, this.eventBus.length - this.maxEventHistory);
     }
   }
 
   /**
-   * Subscribe to widget events
+   * 订阅小部件事件
    */
   subscribeToEvents(
     eventType: string,
@@ -497,7 +487,7 @@ class WidgetManagerService {
       }
     };
 
-    // Store the handler for event subscription (simplified implementation)
+    // 存储事件订阅的处理程序（简化实现）
     const handlerKey = `${eventType}-${Date.now()}`;
     this.eventHandlers.set(handlerKey, handler);
 
@@ -509,7 +499,7 @@ class WidgetManagerService {
   }
 
   /**
-   * Batch operations for performance
+   * 批量操作以提高性能
    */
   async refreshMultipleWidgets(
     widgetIds: string[],
@@ -522,7 +512,7 @@ class WidgetManagerService {
   }
 
   /**
-   * Widget analytics and metrics
+   * 小部件分析和指标
    */
   getWidgetMetrics(): Map<string, WidgetMetrics>;
   getWidgetMetrics(widgetId: string): WidgetMetrics | undefined;
@@ -536,10 +526,10 @@ class WidgetManagerService {
   }
 
   /**
-   * Performance optimization
+   * 性能优化
    */
   optimizePerformance(): void {
-    // Clear old cache entries
+    // 清除旧的缓存条目
     const now = Date.now();
     for (const [key, entry] of this.widgetCache.entries()) {
       if (now - entry.timestamp.getTime() > entry.ttl) {
@@ -547,28 +537,28 @@ class WidgetManagerService {
       }
     }
 
-    // Cleanup old events
+    // 清理旧事件
     if (this.eventBus.length > this.maxEventHistory) {
       this.eventBus.splice(0, this.eventBus.length - this.maxEventHistory);
     }
   }
 
   /**
-   * Cleanup resources
+   * 清理资源
    */
   destroy(): void {
-    // Clear all intervals
+    // 清除所有间隔
     for (const interval of this.refreshIntervals.values()) {
       clearInterval(interval);
     }
     this.refreshIntervals.clear();
 
-    // Clear performance observer
+    // 清除性能观察器
     if (this.performanceObserver) {
       this.performanceObserver.disconnect();
     }
 
-    // Clear all data
+    // 清除所有数据
     this.widgets.clear();
     this.widgetStatus.clear();
     this.widgetData.clear();
@@ -578,10 +568,10 @@ class WidgetManagerService {
   }
 }
 
-// Singleton instance
+// 单例实例
 export const widgetManager = new WidgetManagerService();
 
-// Vue composable for widget management
+// 用于小部件管理的 Vue 组合式函数
 export function useWidgetManager() {
   return {
     registerWidget: widgetManager.registerWidget.bind(widgetManager),

@@ -2,7 +2,7 @@
  * Authentication store using Pinia
  */
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { ElMessage, ElNotification } from "element-plus";
 import router from "@/router";
 import { http } from "@/utils/request";
@@ -11,7 +11,7 @@ import { AUTH_ENDPOINTS, NOTIFICATION_TYPES } from "@/utils/constants";
 import type {
   UserInfo,
   LoginForm,
-  AuthResponse,
+  LoginResponseData,
   ProfileUpdateForm,
   PasswordChangeForm,
   TokenRefreshResponse,
@@ -39,20 +39,32 @@ export const useAuthStore = defineStore("auth", () => {
     error.value = null;
 
     try {
-      const response = await http.post<AuthResponse>(AUTH_ENDPOINTS.LOGIN, {
+      const response = await http.post<LoginResponseData>(AUTH_ENDPOINTS.LOGIN, {
         username: credentials.username,
         password: credentials.password,
         remember: credentials.remember,
+      }, {
+        showLoading: true,
+        showError: false, // 让组件处理错误
+        skipTokenRefresh: true, // 登录API的401错误不应该触发token刷新
       });
 
-      if (!response.success || !response.data) {
-        throw new Error(response.error || "Login failed");
+      let userData, accessToken, refreshToken;
+
+      // Check if response has the expected structure
+      if (!response || !response.success) {
+        throw new Error(response?.message || "登录失败");
       }
 
-      const responseData = response.data.data!;
-      const userData = responseData.user;
-      const accessToken = responseData.accessToken;
-      const refreshToken = responseData.refreshToken;
+      // Handle the standard API response format
+      if (response.data && response.data.user && response.data.token_info) {
+        // Our current backend format: { data: { user: {...}, token_info: {...} } }
+        userData = response.data.user;
+        accessToken = response.data.token_info.access_token;
+        refreshToken = response.data.token_info.refresh_token;
+      } else {
+        throw new Error("登录响应格式错误");
+      }
 
       // Store tokens
       TokenManager.setAccessToken(accessToken);
@@ -64,14 +76,26 @@ export const useAuthStore = defineStore("auth", () => {
       user.value = userData;
       UserManager.setUserInfo(userData);
 
-      ElMessage.success("Login successful");
+      ElMessage.success("登录成功");
+
+      // Wait for user data to be fully reactive and available
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Force reactive update by triggering a re-assignment
+      user.value = { ...userData };
+
+      // Wait for Vue reactivity to settle
+      await nextTick();
+
+      // Additional wait to ensure all computed properties are updated
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Redirect to intended page or dashboard
       const redirectUrl = AuthUtils.getRedirectUrl();
       await router.push(redirectUrl);
     } catch (err: any) {
-      error.value = err.message || "Login failed";
-      ElMessage.error(error.value || "Login failed");
+      error.value = err.message || "登录失败";
+      // Don't show error here, let the component handle it
       throw err;
     } finally {
       isLoading.value = false;
@@ -87,7 +111,7 @@ export const useAuthStore = defineStore("auth", () => {
         await http.post(AUTH_ENDPOINTS.LOGOUT);
       }
     } catch (err) {
-      console.warn("Logout API call failed:", err);
+      console.warn("退出登录API调用失败:", err);
     } finally {
       // Clear local state regardless of API success
       user.value = null;
@@ -95,7 +119,7 @@ export const useAuthStore = defineStore("auth", () => {
       TokenManager.clearTokens();
       UserManager.clearUserInfo();
 
-      ElMessage.info("Logged out successfully");
+      ElMessage.info("退出登录成功");
 
       // Redirect to login page
       await router.push("/login");
@@ -130,21 +154,21 @@ export const useAuthStore = defineStore("auth", () => {
 
       return true;
     } catch (err) {
-      console.error("Token refresh failed:", err);
+      console.error("token刷新失败:", err);
       return false;
     }
   };
 
   const getCurrentUser = async (): Promise<void> => {
     try {
-      const response = await http.get<UserInfo>(AUTH_ENDPOINTS.PROFILE);
+      const response = await http.get<{ user: UserInfo }>(AUTH_ENDPOINTS.PROFILE);
 
-      if (response.success && response.data) {
-        user.value = response.data;
-        UserManager.setUserInfo(response.data);
+      if (response.success && response.data && response.data.user) {
+        user.value = response.data.user;
+        UserManager.setUserInfo(response.data.user);
       }
     } catch (err: any) {
-      console.error("Failed to get current user:", err);
+      console.error("获取当前用户失败:", err);
 
       // If token is invalid, logout
       if (err.code === 401) {
@@ -163,22 +187,22 @@ export const useAuthStore = defineStore("auth", () => {
       const response = await http.put<UserInfo>(AUTH_ENDPOINTS.PROFILE, data);
 
       if (!response.success || !response.data) {
-        throw new Error(response.error || "Profile update failed");
+        throw new Error(response.error || "个人资料更新失败");
       }
 
       user.value = response.data;
       UserManager.setUserInfo(response.data);
 
       ElNotification({
-        title: "Success",
-        message: "Profile updated successfully",
+        title: "成功",
+        message: "个人资料更新成功",
         type: NOTIFICATION_TYPES.SUCCESS,
       });
     } catch (err: any) {
-      error.value = err.message || "Profile update failed";
+      error.value = err.message || "个人资料更新失败";
       ElNotification({
-        title: "Error",
-        message: error.value || "Profile update failed",
+        title: "错误",
+        message: error.value || "个人资料更新失败",
         type: NOTIFICATION_TYPES.ERROR,
       });
       throw err;
@@ -198,19 +222,19 @@ export const useAuthStore = defineStore("auth", () => {
       });
 
       if (!response.success) {
-        throw new Error(response.error || "Password change failed");
+        throw new Error(response.error || "密码修改失败");
       }
 
       ElNotification({
-        title: "Success",
-        message: "Password changed successfully",
+        title: "成功",
+        message: "密码修改成功",
         type: NOTIFICATION_TYPES.SUCCESS,
       });
     } catch (err: any) {
-      error.value = err.message || "Password change failed";
+      error.value = err.message || "密码修改失败";
       ElNotification({
-        title: "Error",
-        message: error.value || "Password change failed",
+        title: "错误",
+        message: error.value || "密码修改失败",
         type: NOTIFICATION_TYPES.ERROR,
       });
       throw err;
@@ -242,8 +266,8 @@ export const useAuthStore = defineStore("auth", () => {
     const routePermissions: Record<string, string[]> = {
       "/containers": ["container:read"],
       "/images": ["image:read"],
-      "/updates": ["update:read"],
-      "/logs": ["log:read"],
+      "/updates": ["update:create"],
+      "/logs": ["system:logs"],
       "/settings": ["admin"],
       "/users": ["admin"],
     };
@@ -258,7 +282,22 @@ export const useAuthStore = defineStore("auth", () => {
 
   const initialize = async (): Promise<void> => {
     const token = TokenManager.getAccessToken();
+
+    // If no token, clear any existing user data
     if (!token || !TokenManager.isTokenValid(token)) {
+      user.value = null;
+      UserManager.clearUserInfo();
+      return;
+    }
+
+    // Try to restore user from localStorage first
+    const cachedUser = UserManager.getUserInfo();
+    if (cachedUser && !user.value) {
+      user.value = cachedUser;
+    }
+
+    // If we already have user data and token is valid, no need to fetch again
+    if (user.value && TokenManager.isTokenValid(token)) {
       return;
     }
 
@@ -284,8 +323,8 @@ export const useAuthStore = defineStore("auth", () => {
 
     if (!TokenManager.isTokenValid(token)) {
       ElNotification({
-        title: "Session Expired",
-        message: "Your session has expired. Please log in again.",
+        title: "会话过期",
+        message: "您的会话已过期，请重新登录。",
         type: NOTIFICATION_TYPES.WARNING,
         duration: 0, // Don't auto close
       });
@@ -293,8 +332,8 @@ export const useAuthStore = defineStore("auth", () => {
     } else if (TokenManager.needsRefresh(token)) {
       refreshToken().catch(() => {
         ElNotification({
-          title: "Session Expiring",
-          message: "Your session is about to expire. Please save your work.",
+          title: "会话即将过期",
+          message: "您的会话即将过期，请保存您的工作。",
           type: NOTIFICATION_TYPES.WARNING,
         });
       });

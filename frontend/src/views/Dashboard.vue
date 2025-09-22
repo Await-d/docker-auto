@@ -5,12 +5,12 @@
       <div class="header-left">
         <h1 class="dashboard-title">
           <el-icon><Monitor /></el-icon>
-          Dashboard
+          仪表板
         </h1>
         <div class="layout-selector">
           <el-select
             v-model="currentLayoutId"
-            placeholder="Select Layout"
+            placeholder="选择布局"
             size="small"
             @change="switchLayout"
           >
@@ -24,11 +24,11 @@
                 <span>{{ layout.name }}</span>
                 <el-tag
 v-if="layout.isDefault" size="small" type="primary"
-                  >Default</el-tag
+                  >默认</el-tag
                 >
                 <el-tag
 v-if="layout.isShared" size="small" type="success"
-                  >Shared</el-tag
+                  >共享</el-tag
                 >
               </span>
             </el-option>
@@ -41,25 +41,25 @@ v-if="layout.isShared" size="small" type="success"
         <el-dropdown @command="handleGlobalAction">
           <el-button size="small" type="text">
             <el-icon><Setting /></el-icon>
-            Settings
+            设置
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="auto-refresh">
                 <el-icon><Refresh /></el-icon>
-                Auto Refresh: {{ globalSettings.autoRefresh ? "On" : "Off" }}
+                自动刷新: {{ globalSettings.autoRefresh ? "开启" : "关闭" }}
               </el-dropdown-item>
               <el-dropdown-item command="theme">
                 <el-icon><Sunny /></el-icon>
-                Theme: {{ globalSettings.theme }}
+                主题: {{ getThemeDisplayName(globalSettings.theme) }}
               </el-dropdown-item>
               <el-dropdown-item command="animations">
                 <el-icon><Magic /></el-icon>
-                Animations: {{ globalSettings.animations ? "On" : "Off" }}
+                动画效果: {{ globalSettings.animations ? "开启" : "关闭" }}
               </el-dropdown-item>
               <el-dropdown-item command="compact-mode">
                 <el-icon><Compress /></el-icon>
-                Compact Mode: {{ globalSettings.compactMode ? "On" : "Off" }}
+                紧凑模式: {{ globalSettings.compactMode ? "开启" : "关闭" }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -69,29 +69,29 @@ v-if="layout.isShared" size="small" type="success"
         <el-dropdown @command="handleLayoutAction">
           <el-button size="small" type="text">
             <el-icon><Grid /></el-icon>
-            Layout
+            布局
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="edit-mode">
                 <el-icon><Edit /></el-icon>
-                {{ isEditMode ? "Exit Edit Mode" : "Edit Mode" }}
+                {{ isEditMode ? "退出编辑模式" : "编辑模式" }}
               </el-dropdown-item>
               <el-dropdown-item command="add-widget">
                 <el-icon><Plus /></el-icon>
-                Add Widget
+                添加组件
               </el-dropdown-item>
               <el-dropdown-item command="create-layout">
                 <el-icon><DocumentAdd /></el-icon>
-                Create Layout
+                创建布局
               </el-dropdown-item>
               <el-dropdown-item command="manage-layouts">
                 <el-icon><FolderOpened /></el-icon>
-                Manage Layouts
+                管理布局
               </el-dropdown-item>
               <el-dropdown-item divided command="reset-layout">
                 <el-icon><RefreshLeft /></el-icon>
-                Reset Layout
+                重置布局
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -105,7 +105,7 @@ v-if="layout.isShared" size="small" type="success"
           @click="refreshAllWidgets"
         >
           <el-icon><Refresh /></el-icon>
-          Refresh All
+          刷新全部
         </el-button>
       </div>
     </div>
@@ -134,37 +134,16 @@ v-if="layout.isShared" size="small" type="success"
         </el-skeleton>
       </div>
 
-      <!-- Widget Grid -->
-      <grid-layout
-        v-else
-        v-model:layout="currentLayout.widgets"
-        :col-num="gridConfig.cols"
-        :row-height="gridConfig.rowHeight"
-        :is-draggable="isEditMode"
-        :is-resizable="isEditMode"
-        :is-mirrored="false"
-        :vertical-compact="true"
-        :margin="gridConfig.margin"
-        :use-css-transforms="true"
-        class="widget-grid"
-        @layout-updated="onLayoutUpdated"
-      >
-        <grid-item
+      <!-- Widget Grid - Simple CSS Grid Layout -->
+      <div v-else-if="currentLayout && currentLayout.widgets.length > 0" class="simple-widget-grid">
+        <div
           v-for="widget in currentLayout.widgets"
           :key="widget.id"
-          :x="widget.position.x"
-          :y="widget.position.y"
-          :w="widget.position.w"
-          :h="widget.position.h"
-          :i="widget.id"
-          :min-w="widget.size.minW"
-          :min-h="widget.size.minH"
-          :max-w="widget.size.maxW"
-          :max-h="widget.size.maxH"
-          :is-draggable="isEditMode && widget.draggable"
-          :is-resizable="isEditMode && widget.resizable"
-          class="widget-container"
-          :data-widget-id="widget.id"
+          class="widget-item"
+          :style="{
+            gridColumn: `span ${Math.min(widget.position.w || 3, gridConfig.cols)}`,
+            minHeight: `${(widget.position.h || 3) * gridConfig.rowHeight}px`
+          }"
         >
           <!-- Widget Component -->
           <widget-wrapper
@@ -174,18 +153,18 @@ v-if="layout.isShared" size="small" type="success"
             @configure="configureWidget"
             @refresh="refreshWidget"
           />
-        </grid-item>
-      </grid-layout>
+        </div>
+      </div>
 
       <!-- Empty State -->
       <div
-        v-if="!isLoading && currentLayout.widgets.length === 0"
+        v-if="!isLoading && currentLayout && currentLayout.widgets.length === 0"
         class="empty-state"
       >
-        <el-empty description="No widgets configured">
+        <el-empty description="暂无配置的组件">
           <el-button type="primary" @click="showAddWidgetDialog">
             <el-icon><Plus /></el-icon>
-            Add Your First Widget
+            添加您的第一个组件
           </el-button>
         </el-empty>
       </div>
@@ -194,7 +173,7 @@ v-if="layout.isShared" size="small" type="success"
     <!-- Add Widget Dialog -->
     <el-dialog
       v-model="addWidgetDialogVisible"
-      title="Add Widget"
+      title="添加组件"
       width="800px"
       :modal="true"
       class="add-widget-dialog"
@@ -231,13 +210,13 @@ v-if="layout.isShared" size="small" type="success"
       </div>
 
       <template #footer>
-        <el-button @click="addWidgetDialogVisible = false"> Cancel </el-button>
+        <el-button @click="addWidgetDialogVisible = false"> 取消 </el-button>
         <el-button
           type="primary"
           :disabled="!selectedWidgetType"
           @click="addSelectedWidget"
         >
-          Add Widget
+          添加组件
         </el-button>
       </template>
     </el-dialog>
@@ -245,7 +224,7 @@ v-if="layout.isShared" size="small" type="success"
     <!-- Layout Management Dialog -->
     <el-dialog
       v-model="layoutDialogVisible"
-      title="Manage Layouts"
+      title="管理布局"
       width="600px"
       :modal="true"
     >
@@ -259,13 +238,13 @@ v-if="layout.isShared" size="small" type="success"
           >
             <div class="layout-info">
               <h4>{{ layout.name }}</h4>
-              <p>{{ layout.description || "No description" }}</p>
+              <p>{{ layout.description || "无描述" }}</p>
               <div class="layout-meta">
                 <el-tag v-if="layout.isDefault" size="small" type="primary">
-                  Default
+                  默认
                 </el-tag>
                 <el-tag v-if="layout.isShared" size="small" type="success">
-                  Shared
+                  共享
                 </el-tag>
                 <span class="layout-date">{{
                   formatDate(layout.updatedAt)
@@ -278,7 +257,7 @@ v-if="layout.isShared" size="small" type="success"
                 size="small"
                 @click="switchLayout(layout.id)"
               >
-                Switch
+                切换
               </el-button>
               <el-dropdown
                 @command="(cmd: string) => handleLayoutItemAction(cmd, layout)"
@@ -289,20 +268,20 @@ v-if="layout.isShared" size="small" type="success"
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="duplicate">
-                      Duplicate
+                      复制
                     </el-dropdown-item>
                     <el-dropdown-item command="rename">
-                      Rename
+                      重命名
                     </el-dropdown-item>
                     <el-dropdown-item command="export">
-                      Export
+                      导出
                     </el-dropdown-item>
                     <el-dropdown-item
                       v-if="!layout.isDefault && layouts.length > 1"
                       command="delete"
                       divided
                     >
-                      Delete
+                      删除
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -313,9 +292,9 @@ v-if="layout.isShared" size="small" type="success"
       </div>
 
       <template #footer>
-        <el-button @click="layoutDialogVisible = false"> Close </el-button>
+        <el-button @click="layoutDialogVisible = false"> 关闭 </el-button>
         <el-button type="primary" @click="showCreateLayoutDialog">
-          Create New Layout
+          创建新布局
         </el-button>
       </template>
     </el-dialog>
@@ -331,7 +310,6 @@ v-if="layout.isShared" size="small" type="success"
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { GridLayout, GridItem } from "vue-grid-layout";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Monitor,
@@ -345,6 +323,8 @@ import {
   RefreshLeft,
   Sunny,
   More,
+  MagicStick as Magic,
+  FullScreen as Compress,
 } from "@element-plus/icons-vue";
 
 // Store imports
@@ -372,7 +352,8 @@ const configWidget = ref<DashboardWidget | null>(null);
 const isLoading = computed(() => dashboardStore.state.isLoading);
 const isEditMode = computed(() => dashboardStore.state.isEditMode);
 const layouts = computed(() => dashboardStore.state.layouts);
-const currentLayout = computed(() => dashboardStore.currentLayout!);
+const currentLayout = computed(() => dashboardStore.currentLayout);
+
 const currentLayoutId = computed({
   get: () => dashboardStore.state.currentLayoutId,
   set: (value: string) => switchLayout(value),
@@ -391,22 +372,22 @@ const gridConfig = computed(() => ({
 const switchLayout = async (layoutId: string) => {
   try {
     await dashboardStore.switchLayout(layoutId);
-    ElMessage.success("Layout switched successfully");
+    ElMessage.success("布局切换成功");
   } catch (error) {
     console.error("Failed to switch layout:", error);
-    ElMessage.error("Failed to switch layout");
+    ElMessage.error("布局切换失败");
   }
 };
 
 const refreshAllWidgets = async () => {
   try {
     isRefreshing.value = true;
-    const widgetIds = currentLayout.value.widgets.map((w) => w.id);
+    const widgetIds = currentLayout.value?.widgets.map((w) => w.id) || [];
     await widgetManager.refreshMultipleWidgets(widgetIds, true);
-    ElMessage.success("All widgets refreshed");
+    ElMessage.success("所有组件已刷新");
   } catch (error) {
     console.error("Failed to refresh widgets:", error);
-    ElMessage.error("Failed to refresh some widgets");
+    ElMessage.error("部分组件刷新失败");
   } finally {
     isRefreshing.value = false;
   }
@@ -415,10 +396,10 @@ const refreshAllWidgets = async () => {
 const refreshWidget = async (widgetId: string) => {
   try {
     await widgetManager.refreshWidget(widgetId, true);
-    ElMessage.success("Widget refreshed");
+    ElMessage.success("组件已刷新");
   } catch (error) {
     console.error("Failed to refresh widget:", error);
-    ElMessage.error("Failed to refresh widget");
+    ElMessage.error("组件刷新失败");
   }
 };
 
@@ -437,31 +418,31 @@ const addSelectedWidget = async () => {
   try {
     await dashboardStore.addWidget(selectedWidgetType.value);
     addWidgetDialogVisible.value = false;
-    ElMessage.success("Widget added successfully");
+    ElMessage.success("组件添加成功");
   } catch (error) {
     console.error("Failed to add widget:", error);
-    ElMessage.error("Failed to add widget");
+    ElMessage.error("组件添加失败");
   }
 };
 
 const removeWidget = async (widgetId: string) => {
   try {
     await ElMessageBox.confirm(
-      "Are you sure you want to remove this widget?",
-      "Confirm Removal",
+      "确定要移除此组件吗？",
+      "确认移除",
       {
         type: "warning",
-        confirmButtonText: "Remove",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "移除",
+        cancelButtonText: "取消",
       },
     );
 
     await dashboardStore.removeWidget(widgetId);
-    ElMessage.success("Widget removed successfully");
+    ElMessage.success("组件移除成功");
   } catch (error) {
     if (error !== "cancel") {
       console.error("Failed to remove widget:", error);
-      ElMessage.error("Failed to remove widget");
+      ElMessage.error("组件移除失败");
     }
   }
 };
@@ -475,41 +456,13 @@ const saveWidgetConfig = async (widgetId: string, config: any) => {
   try {
     await dashboardStore.updateWidget(widgetId, config);
     configDialogVisible.value = false;
-    ElMessage.success("Widget configuration saved");
+    ElMessage.success("组件配置已保存");
   } catch (error) {
     console.error("Failed to save widget config:", error);
-    ElMessage.error("Failed to save configuration");
+    ElMessage.error("配置保存失败");
   }
 };
 
-const onLayoutUpdated = async (layout: any[]) => {
-  if (!currentLayout.value) return;
-
-  try {
-    // Update widget positions
-    const updatedWidgets = currentLayout.value.widgets.map((widget) => {
-      const layoutItem = layout.find((item) => item.i === widget.id);
-      if (layoutItem) {
-        return {
-          ...widget,
-          position: {
-            x: layoutItem.x,
-            y: layoutItem.y,
-            w: layoutItem.w,
-            h: layoutItem.h,
-          },
-        };
-      }
-      return widget;
-    });
-
-    await dashboardStore.updateLayout(currentLayout.value.id, {
-      widgets: updatedWidgets,
-    });
-  } catch (error) {
-    console.error("Failed to update layout:", error);
-  }
-};
 
 const handleGlobalAction = async (command: string) => {
   switch (command) {
@@ -581,22 +534,22 @@ const handleLayoutItemAction = async (
 const showCreateLayoutDialog = async () => {
   try {
     const { value: name } = await ElMessageBox.prompt(
-      "Enter layout name",
-      "Create New Layout",
+      "输入布局名称",
+      "创建新布局",
       {
-        confirmButtonText: "Create",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "创建",
+        cancelButtonText: "取消",
         inputPattern: /^.+$/,
-        inputErrorMessage: "Layout name is required",
+        inputErrorMessage: "布局名称为必填项",
       },
     );
 
     await dashboardStore.createLayout(name);
-    ElMessage.success("Layout created successfully");
+    ElMessage.success("布局创建成功");
   } catch (error) {
     if (error !== "cancel") {
       console.error("Failed to create layout:", error);
-      ElMessage.error("Failed to create layout");
+      ElMessage.error("布局创建失败");
     }
   }
 };
@@ -604,27 +557,27 @@ const showCreateLayoutDialog = async () => {
 const duplicateLayout = async (layout: DashboardLayout) => {
   try {
     const { value: name } = await ElMessageBox.prompt(
-      "Enter name for the duplicated layout",
-      "Duplicate Layout",
+      "输入复制布局的名称",
+      "复制布局",
       {
-        confirmButtonText: "Duplicate",
-        cancelButtonText: "Cancel",
-        inputValue: `${layout.name} (Copy)`,
+        confirmButtonText: "复制",
+        cancelButtonText: "取消",
+        inputValue: `${layout.name} (副本)`,
         inputPattern: /^.+$/,
-        inputErrorMessage: "Layout name is required",
+        inputErrorMessage: "布局名称为必填项",
       },
     );
 
     await dashboardStore.createLayout(
       name,
-      `Copy of ${layout.name}`,
+      `${layout.name}的副本`,
       layout.id,
     );
-    ElMessage.success("Layout duplicated successfully");
+    ElMessage.success("布局复制成功");
   } catch (error) {
     if (error !== "cancel") {
       console.error("Failed to duplicate layout:", error);
-      ElMessage.error("Failed to duplicate layout");
+      ElMessage.error("布局复制失败");
     }
   }
 };
@@ -632,23 +585,23 @@ const duplicateLayout = async (layout: DashboardLayout) => {
 const renameLayout = async (layout: DashboardLayout) => {
   try {
     const { value: name } = await ElMessageBox.prompt(
-      "Enter new layout name",
-      "Rename Layout",
+      "输入新的布局名称",
+      "重命名布局",
       {
-        confirmButtonText: "Rename",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "重命名",
+        cancelButtonText: "取消",
         inputValue: layout.name,
         inputPattern: /^.+$/,
-        inputErrorMessage: "Layout name is required",
+        inputErrorMessage: "布局名称为必填项",
       },
     );
 
     await dashboardStore.updateLayout(layout.id, { name });
-    ElMessage.success("Layout renamed successfully");
+    ElMessage.success("布局重命名成功");
   } catch (error) {
     if (error !== "cancel") {
       console.error("Failed to rename layout:", error);
-      ElMessage.error("Failed to rename layout");
+      ElMessage.error("布局重命名失败");
     }
   }
 };
@@ -667,32 +620,32 @@ const exportLayout = async (layout: DashboardLayout) => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    ElMessage.success("Layout exported successfully");
+    ElMessage.success("布局导出成功");
   } catch (error) {
     console.error("Failed to export layout:", error);
-    ElMessage.error("Failed to export layout");
+    ElMessage.error("布局导出失败");
   }
 };
 
 const deleteLayout = async (layout: DashboardLayout) => {
   try {
     await ElMessageBox.confirm(
-      `Are you sure you want to delete the layout "${layout.name}"?`,
-      "Confirm Deletion",
+      `确定要删除布局 "${layout.name}" 吗？`,
+      "确认删除",
       {
         type: "warning",
-        confirmButtonText: "Delete",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "删除",
+        cancelButtonText: "取消",
       },
     );
 
     await dashboardStore.deleteLayout(layout.id);
-    ElMessage.success("Layout deleted successfully");
+    ElMessage.success("布局删除成功");
     layoutDialogVisible.value = false;
   } catch (error) {
     if (error !== "cancel") {
       console.error("Failed to delete layout:", error);
-      ElMessage.error("Failed to delete layout");
+      ElMessage.error("布局删除失败");
     }
   }
 };
@@ -700,21 +653,21 @@ const deleteLayout = async (layout: DashboardLayout) => {
 const resetLayout = async () => {
   try {
     await ElMessageBox.confirm(
-      "Are you sure you want to reset the current layout to its default state?",
-      "Confirm Reset",
+      "确定要将当前布局重置为默认状态吗？",
+      "确认重置",
       {
         type: "warning",
-        confirmButtonText: "Reset",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "重置",
+        cancelButtonText: "取消",
       },
     );
 
     // Implementation for resetting layout
-    ElMessage.success("Layout reset successfully");
+    ElMessage.success("布局重置成功");
   } catch (error) {
     if (error !== "cancel") {
       console.error("Failed to reset layout:", error);
-      ElMessage.error("Failed to reset layout");
+      ElMessage.error("布局重置失败");
     }
   }
 };
@@ -726,13 +679,22 @@ const formatCategoryName = (category: string): string => {
 };
 
 const formatDate = (date: Date): string => {
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("zh-CN", {
     year: "numeric",
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+};
+
+const getThemeDisplayName = (theme: string): string => {
+  const themeMap: Record<string, string> = {
+    auto: "自动",
+    light: "浅色",
+    dark: "深色",
+  };
+  return themeMap[theme] || theme;
 };
 
 // Lifecycle hooks
@@ -747,7 +709,7 @@ onUnmounted(() => {
 // Watch for edit mode changes
 watch(isEditMode, (editMode) => {
   if (editMode) {
-    ElMessage.info("Edit mode enabled. Drag and resize widgets as needed.");
+    ElMessage.info("编辑模式已启用。可以拖拽和调整组件大小。");
   }
 });
 </script>
@@ -988,6 +950,57 @@ watch(isEditMode, (editMode) => {
         gap: 8px;
       }
     }
+  }
+}
+
+// Simple Widget Grid Styles
+.simple-widget-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+  padding: 16px;
+  width: 100%;
+
+  .widget-item {
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+// Responsive grid
+@media (max-width: 1200px) {
+  .simple-widget-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .simple-widget-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .simple-widget-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .simple-widget-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 8px;
   }
 }
 

@@ -15,19 +15,19 @@
         <template #header>
           <div class="section-header">
             <el-icon><Lock /></el-icon>
-            <span>Password Policy</span>
+            <span>密码策略</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Minimum Length"
+              label="最小长度"
               prop="passwordPolicy.minLength"
               required
             >
               <el-input-number
-                v-model="formData.passwordPolicy.minLength"
+                v-model="passwordMinLength"
                 :min="6"
                 :max="50"
                 @change="updatePasswordPolicy"
@@ -36,11 +36,11 @@
           </el-col>
           <el-col :span="12">
             <el-form-item
-              label="Maximum Age (days)"
+              label="最大使用天数"
               prop="passwordPolicy.maxAge"
             >
               <el-input-number
-                v-model="formData.passwordPolicy.maxAge"
+                v-model="passwordMaxAge"
                 :min="0"
                 :max="365"
                 @change="updatePasswordPolicy"
@@ -51,33 +51,33 @@
 
         <el-row :gutter="24">
           <el-col :span="6">
-            <el-form-item label="Require Uppercase">
+            <el-form-item label="要求大写字母">
               <el-switch
-                v-model="formData.passwordPolicy.requireUppercase"
+                v-model="passwordRequireUppercase"
                 @change="updatePasswordPolicy"
               />
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="Require Lowercase">
+            <el-form-item label="要求小写字母">
               <el-switch
-                v-model="formData.passwordPolicy.requireLowercase"
+                v-model="passwordRequireLowercase"
                 @change="updatePasswordPolicy"
               />
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="Require Numbers">
+            <el-form-item label="要求数字">
               <el-switch
-                v-model="formData.passwordPolicy.requireNumbers"
+                v-model="passwordRequireNumbers"
                 @change="updatePasswordPolicy"
               />
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="Require Special Characters">
+            <el-form-item label="要求特殊字符">
               <el-switch
-                v-model="formData.passwordPolicy.requireSpecialChars"
+                v-model="passwordRequireSpecialChars"
                 @change="updatePasswordPolicy"
               />
             </el-form-item>
@@ -90,13 +90,13 @@
         <template #header>
           <div class="section-header">
             <el-icon><Clock /></el-icon>
-            <span>Session Policy</span>
+            <span>会话策略</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="8">
-            <el-form-item label="JWT Expiration" prop="jwtExpiration" required>
+            <el-form-item label="JWT过期时间" prop="jwtExpiration" required>
               <div class="timeout-input">
                 <el-input-number
                   v-model="formData.jwtExpiration"
@@ -105,17 +105,17 @@
                   :step="15"
                   @change="handleFieldChange('jwtExpiration', $event)"
                 />
-                <span class="timeout-unit">minutes</span>
+                <span class="timeout-unit">分钟</span>
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item
-              label="Max Concurrent Sessions"
+              label="最大并发会话数"
               prop="sessionPolicy.maxConcurrentSessions"
             >
               <el-input-number
-                v-model="formData.sessionPolicy.maxConcurrentSessions"
+                v-model="sessionMaxConcurrent"
                 :min="1"
                 :max="10"
                 @change="updateSessionPolicy"
@@ -123,7 +123,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Two-Factor Authentication">
+            <el-form-item label="双因素认证">
               <el-switch
                 v-model="formData.twoFactorEnabled"
                 @change="handleFieldChange('twoFactorEnabled', $event)"
@@ -138,13 +138,13 @@
         <template #header>
           <div class="section-header">
             <el-icon><Lock /></el-icon>
-            <span>Account Lockout</span>
+            <span>账户锁定</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="8">
-            <el-form-item label="Enable Account Lockout">
+            <el-form-item label="启用账户锁定">
               <el-switch
                 v-model="formData.accountLockoutEnabled"
                 @change="handleFieldChange('accountLockoutEnabled', $event)"
@@ -152,7 +152,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Max Login Attempts" prop="maxLoginAttempts">
+            <el-form-item label="最大登录尝试次数" prop="maxLoginAttempts">
               <el-input-number
                 v-model="formData.maxLoginAttempts"
                 :min="3"
@@ -163,7 +163,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Lockout Duration" prop="lockoutDuration">
+            <el-form-item label="锁定持续时间" prop="lockoutDuration">
               <div class="timeout-input">
                 <el-input-number
                   v-model="formData.lockoutDuration"
@@ -173,7 +173,7 @@
                   :disabled="!formData.accountLockoutEnabled"
                   @change="handleFieldChange('lockoutDuration', $event)"
                 />
-                <span class="timeout-unit">minutes</span>
+                <span class="timeout-unit">分钟</span>
               </div>
             </el-form-item>
           </el-col>
@@ -230,13 +230,161 @@ const formData = ref<UserSettings>({
   lockoutDuration: 30,
 } as any);
 
+// Initialize form data from props
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      formData.value = {
+        ...formData.value, // Keep existing defaults
+        ...newValue, // Override with new values
+        // Ensure required objects are always present
+        passwordPolicy: {
+          ...formData.value.passwordPolicy,
+          ...(newValue.passwordPolicy || {}),
+        },
+        sessionPolicy: {
+          ...formData.value.sessionPolicy,
+          ...(newValue.sessionPolicy || {}),
+        },
+        roles: newValue.roles || [],
+      };
+    }
+  },
+  { immediate: true, deep: true },
+);
+
 const hasChanges = computed(() => {
   return JSON.stringify(formData.value) !== JSON.stringify(props.modelValue);
 });
 
+// Computed properties for safe two-way binding
+const passwordMinLength = computed({
+  get: () => formData.value.passwordPolicy?.minLength || 8,
+  set: (value) => {
+    if (!formData.value.passwordPolicy) {
+      formData.value.passwordPolicy = {
+        minLength: 8,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: true,
+        maxAge: 90,
+        preventReuse: 5,
+      };
+    }
+    formData.value.passwordPolicy.minLength = value;
+  }
+});
+
+const passwordMaxAge = computed({
+  get: () => formData.value.passwordPolicy?.maxAge || 90,
+  set: (value) => {
+    if (!formData.value.passwordPolicy) {
+      formData.value.passwordPolicy = {
+        minLength: 8,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: true,
+        maxAge: 90,
+        preventReuse: 5,
+      };
+    }
+    formData.value.passwordPolicy.maxAge = value;
+  }
+});
+
+const passwordRequireUppercase = computed({
+  get: () => formData.value.passwordPolicy?.requireUppercase || false,
+  set: (value) => {
+    if (!formData.value.passwordPolicy) {
+      formData.value.passwordPolicy = {
+        minLength: 8,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: true,
+        maxAge: 90,
+        preventReuse: 5,
+      };
+    }
+    formData.value.passwordPolicy.requireUppercase = value;
+  }
+});
+
+const passwordRequireLowercase = computed({
+  get: () => formData.value.passwordPolicy?.requireLowercase || false,
+  set: (value) => {
+    if (!formData.value.passwordPolicy) {
+      formData.value.passwordPolicy = {
+        minLength: 8,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: true,
+        maxAge: 90,
+        preventReuse: 5,
+      };
+    }
+    formData.value.passwordPolicy.requireLowercase = value;
+  }
+});
+
+const passwordRequireNumbers = computed({
+  get: () => formData.value.passwordPolicy?.requireNumbers || false,
+  set: (value) => {
+    if (!formData.value.passwordPolicy) {
+      formData.value.passwordPolicy = {
+        minLength: 8,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: true,
+        maxAge: 90,
+        preventReuse: 5,
+      };
+    }
+    formData.value.passwordPolicy.requireNumbers = value;
+  }
+});
+
+const passwordRequireSpecialChars = computed({
+  get: () => formData.value.passwordPolicy?.requireSpecialChars || false,
+  set: (value) => {
+    if (!formData.value.passwordPolicy) {
+      formData.value.passwordPolicy = {
+        minLength: 8,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: true,
+        maxAge: 90,
+        preventReuse: 5,
+      };
+    }
+    formData.value.passwordPolicy.requireSpecialChars = value;
+  }
+});
+
+const sessionMaxConcurrent = computed({
+  get: () => formData.value.sessionPolicy?.maxConcurrentSessions || 3,
+  set: (value) => {
+    if (!formData.value.sessionPolicy) {
+      formData.value.sessionPolicy = {
+        maxConcurrentSessions: 3,
+        idleTimeout: 30,
+        absoluteTimeout: 480,
+        requireReauth: false,
+      };
+    }
+    formData.value.sessionPolicy.maxConcurrentSessions = value;
+  }
+});
+
 const formRules = computed(() => ({
   "passwordPolicy.minLength": [
-    { required: true, message: "Minimum length is required", trigger: "blur" },
+    { required: true, message: "最小长度为必填项", trigger: "blur" },
     {
       validator: (
         _rule: any,
@@ -244,7 +392,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 6 || value > 50) {
-          callback(new Error("Must be between 6 and 50"));
+          callback(new Error("必须在6咁50之间"));
         } else {
           callback();
         }
@@ -253,7 +401,7 @@ const formRules = computed(() => ({
     },
   ],
   jwtExpiration: [
-    { required: true, message: "JWT expiration is required", trigger: "blur" },
+    { required: true, message: "JWT过期时间为必填项", trigger: "blur" },
     {
       validator: (
         _rule: any,
@@ -261,7 +409,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 15 || value > 1440) {
-          callback(new Error("Must be between 15 and 1440 minutes"));
+          callback(new Error("必须在15到1440分钟之间"));
         } else {
           callback();
         }

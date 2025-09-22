@@ -6,8 +6,8 @@
 // Import variables and mixins first
 @use 'variables' as *;
 
-// Import global styles
-@import 'global';
+// Import global styles using modern @use
+@use 'global';
 
 // Element Plus theme customization
 :root {

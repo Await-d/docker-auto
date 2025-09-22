@@ -7,7 +7,7 @@
           <Box />
         </el-icon>
         <h2 class="initializing-title">Docker Auto</h2>
-        <p class="initializing-text">Initializing application...</p>
+        <p class="initializing-text">正在初始化应用程序...</p>
         <div class="initializing-spinner">
           <el-icon class="is-loading" :size="24">
             <Loading />
@@ -29,16 +29,16 @@
         <el-icon class="error-icon" :size="64" color="var(--el-color-danger)">
           <WarningFilled />
         </el-icon>
-        <h2 class="error-title">Something went wrong</h2>
+        <h2 class="error-title">出现了错误</h2>
         <p class="error-message">
           {{ globalError }}
         </p>
         <div class="error-actions">
           <el-button type="primary" @click="reloadApp">
-            Reload Application
+            重新加载应用
           </el-button>
           <el-button @click="clearError">
-Try Again
+重试
 </el-button>
         </div>
       </div>
@@ -47,26 +47,26 @@ Try Again
     <!-- Debug panel (development only) -->
     <div v-if="showDebugPanel" class="debug-panel">
       <div class="debug-header">
-        <span>Debug Panel</span>
+        <span>调试面板</span>
         <el-button size="small" text @click="toggleDebugPanel">
           <el-icon><Close /></el-icon>
         </el-button>
       </div>
       <div class="debug-content">
         <div class="debug-item">
-          <strong>Environment:</strong> {{ env.MODE }}
+          <strong>环境:</strong> {{ env.MODE }}
         </div>
         <div class="debug-item">
-<strong>Route:</strong> {{ currentRoute }}
+<strong>路由:</strong> {{ currentRoute }}
 </div>
         <div class="debug-item">
-          <strong>User:</strong> {{ user?.username || "Not logged in" }}
+          <strong>用户:</strong> {{ user?.username || "未登录" }}
         </div>
         <div class="debug-item">
-<strong>Theme:</strong> {{ theme }}
+<strong>主题:</strong> {{ theme }}
 </div>
         <div class="debug-item">
-          <strong>Screen Size:</strong> {{ screenSize }}
+          <strong>屏幕尺寸:</strong> {{ screenSize }}
         </div>
       </div>
     </div>
@@ -146,7 +146,7 @@ const toggleDebugPanel = () => {
 // Initialize application
 const initializeApp = async () => {
   try {
-    console.log("🚀 Initializing Docker Auto-Update System...");
+    console.log("🚀 正在初始化Docker自动更新系统...");
 
     // Initialize app store
     appStore.initialize();
@@ -159,25 +159,29 @@ const initializeApp = async () => {
       authStore.startTokenCheck();
     }
 
-    console.log("✅ Application initialized successfully");
+    console.log("✅ 应用程序初始化成功");
   } catch (error: any) {
-    console.error("❌ Failed to initialize application:", error);
+    console.error("❌ 应用程序初始化失败:", error);
     hasGlobalError.value = true;
-    globalError.value = error.message || "Failed to initialize application";
+    globalError.value = error.message || "应用程序初始化失败";
   } finally {
     // Add a small delay for better UX
     setTimeout(() => {
       isInitializing.value = false;
+      // Mark app as fully initialized after UI transition
+      setTimeout(() => {
+        isAppInitialized.value = true;
+      }, 500);
     }, 1000);
   }
 };
 
 // Global error handler
 onErrorCaptured((error: any, _instance: any, info: string) => {
-  console.error("Global error captured:", error, info);
+  console.error("捕获到全局错误:", error, info);
 
   hasGlobalError.value = true;
-  globalError.value = error.message || "An unexpected error occurred";
+  globalError.value = error.message || "发生了意外错误";
 
   // Report error to monitoring service
   if (env.PROD) {
@@ -214,13 +218,19 @@ const handleKeyboardShortcuts = (event: KeyboardEvent) => {
 };
 
 // Handle app visibility changes
+const isAppInitialized = ref(false);
 const handleVisibilityChange = () => {
+  // Skip visibility handling during initial app load
+  if (!isAppInitialized.value) {
+    return;
+  }
+
   if (document.hidden) {
     // App became hidden - pause timers, etc.
-    console.log("App hidden");
+    console.debug("应用程序已隐藏");
   } else {
     // App became visible - resume timers, check for updates, etc.
-    console.log("App visible");
+    console.debug("应用程序已显示");
 
     // Check authentication status when app becomes visible
     if (authStore.isAuthenticated) {
@@ -231,13 +241,19 @@ const handleVisibilityChange = () => {
 
 // Handle online/offline status
 const handleOnline = () => {
-  ElMessage.success("Connection restored");
-  console.log("App back online");
+  // Only show message if app is initialized and was previously offline
+  if (isAppInitialized.value && !navigator.onLine) {
+    ElMessage.success("连接已恢复");
+    console.log("应用程序重新联机");
+  }
 };
 
 const handleOffline = () => {
-  ElMessage.warning("Connection lost - working offline");
-  console.log("App went offline");
+  // Only show message if app is initialized
+  if (isAppInitialized.value) {
+    ElMessage.warning("连接中断 - 离线工作");
+    console.log("应用程序已离线");
+  }
 };
 
 // Watch for auth state changes
@@ -295,6 +311,8 @@ onUnmounted(() => {
   color: var(--el-text-color-primary);
   font-family: $font-family-base;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   &.app-initializing {
     overflow: hidden;

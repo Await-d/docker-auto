@@ -21,7 +21,7 @@
         <el-button
 :disabled="!hasChanges || saving" @click="handleReset"
 >
-          Reset
+          重置
         </el-button>
         <el-button
           v-if="testable"
@@ -30,7 +30,7 @@
           :disabled="!isValid || saving"
           @click="handleTest"
         >
-          Test Configuration
+          测试配置
         </el-button>
         <el-button
           type="primary"
@@ -38,7 +38,7 @@
           :disabled="!hasChanges || !isValid"
           @click="handleSave"
         >
-          Save
+          保存
         </el-button>
       </slot>
     </div>

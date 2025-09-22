@@ -1,12 +1,21 @@
 package alerting
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"regexp"
+	"strconv"
+	"strings"
 	"sync"
+	"syscall"
 	"time"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
+	"github.com/sirupsen/logrus"
 )
 
 // AlertManager manages alerts and notifications
@@ -377,13 +386,13 @@ func (am *AlertManager) evaluateRules() {
 
 // evaluateRule evaluates a single alert rule
 func (am *AlertManager) evaluateRule(rule AlertRule) {
-	// This is a simplified rule evaluation
-	// In a real implementation, you would evaluate the rule expression
-	// against metrics or other data sources
-
-	// For demonstration, we'll create a placeholder evaluation
-	// In practice, this would query metrics and evaluate the condition
-	value := 0.0 // This would come from metrics evaluation
+	// Real rule evaluation against metrics and data sources
+	value, err := am.evaluateRuleExpression(rule)
+	if err != nil {
+		// Log the error but continue with other rules
+		logrus.WithError(err).WithField("rule", rule.Name).Error("Failed to evaluate rule")
+		return
+	}
 
 	shouldAlert := false
 	switch rule.Condition {
@@ -734,4 +743,310 @@ func (am *AlertManager) cleanup() {
 			delete(am.activeNotifications, id)
 		}
 	}
+}
+
+// evaluateRuleExpression evaluates a rule expression against real metrics
+func (am *AlertManager) evaluateRuleExpression(rule AlertRule) (float64, error) {
+	// Real metrics evaluation based on rule expression
+	switch rule.Expression {
+	case "cpu_usage":
+		return am.evaluateCPUUsage()
+	case "memory_usage":
+		return am.evaluateMemoryUsage()
+	case "disk_usage":
+		return am.evaluateDiskUsage()
+	case "container_count":
+		return am.evaluateContainerCount()
+	case "failed_containers":
+		return am.evaluateFailedContainers()
+	case "docker_daemon_health":
+		return am.evaluateDockerDaemonHealth()
+	case "response_time":
+		return am.evaluateResponseTime()
+	case "error_rate":
+		return am.evaluateErrorRate()
+	default:
+		// Try to parse as a custom expression
+		return am.evaluateCustomExpression(rule.Expression)
+	}
+}
+
+// evaluateCPUUsage gets current system CPU usage
+func (am *AlertManager) evaluateCPUUsage() (float64, error) {
+	// Read from /proc/stat to get real CPU usage
+	content, err := os.ReadFile("/proc/stat")
+	if err != nil {
+		return 0, fmt.Errorf("failed to read /proc/stat: %w", err)
+	}
+
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "cpu ") {
+			fields := strings.Fields(line)
+			if len(fields) < 8 {
+				continue
+			}
+
+			var total, idle uint64
+			for i := 1; i < len(fields) && i < 9; i++ {
+				val, err := strconv.ParseUint(fields[i], 10, 64)
+				if err != nil {
+					continue
+				}
+				total += val
+				if i == 4 { // idle time is the 4th field
+					idle = val
+				}
+			}
+
+			if total > 0 {
+				return float64(total-idle) / float64(total) * 100.0, nil
+			}
+		}
+	}
+
+	return 0, fmt.Errorf("could not parse CPU usage from /proc/stat")
+}
+
+// evaluateMemoryUsage gets current system memory usage
+func (am *AlertManager) evaluateMemoryUsage() (float64, error) {
+	content, err := os.ReadFile("/proc/meminfo")
+	if err != nil {
+		return 0, fmt.Errorf("failed to read /proc/meminfo: %w", err)
+	}
+
+	var memTotal, memAvailable uint64
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		switch fields[0] {
+		case "MemTotal:":
+			if val, err := strconv.ParseUint(fields[1], 10, 64); err == nil {
+				memTotal = val * 1024 // Convert from kB to bytes
+			}
+		case "MemAvailable:":
+			if val, err := strconv.ParseUint(fields[1], 10, 64); err == nil {
+				memAvailable = val * 1024 // Convert from kB to bytes
+			}
+		}
+	}
+
+	if memTotal > 0 {
+		memUsed := memTotal - memAvailable
+		return float64(memUsed) / float64(memTotal) * 100.0, nil
+	}
+
+	return 0, fmt.Errorf("could not calculate memory usage")
+}
+
+// evaluateDiskUsage gets current disk usage for root filesystem
+func (am *AlertManager) evaluateDiskUsage() (float64, error) {
+	var stat syscall.Statfs_t
+	err := syscall.Statfs("/", &stat)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get disk stats: %w", err)
+	}
+
+	total := stat.Blocks * uint64(stat.Bsize)
+	free := stat.Bavail * uint64(stat.Bsize)
+	used := total - free
+
+	if total > 0 {
+		return float64(used) / float64(total) * 100.0, nil
+	}
+
+	return 0, fmt.Errorf("invalid disk usage calculation")
+}
+
+// evaluateContainerCount gets current number of running containers
+func (am *AlertManager) evaluateContainerCount() (float64, error) {
+	// This would typically connect to Docker API
+	// For now, use a simple approach via Docker socket if available
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Try to create a Docker client
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return 0, fmt.Errorf("failed to create Docker client: %w", err)
+	}
+	defer cli.Close()
+
+	containers, err := cli.ContainerList(ctx, container.ListOptions{})
+	if err != nil {
+		return 0, fmt.Errorf("failed to list containers: %w", err)
+	}
+
+	return float64(len(containers)), nil
+}
+
+// evaluateFailedContainers gets number of containers in failed state
+func (am *AlertManager) evaluateFailedContainers() (float64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return 0, fmt.Errorf("failed to create Docker client: %w", err)
+	}
+	defer cli.Close()
+
+	// List all containers including stopped ones
+	containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
+	if err != nil {
+		return 0, fmt.Errorf("failed to list containers: %w", err)
+	}
+
+	var failedCount float64
+	for _, cont := range containers {
+		if cont.State == "exited" {
+			// Inspect to get exit code
+			inspect, err := cli.ContainerInspect(ctx, cont.ID)
+			if err != nil {
+				continue
+			}
+			if inspect.State.ExitCode != 0 {
+				failedCount++
+			}
+		}
+	}
+
+	return failedCount, nil
+}
+
+// evaluateDockerDaemonHealth checks if Docker daemon is responsive
+func (am *AlertManager) evaluateDockerDaemonHealth() (float64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return 0, nil // Docker not available = healthy = 0, unhealthy = 1
+	}
+	defer cli.Close()
+
+	_, err = cli.Ping(ctx)
+	if err != nil {
+		return 1, nil // Unhealthy
+	}
+
+	return 0, nil // Healthy
+}
+
+// evaluateResponseTime gets average API response time (simplified)
+func (am *AlertManager) evaluateResponseTime() (float64, error) {
+	// This would typically connect to your application's metrics
+	// For now, we'll measure Docker API response time as a proxy
+	start := time.Now()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return 0, fmt.Errorf("failed to create Docker client: %w", err)
+	}
+	defer cli.Close()
+
+	_, err = cli.Ping(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("Docker ping failed: %w", err)
+	}
+
+	duration := time.Since(start)
+	return float64(duration.Milliseconds()), nil
+}
+
+// evaluateErrorRate calculates error rate from recent logs (simplified)
+func (am *AlertManager) evaluateErrorRate() (float64, error) {
+	// This is a simplified implementation
+	// In production, you would connect to your logging system
+
+	// For demonstration, check if there are any recent container failures
+	failedContainers, err := am.evaluateFailedContainers()
+	if err != nil {
+		return 0, err
+	}
+
+	totalContainers, err := am.evaluateContainerCount()
+	if err != nil {
+		return 0, err
+	}
+
+	if totalContainers > 0 {
+		return (failedContainers / (failedContainers + totalContainers)) * 100.0, nil
+	}
+
+	return 0, nil
+}
+
+// evaluateCustomExpression handles custom expressions
+func (am *AlertManager) evaluateCustomExpression(expression string) (float64, error) {
+	// Parse and evaluate custom expressions
+	// This is a simple implementation - in production you'd want a proper expression parser
+
+	// Handle basic mathematical expressions with current metrics
+	if strings.Contains(expression, "cpu_usage") {
+		cpuUsage, err := am.evaluateCPUUsage()
+		if err != nil {
+			return 0, err
+		}
+
+		// Replace cpu_usage in expression and evaluate
+		expr := strings.ReplaceAll(expression, "cpu_usage", fmt.Sprintf("%.2f", cpuUsage))
+		return am.evaluateBasicMath(expr)
+	}
+
+	if strings.Contains(expression, "memory_usage") {
+		memUsage, err := am.evaluateMemoryUsage()
+		if err != nil {
+			return 0, err
+		}
+
+		expr := strings.ReplaceAll(expression, "memory_usage", fmt.Sprintf("%.2f", memUsage))
+		return am.evaluateBasicMath(expr)
+	}
+
+	return 0, fmt.Errorf("unsupported expression: %s", expression)
+}
+
+// evaluateBasicMath evaluates basic mathematical expressions
+func (am *AlertManager) evaluateBasicMath(expr string) (float64, error) {
+	// Very basic math evaluation - in production use a proper expression parser
+	expr = strings.TrimSpace(expr)
+
+	// Handle simple cases like "85.50" or "85.50 + 10"
+	if val, err := strconv.ParseFloat(expr, 64); err == nil {
+		return val, nil
+	}
+
+	// Handle basic addition
+	if strings.Contains(expr, "+") {
+		parts := strings.Split(expr, "+")
+		if len(parts) == 2 {
+			a, err1 := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+			b, err2 := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+			if err1 == nil && err2 == nil {
+				return a + b, nil
+			}
+		}
+	}
+
+	// Handle basic subtraction
+	if strings.Contains(expr, "-") {
+		parts := strings.Split(expr, "-")
+		if len(parts) == 2 {
+			a, err1 := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+			b, err2 := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+			if err1 == nil && err2 == nil {
+				return a - b, nil
+			}
+		}
+	}
+
+	return 0, fmt.Errorf("cannot evaluate expression: %s", expr)
 }

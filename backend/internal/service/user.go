@@ -89,14 +89,29 @@ func (s *UserService) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 
 	// Log successful login
 	s.logUserActivity(user.ID, "login_success", "User logged in successfully", map[string]interface{}{
-		"remember": req.Remember,
+		"device_id": req.DeviceID,
 	})
 
+	// Add permissions to user and token info
+	permissions := s.jwtManager.GetUserPermissions(user) // Get permissions based on role
+	user.Permissions = permissions // Set permissions on user object for response
+
 	return &LoginResponse{
-		User:         s.userToResponse(user),
-		AccessToken:  tokenPair.AccessToken,
-		RefreshToken: tokenPair.RefreshToken,
-		ExpiresIn:    tokenPair.ExpiresIn,
+		User:      user,
+		TokenInfo: &utils.TokenInfo{
+			AccessToken:  tokenPair.AccessToken,
+			RefreshToken: tokenPair.RefreshToken,
+			TokenType:    tokenPair.TokenType,
+			ExpiresIn:    tokenPair.ExpiresIn,
+			ExpiresAt:    tokenPair.ExpiresAt,
+			Permissions:  permissions,
+			UserInfo: map[string]interface{}{
+				"id":       user.ID,
+				"username": user.Username,
+				"email":    user.Email,
+				"role":     user.Role,
+			},
+		},
 	}, nil
 }
 
@@ -274,6 +289,8 @@ func (s *UserService) GetCurrentUser(ctx context.Context, userID int64) (*model.
 
 	// Check cache first
 	if cachedUser := s.getCachedUser(userID); cachedUser != nil {
+		// Add permissions to cached user
+		cachedUser.Permissions = s.jwtManager.GetUserPermissions(cachedUser)
 		return cachedUser, nil
 	}
 
@@ -281,6 +298,9 @@ func (s *UserService) GetCurrentUser(ctx context.Context, userID int64) (*model.
 	if err != nil {
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
+
+	// Add permissions to user
+	user.Permissions = s.jwtManager.GetUserPermissions(user)
 
 	// Cache user
 	s.cacheUser(user)

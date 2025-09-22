@@ -36,7 +36,7 @@
       <div class="progress-actions">
         <el-tooltip
           v-if="update.canPause && update.status === 'running'"
-          content="Pause Update"
+          content="暂停更新"
         >
           <el-button
             size="small"
@@ -47,7 +47,7 @@
         </el-tooltip>
 
         <el-tooltip
-v-if="update.status === 'paused'" content="Resume Update"
+v-if="update.status === 'paused'" content="恢复更新"
 >
           <el-button
             size="small"
@@ -59,7 +59,7 @@ v-if="update.status === 'paused'" content="Resume Update"
         </el-tooltip>
 
         <el-tooltip
-v-if="update.canCancel" content="Cancel Update"
+v-if="update.canCancel" content="取消更新"
 >
           <el-button
             size="small"
@@ -76,11 +76,11 @@ v-if="update.canCancel" content="Cancel Update"
             <el-dropdown-menu>
               <el-dropdown-item @click="showLogs = true">
                 <el-icon><Document /></el-icon>
-                View Logs
+                查看日志
               </el-dropdown-item>
               <el-dropdown-item @click="showDetails = true">
                 <el-icon><View /></el-icon>
-                View Details
+                查看详情
               </el-dropdown-item>
               <!-- Retry option removed as RunningUpdate doesn't include failed status -->
             </el-dropdown-menu>
@@ -94,7 +94,7 @@ v-if="update.canCancel" content="Cancel Update"
       <div class="progress-info">
         <div class="progress-text">
           <span class="current-step">
-            Step {{ update.currentStep + 1 }} of {{ update.totalSteps }}
+            第 {{ update.currentStep + 1 }} 步，共 {{ update.totalSteps }} 步
           </span>
           <span class="step-name">
             {{ getCurrentStepName() }}
@@ -206,7 +206,7 @@ v-if="update.canCancel" content="Cancel Update"
                     :loading="retryingStep === step.id"
                     @click="retryStep(step)"
                   >
-                    Retry Step
+                    重试步骤
                   </el-button>
                   <span class="retry-count">
                     Attempt {{ (step.retryCount || 0) + 1 }} of
@@ -221,12 +221,12 @@ v-if="update.canCancel" content="Cancel Update"
                 class="step-logs"
               >
                 <div class="logs-header">
-                  <span>Step Logs</span>
+                  <span>步骤日志</span>
                   <el-button
 text size="small"
 @click="showStepLogs = null"
 >
-                    Hide
+                    隐藏
                   </el-button>
                 </div>
                 <div class="logs-content">
@@ -245,7 +245,7 @@ text size="small"
 text size="small"
 @click="showStepLogs = step.id"
 >
-                  View Step Logs ({{ step.logs.length }})
+                  查看步骤日志 ({{ step.logs.length }})
                 </el-button>
               </div>
             </div>
@@ -256,31 +256,31 @@ text size="small"
 
     <!-- Metrics (if available) -->
     <div v-if="update.metrics && expanded" class="update-metrics">
-      <h4>Performance Metrics</h4>
+      <h4>性能指标</h4>
       <div class="metrics-grid">
         <div class="metric-item">
-          <span class="metric-label">Download Speed</span>
+          <span class="metric-label">下载速度</span>
           <span class="metric-value">
             {{ formatSpeed(update.metrics.downloadSpeed) }}
           </span>
         </div>
 
         <div class="metric-item">
-          <span class="metric-label">CPU Usage</span>
+          <span class="metric-label">CPU 使用率</span>
           <span class="metric-value">
             {{ Math.round(update.metrics.cpuUsage) }}%
           </span>
         </div>
 
         <div class="metric-item">
-          <span class="metric-label">Memory Usage</span>
+          <span class="metric-label">内存使用量</span>
           <span class="metric-value">
             {{ formatBytes(update.metrics.memoryUsage) }}
           </span>
         </div>
 
         <div class="metric-item">
-          <span class="metric-label">Disk I/O</span>
+          <span class="metric-label">磁盘 I/O</span>
           <span class="metric-value">
             {{ formatSpeed(update.metrics.diskIo) }}
           </span>
@@ -297,7 +297,7 @@ text size="small"
           :icon="expanded ? 'ArrowUp' : 'ArrowDown'"
           @click="toggleExpanded"
         >
-          {{ expanded ? "Less Details" : "More Details" }}
+          {{ expanded ? "收起详情" : "展开详情" }}
         </el-button>
       </div>
 
@@ -312,7 +312,7 @@ text size="small"
     <!-- Logs Dialog -->
     <el-dialog
       v-model="showLogs"
-      title="Update Logs"
+      title="更新日志"
       width="80%"
       :before-close="handleLogsClose"
     >
@@ -325,7 +325,7 @@ text size="small"
 
     <!-- Details Dialog -->
     <el-dialog
-v-model="showDetails" title="Update Details"
+v-model="showDetails" title="更新详情"
 width="60%"
 >
       <UpdateDetailsViewer :update="update" />
@@ -384,11 +384,11 @@ const toggleExpanded = () => {
 const handleCancel = async () => {
   try {
     await ElMessageBox.confirm(
-      "Are you sure you want to cancel this update? This may leave the container in an inconsistent state.",
-      "Cancel Update",
+      "您确定要取消此更新吗？这可能会导致容器处于不一致的状态。",
+      "取消更新",
       {
-        confirmButtonText: "Yes, Cancel",
-        cancelButtonText: "No",
+        confirmButtonText: "是，取消",
+        cancelButtonText: "不",
         type: "warning",
       },
     );
@@ -407,7 +407,7 @@ const retryStep = async (step: UpdateStep) => {
   try {
     // This would call an API to retry the specific step
     // await updatesAPI.retryStep(props.update.id, step.id)
-    console.log("Retrying step:", step.id);
+    console.log("重试步骤:", step.id);
   } catch (error) {
     console.error("Failed to retry step:", error);
   } finally {
@@ -417,9 +417,9 @@ const retryStep = async (step: UpdateStep) => {
 
 const getCurrentStepName = () => {
   if (props.update.currentStep < props.update.steps.length) {
-    return props.update.steps[props.update.currentStep]?.name || "Unknown";
+    return props.update.steps[props.update.currentStep]?.name || "未知";
   }
-  return "Completed";
+  return "已完成";
 };
 
 const getStatusTagType = (status: string) => {

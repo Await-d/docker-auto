@@ -4,16 +4,16 @@
       <el-icon :size="48">
         <Refresh />
       </el-icon>
-      <h3>Update Activity</h3>
-      <p>Recent updates and update statistics will be displayed here.</p>
+      <h3>更新活动</h3>
+      <p>最近的更新和更新统计将在此处显示。</p>
       <div class="mock-data">
         <div class="update-item">
           <span class="update-name">nginx:latest</span>
-          <span class="update-status success">Updated</span>
+          <span class="update-status success">已更新</span>
         </div>
         <div class="update-item">
           <span class="update-name">postgres:14</span>
-          <span class="update-status pending">Pending</span>
+          <span class="update-status pending">等待中</span>
         </div>
       </div>
     </div>

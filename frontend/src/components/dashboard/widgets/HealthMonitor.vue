@@ -4,20 +4,20 @@
       <el-icon :size="48">
         <CircleCheckFilled />
       </el-icon>
-      <h3>Health Monitor</h3>
-      <p>Service health and availability metrics will be displayed here.</p>
+      <h3>健康监控</h3>
+      <p>服务健康状态和可用性指标将在此处显示。</p>
       <div class="mock-data">
         <div class="health-item">
-          <span class="service-name">Web Server</span>
-          <span class="health-status healthy">Healthy</span>
+          <span class="service-name">Web服务器</span>
+          <span class="health-status healthy">健康</span>
         </div>
         <div class="health-item">
-          <span class="service-name">Database</span>
-          <span class="health-status healthy">Healthy</span>
+          <span class="service-name">数据库</span>
+          <span class="health-status healthy">健康</span>
         </div>
         <div class="health-item">
-          <span class="service-name">Cache</span>
-          <span class="health-status warning">Warning</span>
+          <span class="service-name">缓存</span>
+          <span class="health-status warning">警告</span>
         </div>
       </div>
     </div>

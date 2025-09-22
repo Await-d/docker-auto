@@ -3,6 +3,10 @@
  * Global styling configuration for the Docker Auto-Update System
  */
 
+// Import SASS modules for modern functions (must be at top)
+@use "sass:math";
+@use "sass:color";
+
 // ================================
 // Color System
 // ================================
@@ -367,15 +371,15 @@ $input-height-mini: 28px;
 
   &::-webkit-scrollbar-track {
     background: $track-color;
-    border-radius: $size / 2;
+    border-radius: math.div($size, 2);
   }
 
   &::-webkit-scrollbar-thumb {
     background: $thumb-color;
-    border-radius: $size / 2;
+    border-radius: math.div($size, 2);
 
     &:hover {
-      background: darken($thumb-color, 10%);
+      background: color.scale($thumb-color, $lightness: -10%);
     }
   }
 

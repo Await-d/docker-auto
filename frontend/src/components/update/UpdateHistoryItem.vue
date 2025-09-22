@@ -73,7 +73,7 @@ class="update-history-item" :class="[viewMode, `status-${item.status}`]"
           :icon="View"
           @click="$emit('view-details', item)"
         >
-          Details
+          详情
         </el-button>
 
         <el-button
@@ -82,7 +82,7 @@ class="update-history-item" :class="[viewMode, `status-${item.status}`]"
           :icon="Document"
           @click="$emit('view-logs', item)"
         >
-          Logs
+          日志
         </el-button>
 
         <el-button
@@ -92,7 +92,7 @@ class="update-history-item" :class="[viewMode, `status-${item.status}`]"
           type="warning"
           @click="$emit('rollback', item)"
         >
-          Rollback
+          回滚
         </el-button>
 
         <el-button
@@ -102,7 +102,7 @@ class="update-history-item" :class="[viewMode, `status-${item.status}`]"
           type="primary"
           @click="$emit('retry', item)"
         >
-          Retry
+          重试
         </el-button>
       </div>
     </div>

@@ -543,6 +543,9 @@ export interface UpdateFilter {
     min?: number;
     max?: number;
   };
+  // Additional fields for filtering
+  containerIds?: string[];
+  updateIds?: string[];
 }
 
 export interface UpdateSort {

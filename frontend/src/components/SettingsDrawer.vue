@@ -2,11 +2,11 @@
   <div class="settings-drawer">
     <!-- Settings drawer placeholder -->
     <el-drawer
-v-model="visible" title="Settings"
+v-model="visible" title="设置"
 direction="rtl" size="320px"
 >
       <div class="settings-content">
-        <p>Settings panel coming soon...</p>
+        <p>设置面板即将推出...</p>
       </div>
     </el-drawer>
   </div>

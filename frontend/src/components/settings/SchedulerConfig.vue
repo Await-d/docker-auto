@@ -15,14 +15,14 @@
         <template #header>
           <div class="section-header">
             <el-icon><Timer /></el-icon>
-            <span>Global Scheduler Settings</span>
+            <span>全局调度器设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Max Concurrent Tasks"
+              label="最大并发任务数"
               prop="maxConcurrentTasks"
               required
             >
@@ -36,7 +36,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item
-              label="Default Timeout"
+              label="默认超时时间"
               prop="defaultTimeout"
               required
             >
@@ -48,7 +48,7 @@
                   :step="30"
                   @change="handleFieldChange('defaultTimeout', $event)"
                 />
-                <span class="timeout-unit">seconds</span>
+                <span class="timeout-unit">秒</span>
               </div>
             </el-form-item>
           </el-col>
@@ -56,21 +56,21 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Dead Letter Queue">
+            <el-form-item label="死信队列">
               <el-switch
                 v-model="formData.deadLetterQueueEnabled"
                 @change="handleFieldChange('deadLetterQueueEnabled', $event)"
               />
               <div class="field-help">
-Store failed tasks for manual review
+存储失败任务以供手动审查
 </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Default Timezone" prop="timezone" required>
+            <el-form-item label="默认时区" prop="timezone" required>
               <el-select
                 v-model="formData.timezone"
-                placeholder="Select timezone"
+                placeholder="选择时区"
                 @change="handleFieldChange('timezone', $event)"
               >
                 <el-option label="UTC" value="UTC" />
@@ -88,13 +88,13 @@ Store failed tasks for manual review
         <template #header>
           <div class="section-header">
             <el-icon><Refresh /></el-icon>
-            <span>Retry Policy</span>
+            <span>重试策略</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="8">
-            <el-form-item label="Enable Retries">
+            <el-form-item label="启用重试">
               <el-switch
                 v-model="formData.retryPolicy.enabled"
                 @change="updateRetryPolicy"
@@ -102,7 +102,7 @@ Store failed tasks for manual review
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Max Attempts">
+            <el-form-item label="最大尝试次数">
               <el-input-number
                 v-model="formData.retryPolicy.maxAttempts"
                 :min="1"
@@ -113,15 +113,15 @@ Store failed tasks for manual review
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Backoff Strategy">
+            <el-form-item label="退避策略">
               <el-select
                 v-model="formData.retryPolicy.backoffStrategy"
                 :disabled="!formData.retryPolicy.enabled"
                 @change="updateRetryPolicy"
               >
-                <el-option label="Linear" value="linear" />
-                <el-option label="Exponential" value="exponential" />
-                <el-option label="Fixed" value="fixed" />
+                <el-option label="线性" value="linear" />
+                <el-option label="指数" value="exponential" />
+                <el-option label="固定" value="fixed" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -133,14 +133,14 @@ Store failed tasks for manual review
         <template #header>
           <div class="section-header">
             <el-icon><Monitor /></el-icon>
-            <span>Performance Monitoring</span>
+            <span>性能监控</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Metrics Retention"
+              label="指标保留期"
               prop="performanceMonitoring.metricsRetention"
               required
             >
@@ -151,13 +151,13 @@ Store failed tasks for manual review
                   :max="365"
                   @change="updatePerformanceMonitoring"
                 />
-                <span class="timeout-unit">days</span>
+                <span class="timeout-unit">天</span>
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item
-              label="Health Check Interval"
+              label="健康检查间隔"
               prop="performanceMonitoring.healthCheckInterval"
               required
             >
@@ -169,7 +169,7 @@ Store failed tasks for manual review
                   :step="30"
                   @change="updatePerformanceMonitoring"
                 />
-                <span class="timeout-unit">seconds</span>
+                <span class="timeout-unit">秒</span>
               </div>
             </el-form-item>
           </el-col>
@@ -234,7 +234,7 @@ const formRules = computed(() => ({
   maxConcurrentTasks: [
     {
       required: true,
-      message: "Max concurrent tasks is required",
+      message: "最大并发任务数为必填项",
       trigger: "blur",
     },
     {
@@ -244,7 +244,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 1 || value > 50) {
-          callback(new Error("Must be between 1 and 50"));
+          callback(new Error("必须在1咁50之间"));
         } else {
           callback();
         }
@@ -253,7 +253,7 @@ const formRules = computed(() => ({
     },
   ],
   defaultTimeout: [
-    { required: true, message: "Default timeout is required", trigger: "blur" },
+    { required: true, message: "默认超时时间为必填项", trigger: "blur" },
     {
       validator: (
         _rule: any,
@@ -261,7 +261,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 30 || value > 7200) {
-          callback(new Error("Must be between 30 and 7200 seconds"));
+          callback(new Error("必须在30到7200秒之间"));
         } else {
           callback();
         }
@@ -270,7 +270,7 @@ const formRules = computed(() => ({
     },
   ],
   timezone: [
-    { required: true, message: "Timezone is required", trigger: "change" },
+    { required: true, message: "时区为必填项", trigger: "change" },
   ],
 }));
 

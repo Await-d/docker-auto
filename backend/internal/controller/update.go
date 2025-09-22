@@ -105,11 +105,17 @@ func (uc *UpdateController) GetUpdateHistory(c *gin.Context) {
 	}
 
 	// Build filter
+	var containerIDInt *int
+	if containerID != nil {
+		val := int(*containerID)
+		containerIDInt = &val
+	}
+
 	filter := &model.UpdateHistoryFilter{
-		ContainerID: containerID,
-		Status:      status,
-		StartDate:   startDate,
-		EndDate:     endDate,
+		ContainerID: containerIDInt,
+		Status:      model.UpdateStatus(status),
+		StartedAfter: startDate,
+		StartedBefore: endDate,
 		Limit:       limit,
 		Offset:      (page - 1) * limit,
 		OrderBy:     sortBy,
@@ -560,7 +566,20 @@ func (uc *UpdateController) CheckAvailableUpdates(c *gin.Context) {
 	availableUpdates := make([]*service.UpdateInfo, 0)
 	for _, updateInfo := range updateInfos {
 		if updateInfo.UpdateAvailable {
-			availableUpdates = append(availableUpdates, updateInfo)
+			// Convert ImageUpdateInfo to UpdateInfo if needed
+			updateInfoConverted := &service.UpdateInfo{
+				ContainerID:     updateInfo.ContainerID,
+				Name:            updateInfo.Name,
+				CurrentImage:    updateInfo.CurrentImage,
+				CurrentTag:      updateInfo.CurrentTag,
+				LatestImage:     updateInfo.LatestImage,
+				LatestTag:       updateInfo.LatestTag,
+				UpdateAvailable: updateInfo.UpdateAvailable,
+				UpdateType:      updateInfo.UpdateType,
+				LastChecked:     updateInfo.LastChecked,
+				VersionInfo:     nil, // TODO: Convert registry.VersionComparisonResult to service.VersionComparisonResult
+			}
+			availableUpdates = append(availableUpdates, updateInfoConverted)
 		}
 	}
 

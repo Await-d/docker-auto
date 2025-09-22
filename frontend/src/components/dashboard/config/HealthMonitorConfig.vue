@@ -1,37 +1,37 @@
 <template>
   <div class="health-monitor-config">
     <el-form :model="localConfig" label-width="120px" size="small">
-      <el-form-item label="Check Interval">
+      <el-form-item label="检查间隔">
         <el-select v-model="localConfig.checkInterval" style="width: 100%">
-          <el-option label="30 seconds" :value="30000" />
-          <el-option label="1 minute" :value="60000" />
-          <el-option label="2 minutes" :value="120000" />
-          <el-option label="5 minutes" :value="300000" />
+          <el-option label="30秒" :value="30000" />
+          <el-option label="1分钟" :value="60000" />
+          <el-option label="2分钟" :value="120000" />
+          <el-option label="5分钟" :value="300000" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Services">
+      <el-form-item label="服务">
         <el-checkbox-group v-model="localConfig.services">
-          <el-checkbox label="docker"> Docker Engine </el-checkbox>
-          <el-checkbox label="web"> Web Server </el-checkbox>
-          <el-checkbox label="database"> Database </el-checkbox>
-          <el-checkbox label="api"> API Service </el-checkbox>
+          <el-checkbox label="docker"> Docker引擎 </el-checkbox>
+          <el-checkbox label="web"> Web服务器 </el-checkbox>
+          <el-checkbox label="database"> 数据库 </el-checkbox>
+          <el-checkbox label="api"> API服务 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Alert Level">
+      <el-form-item label="警报级别">
         <el-radio-group v-model="localConfig.alertLevel">
-          <el-radio label="critical"> Critical Only </el-radio>
-          <el-radio label="warning"> Warning & Critical </el-radio>
-          <el-radio label="all"> All Alerts </el-radio>
+          <el-radio label="critical"> 仅严重 </el-radio>
+          <el-radio label="warning"> 警告和严重 </el-radio>
+          <el-radio label="all"> 所有警报 </el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item label="Show History">
+      <el-form-item label="显示历史">
         <el-switch v-model="localConfig.showHistory" />
       </el-form-item>
 
-      <el-form-item label="Auto Resolve">
+      <el-form-item label="自动解决">
         <el-switch v-model="localConfig.autoResolve" />
       </el-form-item>
     </el-form>

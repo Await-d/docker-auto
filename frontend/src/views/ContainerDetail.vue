@@ -11,12 +11,12 @@
         <el-icon class="not-found-icon">
           <Warning />
         </el-icon>
-        <h2>Container Not Found</h2>
+        <h2>未找到容器</h2>
         <p>
-          The container you're looking for doesn't exist or has been removed.
+          您正在寻找的容器不存在或已被删除。
         </p>
         <el-button type="primary" @click="$router.push('/containers')">
-          Back to Containers
+          返回容器列表
         </el-button>
       </div>
     </div>
@@ -29,7 +29,7 @@
           <div class="breadcrumb">
             <el-breadcrumb>
               <el-breadcrumb-item :to="{ path: '/containers' }">
-                Containers
+                容器
               </el-breadcrumb-item>
               <el-breadcrumb-item>
                 {{ currentContainer.name }}
@@ -64,7 +64,7 @@
                   @click="performOperation('start')"
                 >
                   <el-icon><VideoPlay /></el-icon>
-                  Start
+                  启动
                 </el-button>
 
                 <el-button
@@ -75,7 +75,7 @@
                   @click="performOperation('stop')"
                 >
                   <el-icon><VideoPause /></el-icon>
-                  Stop
+                  停止
                 </el-button>
 
                 <el-button
@@ -84,7 +84,7 @@
                   @click="performOperation('restart')"
                 >
                   <el-icon><Refresh /></el-icon>
-                  Restart
+                  重启
                 </el-button>
               </el-button-group>
 
@@ -92,7 +92,7 @@
               <el-dropdown @command="handleAction">
                 <el-button>
                   <el-icon><MoreFilled /></el-icon>
-                  More Actions
+                  更多操作
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -101,35 +101,35 @@
                       :disabled="!canPerformAction('update')"
                     >
                       <el-icon><Download /></el-icon>
-                      Update Container
+                      更新容器
                     </el-dropdown-item>
                     <el-dropdown-item
                       command="edit"
                       :disabled="!canPerformAction('edit')"
                     >
                       <el-icon><Edit /></el-icon>
-                      Edit Configuration
+                      编辑配置
                     </el-dropdown-item>
                     <el-dropdown-item
                       command="clone"
                       :disabled="!canPerformAction('clone')"
                     >
                       <el-icon><CopyDocument /></el-icon>
-                      Clone Container
+                      克隆容器
                     </el-dropdown-item>
                     <el-dropdown-item
                       command="backup"
                       :disabled="!canPerformAction('backup')"
                     >
                       <el-icon><Upload /></el-icon>
-                      Create Backup
+                      创建备份
                     </el-dropdown-item>
                     <el-dropdown-item
                       command="export"
                       :disabled="!canPerformAction('export')"
                     >
                       <el-icon><Download /></el-icon>
-                      Export Configuration
+                      导出配置
                     </el-dropdown-item>
                     <el-dropdown-item
                       command="delete"
@@ -137,7 +137,7 @@
                       divided
                     >
                       <el-icon><Delete /></el-icon>
-                      Delete Container
+                      删除容器
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -160,33 +160,33 @@
           @tab-change="handleTabChange"
         >
           <!-- Overview Tab -->
-          <el-tab-pane label="Overview" name="overview">
+          <el-tab-pane label="概览" name="overview">
             <div class="overview-content">
               <!-- Basic Information -->
               <div class="info-section">
                 <h3 class="section-title">
                   <el-icon><InfoFilled /></el-icon>
-                  Basic Information
+                  基本信息
                 </h3>
                 <div class="info-grid">
                   <div class="info-item">
-                    <span class="info-label">Container ID:</span>
+                    <span class="info-label">容器ID:</span>
                     <span class="info-value">{{ currentContainer.id }}</span>
                   </div>
                   <div class="info-item">
-                    <span class="info-label">Image:</span>
+                    <span class="info-label">镜像:</span>
                     <span class="info-value">{{ currentContainer.image }}:{{
                       currentContainer.tag
                     }}</span>
                   </div>
                   <div class="info-item">
-                    <span class="info-label">Status:</span>
+                    <span class="info-label">状态:</span>
                     <el-tag :type="getStatusType(currentContainer.status)">
                       {{ currentContainer.status }}
                     </el-tag>
                   </div>
                   <div class="info-item">
-                    <span class="info-label">Health:</span>
+                    <span class="info-label">健康状态:</span>
                     <el-tag
                       :type="getHealthType(currentContainer.health.status)"
                     >
@@ -194,7 +194,7 @@
                     </el-tag>
                   </div>
                   <div class="info-item">
-                    <span class="info-label">Created:</span>
+                    <span class="info-label">创建时间:</span>
                     <span class="info-value">{{
                       formatFullDate(currentContainer.createdAt)
                     }}</span>
@@ -202,7 +202,7 @@
                   <div
 v-if="currentContainer.startedAt" class="info-item"
 >
-                    <span class="info-label">Started:</span>
+                    <span class="info-label">启动时间:</span>
                     <span class="info-value">{{
                       formatFullDate(currentContainer.startedAt)
                     }}</span>
@@ -210,7 +210,7 @@ v-if="currentContainer.startedAt" class="info-item"
                   <div
 v-if="currentContainer.workingDir" class="info-item"
 >
-                    <span class="info-label">Working Directory:</span>
+                    <span class="info-label">工作目录:</span>
                     <span class="info-value">{{
                       currentContainer.workingDir
                     }}</span>
@@ -218,7 +218,7 @@ v-if="currentContainer.workingDir" class="info-item"
                   <div
 v-if="currentContainer.user" class="info-item"
 >
-                    <span class="info-label">User:</span>
+                    <span class="info-label">用户:</span>
                     <span class="info-value">{{ currentContainer.user }}</span>
                   </div>
                 </div>
@@ -228,7 +228,7 @@ v-if="currentContainer.user" class="info-item"
               <div class="info-section">
                 <h3 class="section-title">
                   <el-icon><Monitor /></el-icon>
-                  Resource Usage
+                  资源使用
                 </h3>
                 <ResourceMonitor
                   :container-id="currentContainer.id"
@@ -244,12 +244,12 @@ v-if="currentContainer.user" class="info-item"
               >
                 <h3 class="section-title">
                   <el-icon><CircleCheckFilled /></el-icon>
-                  Health Status
+                  健康状态
                 </h3>
                 <div class="health-details">
                   <div class="health-summary">
                     <div class="health-item">
-                      <span class="health-label">Status:</span>
+                      <span class="health-label">状态:</span>
                       <el-tag
                         :type="getHealthType(currentContainer.health.status)"
                       >
@@ -260,7 +260,7 @@ v-if="currentContainer.user" class="info-item"
                       v-if="currentContainer.health.failingStreak > 0"
                       class="health-item"
                     >
-                      <span class="health-label">Failing Streak:</span>
+                      <span class="health-label">连续失败次数:</span>
                       <span class="health-value">{{
                         currentContainer.health.failingStreak
                       }}</span>
@@ -272,7 +272,7 @@ v-if="currentContainer.user" class="info-item"
                     v-if="currentContainer.health.log.length > 0"
                     class="health-history"
                   >
-                    <h4>Recent Health Checks</h4>
+                    <h4>最近健康检查</h4>
                     <div class="health-log">
                       <div
                         v-for="(
@@ -298,7 +298,7 @@ v-if="currentContainer.user" class="info-item"
                               "
                             />
                           </el-icon>
-                          {{ entry.exitCode === 0 ? "Passed" : "Failed" }}
+                          {{ entry.exitCode === 0 ? "通过" : "失败" }}
                         </div>
                         <div
 v-if="entry.output" class="health-output"
@@ -317,7 +317,7 @@ v-if="hasAvailableUpdate" class="info-section"
 >
                 <h3 class="section-title">
                   <el-icon><Download /></el-icon>
-                  Update Available
+                  可用更新
                 </h3>
                 <UpdateManager
                   :container-id="currentContainer.id"
@@ -328,7 +328,7 @@ v-if="hasAvailableUpdate" class="info-section"
           </el-tab-pane>
 
           <!-- Configuration Tab -->
-          <el-tab-pane label="Configuration" name="configuration">
+          <el-tab-pane label="配置" name="configuration">
             <div class="configuration-content">
               <!-- Environment Variables -->
               <div
@@ -337,7 +337,7 @@ v-if="hasAvailableUpdate" class="info-section"
               >
                 <h3 class="section-title">
                   <el-icon><Setting /></el-icon>
-                  Environment Variables
+                  环境变量
                 </h3>
                 <div class="env-variables">
                   <div
@@ -358,27 +358,27 @@ v-if="hasAvailableUpdate" class="info-section"
               >
                 <h3 class="section-title">
                   <el-icon><Connection /></el-icon>
-                  Port Mappings
+                  端口映射
                 </h3>
                 <el-table :data="currentContainer.ports" stripe>
                   <el-table-column
                     prop="hostPort"
-                    label="Host Port"
+                    label="主机端口"
                     width="120"
                   />
                   <el-table-column
                     prop="containerPort"
-                    label="Container Port"
+                    label="容器端口"
                     width="140"
                   />
-                  <el-table-column prop="protocol" label="Protocol" width="100">
+                  <el-table-column prop="protocol" label="协议" width="100">
                     <template #default="{ row }">
                       <el-tag size="small">
                         {{ row.protocol.toUpperCase() }}
                       </el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="hostIp" label="Host IP" />
+                  <el-table-column prop="hostIp" label="主机IP" />
                 </el-table>
               </div>
 
@@ -389,20 +389,20 @@ v-if="hasAvailableUpdate" class="info-section"
               >
                 <h3 class="section-title">
                   <el-icon><FolderOpened /></el-icon>
-                  Volume Mounts
+                  卷挂载
                 </h3>
                 <el-table :data="currentContainer.volumes" stripe>
                   <el-table-column
                     prop="source"
-                    label="Source"
+                    label="源路径"
                     min-width="200"
                   />
                   <el-table-column
                     prop="target"
-                    label="Target"
+                    label="目标路径"
                     min-width="200"
                   />
-                  <el-table-column prop="type" label="Type" width="100">
+                  <el-table-column prop="type" label="类型" width="100">
                     <template #default="{ row }">
                       <el-tag size="small" :type="getVolumeTypeColor(row.type)">
                         {{ row.type }}
@@ -411,7 +411,7 @@ v-if="hasAvailableUpdate" class="info-section"
                   </el-table-column>
                   <el-table-column
                     prop="readOnly"
-                    label="Read Only"
+                    label="只读"
                     width="100"
                   >
                     <template #default="{ row }">
@@ -433,13 +433,13 @@ v-if="hasAvailableUpdate" class="info-section"
               >
                 <h3 class="section-title">
                   <el-icon><Share /></el-icon>
-                  Networks
+                  网络
                 </h3>
                 <el-table :data="currentContainer.networks" stripe>
-                  <el-table-column prop="name" label="Network Name" />
-                  <el-table-column prop="ipAddress" label="IP Address" />
-                  <el-table-column prop="gateway" label="Gateway" />
-                  <el-table-column prop="macAddress" label="MAC Address" />
+                  <el-table-column prop="name" label="网络名称" />
+                  <el-table-column prop="ipAddress" label="IP地址" />
+                  <el-table-column prop="gateway" label="网关" />
+                  <el-table-column prop="macAddress" label="MAC地址" />
                 </el-table>
               </div>
 
@@ -450,7 +450,7 @@ v-if="hasAvailableUpdate" class="info-section"
               >
                 <h3 class="section-title">
                   <el-icon><CollectionTag /></el-icon>
-                  Labels
+                  标签
                 </h3>
                 <div class="labels-list">
                   <div
@@ -468,11 +468,11 @@ v-if="hasAvailableUpdate" class="info-section"
               <div class="config-section">
                 <h3 class="section-title">
                   <el-icon><Refresh /></el-icon>
-                  Update Policy
+                  更新策略
                 </h3>
                 <div class="update-policy">
                   <div class="policy-item">
-                    <span class="policy-label">Auto Update:</span>
+                    <span class="policy-label">自动更新:</span>
                     <el-tag
                       :type="
                         currentContainer.updatePolicy.autoUpdate
@@ -482,13 +482,13 @@ v-if="hasAvailableUpdate" class="info-section"
                     >
                       {{
                         currentContainer.updatePolicy.autoUpdate
-                          ? "Enabled"
-                          : "Disabled"
+                          ? "启用"
+                          : "禁用"
                       }}
                     </el-tag>
                   </div>
                   <div class="policy-item">
-                    <span class="policy-label">Strategy:</span>
+                    <span class="policy-label">策略:</span>
                     <el-tag>
                       {{ currentContainer.updatePolicy.strategy }}
                     </el-tag>
@@ -497,13 +497,13 @@ v-if="hasAvailableUpdate" class="info-section"
                     v-if="currentContainer.updatePolicy.schedule"
                     class="policy-item"
                   >
-                    <span class="policy-label">Schedule:</span>
+                    <span class="policy-label">计划:</span>
                     <span class="policy-value">{{
                       currentContainer.updatePolicy.schedule
                     }}</span>
                   </div>
                   <div class="policy-item">
-                    <span class="policy-label">Rollback on Failure:</span>
+                    <span class="policy-label">失败回滚:</span>
                     <el-tag
                       :type="
                         currentContainer.updatePolicy.rollbackOnFailure
@@ -513,8 +513,8 @@ v-if="hasAvailableUpdate" class="info-section"
                     >
                       {{
                         currentContainer.updatePolicy.rollbackOnFailure
-                          ? "Enabled"
-                          : "Disabled"
+                          ? "启用"
+                          : "禁用"
                       }}
                     </el-tag>
                   </div>
@@ -524,7 +524,7 @@ v-if="hasAvailableUpdate" class="info-section"
           </el-tab-pane>
 
           <!-- Logs Tab -->
-          <el-tab-pane label="Logs" name="logs">
+          <el-tab-pane label="日志" name="logs">
             <LogViewer
               :container-id="currentContainer.id"
               :container-name="currentContainer.name"
@@ -533,7 +533,7 @@ v-if="hasAvailableUpdate" class="info-section"
           </el-tab-pane>
 
           <!-- Monitoring Tab -->
-          <el-tab-pane label="Monitoring" name="monitoring">
+          <el-tab-pane label="监控" name="monitoring">
             <ResourceMonitor
               :container-id="currentContainer.id"
               :container-name="currentContainer.name"
@@ -544,7 +544,7 @@ v-if="hasAvailableUpdate" class="info-section"
 
           <!-- Terminal Tab -->
           <el-tab-pane
-            label="Terminal"
+            label="终端"
             name="terminal"
             :disabled="currentContainer.status !== 'running'"
           >
@@ -553,8 +553,8 @@ v-if="hasAvailableUpdate" class="info-section"
               class="terminal-disabled"
             >
               <el-alert
-                title="Terminal Unavailable"
-                description="Terminal access is only available for running containers."
+                title="终端不可用"
+                description="终端访问仅适用于正在运行的容器。"
                 type="warning"
                 :closable="false"
               />
@@ -562,24 +562,24 @@ v-if="hasAvailableUpdate" class="info-section"
             <div v-else class="terminal-container">
               <!-- Terminal component would go here -->
               <div class="terminal-placeholder">
-                <p>Terminal functionality will be implemented here.</p>
+                <p>终端功能将在此处实现。</p>
                 <p>
-                  This would provide web-based terminal access to the container.
+                  这将提供基于Web的容器终端访问。
                 </p>
               </div>
             </div>
           </el-tab-pane>
 
           <!-- Events Tab -->
-          <el-tab-pane label="Events" name="events">
+          <el-tab-pane label="事件" name="events">
             <div class="events-content">
               <div class="events-header">
-                <h3>Container Events</h3>
+                <h3>容器事件</h3>
                 <el-button
 size="small" @click="refreshEvents"
 >
                   <el-icon><Refresh /></el-icon>
-                  Refresh
+                  刷新
                 </el-button>
               </div>
 
@@ -587,12 +587,10 @@ size="small" @click="refreshEvents"
                 <!-- Events timeline would go here -->
                 <div class="events-placeholder">
                   <p>
-                    Container events and activity timeline will be displayed
-                    here.
+                    容器事件和活动时间线将显示在此处。
                   </p>
                   <p>
-                    This includes start/stop events, configuration changes, and
-                    errors.
+                    这包括启动/停止事件、配置更改和错误信息。
                   </p>
                 </div>
               </div>
@@ -605,7 +603,7 @@ size="small" @click="refreshEvents"
     <!-- Edit Dialog -->
     <el-dialog
       v-model="showEditDialog"
-      title="Edit Container Configuration"
+      title="编辑容器配置"
       width="80%"
       :before-close="handleEditDialogClose"
     >
@@ -727,10 +725,10 @@ function getHealthType(
 
 function formatHealthStatus(status: string): string {
   const statuses: Record<string, string> = {
-    healthy: "Healthy",
-    unhealthy: "Unhealthy",
-    starting: "Starting",
-    none: "No Health Check",
+    healthy: "健康",
+    unhealthy: "不健康",
+    starting: "启动中",
+    none: "无健康检查",
   };
   return statuses[status] || status;
 }
@@ -817,12 +815,12 @@ function handleAction(command: string) {
       break;
     case "delete":
       ElMessageBox.confirm(
-        `Are you sure you want to delete container "${currentContainer.value.name}"?`,
-        "Confirm Deletion",
+        `您确定要删除容器 "${currentContainer.value.name}" 吗？`,
+        "确认删除",
         {
           type: "warning",
-          confirmButtonText: "Delete",
-          cancelButtonText: "Cancel",
+          confirmButtonText: "删除",
+          cancelButtonText: "取消",
         },
       ).then(() => {
         if (currentContainer.value) {
@@ -852,7 +850,7 @@ function refreshContainer() {
 
 function refreshEvents() {
   // Refresh events data
-  ElMessage.success("Events refreshed");
+  ElMessage.success("事件已刷新");
 }
 
 function handleEditContainer(data: Partial<ContainerFormData>) {
@@ -864,9 +862,12 @@ function handleEditContainer(data: Partial<ContainerFormData>) {
 }
 
 function handleEditDialogClose(done: () => void) {
-  ElMessageBox.confirm("Discard changes and close?")
+  ElMessageBox.confirm("放弃更改并关闭？")
     .then(() => done())
-    .catch(() => {});
+    .catch(() => {
+      // User cancelled the dialog close
+      console.log('User cancelled closing dialog');
+    });
 }
 
 // Watch for route changes

@@ -124,6 +124,7 @@ type UpdateHistoryRepository interface {
 	// Basic CRUD operations
 	Create(ctx context.Context, history *model.UpdateHistory) error
 	GetByID(ctx context.Context, id int64) (*model.UpdateHistory, error)
+	Update(ctx context.Context, history *model.UpdateHistory) error
 	Delete(ctx context.Context, id int64) error
 
 	// Query operations

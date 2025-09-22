@@ -427,8 +427,8 @@ export const useSettingsStore = defineStore("settings", () => {
 
   const settingsSections = computed((): SettingsSection[] => [
     {
-      title: "System Configuration",
-      description: "General system settings and configuration",
+      title: "系统配置",
+      description: "通用系统设置和配置",
       icon: "Setting",
       key: "general",
       permissions: ["settings:general:read"],
@@ -437,8 +437,8 @@ export const useSettingsStore = defineStore("settings", () => {
       hasChanges: hasChangesInSection("general"),
     },
     {
-      title: "Docker Configuration",
-      description: "Docker connection and container settings",
+      title: "Docker 配置",
+      description: "Docker连接和容器设置",
       icon: "Box",
       key: "docker",
       permissions: ["settings:docker:read"],
@@ -447,8 +447,8 @@ export const useSettingsStore = defineStore("settings", () => {
       hasChanges: hasChangesInSection("docker"),
     },
     {
-      title: "Update Policies",
-      description: "Container update strategies and schedules",
+      title: "更新策略",
+      description: "容器更新策略和计划",
       icon: "Refresh",
       key: "updates",
       permissions: ["settings:updates:read"],
@@ -457,8 +457,8 @@ export const useSettingsStore = defineStore("settings", () => {
       hasChanges: hasChangesInSection("updates"),
     },
     {
-      title: "Registry Management",
-      description: "Container registry connections and settings",
+      title: "镜像仓库管理",
+      description: "容器镜像仓库连接和设置",
       icon: "CloudUpload",
       key: "registries",
       permissions: ["settings:registries:read"],
@@ -467,8 +467,8 @@ export const useSettingsStore = defineStore("settings", () => {
       hasChanges: hasChangesInSection("registries"),
     },
     {
-      title: "User Management",
-      description: "User accounts, roles and permissions",
+      title: "用户管理",
+      description: "用户账户、角色和权限",
       icon: "User",
       key: "users",
       permissions: ["settings:users:read", "admin"],
@@ -477,8 +477,8 @@ export const useSettingsStore = defineStore("settings", () => {
       hasChanges: hasChangesInSection("users"),
     },
     {
-      title: "Notifications",
-      description: "Notification channels and rules",
+      title: "通知设置",
+      description: "通知渠道和规则",
       icon: "Bell",
       key: "notifications",
       permissions: ["settings:notifications:read"],
@@ -487,8 +487,8 @@ export const useSettingsStore = defineStore("settings", () => {
       hasChanges: hasChangesInSection("notifications"),
     },
     {
-      title: "Scheduler",
-      description: "Task scheduling and execution settings",
+      title: "调度器",
+      description: "任务调度和执行设置",
       icon: "Timer",
       key: "scheduler",
       permissions: ["settings:scheduler:read"],
@@ -497,8 +497,8 @@ export const useSettingsStore = defineStore("settings", () => {
       hasChanges: hasChangesInSection("scheduler"),
     },
     {
-      title: "Security",
-      description: "Security policies and access controls",
+      title: "安全设置",
+      description: "安全策略和访问控制",
       icon: "Lock",
       key: "security",
       permissions: ["settings:security:read", "admin"],
@@ -507,8 +507,8 @@ export const useSettingsStore = defineStore("settings", () => {
       hasChanges: hasChangesInSection("security"),
     },
     {
-      title: "Monitoring",
-      description: "System monitoring and logging configuration",
+      title: "监控设置",
+      description: "系统监控和日志配置",
       icon: "Monitor",
       key: "monitoring",
       permissions: ["settings:monitoring:read"],
@@ -587,7 +587,7 @@ export const useSettingsStore = defineStore("settings", () => {
       }
 
       app.showSuccess(
-        `Settings ${section ? `for ${section}` : ""} saved successfully`,
+        `设置 ${section ? `${section}` : ""} 保存成功`,
       );
     } catch (error) {
       app.handleError(error as Error, "Settings Save");
@@ -626,7 +626,7 @@ export const useSettingsStore = defineStore("settings", () => {
     }
 
     app.showInfo(
-      `Settings ${section ? `for ${section}` : ""} reset to saved values`,
+      `设置 ${section ? `${section}` : ""} 已重置为保存的值`,
     );
   };
 
@@ -664,7 +664,7 @@ export const useSettingsStore = defineStore("settings", () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      app.showSuccess("Settings exported successfully");
+      app.showSuccess("设置导出成功");
     } catch (error) {
       app.handleError(error as Error, "Settings Export");
       throw error;
@@ -683,7 +683,7 @@ export const useSettingsStore = defineStore("settings", () => {
       // Reload settings after import
       await loadSettings();
 
-      app.showSuccess("Settings imported successfully");
+      app.showSuccess("设置导入成功");
       return response.data;
     } catch (error) {
       app.handleError(error as Error, "Settings Import");
@@ -722,11 +722,11 @@ export const useSettingsStore = defineStore("settings", () => {
     // Add validation logic based on field type and constraints
     // This is a simplified version - you would implement full validation
     if (field.includes("email") && value && !isValidEmail(value)) {
-      errors.push("Invalid email format");
+      errors.push("邮箱格式无效");
     }
 
     if (field.includes("url") && value && !isValidUrl(value)) {
-      errors.push("Invalid URL format");
+      errors.push("URL格式无效");
     }
 
     if (
@@ -734,7 +734,7 @@ export const useSettingsStore = defineStore("settings", () => {
       value &&
       (!Number.isInteger(value) || value < 1 || value > 65535)
     ) {
-      errors.push("Port must be between 1 and 65535");
+      errors.push("端口必须在1到65535之间");
     }
 
     return errors;
@@ -844,11 +844,11 @@ export const useSettings = () => {
     saveSectionWithConfirmation: async (section: keyof SystemSettings) => {
       try {
         await ElMessageBox.confirm(
-          `Are you sure you want to save ${section} settings?`,
-          "Save Settings",
+          `确定要保存 ${section} 设置吗？`,
+          "保存设置",
           {
-            confirmButtonText: "Save",
-            cancelButtonText: "Cancel",
+            confirmButtonText: "保存",
+            cancelButtonText: "取消",
             type: "warning",
           },
         );
@@ -865,11 +865,11 @@ export const useSettings = () => {
     resetSectionWithConfirmation: async (section: keyof SystemSettings) => {
       try {
         await ElMessageBox.confirm(
-          `Are you sure you want to reset ${section} settings? All unsaved changes will be lost.`,
-          "Reset Settings",
+          `确定要重置 ${section} 设置吗？所有未保存的更改将丢失。`,
+          "重置设置",
           {
-            confirmButtonText: "Reset",
-            cancelButtonText: "Cancel",
+            confirmButtonText: "重置",
+            cancelButtonText: "取消",
             type: "error",
           },
         );

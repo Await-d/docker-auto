@@ -1,14 +1,14 @@
 <template>
   <div class="resource-monitor" :class="{ 'detailed-view': detailedView }">
-    <!-- Real-time Stats -->
+    <!-- 实时统计 -->
     <div class="current-stats">
       <div class="stats-grid">
-        <!-- CPU Usage -->
+        <!-- CPU使用情况 -->
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-title">
               <el-icon><Monitor /></el-icon>
-              CPU Usage
+              CPU使用率
             </div>
             <div class="stat-value">
               {{ formatPercentage(currentStats?.cpu.usage || 0) }}
@@ -32,12 +32,12 @@
           </div>
         </div>
 
-        <!-- Memory Usage -->
+        <!-- 内存使用情况 -->
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-title">
               <el-icon><Cpu /></el-icon>
-              Memory Usage
+              内存使用率
             </div>
             <div class="stat-value">
               {{ formatBytes(currentStats?.memory.usage || 0) }}
@@ -61,12 +61,12 @@
           </div>
         </div>
 
-        <!-- Network I/O -->
+        <!-- 网络 I/O -->
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-title">
               <el-icon><Connection /></el-icon>
-              Network I/O
+              网络 I/O
             </div>
             <div class="stat-value">{{ formatBytes(networkTotal) }}/s</div>
           </div>
@@ -94,12 +94,12 @@
           </div>
         </div>
 
-        <!-- Disk I/O -->
+        <!-- 磁盘 I/O -->
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-title">
               <el-icon><Folder /></el-icon>
-              Disk I/O
+              磁盘 I/O
             </div>
             <div class="stat-value">{{ formatBytes(diskTotal) }}/s</div>
           </div>
@@ -132,7 +132,7 @@
       <div class="stats-footer">
         <div class="last-updated">
           <el-icon><Clock /></el-icon>
-          Last updated: {{ formatTime(currentStats?.timestamp) }}
+          最后更新： {{ formatTime(currentStats?.timestamp) }}
         </div>
         <div class="update-controls">
           <el-button
@@ -140,7 +140,7 @@ size="small" @click="refreshStats"
 :loading="loading"
 >
             <el-icon><Refresh /></el-icon>
-            Refresh
+            刷新
           </el-button>
           <el-button
             size="small"
@@ -148,7 +148,7 @@ size="small" @click="refreshStats"
             @click="toggleAutoRefresh"
           >
             <el-icon><Timer /></el-icon>
-            Auto Refresh
+            自动刷新
           </el-button>
         </div>
       </div>
@@ -157,7 +157,7 @@ size="small" @click="refreshStats"
     <!-- Historical Charts -->
     <div v-if="showHistorical" class="historical-charts">
       <div class="charts-header">
-        <h3>Historical Data</h3>
+        <h3>历史数据</h3>
         <div class="time-range-selector">
           <el-select
             v-model="timeRange"
@@ -175,28 +175,28 @@ size="small" @click="refreshStats"
       <div class="charts-grid">
         <!-- CPU Chart -->
         <div class="chart-container">
-          <h4>CPU Usage Over Time</h4>
+          <h4>CPU使用率趋势</h4>
           <div
 ref="cpuChartRef" class="chart" />
         </div>
 
         <!-- Memory Chart -->
         <div class="chart-container">
-          <h4>Memory Usage Over Time</h4>
+          <h4>内存使用率趋势</h4>
           <div
 ref="memoryChartRef" class="chart" />
         </div>
 
         <!-- Network Chart -->
         <div class="chart-container">
-          <h4>Network I/O Over Time</h4>
+          <h4>网络 I/O 趋势</h4>
           <div
 ref="networkChartRef" class="chart" />
         </div>
 
         <!-- Disk Chart -->
         <div class="chart-container">
-          <h4>Disk I/O Over Time</h4>
+          <h4>磁盘 I/O 趋势</h4>
           <div
 ref="diskChartRef" class="chart" />
         </div>
@@ -206,42 +206,42 @@ ref="diskChartRef" class="chart" />
     <!-- Detailed Metrics -->
     <div v-if="detailedView" class="detailed-metrics">
       <div class="metrics-header">
-        <h3>Detailed Metrics</h3>
+        <h3>详细指标</h3>
         <el-button size="small" @click="exportMetrics">
           <el-icon><Download /></el-icon>
-          Export Data
+          导出数据
         </el-button>
       </div>
 
       <el-tabs v-model="activeMetricTab">
         <!-- System Metrics -->
-        <el-tab-pane label="System" name="system">
+        <el-tab-pane label="系统" name="system">
           <div class="metrics-table">
             <el-table :data="systemMetrics" stripe>
-              <el-table-column prop="metric" label="Metric" />
-              <el-table-column prop="value" label="Current Value" />
-              <el-table-column prop="unit" label="Unit" />
-              <el-table-column prop="description" label="Description" />
+              <el-table-column prop="metric" label="指标" />
+              <el-table-column prop="value" label="当前值" />
+              <el-table-column prop="unit" label="单位" />
+              <el-table-column prop="description" label="描述" />
             </el-table>
           </div>
         </el-tab-pane>
 
         <!-- Process Metrics -->
-        <el-tab-pane label="Processes" name="processes">
+        <el-tab-pane label="进程" name="processes">
           <div class="process-metrics">
-            <p>Process-level metrics will be displayed here</p>
+            <p>进程级别的指标将在此处显示</p>
           </div>
         </el-tab-pane>
 
         <!-- Network Metrics -->
-        <el-tab-pane label="Network" name="network">
+        <el-tab-pane label="网络" name="network">
           <div class="network-metrics">
             <el-table :data="networkMetrics" stripe>
-              <el-table-column prop="interface" label="Interface" />
-              <el-table-column prop="rxBytes" label="RX Bytes" />
-              <el-table-column prop="txBytes" label="TX Bytes" />
-              <el-table-column prop="rxPackets" label="RX Packets" />
-              <el-table-column prop="txPackets" label="TX Packets" />
+              <el-table-column prop="interface" label="网卡" />
+              <el-table-column prop="rxBytes" label="接收字节" />
+              <el-table-column prop="txBytes" label="发送字节" />
+              <el-table-column prop="rxPackets" label="接收包" />
+              <el-table-column prop="txPackets" label="发送包" />
             </el-table>
           </div>
         </el-tab-pane>
@@ -250,7 +250,7 @@ ref="diskChartRef" class="chart" />
 
     <!-- Alerts -->
     <div v-if="alerts.length > 0" class="resource-alerts">
-      <h4>Resource Alerts</h4>
+      <h4>资源告警</h4>
       <div class="alerts-list">
         <el-alert
           v-for="alert in alerts"
@@ -353,46 +353,46 @@ const systemMetrics = computed(() => {
 
   return [
     {
-      metric: "CPU Usage",
+      metric: "CPU使用率",
       value: formatPercentage(currentStats.value.cpu.usage),
       unit: "%",
-      description: "Current CPU utilization",
+      description: "当前CPU利用率",
     },
     {
-      metric: "Memory Usage",
+      metric: "内存使用率",
       value: formatBytes(currentStats.value.memory.usage),
       unit: "Bytes",
-      description: "Current memory consumption",
+      description: "当前内存消耗",
     },
     {
-      metric: "Memory Percentage",
+      metric: "内存百分比",
       value: formatPercentage(currentStats.value.memory.percentage),
       unit: "%",
-      description: "Memory usage as percentage of limit",
+      description: "内存使用率占限制的百分比",
     },
     {
-      metric: "Network RX",
+      metric: "网络接收",
       value: formatBytes(currentStats.value.network.rxBytes),
       unit: "Bytes",
-      description: "Total bytes received",
+      description: "接收的总字节数",
     },
     {
-      metric: "Network TX",
+      metric: "网络发送",
       value: formatBytes(currentStats.value.network.txBytes),
       unit: "Bytes",
-      description: "Total bytes transmitted",
+      description: "发送的总字节数",
     },
     {
-      metric: "Disk Read",
+      metric: "磁盘读取",
       value: formatBytes(currentStats.value.disk.readBytes),
       unit: "Bytes",
-      description: "Total bytes read from disk",
+      description: "从磁盘读取的总字节数",
     },
     {
-      metric: "Disk Write",
+      metric: "磁盘写入",
       value: formatBytes(currentStats.value.disk.writeBytes),
       unit: "Bytes",
-      description: "Total bytes written to disk",
+      description: "写入磁盘的总字节数",
     },
   ];
 });
@@ -444,7 +444,7 @@ async function refreshStats() {
     checkAlerts();
   } catch (error) {
     console.error("Failed to refresh stats:", error);
-    ElMessage.error("Failed to refresh statistics");
+    ElMessage.error("刷新统计信息失败");
   } finally {
     loading.value = false;
   }
@@ -463,7 +463,7 @@ async function fetchHistoricalData() {
     renderCharts();
   } catch (error) {
     console.error("Failed to fetch historical data:", error);
-    ElMessage.error("Failed to load historical data");
+    ElMessage.error("加载历史数据失败");
   }
 }
 
@@ -511,7 +511,7 @@ function checkAlerts() {
       newAlerts.push({
         id: "cpu-high",
         type: "warning",
-        title: "High CPU Usage",
+        title: "高CPU使用率",
         message: `CPU usage is at ${formatPercentage(currentStats.value.cpu.usage)}`,
       });
     }
@@ -521,7 +521,7 @@ function checkAlerts() {
       newAlerts.push({
         id: "memory-high",
         type: "error",
-        title: "High Memory Usage",
+        title: "高内存使用率",
         message: `Memory usage is at ${formatPercentage(currentStats.value.memory.percentage)}`,
       });
     }
@@ -554,10 +554,10 @@ async function exportMetrics() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    ElMessage.success("Metrics exported successfully");
+    ElMessage.success("指标导出成功");
   } catch (error) {
     console.error("Failed to export metrics:", error);
-    ElMessage.error("Failed to export metrics");
+    ElMessage.error("导出指标失败");
   }
 }
 

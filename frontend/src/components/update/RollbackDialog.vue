@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Rollback Update"
+    title="回滚更新"
     width="60%"
     :before-close="handleClose"
   >
@@ -9,78 +9,76 @@
 v-if="update" class="rollback-content"
 >
       <el-alert
-title="Warning" type="warning"
+title="警告" type="warning"
 :closable="false" show-icon
 >
         <template #default>
-          This will rollback the container
-          <strong>{{ update.containerName }}</strong> from version
-          <strong>{{ update.toVersion }}</strong> back to
-          <strong>{{ update.fromVersion }}</strong>.
+          这将把容器
+          <strong>{{ update.containerName }}</strong> 从版本
+          <strong>{{ update.toVersion }}</strong> 回滚到
+          <strong>{{ update.fromVersion }}</strong>。
         </template>
       </el-alert>
 
       <el-card shadow="never" class="update-info">
         <template #header>
-          <h4>Update Information</h4>
+          <h4>更新信息</h4>
         </template>
 
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="Container">
+          <el-descriptions-item label="容器">
             {{ update.containerName }}
           </el-descriptions-item>
-          <el-descriptions-item label="Current Version">
+          <el-descriptions-item label="当前版本">
             {{ update.toVersion }}
           </el-descriptions-item>
-          <el-descriptions-item label="Rollback to Version">
+          <el-descriptions-item label="回滚到版本">
             {{ update.fromVersion }}
           </el-descriptions-item>
-          <el-descriptions-item label="Update Date">
+          <el-descriptions-item label="更新日期">
             {{ formatDate(update.startedAt) }}
           </el-descriptions-item>
         </el-descriptions>
       </el-card>
 
       <el-form :model="rollbackFormData" label-width="140px">
-        <el-form-item label="Rollback Strategy">
+        <el-form-item label="回滚策略">
           <el-radio-group v-model="rollbackFormData.strategy">
             <el-radio value="immediate">
               <div class="strategy-option">
-                <strong>Immediate</strong>
-                <small>Stop current container and start with previous version</small>
+                <strong>立即执行</strong>
+                <small>停止当前容器，使用之前的版本重新启动</small>
               </div>
             </el-radio>
             <el-radio value="graceful">
               <div class="strategy-option">
-                <strong>Graceful</strong>
-                <small>Allow current container to finish processing and then
-                  rollback</small>
+                <strong>优雅关闭</strong>
+                <small>允许当前容器完成处理，然后再回滚</small>
               </div>
             </el-radio>
             <el-radio value="blue-green">
               <div class="strategy-option">
-                <strong>Blue-Green</strong>
-                <small>Start previous version alongside current, then switch
-                  traffic</small>
+                <strong>蓝绿部署</strong>
+                <small>在当前版本旁边启动之前的版本，然后切换流量</small>
               </div>
             </el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="Backup Current">
+        <el-form-item label="备份当前版本">
           <el-checkbox v-model="rollbackFormData.createBackup">
-            Create backup of current container state before rollback
+            回滚前创建当前容器状态的备份
           </el-checkbox>
         </el-form-item>
 
-        <el-form-item label="Health Check">
+        <el-form-item label="健康检查">
           <el-checkbox v-model="rollbackFormData.performHealthCheck">
-            Perform health check after rollback
+            回滚后执行健康检查
           </el-checkbox>
           <div
 v-if="rollbackFormData.performHealthCheck" class="field-help"
 >
-            Health check timeout:
+            健康检查超时：
             <el-input-number
               v-model="rollbackFormData.healthCheckTimeout"
               :min="30"
@@ -88,22 +86,22 @@ v-if="rollbackFormData.performHealthCheck" class="field-help"
               size="small"
               style="width: 100px; margin: 0 8px"
             />
-            seconds
+            秒
           </div>
         </el-form-item>
 
-        <el-form-item label="Notification">
+        <el-form-item label="通知">
           <el-checkbox v-model="rollbackFormData.notifyOnCompletion">
-            Send notification when rollback is completed
+            回滚完成后发送通知
           </el-checkbox>
         </el-form-item>
 
-        <el-form-item label="Reason">
+        <el-form-item label="原因">
           <el-input
             v-model="rollbackFormData.reason"
             type="textarea"
             :rows="3"
-            placeholder="Optional: Provide a reason for the rollback..."
+            placeholder="可选：提供回滚原因..."
             maxlength="500"
             show-word-limit
           />
@@ -112,7 +110,7 @@ v-if="rollbackFormData.performHealthCheck" class="field-help"
 
       <el-card shadow="never" class="risk-assessment">
         <template #header>
-          <h4>Risk Assessment</h4>
+          <h4>风险评估</h4>
         </template>
 
         <div class="risk-items">
@@ -131,13 +129,13 @@ v-if="rollbackFormData.performHealthCheck" class="field-help"
 
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="handleClose">Cancel</el-button>
+        <el-button @click="handleClose">取消</el-button>
         <el-button
 type="danger" @click="handleRollback"
 :loading="rolling"
 >
           <el-icon><RefreshLeft /></el-icon>
-          Confirm Rollback
+          确认回滚
         </el-button>
       </span>
     </template>
@@ -208,19 +206,19 @@ const assessRiskLevel = () => {
 const getRiskTitle = () => {
   const level = assessRiskLevel();
   return {
-    low: "Low Risk Rollback",
-    medium: "Medium Risk Rollback",
-    high: "High Risk Rollback",
+    low: "低风险回滚",
+    medium: "中风险回滚",
+    high: "高风险回滚",
   }[level];
 };
 
 const getRiskDescription = () => {
   const level = assessRiskLevel();
   return {
-    low: "Recent update with graceful rollback strategy. Minimal risk of data loss or service disruption.",
+    low: "最近的更新，使用优雅回滚策略。数据丢失或服务中断的风险最小。",
     medium:
-      "Moderate time since update or some risk factors present. Consider backup and health checks.",
-    high: "Older update or immediate rollback strategy. Higher risk of issues. Backup and monitoring recommended.",
+      "更新后过了适中的时间或存在一些风险因素。建议考虑备份和健康检查。",
+    high: "较旧的更新或立即回滚策略。出现问题的风险较高。建议进行备份和监控。",
   }[level];
 };
 
@@ -233,11 +231,11 @@ const handleRollback = async () => {
 
   try {
     await ElMessageBox.confirm(
-      "Are you sure you want to rollback this update? This action cannot be undone.",
-      "Confirm Rollback",
+      "您确定要回滚此更新吗？此操作无法撤销。",
+      "确认回滚",
       {
-        confirmButtonText: "Yes, Rollback",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "是，回滚",
+        cancelButtonText: "取消",
         type: "warning",
       },
     );
@@ -253,12 +251,12 @@ const handleRollback = async () => {
     // Simulate rollback process
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    ElMessage.success("Rollback initiated successfully");
+    ElMessage.success("回滚成功启动");
     handleClose();
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error("Failed to initiate rollback");
-      console.error("Rollback error:", error);
+      ElMessage.error("启动回滚失败");
+      console.error("回滚错误:", error);
     }
   } finally {
     rolling.value = false;

@@ -15,33 +15,33 @@
         <template #header>
           <div class="section-header">
             <el-icon><Bell /></el-icon>
-            <span>Notification Channels</span>
+            <span>通知渠道</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Email Notifications">
+            <el-form-item label="邮件通知">
               <el-switch v-model="emailEnabled" @change="toggleEmailChannel" />
-              <div class="field-help">Send notifications via email</div>
+              <div class="field-help">通过邮件发送通知</div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Webhook Notifications">
+            <el-form-item label="Webhook通知">
               <el-switch
                 v-model="webhookEnabled"
                 @change="toggleWebhookChannel"
               />
-              <div class="field-help">Send notifications via webhooks</div>
+              <div class="field-help">通过Webhook发送通知</div>
             </el-form-item>
           </el-col>
         </el-row>
 
         <div v-if="emailEnabled" class="channel-config">
-          <h4>Email Configuration</h4>
+          <h4>邮件配置</h4>
           <el-row :gutter="16">
             <el-col :span="12">
-              <el-form-item label="SMTP Server">
+              <el-form-item label="SMTP服务器">
                 <el-input
                   v-model="emailConfig.smtpServer"
                   placeholder="smtp.example.com"
@@ -49,7 +49,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="6">
-              <el-form-item label="Port">
+              <el-form-item label="端口">
                 <el-input-number
                   v-model="emailConfig.port"
                   :min="25"
@@ -58,7 +58,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="6">
-              <el-form-item label="Use TLS">
+              <el-form-item label="使用TLS">
                 <el-switch v-model="emailConfig.useTLS" />
               </el-form-item>
             </el-col>
@@ -66,7 +66,7 @@
         </div>
 
         <div v-if="webhookEnabled" class="channel-config">
-          <h4>Webhook Configuration</h4>
+          <h4>Webhook配置</h4>
           <el-row :gutter="16">
             <el-col :span="24">
               <el-form-item label="Webhook URL">

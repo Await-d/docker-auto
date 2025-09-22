@@ -100,7 +100,7 @@ func NewSchedulerService(
 	}
 
 	// Override with config values if available
-	if config != nil && config.Scheduler != nil {
+	if config != nil {
 		if config.Scheduler.MaxConcurrentTasks > 0 {
 			schedulerConfig.MaxConcurrentTasks = config.Scheduler.MaxConcurrentTasks
 		}

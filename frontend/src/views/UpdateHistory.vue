@@ -6,10 +6,10 @@
         <div class="header-info">
           <h1 class="page-title">
             <el-icon><Clock /></el-icon>
-            Update History
+            更新历史
           </h1>
           <p class="page-description">
-            Track update history, analyze trends, and manage rollbacks
+            跟踪更新历史、分析趋势并管理回滚
           </p>
         </div>
 
@@ -20,18 +20,18 @@
               :loading="loadingHistory"
               @click="refreshHistory"
             >
-              Refresh
+              刷新
             </el-button>
             <el-button
 :icon="Download" @click="showExportDialog = true"
 >
-              Export
+              导出
             </el-button>
             <el-button
               :icon="TrendCharts"
               @click="showAnalytics = !showAnalytics"
             >
-              Analytics
+              分析
             </el-button>
           </el-button-group>
         </div>
@@ -43,7 +43,7 @@
           <div class="analytics-grid">
             <!-- Success Rate Chart -->
             <div class="analytics-card">
-              <h3>Success Rate</h3>
+              <h3>成功率</h3>
               <div class="chart-container">
                 <el-progress
                   :percentage="updateAnalytics.successRate"
@@ -53,13 +53,13 @@
                 />
                 <div class="chart-details">
                   <span class="detail-item">
-                    <span class="label">Completed:</span>
+                    <span class="label">已完成:</span>
                     <span class="value success">{{
                       updateAnalytics.updatesThisMonth
                     }}</span>
                   </span>
                   <span class="detail-item">
-                    <span class="label">Failed:</span>
+                    <span class="label">已失败:</span>
                     <span class="value error">{{
                       updateAnalytics.failedUpdatesLast30Days
                     }}</span>
@@ -70,31 +70,31 @@
 
             <!-- Average Update Time -->
             <div class="analytics-card">
-              <h3>Average Update Time</h3>
+              <h3>平均更新时间</h3>
               <div class="metric-display">
                 <span class="metric-value">{{
                   formatDuration(updateAnalytics.averageUpdateTime)
                 }}</span>
-                <span class="metric-unit">minutes</span>
+                <span class="metric-unit">分钟</span>
               </div>
               <div class="metric-trend">
                 <el-icon class="trend-icon down">
                   <ArrowDown />
                 </el-icon>
-                <span class="trend-text">12% faster than last month</span>
+                <span class="trend-text">比上个月快 12%</span>
               </div>
             </div>
 
             <!-- Update Distribution -->
             <div class="analytics-card full-width">
-              <h3>Update Trend (Last 30 Days)</h3>
+              <h3>更新趋势（近 30 天）</h3>
               <div class="trend-chart">
                 <div
                   v-for="(day, index) in trendData"
                   :key="index"
                   class="trend-bar"
                   :style="{ height: `${(day.total / maxDailyUpdates) * 100}%` }"
-                  :title="`${day.date}: ${day.completed} completed, ${day.failed} failed`"
+                  :title="`${day.date}: ${day.completed} 个已完成，${day.failed} 个失败`"
                 >
                   <div
                     class="bar-completed"
@@ -109,11 +109,11 @@
               <div class="trend-legend">
                 <div class="legend-item">
                   <div class="legend-color success" />
-                  <span>Completed</span>
+                  <span>已完成</span>
                 </div>
                 <div class="legend-item">
                   <div class="legend-color error" />
-                  <span>Failed</span>
+                  <span>已失败</span>
                 </div>
               </div>
             </div>
@@ -128,7 +128,7 @@
         <el-button
 :icon="Filter" @click="showFilters = !showFilters"
 >
-          Filters
+          筛选
           <el-badge
             v-if="activeFiltersCount > 0"
             :value="activeFiltersCount"
@@ -138,22 +138,22 @@
 
         <el-select
           v-model="quickFilter"
-          placeholder="Quick Filter"
+          placeholder="快速筛选"
           style="width: 150px"
           @change="applyQuickFilter"
         >
-          <el-option label="All Updates" value="all" />
-          <el-option label="Completed" value="completed" />
-          <el-option label="Failed" value="failed" />
-          <el-option label="Security" value="security" />
-          <el-option label="Rollbacks" value="rollback" />
-          <el-option label="Last 7 Days" value="week" />
-          <el-option label="Last 30 Days" value="month" />
+          <el-option label="所有更新" value="all" />
+          <el-option label="已完成" value="completed" />
+          <el-option label="已失败" value="failed" />
+          <el-option label="安全更新" value="security" />
+          <el-option label="回滚" value="rollback" />
+          <el-option label="近 7 天" value="week" />
+          <el-option label="近 30 天" value="month" />
         </el-select>
 
         <el-input
           v-model="searchQuery"
-          placeholder="Search by container name..."
+          placeholder="按容器名称搜索..."
           :prefix-icon="Search"
           style="width: 250px"
           clearable
@@ -164,8 +164,8 @@
           v-model="dateRange"
           type="datetimerange"
           range-separator="to"
-          start-placeholder="Start date"
-          end-placeholder="End date"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
           format="YYYY-MM-DD HH:mm"
           value-format="YYYY-MM-DD HH:mm:ss"
           @change="handleDateRangeChange"
@@ -176,15 +176,15 @@
         <el-radio-group v-model="viewMode" size="small">
           <el-radio-button label="timeline">
             <el-icon><Clock /></el-icon>
-            Timeline
+            时间线
           </el-radio-button>
           <el-radio-button label="table">
             <el-icon><List /></el-icon>
-            Table
+            表格
           </el-radio-button>
           <el-radio-button label="cards">
             <el-icon><Grid /></el-icon>
-            Cards
+            卡片
           </el-radio-button>
         </el-radio-group>
 
@@ -193,11 +193,11 @@
           style="width: 150px"
           @change="handleSort"
         >
-          <el-option label="Start Date" value="started_at" />
-          <el-option label="Completion Date" value="completed_at" />
-          <el-option label="Container Name" value="container_name" />
-          <el-option label="Duration" value="duration" />
-          <el-option label="Status" value="status" />
+          <el-option label="开始日期" value="started_at" />
+          <el-option label="完成日期" value="completed_at" />
+          <el-option label="容器名称" value="container_name" />
+          <el-option label="持续时间" value="duration" />
+          <el-option label="状态" value="status" />
         </el-select>
 
         <el-button
@@ -212,40 +212,40 @@
       <div v-show="showFilters" class="filters-panel">
         <div class="filter-groups">
           <div class="filter-group">
-            <label>Status</label>
+            <label>状态</label>
             <el-checkbox-group v-model="historyFilters.status">
-              <el-checkbox label="completed"> Completed </el-checkbox>
-              <el-checkbox label="failed"> Failed </el-checkbox>
-              <el-checkbox label="cancelled"> Cancelled </el-checkbox>
-              <el-checkbox label="running"> Running </el-checkbox>
+              <el-checkbox label="completed"> 已完成 </el-checkbox>
+              <el-checkbox label="failed"> 已失败 </el-checkbox>
+              <el-checkbox label="cancelled"> 已取消 </el-checkbox>
+              <el-checkbox label="running"> 运行中 </el-checkbox>
             </el-checkbox-group>
           </div>
 
           <div class="filter-group">
-            <label>Update Type</label>
+            <label>更新类型</label>
             <el-checkbox-group v-model="historyFilters.updateType">
-              <el-checkbox label="major"> Major </el-checkbox>
-              <el-checkbox label="minor"> Minor </el-checkbox>
-              <el-checkbox label="patch"> Patch </el-checkbox>
-              <el-checkbox label="security"> Security </el-checkbox>
-              <el-checkbox label="hotfix"> Hotfix </el-checkbox>
-              <el-checkbox label="rollback"> Rollback </el-checkbox>
+              <el-checkbox label="major"> 主版本 </el-checkbox>
+              <el-checkbox label="minor"> 次版本 </el-checkbox>
+              <el-checkbox label="patch"> 补丁 </el-checkbox>
+              <el-checkbox label="security"> 安全 </el-checkbox>
+              <el-checkbox label="hotfix"> 热修复 </el-checkbox>
+              <el-checkbox label="rollback"> 回滚 </el-checkbox>
             </el-checkbox-group>
           </div>
 
           <div class="filter-group">
-            <label>Triggered By</label>
+            <label>触发方式</label>
             <el-checkbox-group v-model="historyFilters.triggeredBy">
-              <el-checkbox label="manual"> Manual </el-checkbox>
-              <el-checkbox label="scheduled"> Scheduled </el-checkbox>
-              <el-checkbox label="policy"> Policy </el-checkbox>
-              <el-checkbox label="webhook"> Webhook </el-checkbox>
+              <el-checkbox label="manual"> 手动 </el-checkbox>
+              <el-checkbox label="scheduled"> 计划 </el-checkbox>
+              <el-checkbox label="policy"> 策略 </el-checkbox>
+              <el-checkbox label="webhook"> 钩子 </el-checkbox>
               <el-checkbox label="api"> API </el-checkbox>
             </el-checkbox-group>
           </div>
 
           <div class="filter-group">
-            <label>Duration Range</label>
+            <label>持续时间范围</label>
             <el-slider
               v-model="durationRange"
               range
@@ -258,9 +258,9 @@
         </div>
 
         <div class="filter-actions">
-          <el-button @click="clearAllFilters"> Clear All </el-button>
+          <el-button @click="clearAllFilters"> 清除所有 </el-button>
           <el-button type="primary" @click="applyFilters">
-            Apply Filters
+            应用筛选
           </el-button>
         </div>
       </div>
@@ -274,10 +274,10 @@
 
       <div v-else-if="updateHistory.length === 0" class="empty-state">
         <el-empty
-:image-size="200" description="No update history found"
+:image-size="200" description="未找到更新历史"
 >
           <el-button type="primary" @click="refreshHistory">
-            Refresh History
+            刷新历史
           </el-button>
         </el-empty>
       </div>
@@ -293,7 +293,7 @@
             >
               <div class="timeline-date">
                 <h3>{{ formatDate(date) }}</h3>
-                <span class="date-stats">{{ group.length }} updates</span>
+                <span class="date-stats">{{ group.length }} 个更新</span>
               </div>
 
               <div class="timeline-items">
@@ -320,7 +320,7 @@
             :default-sort="{ prop: 'startedAt', order: 'descending' }"
             @sort-change="handleTableSort"
           >
-            <el-table-column prop="containerName" label="Container" sortable>
+            <el-table-column prop="containerName" label="容器" sortable>
               <template #default="{ row }">
                 <div class="container-cell">
                   <el-icon><Box /></el-icon>
@@ -329,7 +329,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="fromVersion" label="From" width="120">
+            <el-table-column prop="fromVersion" label="从" width="120">
               <template #default="{ row }">
                 <el-tag size="small" type="info">
                   {{ row.fromVersion }}
@@ -337,7 +337,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="toVersion" label="To" width="120">
+            <el-table-column prop="toVersion" label="到" width="120">
               <template #default="{ row }">
                 <el-tag size="small" type="primary">
                   {{ row.toVersion }}
@@ -345,7 +345,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="updateType" label="Type" width="100">
+            <el-table-column prop="updateType" label="类型" width="100">
               <template #default="{ row }">
                 <el-tag
                   size="small"
@@ -356,7 +356,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="status" label="Status" width="120">
+            <el-table-column prop="status" label="状态" width="120">
               <template #default="{ row }">
                 <el-tag
 size="small" :type="getStatusTagType(row.status)"
@@ -371,7 +371,7 @@ size="small" :type="getStatusTagType(row.status)"
 
             <el-table-column
               prop="startedAt"
-              label="Started"
+              label="开始时间"
               width="180"
               sortable
             >
@@ -387,7 +387,7 @@ size="small" :type="getStatusTagType(row.status)"
 
             <el-table-column
               prop="duration"
-              label="Duration"
+              label="持续时间"
               width="120"
               sortable
             >
@@ -401,7 +401,7 @@ size="small" :type="getStatusTagType(row.status)"
 
             <el-table-column
               prop="triggeredBy"
-              label="Triggered By"
+              label="触发方式"
               width="120"
             >
               <template #default="{ row }">
@@ -414,10 +414,10 @@ size="small" :type="getStatusTagType(row.status)"
               </template>
             </el-table-column>
 
-            <el-table-column label="Actions" width="200" fixed="right">
+            <el-table-column label="操作" width="200" fixed="right">
               <template #default="{ row }">
                 <div class="table-actions">
-                  <el-tooltip content="View Details">
+                  <el-tooltip content="查看详情">
                     <el-button
                       size="small"
                       :icon="View"
@@ -425,7 +425,7 @@ size="small" :type="getStatusTagType(row.status)"
                     />
                   </el-tooltip>
 
-                  <el-tooltip v-if="row.logs?.length" content="View Logs">
+                  <el-tooltip v-if="row.logs?.length" content="查看日志">
                     <el-button
                       size="small"
                       :icon="Document"
@@ -435,7 +435,7 @@ size="small" :type="getStatusTagType(row.status)"
 
                   <el-tooltip
                     v-if="row.canRollback && row.status === 'completed'"
-                    content="Rollback"
+                    content="回滚"
                   >
                     <el-button
                       size="small"
@@ -447,7 +447,7 @@ size="small" :type="getStatusTagType(row.status)"
 
                   <el-tooltip
                     v-if="row.status === 'failed'"
-                    content="Retry Update"
+                    content="重试更新"
                   >
                     <el-button
                       size="small"
@@ -795,18 +795,18 @@ const handleRollback = (item: IUpdateHistoryItem) => {
 const handleRetry = async (item: IUpdateHistoryItem) => {
   try {
     await ElMessageBox.confirm(
-      `Are you sure you want to retry the update for "${item.containerName}"?`,
-      "Retry Update",
+      `您确定要重试更新 "${item.containerName}" 吗？`,
+      "重试更新",
       {
-        confirmButtonText: "Yes, Retry",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "是的，重试",
+        cancelButtonText: "取消",
         type: "info",
       },
     );
 
     // Create a new update request based on the failed one
     // This would need to be implemented in the store
-    ElMessage.success("Update retry initiated");
+    ElMessage.success("更新重试已启动");
   } catch (error) {
     if (error !== "cancel") {
       console.error("Failed to retry update:", error);
@@ -826,7 +826,7 @@ const handleConfirmRollback = async (data: {
       historyItemId: data.update.id,
       containerId: data.update.containerId,
       targetVersion: data.update.fromVersion,
-      reason: data.options.reason || "Manual rollback",
+      reason: data.options.reason || "手动回滚",
       strategy:
         data.options.strategy === "immediate"
           ? "recreate"
@@ -841,7 +841,7 @@ const handleConfirmRollback = async (data: {
       rollbackForm.targetVersion,
     );
     showRollbackDialog.value = false;
-    ElMessage.success("Rollback initiated successfully");
+    ElMessage.success("回滚已成功启动");
   } catch (error) {
     console.error("Failed to initiate rollback:", error);
   }
@@ -869,7 +869,7 @@ const handlePageChange = (newPage: number) => {
 // Utility functions
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString("zh-CN", {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -896,10 +896,10 @@ const getRelativeTime = (dateString: string) => {
   const now = new Date();
   const diff = now.getTime() - date.getTime();
 
-  if (diff < 60000) return "Just now";
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-  return `${Math.floor(diff / 86400000)}d ago`;
+  if (diff < 60000) return "刚刚";
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
+  return `${Math.floor(diff / 86400000)}天前`;
 };
 
 const getSuccessRateColor = (rate: number) => {

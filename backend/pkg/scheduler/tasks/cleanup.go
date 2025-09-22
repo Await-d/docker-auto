@@ -7,14 +7,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/docker/api/types"
+
 	"docker-auto/internal/model"
 	"docker-auto/internal/repository"
 	"docker-auto/internal/service"
 	"docker-auto/pkg/docker"
 	"docker-auto/pkg/scheduler"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	mount_types "github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/sirupsen/logrus"
 )
 
@@ -826,12 +830,78 @@ func (t *CleanupTask) cleanupDockerVolumes(ctx context.Context, params *CleanupP
 		return operation
 	}
 
-	// This is a placeholder implementation
-	// Real implementation would use Docker API to list and remove unused volumes
-	operation.ItemsRemoved = 0
-	operation.Success = true
+	// Get list of all volumes
+	volumes, err := t.dockerClient.VolumeList(ctx, volume.ListOptions{})
+	if err != nil {
+		operation.Error = fmt.Sprintf("Failed to list volumes: %v", err)
+		operation.Success = false
+		return operation
+	}
 
-	logrus.Info("Docker volume cleanup completed")
+	var removedCount int
+	var errors []string
+
+	// Get list of all containers to check volume usage
+	containers, err := t.dockerClient.ContainerList(ctx, container.ListOptions{All: true})
+	if err != nil {
+		logrus.WithError(err).Warn("Failed to list containers for volume cleanup, proceeding with caution")
+	}
+
+	// Build map of volumes in use
+	volumesInUse := make(map[string]bool)
+	for _, container := range containers {
+		for _, mount := range container.Mounts {
+			if mount.Type == mount_types.TypeVolume {
+				volumesInUse[mount.Name] = true
+			}
+		}
+	}
+
+	// Remove unused volumes
+	for _, vol := range volumes.Volumes {
+		// Skip if volume is in use
+		if volumesInUse[vol.Name] {
+			logrus.WithField("volume", vol.Name).Debug("Volume is in use, skipping")
+			continue
+		}
+
+		// Skip system volumes and named volumes that might be important
+		if vol.Driver != "local" {
+			logrus.WithField("volume", vol.Name).Debug("Non-local volume, skipping")
+			continue
+		}
+
+		// Additional safety check: skip volumes with labels indicating they should be preserved
+		if labels := vol.Labels; labels != nil {
+			if preserve, exists := labels["docker-auto.preserve"]; exists && preserve == "true" {
+				logrus.WithField("volume", vol.Name).Debug("Volume marked for preservation, skipping")
+				continue
+			}
+		}
+
+		// Remove the volume
+		if err := t.dockerClient.VolumeRemove(ctx, vol.Name, true); err != nil {
+			errorMsg := fmt.Sprintf("Failed to remove volume %s: %v", vol.Name, err)
+			errors = append(errors, errorMsg)
+			logrus.WithError(err).WithField("volume", vol.Name).Warn("Failed to remove volume")
+		} else {
+			removedCount++
+			logrus.WithField("volume", vol.Name).Info("Successfully removed unused volume")
+		}
+	}
+
+	operation.ItemsRemoved = removedCount
+	operation.Success = len(errors) == 0
+
+	if len(errors) > 0 {
+		operation.Error = fmt.Sprintf("Encountered %d errors during volume cleanup: %s", len(errors), strings.Join(errors, "; "))
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"removed_count": removedCount,
+		"total_volumes": len(volumes.Volumes),
+		"errors_count":  len(errors),
+	}).Info("Docker volume cleanup completed")
 
 	return operation
 }
@@ -855,12 +925,116 @@ func (t *CleanupTask) cleanupDockerNetworks(ctx context.Context, params *Cleanup
 		return operation
 	}
 
-	// This is a placeholder implementation
-	// Real implementation would use Docker API to list and remove unused networks
-	operation.ItemsRemoved = 0
-	operation.Success = true
+	// Get list of all networks
+	networks, err := t.dockerClient.NetworkList(ctx, types.NetworkListOptions{})
+	if err != nil {
+		operation.Error = fmt.Sprintf("Failed to list networks: %v", err)
+		operation.Success = false
+		return operation
+	}
 
-	logrus.Info("Docker network cleanup completed")
+	var removedCount int
+	var errors []string
+
+	// Get list of all containers to check network usage
+	containers, err := t.dockerClient.ContainerList(ctx, container.ListOptions{All: true})
+	if err != nil {
+		logrus.WithError(err).Warn("Failed to list containers for network cleanup, proceeding with caution")
+	}
+
+	// Build map of networks in use
+	networksInUse := make(map[string]bool)
+	for _, container := range containers {
+		for networkName := range container.NetworkSettings.Networks {
+			networksInUse[networkName] = true
+		}
+	}
+
+	// Protected system networks that should never be removed
+	systemNetworks := map[string]bool{
+		"bridge": true,
+		"host":   true,
+		"none":   true,
+	}
+
+	// Remove unused networks
+	for _, net := range networks {
+		// Skip system networks
+		if systemNetworks[net.Name] {
+			logrus.WithField("network", net.Name).Debug("System network, skipping")
+			continue
+		}
+
+		// Skip networks that are in use
+		if networksInUse[net.Name] {
+			logrus.WithField("network", net.Name).Debug("Network is in use, skipping")
+			continue
+		}
+
+		// Skip networks with built-in scope
+		if net.Scope == "swarm" || net.Scope == "global" {
+			logrus.WithField("network", net.Name).Debug("Swarm/global network, skipping")
+			continue
+		}
+
+		// Additional safety check: skip networks with labels indicating they should be preserved
+		if labels := net.Labels; labels != nil {
+			if preserve, exists := labels["docker-auto.preserve"]; exists && preserve == "true" {
+				logrus.WithField("network", net.Name).Debug("Network marked for preservation, skipping")
+				continue
+			}
+		}
+
+		// Check if network is actually unused by inspecting it
+		networkInfo, err := t.dockerClient.NetworkInspect(ctx, net.ID, types.NetworkInspectOptions{})
+		if err != nil {
+			logrus.WithError(err).WithField("network", net.Name).Warn("Failed to inspect network, skipping")
+			continue
+		}
+
+		// Skip if network has connected containers
+		if len(networkInfo.Containers) > 0 {
+			logrus.WithField("network", net.Name).Debug("Network has connected containers, skipping")
+			continue
+		}
+
+		// If dry run, just count what would be removed
+		if params.DryRun {
+			removedCount++
+			logrus.WithField("network", net.Name).Info("Would remove unused network (dry run)")
+			continue
+		}
+
+		// Remove the network
+		if err := t.dockerClient.NetworkRemove(ctx, net.ID); err != nil {
+			errorMsg := fmt.Sprintf("Failed to remove network %s: %v", net.Name, err)
+			errors = append(errors, errorMsg)
+			logrus.WithError(err).WithField("network", net.Name).Warn("Failed to remove network")
+		} else {
+			removedCount++
+			logrus.WithField("network", net.Name).Info("Successfully removed unused network")
+		}
+	}
+
+	operation.ItemsRemoved = removedCount
+	operation.Success = len(errors) == 0
+
+	if len(errors) > 0 {
+		operation.Error = fmt.Sprintf("Encountered %d errors during network cleanup: %s", len(errors), strings.Join(errors, "; "))
+	}
+
+	if params.DryRun {
+		logrus.WithFields(logrus.Fields{
+			"would_remove_count": removedCount,
+			"total_networks":     len(networks),
+		}).Info("Docker network cleanup completed (dry run)")
+	} else {
+		logrus.WithFields(logrus.Fields{
+			"removed_count":   removedCount,
+			"total_networks":  len(networks),
+			"errors_count":    len(errors),
+		}).Info("Docker network cleanup completed")
+	}
 
 	return operation
 }

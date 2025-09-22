@@ -1,25 +1,25 @@
 <template>
   <div class="update-activity-config">
     <el-form :model="localConfig" label-width="120px" size="small">
-      <el-form-item label="Time Range">
+      <el-form-item label="时间范围">
         <el-select v-model="localConfig.timeRange" style="width: 100%">
-          <el-option label="Last 24 hours" value="24h" />
-          <el-option label="Last 7 days" value="7d" />
-          <el-option label="Last 30 days" value="30d" />
-          <el-option label="All time" value="all" />
+          <el-option label="最近24小时" value="24h" />
+          <el-option label="最近7天" value="7d" />
+          <el-option label="最近30天" value="30d" />
+          <el-option label="全部时间" value="all" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Show Status">
+      <el-form-item label="显示状态">
         <el-checkbox-group v-model="localConfig.statusFilter">
-          <el-checkbox label="pending"> Pending </el-checkbox>
-          <el-checkbox label="running"> Running </el-checkbox>
-          <el-checkbox label="completed"> Completed </el-checkbox>
-          <el-checkbox label="failed"> Failed </el-checkbox>
+          <el-checkbox label="pending"> 等待中 </el-checkbox>
+          <el-checkbox label="running"> 运行中 </el-checkbox>
+          <el-checkbox label="completed"> 已完成 </el-checkbox>
+          <el-checkbox label="failed"> 失败 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Max Items">
+      <el-form-item label="最大项目数">
         <el-input-number
           v-model="localConfig.maxItems"
           :min="5"
@@ -29,11 +29,11 @@
         />
       </el-form-item>
 
-      <el-form-item label="Auto Refresh">
+      <el-form-item label="自动刷新">
         <el-switch v-model="localConfig.autoRefresh" />
       </el-form-item>
 
-      <el-form-item label="Show Progress">
+      <el-form-item label="显示进度">
         <el-switch v-model="localConfig.showProgress" />
       </el-form-item>
     </el-form>

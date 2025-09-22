@@ -1,32 +1,32 @@
 <template>
   <div class="container-stats-config">
     <el-form :model="localConfig" label-width="120px" size="small">
-      <el-form-item label="Chart Type">
+      <el-form-item label="图表类型">
         <el-radio-group v-model="localConfig.chartType">
-          <el-radio label="pie"> Pie Chart </el-radio>
-          <el-radio label="donut"> Donut Chart </el-radio>
-          <el-radio label="bar"> Bar Chart </el-radio>
+          <el-radio label="pie"> 饼图 </el-radio>
+          <el-radio label="donut"> 环形图 </el-radio>
+          <el-radio label="bar"> 柱状图 </el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item label="Display Metrics">
+      <el-form-item label="显示指标">
         <el-checkbox-group v-model="localConfig.displayMetrics">
-          <el-checkbox label="running"> Running Containers </el-checkbox>
-          <el-checkbox label="stopped"> Stopped Containers </el-checkbox>
-          <el-checkbox label="paused"> Paused Containers </el-checkbox>
-          <el-checkbox label="restarting"> Restarting Containers </el-checkbox>
+          <el-checkbox label="running"> 运行中的容器 </el-checkbox>
+          <el-checkbox label="stopped"> 已停止的容器 </el-checkbox>
+          <el-checkbox label="paused"> 已暂停的容器 </el-checkbox>
+          <el-checkbox label="restarting"> 重启中的容器 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Show Labels">
+      <el-form-item label="显示标签">
         <el-switch v-model="localConfig.showLabels" />
       </el-form-item>
 
-      <el-form-item label="Show Values">
+      <el-form-item label="显示数值">
         <el-switch v-model="localConfig.showValues" />
       </el-form-item>
 
-      <el-form-item label="Animation">
+      <el-form-item label="启用动画">
         <el-switch v-model="localConfig.animated" />
       </el-form-item>
     </el-form>

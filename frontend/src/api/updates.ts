@@ -370,18 +370,14 @@ export const updatesAPI = {
       params.set("endDate", dateRange.end);
     }
 
-    const response = await fetch(`/api/updates/export?${params}`, {
+    const { request } = await import('@/utils/request');
+    const response = await request({
+      url: `/api/updates/export?${params}`,
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-      },
+      responseType: 'blob',
     });
 
-    if (!response.ok) {
-      throw new Error(`Export failed: ${response.statusText}`);
-    }
-
-    return response.blob();
+    return response.data as Blob;
   },
 
   /**

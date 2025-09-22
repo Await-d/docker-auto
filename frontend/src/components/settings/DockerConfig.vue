@@ -11,12 +11,12 @@
       @test="handleTestConnection"
       @field-change="handleFieldChange"
     >
-      <!-- Docker Connection -->
+      <!-- Docker连接 -->
       <el-card class="config-section" shadow="never">
         <template #header>
           <div class="section-header">
             <el-icon><Connection /></el-icon>
-            <span>Docker Connection</span>
+            <span>Docker连接</span>
             <div class="header-status">
               <el-tag
                 :type="connectionStatus.type"
@@ -34,7 +34,7 @@
             <el-form-item label="Docker Socket/URL" prop="socketPath" required>
               <el-input
                 v-model="formData.socketPath"
-                placeholder="unix:///var/run/docker.sock or tcp://host:port"
+                placeholder="unix:///var/run/docker.sock 或 tcp://host:port"
                 @input="handleFieldChange('socketPath', $event)"
               >
                 <template #prepend>
@@ -54,12 +54,12 @@
                     :loading="testing"
                     @click="testConnection"
                   >
-                    Test
+                    测试
                   </el-button>
                 </template>
               </el-input>
               <div class="field-help">
-Connection string to Docker daemon
+Docker守护进程连接字符串
 </div>
             </el-form-item>
           </el-col>
@@ -68,7 +68,7 @@ Connection string to Docker daemon
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Connection Timeout"
+              label="连接超时"
               prop="connectionTimeout"
               required
             >
@@ -80,21 +80,21 @@ Connection string to Docker daemon
                   :step="5"
                   @change="handleFieldChange('connectionTimeout', $event)"
                 />
-                <span class="timeout-unit">seconds</span>
+                <span class="timeout-unit">秒</span>
               </div>
               <div class="field-help">
-Timeout for Docker API calls
+Docker API调用超时时间
 </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Auto Reconnect">
+            <el-form-item label="自动重连">
               <el-switch
                 v-model="formData.autoReconnect"
                 @change="handleFieldChange('autoReconnect', $event)"
               />
               <div class="field-help">
-                Automatically reconnect on connection loss
+                连接断开时自动重连
               </div>
             </el-form-item>
           </el-col>
@@ -106,7 +106,7 @@ Timeout for Docker API calls
         <template #header>
           <div class="section-header">
             <el-icon><Lock /></el-icon>
-            <span>TLS Configuration</span>
+            <span>TLS配置</span>
             <el-switch
               v-model="formData.tlsEnabled"
               class="header-switch"
@@ -118,18 +118,18 @@ Timeout for Docker API calls
         <div v-if="formData.tlsEnabled">
           <el-row :gutter="24">
             <el-col :span="8">
-              <el-form-item label="TLS Verification" prop="tlsVerify">
+              <el-form-item label="TLS验证" prop="tlsVerify">
                 <el-switch
                   v-model="formData.tlsVerify"
                   @change="handleFieldChange('tlsVerify', $event)"
                 />
                 <div class="field-help">
-Verify TLS certificates
+验证TLS证书
 </div>
               </el-form-item>
             </el-col>
             <el-col :span="8">
-              <el-form-item label="Client Certificate Auth">
+              <el-form-item label="客户端证书认证">
                 <el-switch
                   v-model="formData.clientCertAuth"
                   @change="handleFieldChange('clientCertAuth', $event)"
@@ -140,7 +140,7 @@ Verify TLS certificates
               </el-form-item>
             </el-col>
             <el-col :span="8">
-              <el-form-item label="Skip Hostname Verification">
+              <el-form-item label="跳过主机名验证">
                 <el-switch
                   v-model="formData.skipHostnameVerification"
                   @change="
@@ -156,11 +156,11 @@ Verify TLS certificates
 
           <el-row :gutter="24">
             <el-col :span="8">
-              <el-form-item label="CA Certificate" prop="tlsCa">
+              <el-form-item label="CA证书" prop="tlsCa">
                 <FileUpload
                   v-model="tlsCaValue"
                   accept=".pem,.crt,.cer"
-                  placeholder="Upload CA certificate"
+                  placeholder="上传CA证书"
                   @change="handleFieldChange('tlsCa', $event)"
                 />
               </el-form-item>
@@ -168,13 +168,13 @@ Verify TLS certificates
             <el-col :span="8">
               <el-form-item
                 v-if="formData.clientCertAuth"
-                label="Client Certificate"
+                label="客户端证书"
                 prop="tlsCert"
               >
                 <FileUpload
                   v-model="tlsCertValue"
                   accept=".pem,.crt,.cer"
-                  placeholder="Upload client certificate"
+                  placeholder="上传客户端证书"
                   @change="handleFieldChange('tlsCert', $event)"
                 />
               </el-form-item>
@@ -182,13 +182,13 @@ Verify TLS certificates
             <el-col :span="8">
               <el-form-item
                 v-if="formData.clientCertAuth"
-                label="Client Key"
+                label="客户端私钥"
                 prop="tlsKey"
               >
                 <FileUpload
                   v-model="tlsKeyValue"
                   accept=".pem,.key"
-                  placeholder="Upload client private key"
+                  placeholder="上传客户端私钥"
                   @change="handleFieldChange('tlsKey', $event)"
                 />
               </el-form-item>
@@ -215,20 +215,20 @@ TLS is disabled
         <template #header>
           <div class="section-header">
             <el-icon><Box /></el-icon>
-            <span>Default Container Settings</span>
+            <span>默认容器设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Default Restart Policy"
+              label="默认重启策略"
               prop="defaultRestartPolicy"
               required
             >
               <el-select
                 v-model="formData.defaultRestartPolicy"
-                placeholder="Select restart policy"
+                placeholder="选择重启策略"
                 @change="handleFieldChange('defaultRestartPolicy', $event)"
               >
                 <el-option
@@ -249,13 +249,13 @@ TLS is disabled
           </el-col>
           <el-col :span="12">
             <el-form-item
-              label="Default Network Mode"
+              label="默认网络模式"
               prop="defaultNetworkMode"
               required
             >
               <el-select
                 v-model="formData.defaultNetworkMode"
-                placeholder="Select network mode"
+                placeholder="选择网络模式"
                 @change="handleFieldChange('defaultNetworkMode', $event)"
               >
                 <el-option
@@ -276,7 +276,7 @@ TLS is disabled
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Default CPU Limit">
+            <el-form-item label="默认CPU限制">
               <div class="resource-input">
                 <el-input-number
                   v-model="formData.defaultCpuLimit"
@@ -286,15 +286,15 @@ TLS is disabled
                   :precision="1"
                   @change="handleFieldChange('defaultCpuLimit', $event)"
                 />
-                <span class="resource-unit">cores</span>
+                <span class="resource-unit">核心</span>
               </div>
               <div class="field-help">
-                CPU limit for new containers (0 = unlimited)
+                新容器的CPU限制（0 = 无限制）
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Default Memory Limit">
+            <el-form-item label="默认内存限制">
               <div class="resource-input">
                 <el-input-number
                   v-model="formData.defaultMemoryLimit"
@@ -306,7 +306,7 @@ TLS is disabled
                 <span class="resource-unit">MB</span>
               </div>
               <div class="field-help">
-                Memory limit for new containers (0 = unlimited)
+                新容器的内存限制（0 = 无限制）
               </div>
             </el-form-item>
           </el-col>
@@ -314,15 +314,15 @@ TLS is disabled
 
         <el-row :gutter="24">
           <el-col :span="24">
-            <el-form-item label="Default Volume Mounts">
+            <el-form-item label="默认卷挂载">
               <KeyValueEditor
                 v-model="defaultVolumeMountsValue"
-                title="Volume Mounts"
-                item-name="Mount"
-                key-label="Host Path"
-                value-label="Container Path"
-                key-placeholder="/host/path"
-                value-placeholder="/container/path"
+                title="卷挂载"
+                item-name="挂载点"
+                key-label="主机路径"
+                value-label="容器路径"
+                key-placeholder="/主机/路径"
+                value-placeholder="/容器/路径"
                 @change="handleFieldChange('defaultVolumeMounts', $event)"
               />
             </el-form-item>
@@ -335,20 +335,20 @@ TLS is disabled
         <template #header>
           <div class="section-header">
             <el-icon><Picture /></el-icon>
-            <span>Image Management</span>
+            <span>镜像管理</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Default Pull Policy"
+              label="默认拉取策略"
               prop="imagePullPolicy"
               required
             >
               <el-select
                 v-model="formData.imagePullPolicy"
-                placeholder="Select pull policy"
+                placeholder="选择拉取策略"
                 @change="handleFieldChange('imagePullPolicy', $event)"
               >
                 <el-option
@@ -369,7 +369,7 @@ TLS is disabled
           </el-col>
           <el-col :span="12">
             <el-form-item
-              label="Image Cleanup Schedule"
+              label="镜像清理计划"
               prop="imageCleanupSchedule"
             >
               <CronEditor
@@ -382,24 +382,24 @@ TLS is disabled
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Auto Remove Dangling Images">
+            <el-form-item label="自动删除悬空镜像">
               <el-switch
                 v-model="formData.autoRemoveDanglingImages"
                 @change="handleFieldChange('autoRemoveDanglingImages', $event)"
               />
               <div class="field-help">
-Automatically remove untagged images
+自动删除未标记的镜像
 </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Image Verification">
+            <el-form-item label="镜像验证">
               <el-switch
                 v-model="formData.imageVerification"
                 @change="handleFieldChange('imageVerification', $event)"
               />
               <div class="field-help">
-                Verify image signatures and checksums
+                验证镜像签名和校验和
               </div>
             </el-form-item>
           </el-col>
@@ -407,7 +407,7 @@ Automatically remove untagged images
 
         <el-row :gutter="24">
           <el-col :span="24">
-            <el-form-item label="Registry Connection Timeout">
+            <el-form-item label="镜像仓库连接超时">
               <div class="timeout-input">
                 <el-input-number
                   v-model="formData.registryTimeout"
@@ -416,10 +416,10 @@ Automatically remove untagged images
                   :step="10"
                   @change="handleFieldChange('registryTimeout', $event)"
                 />
-                <span class="timeout-unit">seconds</span>
+                <span class="timeout-unit">秒</span>
               </div>
               <div class="field-help">
-                Timeout for registry operations (pull, push, etc.)
+                镜像仓库操作超时时间（拉取、推送等）
               </div>
             </el-form-item>
           </el-col>
@@ -431,16 +431,16 @@ Automatically remove untagged images
         <template #header>
           <div class="section-header">
             <el-icon><Tools /></el-icon>
-            <span>Advanced Settings</span>
+            <span>高级设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Log Driver" prop="logDriver">
+            <el-form-item label="日志驱动" prop="logDriver">
               <el-select
                 v-model="formData.logDriver"
-                placeholder="Select log driver"
+                placeholder="选择日志驱动"
                 @change="handleFieldChange('logDriver', $event)"
               >
                 <el-option
@@ -460,13 +460,13 @@ Automatically remove untagged images
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Enable BuildKit">
+            <el-form-item label="启用BuildKit">
               <el-switch
                 v-model="formData.enableBuildKit"
                 @change="handleFieldChange('enableBuildKit', $event)"
               />
               <div class="field-help">
-                Use BuildKit for improved build performance
+                使用BuildKit提高构建性能
               </div>
             </el-form-item>
           </el-col>
@@ -474,15 +474,15 @@ Automatically remove untagged images
 
         <el-row :gutter="24">
           <el-col :span="24">
-            <el-form-item label="Docker CLI Options">
+            <el-form-item label="Docker CLI选项">
               <KeyValueEditor
                 v-model="dockerCliOptionsValue"
-                title="Docker CLI Options"
-                item-name="Option"
-                key-label="Option"
-                value-label="Value"
-                key-placeholder="--option"
-                value-placeholder="value"
+                title="Docker CLI选项"
+                item-name="选项"
+                key-label="选项"
+                value-label="值"
+                key-placeholder="--选项名"
+                value-placeholder="值"
                 @change="handleFieldChange('dockerCliOptions', $event)"
               />
             </el-form-item>
@@ -573,7 +573,7 @@ const connectionStatus = computed(
       return {
         type: "info",
         icon: "Loading",
-        text: "Testing...",
+        text: "测试中...",
       };
     }
 
@@ -581,7 +581,7 @@ const connectionStatus = computed(
       return {
         type: "success",
         icon: CircleCheck,
-        text: "Connected",
+        text: "已连接",
       };
     }
 
@@ -589,14 +589,14 @@ const connectionStatus = computed(
       return {
         type: "danger",
         icon: CircleClose,
-        text: "Connection Failed",
+        text: "连接失败",
       };
     }
 
     return {
       type: "warning",
       icon: Warning,
-      text: "Not Tested",
+      text: "未测试",
     };
   },
 );
@@ -638,88 +638,88 @@ const dockerCliOptionsValue = computed({
 
 const restartPolicies = ref([
   {
-    label: "No",
+    label: "不重启",
     value: "no",
-    description: "Do not restart container",
+    description: "不重启容器",
   },
   {
-    label: "Always",
+    label: "总是重启",
     value: "always",
-    description: "Always restart container",
+    description: "总是重启容器",
   },
   {
-    label: "Unless Stopped",
+    label: "除非手动停止",
     value: "unless-stopped",
-    description: "Restart unless manually stopped",
+    description: "除非手动停止否则重启",
   },
   {
-    label: "On Failure",
+    label: "仅失败时重启",
     value: "on-failure",
-    description: "Restart only on failure",
+    description: "仅在失败时重启",
   },
 ]);
 
 const networkModes = ref([
   {
-    label: "Bridge",
+    label: "桥接网络",
     value: "bridge",
-    description: "Default bridge network",
+    description: "默认桥接网络",
   },
   {
-    label: "Host",
+    label: "主机网络",
     value: "host",
-    description: "Use host network",
+    description: "使用主机网络",
   },
   {
-    label: "None",
+    label: "无网络",
     value: "none",
-    description: "No networking",
+    description: "无网络连接",
   },
   {
-    label: "Container",
+    label: "容器网络",
     value: "container",
-    description: "Share another container network",
+    description: "共享另一个容器的网络",
   },
 ]);
 
 const pullPolicies = ref([
   {
-    label: "Always",
+    label: "总是拉取",
     value: "always",
-    description: "Always pull latest image",
+    description: "总是拉取最新镜像",
   },
   {
-    label: "Missing",
+    label: "缺失时拉取",
     value: "missing",
-    description: "Pull only if image missing",
+    description: "仅在镜像缺失时拉取",
   },
   {
-    label: "Never",
+    label: "永不拉取",
     value: "never",
-    description: "Never pull images",
+    description: "从不拉取镜像",
   },
 ]);
 
 const logDrivers = ref([
   {
-    label: "JSON File",
+    label: "JSON文件",
     value: "json-file",
-    description: "Default JSON logging",
+    description: "默认JSON日志",
   },
   {
-    label: "Syslog",
+    label: "系统日志",
     value: "syslog",
-    description: "Syslog daemon",
+    description: "Syslog守护进程",
   },
   {
     label: "Journald",
     value: "journald",
-    description: "Systemd journal",
+    description: "Systemd日志",
   },
   {
-    label: "None",
+    label: "无日志",
     value: "none",
-    description: "Disable logging",
+    description: "禁用日志",
   },
 ]);
 
@@ -727,14 +727,14 @@ const formRules = computed(() => ({
   socketPath: [
     {
       required: true,
-      message: "Docker socket path is required",
+      message: "Docker套接字路径必填",
       trigger: "blur",
     },
   ],
   connectionTimeout: [
     {
       required: true,
-      message: "Connection timeout is required",
+      message: "连接超时时间必填",
       trigger: "blur",
     },
     {
@@ -744,7 +744,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 5 || value > 300) {
-          callback(new Error("Must be between 5 and 300 seconds"));
+          callback(new Error("Must be between 5 and 300 秒"));
         } else {
           callback();
         }
@@ -818,16 +818,16 @@ const testConnection = async () => {
 
     if (success) {
       connectionTestResult.value = "success";
-      ElMessage.success("Docker connection successful");
+      ElMessage.success("Docker连接成功");
     } else {
       connectionTestResult.value = "error";
-      ElMessage.error("Failed to connect to Docker daemon");
+      ElMessage.error("连接Docker守护进程失败");
     }
 
     lastConnectionTest.value = new Date();
   } catch (error) {
     connectionTestResult.value = "error";
-    ElMessage.error("Connection test failed");
+    ElMessage.error("连接测试失败");
   } finally {
     testing.value = false;
   }

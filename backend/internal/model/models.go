@@ -65,6 +65,11 @@ func (ds *DefaultSeeder) Seed(db *gorm.DB) error {
 		}
 	}
 
+	// Seed default demo users
+	if err := CreateDefaultUsers(db); err != nil {
+		return err
+	}
+
 	return nil
 }
 

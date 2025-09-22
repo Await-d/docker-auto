@@ -1,45 +1,45 @@
 <template>
   <div class="resource-charts-config">
     <el-form :model="localConfig" label-width="120px" size="small">
-      <el-form-item label="Chart Type">
+      <el-form-item label="图表类型">
         <el-radio-group v-model="localConfig.chartType">
-          <el-radio label="line"> Line Chart </el-radio>
-          <el-radio label="area"> Area Chart </el-radio>
-          <el-radio label="bar"> Bar Chart </el-radio>
+          <el-radio label="line"> 折线图 </el-radio>
+          <el-radio label="area"> 面积图 </el-radio>
+          <el-radio label="bar"> 柱状图 </el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item label="Time Range">
+      <el-form-item label="时间范围">
         <el-select v-model="localConfig.timeRange" style="width: 100%">
-          <el-option label="Last Hour" value="1h" />
-          <el-option label="Last 6 Hours" value="6h" />
-          <el-option label="Last 24 Hours" value="24h" />
-          <el-option label="Last 7 Days" value="7d" />
+          <el-option label="最近1小时" value="1h" />
+          <el-option label="最近6小时" value="6h" />
+          <el-option label="最近24小时" value="24h" />
+          <el-option label="最近7天" value="7d" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Resources">
+      <el-form-item label="资源类型">
         <el-checkbox-group v-model="localConfig.resources">
-          <el-checkbox label="cpu"> CPU Usage </el-checkbox>
-          <el-checkbox label="memory"> Memory Usage </el-checkbox>
-          <el-checkbox label="disk"> Disk Usage </el-checkbox>
-          <el-checkbox label="network"> Network Usage </el-checkbox>
+          <el-checkbox label="cpu"> CPU使用率 </el-checkbox>
+          <el-checkbox label="memory"> 内存使用率 </el-checkbox>
+          <el-checkbox label="disk"> 磁盘使用率 </el-checkbox>
+          <el-checkbox label="network"> 网络使用率 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Data Aggregation">
+      <el-form-item label="数据聚合">
         <el-radio-group v-model="localConfig.aggregation">
-          <el-radio label="avg"> Average </el-radio>
-          <el-radio label="max"> Maximum </el-radio>
-          <el-radio label="min"> Minimum </el-radio>
+          <el-radio label="avg"> 平均值 </el-radio>
+          <el-radio label="max"> 最大值 </el-radio>
+          <el-radio label="min"> 最小值 </el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item label="Show Legend">
+      <el-form-item label="显示图例">
         <el-switch v-model="localConfig.showLegend" />
       </el-form-item>
 
-      <el-form-item label="Smooth Lines">
+      <el-form-item label="平滑曲线">
         <el-switch v-model="localConfig.smoothLines" />
       </el-form-item>
     </el-form>

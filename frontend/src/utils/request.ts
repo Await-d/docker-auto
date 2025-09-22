@@ -42,6 +42,7 @@ export interface RequestOptions extends AxiosRequestConfig {
   showLoading?: boolean;
   showError?: boolean;
   showSuccess?: boolean;
+  skipTokenRefresh?: boolean; // 跳过401错误的token刷新处理
   retryTimes?: number;
   retryDelay?: number;
 }
@@ -129,10 +130,13 @@ class HttpRequest {
           _retry?: boolean;
         };
 
-        // Handle token refresh for 401 errors
+        // Handle token refresh for 401 errors (但不处理登录API的401错误)
+        const isLoginRequest = originalRequest.metadata?.skipTokenRefresh === true;
+
         if (
           error.response?.status === HTTP_STATUS.UNAUTHORIZED &&
-          !originalRequest._retry
+          !originalRequest._retry &&
+          !isLoginRequest // 标记为跳过token刷新的请求不进行token刷新
         ) {
           originalRequest._retry = true;
 
@@ -318,6 +322,7 @@ class HttpRequest {
         showLoading: config.showLoading ?? true,
         showError: config.showError ?? true,
         showSuccess: config.showSuccess ?? false,
+        skipTokenRefresh: config.skipTokenRefresh ?? false,
       };
 
       const response = await this.instance.request<ApiResponse<T>>(config);
@@ -566,6 +571,7 @@ declare module "axios" {
       showLoading?: boolean;
       showError?: boolean;
       showSuccess?: boolean;
+      skipTokenRefresh?: boolean; // 跳过401错误的token刷新处理
     };
   }
 }

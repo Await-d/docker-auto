@@ -34,7 +34,7 @@
             effect="plain"
           >
             <el-icon><Clock /></el-icon>
-            Scheduled
+            已计划
           </el-tag>
         </div>
 
@@ -73,7 +73,7 @@
           effect="dark"
         >
           <el-icon><Warning /></el-icon>
-          SECURITY
+          安全更新
         </el-tag>
       </div>
     </div>
@@ -82,7 +82,7 @@
     <div class="version-info">
       <div class="version-change">
         <div class="current-version">
-          <span class="version-label">Current</span>
+          <span class="version-label">当前版本</span>
           <el-tag size="small" type="info">
             {{ update.currentVersion }}
           </el-tag>
@@ -91,7 +91,7 @@
           <el-icon><Right /></el-icon>
         </div>
         <div class="new-version">
-          <span class="version-label">Available</span>
+          <span class="version-label">可用版本</span>
           <el-tag size="small" type="primary">
             {{ update.availableVersion }}
           </el-tag>
@@ -116,7 +116,7 @@
 
     <!-- Security Patches -->
     <div v-if="update.securityPatches.length > 0" class="security-patches">
-      <h4>Security Patches</h4>
+      <h4>安全补丁</h4>
       <div class="patches-list">
         <div
           v-for="patch in update.securityPatches.slice(
@@ -153,8 +153,8 @@
         >
           {{
             showAllPatches
-              ? "Show Less"
-              : `Show ${update.securityPatches.length - 3} More`
+              ? "显示更少"
+              : `显示更多 ${update.securityPatches.length - 3} 个`
           }}
         </el-button>
       </div>
@@ -165,7 +165,7 @@
       v-if="update.changelog.length > 0 && expanded"
       class="changelog-preview"
     >
-      <h4>What's New</h4>
+      <h4>更新内容</h4>
       <div class="changelog-items">
         <div
           v-for="item in update.changelog.slice(0, 5)"
@@ -186,7 +186,7 @@
               size="small"
               effect="dark"
             >
-              BREAKING
+              破坏性变更
             </el-tag>
           </div>
         </div>
@@ -198,7 +198,7 @@ text type="primary"
 size="small" @click="openReleaseNotes"
 >
           <el-icon><Link /></el-icon>
-          View Full Release Notes
+          查看完整发布说明
         </el-button>
       </div>
     </div>
@@ -212,7 +212,7 @@ size="small" @click="openReleaseNotes"
       class="dependencies-section"
     >
       <div v-if="update.dependencies.length > 0" class="dependencies">
-        <h5>Dependencies</h5>
+        <h5>依赖项</h5>
         <div class="dependency-list">
           <el-tag
             v-for="dep in update.dependencies"
@@ -228,7 +228,7 @@ size="small" @click="openReleaseNotes"
       </div>
 
       <div v-if="update.conflicts.length > 0" class="conflicts">
-        <h5>Conflicts</h5>
+        <h5>冲突项</h5>
         <div class="conflict-list">
           <el-tag
             v-for="conflict in update.conflicts"
@@ -248,13 +248,13 @@ size="small" @click="openReleaseNotes"
     <div v-if="update.ignored" class="ignored-info">
       <div class="ignored-banner">
         <el-icon><CircleClose /></el-icon>
-        <span>This update has been ignored</span>
+        <span>此更新已被忽略</span>
       </div>
       <div v-if="update.ignoredReason" class="ignored-reason">
-        <strong>Reason:</strong> {{ update.ignoredReason }}
+        <strong>原因:</strong> {{ update.ignoredReason }}
       </div>
       <div class="ignored-date">
-        <strong>Ignored on:</strong> {{ formatDateTime(update.ignoredAt!) }}
+        <strong>忽略时间:</strong> {{ formatDateTime(update.ignoredAt!) }}
       </div>
     </div>
 
@@ -262,7 +262,7 @@ size="small" @click="openReleaseNotes"
     <div v-if="update.requiresApproval" class="approval-info">
       <div class="approval-banner">
         <el-icon><Lock /></el-icon>
-        <span>Requires approval before update</span>
+        <span>更新前需要审批</span>
         <el-tag
           v-if="update.approvalStatus"
           :type="getApprovalStatusType(update.approvalStatus)"
@@ -288,7 +288,7 @@ size="small" @click="openReleaseNotes"
             @click="$emit('update', update.id)"
           >
             <el-icon><Refresh /></el-icon>
-            Update Now
+            立即更新
           </el-button>
 
           <el-button
@@ -297,7 +297,7 @@ size="small" @click="openReleaseNotes"
             @click="$emit('unignore', update.id)"
           >
             <el-icon><Check /></el-icon>
-            Unignore
+            取消忽略
           </el-button>
 
           <el-button
@@ -306,7 +306,7 @@ size="small" @click="openReleaseNotes"
             @click="$emit('reschedule', update.id)"
           >
             <el-icon><Clock /></el-icon>
-            Reschedule
+            重新计划
           </el-button>
         </div>
 
@@ -318,18 +318,18 @@ size="small" @click="openReleaseNotes"
               <el-dropdown-menu>
                 <el-dropdown-item @click="$emit('details', update.id)">
                   <el-icon><View /></el-icon>
-                  View Details
+                  查看详情
                 </el-dropdown-item>
                 <el-dropdown-item @click="$emit('compare', update.id)">
                   <el-icon><Document /></el-icon>
-                  Document Versions
+                  版本比较
                 </el-dropdown-item>
                 <el-dropdown-item
                   v-if="!update.ignored && !update.scheduled"
                   @click="$emit('schedule', update.id)"
                 >
                   <el-icon><Calendar /></el-icon>
-                  Schedule Update
+                  计划更新
                 </el-dropdown-item>
                 <el-dropdown-item
                   v-if="!update.ignored"
@@ -337,7 +337,7 @@ size="small" @click="openReleaseNotes"
                   @click="$emit('ignore', update.id)"
                 >
                   <el-icon><CircleClose /></el-icon>
-                  Ignore Update
+                  忽略更新
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -352,7 +352,7 @@ size="small" @click="openReleaseNotes"
           :icon="expanded ? 'ArrowUp' : 'ArrowDown'"
           @click="toggleExpanded"
         >
-          {{ expanded ? "Less Info" : "More Info" }}
+          {{ expanded ? "收起详情" : "展开详情" }}
         </el-button>
       </div>
     </div>
@@ -537,11 +537,11 @@ const formatReleaseDate = (dateString: string) => {
   const diffTime = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+  if (diffDays === 0) return "今天";
+  if (diffDays === 1) return "昨天";
+  if (diffDays < 7) return `${diffDays} 天前`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} 周前`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} 个月前`;
 
   return date.toLocaleDateString();
 };

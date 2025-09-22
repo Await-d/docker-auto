@@ -511,6 +511,23 @@ func (r *updateHistoryRepository) Create(ctx context.Context, history *model.Upd
 	return nil
 }
 
+// Update updates an existing update history entry
+func (r *updateHistoryRepository) Update(ctx context.Context, history *model.UpdateHistory) error {
+	if history == nil {
+		return fmt.Errorf("update history cannot be nil")
+	}
+
+	if history.ID <= 0 {
+		return fmt.Errorf("update history ID is required")
+	}
+
+	if err := r.db.WithContext(ctx).Save(history).Error; err != nil {
+		return fmt.Errorf("failed to update history: %w", err)
+	}
+
+	return nil
+}
+
 // GetByID retrieves an update history entry by ID
 func (r *updateHistoryRepository) GetByID(ctx context.Context, id int64) (*model.UpdateHistory, error) {
 	if id <= 0 {

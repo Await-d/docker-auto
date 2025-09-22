@@ -5,5 +5,5 @@ package main
 import "embed"
 
 // Embed frontend static files (only available during Docker build)
-//go:embed all:frontend/dist
+//go:embed all:frontend
 var frontendFS embed.FS

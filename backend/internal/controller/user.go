@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"docker-auto/internal/middleware"
+	"docker-auto/internal/model"
 	"docker-auto/internal/service"
 	"docker-auto/pkg/utils"
 
@@ -15,13 +16,15 @@ import (
 // UserController handles user-related HTTP requests
 type UserController struct {
 	userService *service.UserService
+	authService *service.AuthService
 	logger      *logrus.Logger
 }
 
 // NewUserController creates a new user controller
-func NewUserController(userService *service.UserService, logger *logrus.Logger) *UserController {
+func NewUserController(userService *service.UserService, authService *service.AuthService, logger *logrus.Logger) *UserController {
 	return &UserController{
 		userService: userService,
+		authService: authService,
 		logger:      logger,
 	}
 }
@@ -132,14 +135,15 @@ func (uc *UserController) GetProfile(c *gin.Context) {
 
 	// Convert to response format
 	userResponse := &service.UserResponse{
-		ID:        int64(user.ID),
-		Username:  user.Username,
-		Email:     user.Email,
-		Role:      string(user.Role),
-		AvatarURL: user.AvatarURL,
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:          int64(user.ID),
+		Username:    user.Username,
+		Email:       user.Email,
+		Role:        string(user.Role),
+		AvatarURL:   user.AvatarURL,
+		IsActive:    user.IsActive,
+		Permissions: user.Permissions,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
 	}
 
 	rb.Success(userResponse)
@@ -308,14 +312,15 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 
 	// Convert to response format
 	userResponse := &service.UserResponse{
-		ID:        int64(user.ID),
-		Username:  user.Username,
-		Email:     user.Email,
-		Role:      string(user.Role),
-		AvatarURL: user.AvatarURL,
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:          int64(user.ID),
+		Username:    user.Username,
+		Email:       user.Email,
+		Role:        string(user.Role),
+		AvatarURL:   user.AvatarURL,
+		IsActive:    user.IsActive,
+		Permissions: user.Permissions,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
 	}
 
 	uc.logger.WithField("user_id", user.ID).Info("User created successfully")
@@ -371,15 +376,18 @@ func (uc *UserController) ListUsers(c *gin.Context) {
 		}
 	}
 
-	// Build filter
-	filter := &service.UserFilter{
-		Search:    search,
-		Role:      role,
-		IsActive:  isActive,
-		SortBy:    sortBy,
-		SortOrder: sortOrder,
-		Page:      page,
-		Limit:     limit,
+	// Build filter - convert to model.UserFilter
+	filter := &model.UserFilter{
+		Username: search, // Map search to username for now
+		Role:     model.UserRole(role),
+		IsActive: isActive,
+		Limit:    limit,
+		Offset:   (page - 1) * limit,
+		OrderBy:  sortBy,
+	}
+
+	if sortOrder == "desc" {
+		filter.OrderBy += " DESC"
 	}
 
 	rb := utils.NewResponseBuilder(c)
@@ -445,14 +453,15 @@ func (uc *UserController) GetUser(c *gin.Context) {
 
 	// Convert to response format
 	userResponse := &service.UserResponse{
-		ID:        int64(user.ID),
-		Username:  user.Username,
-		Email:     user.Email,
-		Role:      string(user.Role),
-		AvatarURL: user.AvatarURL,
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:          int64(user.ID),
+		Username:    user.Username,
+		Email:       user.Email,
+		Role:        string(user.Role),
+		AvatarURL:   user.AvatarURL,
+		IsActive:    user.IsActive,
+		Permissions: user.Permissions,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
 	}
 
 	rb.Success(userResponse)
@@ -585,9 +594,47 @@ func (uc *UserController) ChangeUserPassword(c *gin.Context) {
 
 	rb := utils.NewResponseBuilder(c)
 
-	// TODO: Implement admin password change in service
-	// For now, return not implemented
-	rb.Error(http.StatusNotImplemented, "Admin password change not yet implemented")
+	// Get admin user ID from JWT claims
+	adminUserID, exists := c.Get("user_id")
+	if !exists {
+		rb.Error(http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	adminID, ok := adminUserID.(int64)
+	if !ok {
+		uc.logger.Error("Invalid user ID type in JWT claims")
+		rb.Error(http.StatusInternalServerError, "Internal error")
+		return
+	}
+
+	// Implement admin password change using auth service
+	err = uc.authService.AdminChangePassword(c.Request.Context(), adminID, userID, req.NewPassword)
+	if err != nil {
+		uc.logger.WithError(err).WithFields(logrus.Fields{
+			"admin_user_id":  adminID,
+			"target_user_id": userID,
+		}).Error("Failed to change user password as admin")
+
+		if err.Error() == "admin user not found or not authorized" {
+			rb.Error(http.StatusForbidden, "Not authorized to change passwords")
+			return
+		}
+		if err.Error() == "target user not found" {
+			rb.Error(http.StatusNotFound, "User not found")
+			return
+		}
+
+		rb.Error(http.StatusInternalServerError, "Failed to change password: "+err.Error())
+		return
+	}
+
+	uc.logger.WithFields(logrus.Fields{
+		"admin_user_id":  adminID,
+		"target_user_id": userID,
+	}).Info("Admin successfully changed user password")
+
+	rb.SuccessWithMessage(nil, "Password changed successfully")
 }
 
 // GetUserSessions godoc

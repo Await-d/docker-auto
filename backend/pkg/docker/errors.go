@@ -9,6 +9,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	dockerTypes "docker-auto/pkg/types"
 )
 
 // DockerError represents a Docker-specific error
@@ -425,23 +427,13 @@ func (ec *ErrorCollector) Error() error {
 
 // Retry logic and error handling
 
-// RetryConfig defines retry configuration
-type RetryConfig struct {
-	MaxRetries    int
-	InitialDelay  time.Duration
-	MaxDelay      time.Duration
-	BackoffFactor float64
-	RetryableFunc func(error) bool
-}
-
 // DefaultRetryConfig returns a default retry configuration
-func DefaultRetryConfig() RetryConfig {
-	return RetryConfig{
+func DefaultRetryConfig() dockerTypes.RetryConfig {
+	return dockerTypes.RetryConfig{
 		MaxRetries:    3,
 		InitialDelay:  1 * time.Second,
 		MaxDelay:      30 * time.Second,
 		BackoffFactor: 2.0,
-		RetryableFunc: IsRetryableError,
 	}
 }
 
@@ -449,7 +441,7 @@ func DefaultRetryConfig() RetryConfig {
 type RetryableOperation func() error
 
 // Retry executes an operation with retry logic
-func Retry(operation RetryableOperation, config RetryConfig) error {
+func Retry(operation RetryableOperation, config dockerTypes.RetryConfig) error {
 	var lastErr error
 
 	for attempt := 0; attempt <= config.MaxRetries; attempt++ {
@@ -466,7 +458,7 @@ func Retry(operation RetryableOperation, config RetryConfig) error {
 		}
 
 		// Check if error is retryable
-		if !config.RetryableFunc(err) {
+		if !IsRetryableError(err) {
 			break
 		}
 

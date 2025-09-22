@@ -29,12 +29,12 @@ func NewSchedulerController(schedulerService *service.SchedulerService) *Schedul
 // RegisterRoutes registers scheduler routes
 func (c *SchedulerController) RegisterRoutes(router *gin.RouterGroup) {
 	scheduler := router.Group("/scheduler")
-	scheduler.Use(middleware.JWT())
+	// Note: JWT middleware should be applied at the router level, not here
 
 	// Scheduler status and control
 	scheduler.GET("/status", c.GetSchedulerStatus)
-	scheduler.POST("/start", middleware.Permission("admin"), c.StartScheduler)
-	scheduler.POST("/stop", middleware.Permission("admin"), c.StopScheduler)
+	scheduler.POST("/start", middleware.RequireAdmin(), c.StartScheduler)
+	scheduler.POST("/stop", middleware.RequireAdmin(), c.StopScheduler)
 
 	// Task management
 	tasks := scheduler.Group("/tasks")

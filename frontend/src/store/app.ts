@@ -184,8 +184,8 @@ export const useAppStore = defineStore("app", () => {
 
     addNotification({
       type: "error",
-      title: "An error occurred",
-      message: error.message || "Something went wrong",
+      title: "发生错误",
+      message: error.message || "出现问题",
       duration: 5000,
     });
   };
@@ -236,7 +236,7 @@ export const useApp = () => {
     ...appStore,
 
     // Additional convenience methods
-    showSuccess: (message: string, title = "Success") =>
+    showSuccess: (message: string, title = "成功") =>
       appStore.addNotification({
         type: "success",
         title,
@@ -244,7 +244,7 @@ export const useApp = () => {
         duration: 3000,
       }),
 
-    showError: (message: string, title = "Error") =>
+    showError: (message: string, title = "错误") =>
       appStore.addNotification({
         type: "error",
         title,
@@ -252,7 +252,7 @@ export const useApp = () => {
         duration: 5000,
       }),
 
-    showWarning: (message: string, title = "Warning") =>
+    showWarning: (message: string, title = "警告") =>
       appStore.addNotification({
         type: "warning",
         title,
@@ -260,7 +260,7 @@ export const useApp = () => {
         duration: 4000,
       }),
 
-    showInfo: (message: string, title = "Info") =>
+    showInfo: (message: string, title = "信息") =>
       appStore.addNotification({
         type: "info",
         title,

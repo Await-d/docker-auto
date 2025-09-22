@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 
@@ -251,6 +252,105 @@ func (d *DockerClient) IsAvailable(ctx context.Context) bool {
 // GetClientVersion returns the Docker client version
 func (d *DockerClient) GetClientVersion() string {
 	return d.client.ClientVersion()
+}
+
+// VolumeList lists Docker volumes
+func (d *DockerClient) VolumeList(ctx context.Context, options volume.ListOptions) (volume.ListResponse, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), d.timeout)
+		defer cancel()
+	}
+
+	return d.client.VolumeList(ctx, options)
+}
+
+// VolumeRemove removes a Docker volume
+func (d *DockerClient) VolumeRemove(ctx context.Context, volumeID string, force bool) error {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), d.timeout)
+		defer cancel()
+	}
+
+	return d.client.VolumeRemove(ctx, volumeID, force)
+}
+
+// ContainerList lists Docker containers
+func (d *DockerClient) ContainerList(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), d.timeout)
+		defer cancel()
+	}
+
+	return d.client.ContainerList(ctx, options)
+}
+
+// NetworkList lists Docker networks
+func (d *DockerClient) NetworkList(ctx context.Context, options types.NetworkListOptions) ([]types.NetworkResource, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), d.timeout)
+		defer cancel()
+	}
+
+	return d.client.NetworkList(ctx, options)
+}
+
+// NetworkInspect inspects a Docker network
+func (d *DockerClient) NetworkInspect(ctx context.Context, networkID string, options types.NetworkInspectOptions) (types.NetworkResource, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), d.timeout)
+		defer cancel()
+	}
+
+	return d.client.NetworkInspect(ctx, networkID, options)
+}
+
+// NetworkRemove removes a Docker network
+func (d *DockerClient) NetworkRemove(ctx context.Context, networkID string) error {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), d.timeout)
+		defer cancel()
+	}
+
+	return d.client.NetworkRemove(ctx, networkID)
+}
+
+// ServerVersion returns Docker server version
+func (d *DockerClient) ServerVersion(ctx context.Context) (types.Version, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), d.timeout)
+		defer cancel()
+	}
+
+	return d.client.ServerVersion(ctx)
+}
+
+// Info returns Docker system information
+func (d *DockerClient) Info(ctx context.Context) (types.Info, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), d.timeout)
+		defer cancel()
+	}
+
+	return d.client.Info(ctx)
+}
+
+// DiskUsage returns Docker disk usage
+func (d *DockerClient) DiskUsage(ctx context.Context) (types.DiskUsage, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), d.timeout)
+		defer cancel()
+	}
+
+	return d.client.DiskUsage(ctx, types.DiskUsageOptions{})
 }
 
 // NegotiateAPIVersion negotiates the API version with the Docker daemon

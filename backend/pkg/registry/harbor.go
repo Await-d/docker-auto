@@ -2,15 +2,20 @@ package registry
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"docker-auto/internal/model"
+	"github.com/sirupsen/logrus"
 )
 
 // harborClient implements the HarborClient interface for Harbor registries
@@ -48,7 +53,16 @@ func NewHarborClientWithConfig(config *ClientConfig) HarborClient {
 
 	// Set up TLS config if provided
 	if config.TLSConfig != nil {
-		// TODO: Implement TLS configuration
+		transport := &http.Transport{
+			TLSClientConfig: buildTLSConfig(config.TLSConfig),
+		}
+		httpClient.Transport = transport
+
+		logrus.WithFields(logrus.Fields{
+			"insecure_skip_verify": config.TLSConfig.InsecureSkipVerify,
+			"ca_cert_provided":     config.TLSConfig.CAFile != "",
+			"client_cert_provided": config.TLSConfig.CertFile != "",
+		}).Debug("Harbor client configured with TLS settings")
 	}
 
 	return &harborClient{
@@ -290,7 +304,7 @@ func (c *harborClient) GetImageTags(ctx context.Context, repository string, opti
 
 	// Apply sorting and limits if specified
 	if options != nil {
-		// TODO: Implement sorting and pagination
+		imageTags = c.applySortingAndPagination(imageTags, options)
 	}
 
 	return imageTags, nil
@@ -744,4 +758,262 @@ func (c *harborClient) addAuthHeader(req *http.Request) {
 			req.Header.Set("Authorization", "Bearer "+c.auth.Token)
 		}
 	}
+}
+
+// buildTLSConfig creates TLS configuration for Harbor client
+func buildTLSConfig(tlsConfig *TLSConfig) *tls.Config {
+	config := &tls.Config{
+		InsecureSkipVerify: tlsConfig.InsecureSkipVerify,
+		MinVersion:         tls.VersionTLS12, // Enforce minimum TLS 1.2
+	}
+
+	// Load CA certificate if provided
+	if tlsConfig.CAFile != "" {
+		if err := loadCACertificate(config, tlsConfig.CAFile); err != nil {
+			logrus.WithError(err).Warn("Failed to load CA certificate, proceeding without custom CA")
+		}
+	}
+
+	// Load client certificate if provided
+	if tlsConfig.CertFile != "" && tlsConfig.KeyFile != "" {
+		if err := loadClientCertificate(config, tlsConfig.CertFile, tlsConfig.KeyFile); err != nil {
+			logrus.WithError(err).Warn("Failed to load client certificate, proceeding without client cert")
+		}
+	}
+
+	// Configure cipher suites for enhanced security
+	config.CipherSuites = []uint16{
+		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	}
+
+	// Prefer server cipher suites for better security
+	config.PreferServerCipherSuites = true
+
+	logrus.WithFields(logrus.Fields{
+		"min_version":          "TLS1.2",
+		"insecure_skip_verify": config.InsecureSkipVerify,
+		"cipher_suites_count":  len(config.CipherSuites),
+	}).Debug("Built TLS configuration for Harbor client")
+
+	return config
+}
+
+// loadCACertificate loads CA certificate from file and adds it to TLS config
+func loadCACertificate(config *tls.Config, caCertPath string) error {
+	caCert, err := ioutil.ReadFile(caCertPath)
+	if err != nil {
+		return fmt.Errorf("failed to read CA certificate file %s: %w", caCertPath, err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCert) {
+		return fmt.Errorf("failed to parse CA certificate from %s", caCertPath)
+	}
+
+	config.RootCAs = caCertPool
+
+	logrus.WithField("ca_cert_path", caCertPath).Debug("Successfully loaded CA certificate")
+	return nil
+}
+
+// loadClientCertificate loads client certificate and key for mutual TLS
+func loadClientCertificate(config *tls.Config, certPath, keyPath string) error {
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err != nil {
+		return fmt.Errorf("failed to load client certificate pair (cert: %s, key: %s): %w",
+			certPath, keyPath, err)
+	}
+
+	config.Certificates = []tls.Certificate{cert}
+
+	logrus.WithFields(logrus.Fields{
+		"client_cert_path": certPath,
+		"client_key_path":  keyPath,
+	}).Debug("Successfully loaded client certificate for mutual TLS")
+
+	return nil
+}
+
+// applySortingAndPagination applies sorting and pagination to image tags
+func (c *harborClient) applySortingAndPagination(imageTags []*ImageTag, options *TagListOptions) []*ImageTag {
+	if len(imageTags) == 0 {
+		return imageTags
+	}
+
+	// Create a copy to avoid modifying the original slice
+	result := make([]*ImageTag, len(imageTags))
+	copy(result, imageTags)
+
+	// Apply sorting
+	c.sortImageTags(result, options.Sort, options.Order)
+
+	// Apply pagination
+	if options.Limit > 0 || options.Offset > 0 {
+		result = c.paginateImageTags(result, options.Offset, options.Limit)
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"original_count":  len(imageTags),
+		"result_count":    len(result),
+		"sort_by":         options.Sort,
+		"sort_order":      options.Order,
+		"offset":          options.Offset,
+		"limit":           options.Limit,
+	}).Debug("Applied sorting and pagination to image tags")
+
+	return result
+}
+
+// sortImageTags sorts image tags based on the specified criteria
+func (c *harborClient) sortImageTags(imageTags []*ImageTag, sortBy string, sortOrder string) {
+	if sortBy == "" {
+		sortBy = "created" // Default sort by creation time
+	}
+	if sortOrder == "" {
+		sortOrder = "desc" // Default descending order (newest first)
+	}
+
+	switch sortBy {
+	case "name":
+		if sortOrder == "asc" {
+			sort.Slice(imageTags, func(i, j int) bool {
+				return strings.Compare(imageTags[i].Name, imageTags[j].Name) < 0
+			})
+		} else {
+			sort.Slice(imageTags, func(i, j int) bool {
+				return strings.Compare(imageTags[i].Name, imageTags[j].Name) > 0
+			})
+		}
+	case "created", "creation_time":
+		if sortOrder == "asc" {
+			sort.Slice(imageTags, func(i, j int) bool {
+				return imageTags[i].Created.Before(imageTags[j].Created)
+			})
+		} else {
+			sort.Slice(imageTags, func(i, j int) bool {
+				return imageTags[i].Created.After(imageTags[j].Created)
+			})
+		}
+	case "size":
+		if sortOrder == "asc" {
+			sort.Slice(imageTags, func(i, j int) bool {
+				return imageTags[i].Size < imageTags[j].Size
+			})
+		} else {
+			sort.Slice(imageTags, func(i, j int) bool {
+				return imageTags[i].Size > imageTags[j].Size
+			})
+		}
+	default:
+		// Default sorting by creation time
+		if sortOrder == "asc" {
+			sort.Slice(imageTags, func(i, j int) bool {
+				return imageTags[i].Created.Before(imageTags[j].Created)
+			})
+		} else {
+			sort.Slice(imageTags, func(i, j int) bool {
+				return imageTags[i].Created.After(imageTags[j].Created)
+			})
+		}
+		logrus.WithField("sort_by", sortBy).Warn("Unknown sort field, defaulting to creation time")
+	}
+}
+
+// paginateImageTags applies pagination to image tags
+func (c *harborClient) paginateImageTags(imageTags []*ImageTag, offset, limit int) []*ImageTag {
+	totalCount := len(imageTags)
+
+	// Validate offset
+	if offset < 0 {
+		offset = 0
+	}
+	if offset >= totalCount {
+		return []*ImageTag{} // Return empty slice if offset is beyond the data
+	}
+
+	// Calculate end index
+	end := totalCount
+	if limit > 0 {
+		end = offset + limit
+		if end > totalCount {
+			end = totalCount
+		}
+	}
+
+	result := imageTags[offset:end]
+
+	logrus.WithFields(logrus.Fields{
+		"total_count":    totalCount,
+		"offset":         offset,
+		"limit":          limit,
+		"result_count":   len(result),
+		"start_index":    offset,
+		"end_index":      end,
+	}).Debug("Applied pagination to image tags")
+
+	return result
+}
+
+// validateTagListOptions validates and normalizes TagListOptions
+func (c *harborClient) validateTagListOptions(options *TagListOptions) *TagListOptions {
+	if options == nil {
+		return &TagListOptions{
+			Sort:   "created",
+			Order:  "desc",
+			Offset: 0,
+			Limit:  100, // Default limit
+		}
+	}
+
+	// Create a copy to avoid modifying the original
+	validated := &TagListOptions{
+		Repository: options.Repository,
+		Sort:       options.Sort,
+		Order:      options.Order,
+		Offset:     options.Offset,
+		Limit:      options.Limit,
+	}
+
+	// Set defaults for empty values
+	if validated.Sort == "" {
+		validated.Sort = "created"
+	}
+	if validated.Order == "" {
+		validated.Order = "desc"
+	}
+	if validated.Offset < 0 {
+		validated.Offset = 0
+	}
+	if validated.Limit <= 0 {
+		validated.Limit = 100 // Default limit
+	}
+	if validated.Limit > 1000 {
+		validated.Limit = 1000 // Maximum limit to prevent abuse
+		logrus.Warn("Tag list limit was capped at 1000 for performance reasons")
+	}
+
+	// Validate sort fields
+	validSortFields := map[string]bool{
+		"name":          true,
+		"created":       true,
+		"creation_time": true,
+		"size":          true,
+	}
+	if !validSortFields[validated.Sort] {
+		logrus.WithField("sort_by", validated.Sort).Warn("Invalid sort field, defaulting to 'created'")
+		validated.Sort = "created"
+	}
+
+	// Validate sort order
+	if validated.Order != "asc" && validated.Order != "desc" {
+		logrus.WithField("sort_order", validated.Order).Warn("Invalid sort order, defaulting to 'desc'")
+		validated.Order = "desc"
+	}
+
+	return validated
 }

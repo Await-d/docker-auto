@@ -1,33 +1,33 @@
 <template>
   <div class="realtime-monitor-config">
     <el-form :model="localConfig" label-width="120px" size="small">
-      <el-form-item label="Update Interval">
+      <el-form-item label="更新间隔">
         <el-select v-model="localConfig.updateInterval" style="width: 100%">
-          <el-option label="1 second" :value="1000" />
-          <el-option label="2 seconds" :value="2000" />
-          <el-option label="5 seconds" :value="5000" />
-          <el-option label="10 seconds" :value="10000" />
+          <el-option label="1秒" :value="1000" />
+          <el-option label="2秒" :value="2000" />
+          <el-option label="5秒" :value="5000" />
+          <el-option label="10秒" :value="10000" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Chart Type">
+      <el-form-item label="图表类型">
         <el-radio-group v-model="localConfig.chartType">
-          <el-radio label="line"> Line Chart </el-radio>
-          <el-radio label="area"> Area Chart </el-radio>
-          <el-radio label="bar"> Bar Chart </el-radio>
+          <el-radio label="line"> 折线图 </el-radio>
+          <el-radio label="area"> 面积图 </el-radio>
+          <el-radio label="bar"> 柱状图 </el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item label="Metrics">
+      <el-form-item label="监控指标">
         <el-checkbox-group v-model="localConfig.metrics">
-          <el-checkbox label="cpu"> CPU Usage </el-checkbox>
-          <el-checkbox label="memory"> Memory Usage </el-checkbox>
-          <el-checkbox label="network"> Network I/O </el-checkbox>
-          <el-checkbox label="disk"> Disk I/O </el-checkbox>
+          <el-checkbox label="cpu"> CPU使用率 </el-checkbox>
+          <el-checkbox label="memory"> 内存使用率 </el-checkbox>
+          <el-checkbox label="network"> 网络I/O </el-checkbox>
+          <el-checkbox label="disk"> 磁盘I/O </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Data Points">
+      <el-form-item label="数据点数">
         <el-input-number
           v-model="localConfig.dataPoints"
           :min="10"
@@ -37,7 +37,7 @@
         />
       </el-form-item>
 
-      <el-form-item label="Show Grid">
+      <el-form-item label="显示网格">
         <el-switch v-model="localConfig.showGrid" />
       </el-form-item>
     </el-form>

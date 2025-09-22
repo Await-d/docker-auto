@@ -1,3 +1,8 @@
+<!--
+  通用加载组件
+  支持多种加载样式：转圈、点状、进度条、骨架屏、遮罩层
+  可配置全屏显示、自定义文本、进度显示等功能
+-->
 <template>
   <div :class="loadingClass">
     <div v-if="type === 'spinner'" class="loading-spinner">
@@ -53,40 +58,52 @@ import { computed } from "vue";
 import { Loading } from "@element-plus/icons-vue";
 
 interface Props {
+  /** 加载类型：转圈 | 点状 | 进度条 | 骨架屏 | 遮罩层 */
   type?: "spinner" | "dots" | "bar" | "skeleton" | "overlay";
+  /** 图标大小 */
   size?: number;
+  /** 加载提示文本 */
   text?: string;
+  /** 是否全屏显示 */
   fullscreen?: boolean;
+  /** 是否显示遮罩层 */
   overlay?: boolean;
+  /** 进度百分比 */
   progress?: number;
+  /** 是否显示进度百分比文本 */
   showProgress?: boolean;
+  /** 骨架屏行数 */
   skeletonLines?: number;
+  /** 背景颜色 */
   background?: string;
 }
 
+// 设置属性默认值
 const props = withDefaults(defineProps<Props>(), {
-  type: "spinner",
-  size: 24,
-  text: "",
-  fullscreen: false,
-  overlay: false,
-  progress: 0,
-  showProgress: false,
-  skeletonLines: 3,
-  background: "",
+  type: "spinner", // 默认使用转圈加载
+  size: 24, // 默认图标大小24px
+  text: "", // 默认无提示文本
+  fullscreen: false, // 默认非全屏
+  overlay: false, // 默认无遮罩层
+  progress: 0, // 默认进度0%
+  showProgress: false, // 默认不显示进度文本
+  skeletonLines: 3, // 默认骨架屏3行
+  background: "", // 默认无背景色
 });
 
+// 计算加载组件的CSS类名
 const loadingClass = computed(() => [
-  "loading-component",
-  `loading-${props.type}`,
+  "loading-component", // 基础样式类
+  `loading-${props.type}`, // 根据类型添加对应样式类
   {
-    "loading-fullscreen": props.fullscreen,
-    "loading-overlay-mode": props.overlay,
+    "loading-fullscreen": props.fullscreen, // 全屏模式样式
+    "loading-overlay-mode": props.overlay, // 遮罩层模式样式
   },
 ]);
 </script>
 
 <style scoped lang="scss">
+/* 加载组件基础样式 */
 .loading-component {
   display: flex;
   flex-direction: column;
@@ -94,6 +111,7 @@ const loadingClass = computed(() => [
   justify-content: center;
   min-height: 60px;
 
+  /* 全屏加载模式 */
   &.loading-fullscreen {
     position: fixed;
     top: 0;
@@ -109,6 +127,7 @@ const loadingClass = computed(() => [
     }
   }
 
+  /* 遮罩层模式 */
   &.loading-overlay-mode {
     position: absolute;
     top: 0;
@@ -124,6 +143,7 @@ const loadingClass = computed(() => [
   }
 }
 
+/* 转圈加载样式 */
 .loading-spinner {
   display: flex;
   flex-direction: column;
@@ -135,6 +155,7 @@ const loadingClass = computed(() => [
   }
 }
 
+/* 点状加载样式 */
 .loading-dots {
   display: flex;
   flex-direction: column;
@@ -161,6 +182,7 @@ const loadingClass = computed(() => [
   }
 }
 
+/* 进度条加载样式 */
 .loading-bar {
   width: 100%;
   max-width: 300px;
@@ -196,6 +218,7 @@ const loadingClass = computed(() => [
   }
 }
 
+/* 骨架屏加载样式 */
 .loading-skeleton {
   width: 100%;
   display: flex;
@@ -230,7 +253,8 @@ const loadingClass = computed(() => [
   font-weight: 500;
 }
 
-// Animations
+/* 动画效果 */
+/* 点状闪烁动画 */
 @keyframes dot-flashing {
   0%,
   80%,
@@ -244,6 +268,7 @@ const loadingClass = computed(() => [
   }
 }
 
+/* 进度条光泽动画 */
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
@@ -253,6 +278,7 @@ const loadingClass = computed(() => [
   }
 }
 
+/* 骨架屏加载动画 */
 @keyframes skeleton-loading {
   0% {
     background-position: 200% 0;
@@ -262,7 +288,8 @@ const loadingClass = computed(() => [
   }
 }
 
-// Responsive design
+/* 响应式设计 */
+/* 移动端适配 */
 @media (max-width: 768px) {
   .loading-component {
     min-height: 40px;

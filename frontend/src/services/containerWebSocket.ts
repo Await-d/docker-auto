@@ -1,5 +1,5 @@
 /**
- * Container-specific WebSocket service for real-time updates
+ * 容器专用WebSocket服务，用于实时更新
  */
 import { ref } from "vue";
 import { ElNotification } from "element-plus";
@@ -18,18 +18,34 @@ export class ContainerWebSocketService {
   private authStore = useAuthStore();
   private isInitialized = false;
 
-  // Connection state
+  // 连接状态
   public state = ref<
     "disconnected" | "connecting" | "connected" | "reconnecting" | "error"
   >("disconnected");
   public lastError = ref<string | null>(null);
 
-  // Subscription tracking
+  // 订阅跟踪
   private subscriptions = new Set<string>();
 
   constructor() {
-    // Initialize when auth state is available
-    this.initialize();
+    // 延迟初始化，等待认证完成
+    this.watchAuthState();
+  }
+
+  private watchAuthState() {
+    // 监听认证状态变化
+    this.authStore.$subscribe((mutation, state) => {
+      if (state.isAuthenticated && state.token && !this.isInitialized) {
+        this.initialize();
+      } else if (!state.isAuthenticated && this.isInitialized) {
+        this.disconnect();
+      }
+    });
+
+    // 如果已经认证，立即初始化
+    if (this.authStore.isAuthenticated && this.authStore.token) {
+      this.initialize();
+    }
   }
 
   private async initialize() {
@@ -40,10 +56,7 @@ export class ContainerWebSocketService {
         import.meta.env.VITE_API_BASE_URL || window.location.origin;
       const token = this.authStore.token;
 
-      if (!token) {
-        console.warn("No auth token available for WebSocket connection");
-        return;
-      }
+      console.log("正在初始化WebSocket连接，认证令牌:", token ? "存在" : "缺失");
 
       this.client = new WebSocketClient(baseUrl, token, {
         autoReconnect: true,
@@ -66,16 +79,16 @@ export class ContainerWebSocketService {
       await this.client.connect();
       this.isInitialized = true;
 
-      console.log("Container WebSocket service initialized");
+      console.log("容器WebSocket服务已初始化");
     } catch (error) {
-      console.error("Failed to initialize Container WebSocket service:", error);
+      console.error("容器WebSocket服务初始化失败:", error);
       this.lastError.value =
-        error instanceof Error ? error.message : "Connection failed";
+        error instanceof Error ? error.message : "连接失败";
     }
   }
 
   /**
-   * Subscribe to container status updates
+   * 订阅容器状态更新
    */
   subscribeToContainerStatus() {
     if (!this.client) return;
@@ -92,26 +105,26 @@ export class ContainerWebSocketService {
           timestamp: new Date(event.timestamp),
         });
 
-        // Show notification for important status changes
+        // 为重要状态变化显示通知
         if (update.status === "running" || update.status === "exited") {
           ElNotification({
-            title: "Container Status Update",
-            message: `Container ${update.container} is now ${update.status}`,
+            title: "容器状态更新",
+            message: `容器 ${update.container} 现在状态为 ${update.status}`,
             type: update.status === "running" ? "success" : "warning",
             duration: 3000,
           });
         }
       } catch (error) {
-        console.error("Error handling container status update:", error);
+        console.error("处理容器状态更新时出错:", error);
       }
     });
 
     this.subscriptions.add(topic);
-    console.log("Subscribed to container status updates");
+    console.log("已订阅容器状态更新");
   }
 
   /**
-   * Subscribe to container stats updates
+   * 订阅容器统计更新
    */
   subscribeToContainerStats() {
     if (!this.client) return;
@@ -128,16 +141,16 @@ export class ContainerWebSocketService {
           timestamp: new Date(event.timestamp),
         });
       } catch (error) {
-        console.error("Error handling container stats update:", error);
+        console.error("处理容器统计更新时出错:", error);
       }
     });
 
     this.subscriptions.add(topic);
-    console.log("Subscribed to container stats updates");
+    console.log("已订阅容器统计更新");
   }
 
   /**
-   * Subscribe to container log updates
+   * 订阅容器日志更新
    */
   subscribeToContainerLogs(containerId?: string) {
     if (!this.client) return;
@@ -156,16 +169,16 @@ export class ContainerWebSocketService {
           timestamp: new Date(event.timestamp),
         });
       } catch (error) {
-        console.error("Error handling container logs update:", error);
+        console.error("处理容器日志更新时出错:", error);
       }
     });
 
     this.subscriptions.add(topic);
-    console.log(`Subscribed to container logs: ${topic}`);
+    console.log(`已订阅容器日志: ${topic}`);
   }
 
   /**
-   * Subscribe to container events (creation, deletion, etc.)
+   * 订阅容器事件（创建、删除等）
    */
   subscribeToContainerEvents() {
     if (!this.client) return;
@@ -181,30 +194,30 @@ export class ContainerWebSocketService {
           timestamp: new Date(event.timestamp),
         });
 
-        // Show notifications for important events
+        // 为重要事件显示通知
         if (event.data) {
           const eventType = event.data.action;
           if (["create", "start", "stop", "remove"].includes(eventType)) {
             const severity = eventType === "remove" ? "warning" : "info";
             ElNotification({
-              title: "Container Event",
-              message: `Container ${event.data.container} ${eventType}d`,
+            title: "容器事件",
+            message: `容器 ${event.data.container} 已${eventType === "create" ? "创建" : eventType === "start" ? "启动" : eventType === "stop" ? "停止" : "移除"}`,
               type: severity,
               duration: 3000,
             });
           }
         }
       } catch (error) {
-        console.error("Error handling container event:", error);
+        console.error("处理容器事件时出错:", error);
       }
     });
 
     this.subscriptions.add(topic);
-    console.log("Subscribed to container events");
+    console.log("已订阅容器事件");
   }
 
   /**
-   * Subscribe to update notifications
+   * 订阅更新通知
    */
   subscribeToUpdateNotifications() {
     if (!this.client) return;
@@ -217,7 +230,7 @@ export class ContainerWebSocketService {
         const updateData = event.data;
         if (!updateData) return;
 
-        // Add to available updates in store
+        // 在存储中添加可用更新
         this.containerStore.availableUpdates.push({
           container: updateData.container,
           currentVersion: updateData.currentVersion,
@@ -228,24 +241,24 @@ export class ContainerWebSocketService {
           critical: updateData.critical || false,
         });
 
-        // Show notification
+        // 显示通知
         ElNotification({
-          title: "Update Available",
+          title: "有可用更新",
           message: `${updateData.container}: ${updateData.currentVersion} → ${updateData.availableVersion}`,
           type: updateData.critical ? "warning" : "info",
           duration: 5000,
         });
       } catch (error) {
-        console.error("Error handling update notification:", error);
+        console.error("处理更新通知时出错:", error);
       }
     });
 
     this.subscriptions.add(topic);
-    console.log("Subscribed to update notifications");
+    console.log("已订阅更新通知");
   }
 
   /**
-   * Subscribe to system alerts
+   * 订阅系统警报
    */
   subscribeToSystemAlerts() {
     if (!this.client) return;
@@ -258,9 +271,9 @@ export class ContainerWebSocketService {
         const alert = event.data;
         if (!alert) return;
 
-        // Show system-wide notifications
+        // 显示系统全局通知
         ElNotification({
-          title: alert.title || "System Alert",
+          title: alert.title || "系统警报",
           message: alert.message,
           type:
             alert.severity === "error"
@@ -268,19 +281,19 @@ export class ContainerWebSocketService {
               : alert.severity === "warning"
                 ? "warning"
                 : "info",
-          duration: alert.severity === "error" ? 0 : 5000, // Errors stay until dismissed
+          duration: alert.severity === "error" ? 0 : 5000, // 错误保持直到被关闭
         });
       } catch (error) {
-        console.error("Error handling system alert:", error);
+        console.error("处理系统警报时出错:", error);
       }
     });
 
     this.subscriptions.add(topic);
-    console.log("Subscribed to system alerts");
+    console.log("已订阅系统警报");
   }
 
   /**
-   * Subscribe to all container-related updates
+   * 订阅所有容器相关更新
    */
   subscribeToAll() {
     this.subscribeToContainerStatus();
@@ -292,18 +305,18 @@ export class ContainerWebSocketService {
   }
 
   /**
-   * Unsubscribe from a specific topic
+   * 取消订阅特定主题
    */
   unsubscribe(topic: string) {
     if (!this.client || !this.subscriptions.has(topic)) return;
 
     this.client.unsubscribe(topic);
     this.subscriptions.delete(topic);
-    console.log(`Unsubscribed from ${topic}`);
+    console.log(`已取消订阅 ${topic}`);
   }
 
   /**
-   * Unsubscribe from all topics
+   * 取消订阅所有主题
    */
   unsubscribeAll() {
     if (!this.client) return;
@@ -312,11 +325,25 @@ export class ContainerWebSocketService {
       this.client!.unsubscribe(topic);
     });
     this.subscriptions.clear();
-    console.log("Unsubscribed from all topics");
+    console.log("已取消订阅所有主题");
   }
 
   /**
-   * Reconnect the WebSocket connection
+   * 断开WebSocket连接
+   */
+  disconnect() {
+    if (!this.client) return;
+
+    this.unsubscribeAll();
+    this.client.disconnect();
+    this.client = null;
+    this.isInitialized = false;
+    this.state.value = "disconnected";
+    console.log("WebSocket连接已断开");
+  }
+
+  /**
+   * 重新连接WebSocket连接
    */
   async reconnect() {
     if (!this.client) {
@@ -328,7 +355,7 @@ export class ContainerWebSocketService {
       this.client.disconnect();
       await this.client.connect();
 
-      // Re-subscribe to all topics
+      // 重新订阅所有主题
       const currentSubscriptions = Array.from(this.subscriptions);
       this.subscriptions.clear();
 
@@ -344,14 +371,14 @@ export class ContainerWebSocketService {
         else if (topic === "system.alerts") this.subscribeToSystemAlerts();
       });
     } catch (error) {
-      console.error("Failed to reconnect WebSocket:", error);
+      console.error("WebSocket重新连接失败:", error);
       this.lastError.value =
-        error instanceof Error ? error.message : "Reconnection failed";
+        error instanceof Error ? error.message : "重新连接失败";
     }
   }
 
   /**
-   * Update authentication token
+   * 更新认证令牌
    */
   updateToken(token: string) {
     if (!this.client) return;
@@ -360,7 +387,7 @@ export class ContainerWebSocketService {
   }
 
   /**
-   * Get connection statistics
+   * 获取连接统计
    */
   getStats() {
     if (!this.client) {
@@ -380,7 +407,7 @@ export class ContainerWebSocketService {
   }
 
   /**
-   * Disconnect and cleanup
+   * 断开连接并清理
    */
   disconnect() {
     this.unsubscribeAll();
@@ -392,28 +419,28 @@ export class ContainerWebSocketService {
 
     this.state.value = "disconnected";
     this.isInitialized = false;
-    console.log("Container WebSocket service disconnected");
+    console.log("容器WebSocket服务已断开连接");
   }
 
   /**
-   * Check if connected
+   * 检查是否已连接
    */
   get isConnected() {
     return this.state.value === "connected";
   }
 
   /**
-   * Get active subscriptions
+   * 获取活跃订阅
    */
   get activeSubscriptions() {
     return Array.from(this.subscriptions);
   }
 }
 
-// Create singleton instance
+// 创建单例实例
 export const containerWebSocketService = new ContainerWebSocketService();
 
-// Vue composable for easier usage in components
+// Vue组合式函数，方便在组件中使用
 export function useContainerWebSocket() {
   return {
     service: containerWebSocketService,

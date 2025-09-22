@@ -6,10 +6,10 @@
         <div class="header-info">
           <h1 class="page-title">
             <el-icon><Refresh /></el-icon>
-            Updates Center
+            更新管理
           </h1>
           <p class="page-description">
-            Manage container updates, schedule maintenance, and track progress
+            管理容器更新、安排维护计划并跟踪进度
           </p>
         </div>
 
@@ -20,17 +20,17 @@
               :loading="checkingUpdates"
               @click="checkForUpdates(true)"
             >
-              Check Updates
+              检查更新
             </el-button>
             <el-button
 :icon="Calendar" @click="showScheduler = true"
 >
-              Schedule
+              计划
             </el-button>
             <el-button
 :icon="Setting" @click="showPolicies = true"
 >
-              Policies
+              策略
             </el-button>
           </el-button-group>
 
@@ -40,7 +40,7 @@ trigger="click" @command="handleBulkAction"
             <el-button
 type="primary" :disabled="!hasSelection"
 >
-              Bulk Actions
+              批量操作
               <el-icon class="el-icon--right">
                 <ArrowDown />
               </el-icon>
@@ -49,19 +49,19 @@ type="primary" :disabled="!hasSelection"
               <el-dropdown-menu>
                 <el-dropdown-item command="update-all">
                   <el-icon><Refresh /></el-icon>
-                  Update All Selected
+                  更新所有已选择
                 </el-dropdown-item>
                 <el-dropdown-item command="schedule-all">
                   <el-icon><Calendar /></el-icon>
-                  Schedule All Selected
+                  计划所有已选择
                 </el-dropdown-item>
                 <el-dropdown-item command="ignore-all">
                   <el-icon><CircleClose /></el-icon>
-                  Ignore All Selected
+                  忽略所有已选择
                 </el-dropdown-item>
                 <el-dropdown-item divided command="export-selected">
                   <el-icon><Download /></el-icon>
-                  Export Selected
+                  导出已选择
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -79,7 +79,7 @@ type="primary" :disabled="!hasSelection"
             <span class="stat-value">{{
               updateAnalytics.totalUpdatesAvailable
             }}</span>
-            <span class="stat-label">Available Updates</span>
+            <span class="stat-label">可用更新</span>
           </div>
         </div>
 
@@ -91,7 +91,7 @@ type="primary" :disabled="!hasSelection"
             <span class="stat-value">{{
               updateAnalytics.securityUpdates
             }}</span>
-            <span class="stat-label">Security Updates</span>
+            <span class="stat-label">安全更新</span>
           </div>
         </div>
 
@@ -103,7 +103,7 @@ type="primary" :disabled="!hasSelection"
             <span class="stat-value">{{
               updateAnalytics.criticalUpdates
             }}</span>
-            <span class="stat-label">Critical Updates</span>
+            <span class="stat-label">重要更新</span>
           </div>
         </div>
 
@@ -113,7 +113,7 @@ type="primary" :disabled="!hasSelection"
           </div>
           <div class="stat-content">
             <span class="stat-value">{{ runningUpdatesCount }}</span>
-            <span class="stat-label">Running Updates</span>
+            <span class="stat-label">运行中更新</span>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ type="primary" :disabled="!hasSelection"
           </div>
           <div class="stat-content">
             <span class="stat-value">{{ scheduledUpdatesCount }}</span>
-            <span class="stat-label">Scheduled Updates</span>
+            <span class="stat-label">计划更新</span>
           </div>
         </div>
       </div>
@@ -134,14 +134,14 @@ type="primary" :disabled="!hasSelection"
       <div class="panel-header">
         <h3>
           <el-icon><Loading /></el-icon>
-          Running Updates ({{ runningUpdates.length }})
+          运行中更新 ({{ runningUpdates.length }})
         </h3>
         <el-button
           text
           type="primary"
           @click="showAllRunningUpdates = !showAllRunningUpdates"
         >
-          {{ showAllRunningUpdates ? "Show Less" : "Show All" }}
+          {{ showAllRunningUpdates ? "显示更少" : "显示全部" }}
         </el-button>
       </div>
 
@@ -161,7 +161,7 @@ type="primary" :disabled="!hasSelection"
         <el-button
 :icon="Filter" @click="showFilters = !showFilters"
 >
-          Filters
+          筛选器
           <el-badge
             v-if="activeFiltersCount > 0"
             :value="activeFiltersCount"
@@ -171,21 +171,21 @@ type="primary" :disabled="!hasSelection"
 
         <el-select
           v-model="quickFilter"
-          placeholder="Quick Filter"
+          placeholder="快速筛选"
           style="width: 150px"
           @change="applyQuickFilter"
         >
-          <el-option label="All Updates" value="all" />
-          <el-option label="Security Only" value="security" />
-          <el-option label="Critical Only" value="critical" />
-          <el-option label="Pending" value="pending" />
-          <el-option label="Ignored" value="ignored" />
-          <el-option label="Scheduled" value="scheduled" />
+          <el-option label="所有更新" value="all" />
+          <el-option label="仅安全更新" value="security" />
+          <el-option label="仅重要更新" value="critical" />
+          <el-option label="待处理" value="pending" />
+          <el-option label="已忽略" value="ignored" />
+          <el-option label="已计划" value="scheduled" />
         </el-select>
 
         <el-input
           v-model="searchQuery"
-          placeholder="Search containers..."
+          placeholder="搜索容器..."
           :prefix-icon="Search"
           style="width: 250px"
           clearable
@@ -197,11 +197,11 @@ type="primary" :disabled="!hasSelection"
         <el-radio-group v-model="viewMode" size="small">
           <el-radio-button label="list">
             <el-icon><List /></el-icon>
-            List
+            列表
           </el-radio-button>
           <el-radio-button label="grid">
             <el-icon><Grid /></el-icon>
-            Grid
+            网格
           </el-radio-button>
         </el-radio-group>
 
@@ -210,11 +210,11 @@ type="primary" :disabled="!hasSelection"
           style="width: 150px"
           @change="handleSort"
         >
-          <el-option label="Available Date" value="available_date" />
-          <el-option label="Release Date" value="release_date" />
-          <el-option label="Container Name" value="container_name" />
-          <el-option label="Risk Level" value="risk_level" />
-          <el-option label="Size" value="size" />
+          <el-option label="可用日期" value="available_date" />
+          <el-option label="发布日期" value="release_date" />
+          <el-option label="容器名称" value="container_name" />
+          <el-option label="风险等级" value="risk_level" />
+          <el-option label="大小" value="size" />
         </el-select>
 
         <el-button
@@ -225,7 +225,7 @@ type="primary" :disabled="!hasSelection"
         <el-checkbox
 v-model="autoRefresh" @change="setAutoRefresh"
 >
-          Auto Refresh
+          自动刷新
         </el-checkbox>
       </div>
     </div>
@@ -235,28 +235,28 @@ v-model="autoRefresh" @change="setAutoRefresh"
       <div v-show="showFilters" class="filters-panel">
         <div class="filter-groups">
           <div class="filter-group">
-            <label>Update Type</label>
+            <label>更新类型</label>
             <el-checkbox-group v-model="filters.updateType">
-              <el-checkbox label="major"> Major </el-checkbox>
-              <el-checkbox label="minor"> Minor </el-checkbox>
-              <el-checkbox label="patch"> Patch </el-checkbox>
-              <el-checkbox label="security"> Security </el-checkbox>
-              <el-checkbox label="hotfix"> Hotfix </el-checkbox>
+              <el-checkbox label="major"> 主版本 </el-checkbox>
+              <el-checkbox label="minor"> 次版本 </el-checkbox>
+              <el-checkbox label="patch"> 补丁 </el-checkbox>
+              <el-checkbox label="security"> 安全 </el-checkbox>
+              <el-checkbox label="hotfix"> 热修复 </el-checkbox>
             </el-checkbox-group>
           </div>
 
           <div class="filter-group">
-            <label>Risk Level</label>
+            <label>风险等级</label>
             <el-checkbox-group v-model="filters.riskLevel">
-              <el-checkbox label="low"> Low </el-checkbox>
-              <el-checkbox label="medium"> Medium </el-checkbox>
-              <el-checkbox label="high"> High </el-checkbox>
-              <el-checkbox label="critical"> Critical </el-checkbox>
+              <el-checkbox label="low"> 低 </el-checkbox>
+              <el-checkbox label="medium"> 中 </el-checkbox>
+              <el-checkbox label="high"> 高 </el-checkbox>
+              <el-checkbox label="critical"> 严重 </el-checkbox>
             </el-checkbox-group>
           </div>
 
           <div class="filter-group">
-            <label>Size Range</label>
+            <label>大小范围</label>
             <el-slider
               v-model="sizeRange"
               range
@@ -268,19 +268,19 @@ v-model="autoRefresh" @change="setAutoRefresh"
           </div>
 
           <div class="filter-group">
-            <label>Status</label>
+            <label>状态</label>
             <el-checkbox-group v-model="statusFilters">
-              <el-checkbox label="available"> Available </el-checkbox>
-              <el-checkbox label="ignored"> Ignored </el-checkbox>
-              <el-checkbox label="scheduled"> Scheduled </el-checkbox>
+              <el-checkbox label="available"> 可用 </el-checkbox>
+              <el-checkbox label="ignored"> 已忽略 </el-checkbox>
+              <el-checkbox label="scheduled"> 已计划 </el-checkbox>
             </el-checkbox-group>
           </div>
         </div>
 
         <div class="filter-actions">
-          <el-button @click="clearAllFilters"> Clear All </el-button>
+          <el-button @click="clearAllFilters"> 清除全部 </el-button>
           <el-button type="primary" @click="applyFilters">
-            Apply Filters
+            应用筛选器
           </el-button>
         </div>
       </div>
@@ -302,17 +302,17 @@ v-model="autoRefresh" @change="setAutoRefresh"
         <el-button
 size="small" @click="selectByType('security')"
 >
-          Select Security
+          选择安全更新
         </el-button>
         <el-button
 size="small" @click="selectByType('critical')"
 >
-          Select Critical
+          选择重要更新
         </el-button>
         <el-button
 size="small" @click="clearSelection"
 >
-          Clear Selection
+          清除选择
         </el-button>
       </div>
     </div>
@@ -325,10 +325,10 @@ size="small" @click="clearSelection"
 
       <div v-else-if="filteredUpdates.length === 0" class="empty-state">
         <el-empty
-:image-size="200" description="No updates available"
+:image-size="200" description="暂无可用更新"
 >
           <el-button type="primary" @click="checkForUpdates(true)">
-            Check for Updates
+            检查更新
           </el-button>
         </el-empty>
       </div>
@@ -566,13 +566,13 @@ const handleScheduleUpdate = (updateId: string) => {
 const handleIgnoreUpdate = async (updateId: string) => {
   try {
     const result = await ElMessageBox.prompt(
-      "Please provide a reason for ignoring this update:",
-      "Ignore Update",
+      "请提供忽略此更新的原因：",
+      "忽略更新",
       {
-        confirmButtonText: "Ignore",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "忽略",
+        cancelButtonText: "取消",
         inputType: "textarea",
-        inputPlaceholder: "Reason for ignoring this update...",
+        inputPlaceholder: "忽略此更新的原因...",
       },
     );
 
@@ -606,11 +606,11 @@ const handleShowDetails = (updateId: string) => {
 const handleCancelUpdate = async (runningUpdateId: string) => {
   try {
     await ElMessageBox.confirm(
-      "Are you sure you want to cancel this update? This may leave the container in an inconsistent state.",
-      "Cancel Update",
+      "您确定要取消此更新吗？这可能会使容器处于不一致状态。",
+      "取消更新",
       {
-        confirmButtonText: "Yes, Cancel",
-        cancelButtonText: "No",
+        confirmButtonText: "是的，取消",
+        cancelButtonText: "否",
         type: "warning",
       },
     );
@@ -643,17 +643,17 @@ const handleBulkAction = (command: string) => {
 const handleBulkIgnore = async () => {
   try {
     await ElMessageBox.confirm(
-      `Are you sure you want to ignore ${selectedUpdates.value.size} selected updates?`,
-      "Bulk Ignore Updates",
+      `您确定要忽略选中的 ${selectedUpdates.value.size} 个更新吗？`,
+      "批量忽略更新",
       {
-        confirmButtonText: "Yes, Ignore All",
-        cancelButtonText: "Cancel",
+        confirmButtonText: "是的，忽略全部",
+        cancelButtonText: "取消",
         type: "warning",
       },
     );
 
     const promises = Array.from(selectedUpdates.value).map((updateId) =>
-      updatesStore.ignoreUpdate(updateId, "Bulk ignore operation"),
+      updatesStore.ignoreUpdate(updateId, "批量忽略操作"),
     );
 
     await Promise.all(promises);
@@ -666,23 +666,63 @@ const handleBulkIgnore = async () => {
 };
 
 const handleExportSelected = async () => {
+  if (selectedUpdates.value.size === 0) {
+    ElMessage.warning("请先选择要导出的更新记录");
+    return;
+  }
+
   try {
-    // TODO: Implement export for selected updates
+    // Ask for export format
+    const formatChoice = await ElMessageBox.confirm(
+      "请选择导出格式：CSV、JSON 或 Excel",
+      "导出选中项",
+      {
+        distinguishCancelAndClose: true,
+        confirmButtonText: "CSV格式",
+        cancelButtonText: "取消",
+        type: "info",
+      }
+    ).then(() => "csv")
+    .catch((action) => {
+      if (action === "close") {
+        return ElMessageBox.confirm(
+          "请选择导出格式：CSV、JSON 或 Excel",
+          "导出选中项",
+          {
+            distinguishCancelAndClose: true,
+            confirmButtonText: "JSON格式",
+            cancelButtonText: "取消",
+            type: "info",
+          }
+        ).then(() => "json")
+        .catch(() => "excel");
+      }
+      throw action;
+    });
+
+    const selectedIds = Array.from(selectedUpdates.value);
+    const exportFormat = formatChoice as "csv" | "json" | "excel";
+
+    // Create filter for selected updates
     const exportFilters: UpdateFilter = {
-      // Filter to only selected updates
-      // This would need to be implemented in the API
+      containerIds: selectedIds, // Use containerIds instead of updateIds
     };
 
-    await updatesStore.exportUpdateHistory("csv", exportFilters);
+    await updatesStore.exportUpdateHistory(exportFormat, exportFilters);
+    clearSelection();
+    ElMessage.success(`已导出 ${selectedIds.length} 项更新记录`);
   } catch (error) {
-    console.error("Failed to export selected updates:", error);
+    if (error !== "cancel") {
+      console.error("Failed to export selected updates:", error);
+      ElMessage.error("导出失败");
+    }
   }
 };
 
 const handleUpdateScheduled = () => {
   showScheduler.value = false;
   clearSelection();
-  ElMessage.success("Updates scheduled successfully");
+  ElMessage.success("更新计划安排成功");
 };
 
 const handlePolicyApplied = () => {

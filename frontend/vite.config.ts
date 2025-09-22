@@ -51,6 +51,8 @@ export default defineConfig(({ mode }) => {
       preprocessorOptions: {
         scss: {
           additionalData: '@use "@/styles/variables.scss" as *;',
+          // Silence deprecation warnings
+          quietDeps: true,
         },
       },
     },
@@ -60,77 +62,36 @@ export default defineConfig(({ mode }) => {
       open: false,
       proxy: {
         "/api": {
-          target: "http://backend:8080",
+          target: "http://localhost:8080",
           changeOrigin: true,
           secure: false,
         },
         "/ws": {
-          target: "ws://backend:8080",
+          target: "ws://localhost:8080",
           ws: true,
           changeOrigin: true,
         },
       },
     },
     build: {
-      target: "es2015",
+      target: "es2020",
       outDir: "dist",
       assetsDir: "assets",
       sourcemap: false,
       minify: "esbuild", // Faster minification
-      reportCompressedSize: false, // Disable to speed up build
-      chunkSizeWarningLimit: 600, // Lower threshold for better performance
+      reportCompressedSize: false,
+      chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
-          manualChunks: (id) => {
-            // Advanced chunking strategy for better performance
-            if (id.includes("node_modules")) {
-              if (id.includes("vue")) {
-                return "vendor-vue";
-              }
-              if (id.includes("element-plus")) {
-                return "vendor-ui";
-              }
-              if (id.includes("echarts")) {
-                return "vendor-charts";
-              }
-              if (
-                id.includes("axios") ||
-                id.includes("dayjs") ||
-                id.includes("lodash")
-              ) {
-                return "vendor-utils";
-              }
-              // Split large node_modules into smaller chunks
-              return "vendor-misc";
-            }
-            // Split application code by feature
-            if (id.includes("/views/")) {
-              return "views";
-            }
-            if (id.includes("/components/dashboard/")) {
-              return "dashboard";
-            }
-            if (id.includes("/components/container/")) {
-              return "containers";
-            }
-            if (id.includes("/components/settings/")) {
-              return "settings";
-            }
-          },
-          // Optimize asset naming for better caching
-          assetFileNames: (assetInfo) => {
-            const info = assetInfo.name.split(".");
-            const ext = info[info.length - 1];
-            if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
-              return `img/[name]-[hash][extname]`;
-            }
-            if (/woff2?|eot|ttf|otf/i.test(ext)) {
-              return `fonts/[name]-[hash][extname]`;
-            }
-            return `assets/[name]-[hash][extname]`;
+          manualChunks: {
+            vue: ['vue'],
+            'vue-router': ['vue-router'],
+            pinia: ['pinia'],
+            'element-plus': ['element-plus'],
           },
           chunkFileNames: "js/[name]-[hash].js",
           entryFileNames: "js/[name]-[hash].js",
+          assetFileNames: "assets/[name]-[hash][extname]",
         },
       },
     },
@@ -143,15 +104,6 @@ export default defineConfig(({ mode }) => {
         "@element-plus/icons-vue",
         "axios",
         "dayjs",
-        "echarts/core",
-        "echarts/charts/LineChart",
-        "echarts/charts/BarChart",
-        "echarts/charts/PieChart",
-        "echarts/components/GridComponent",
-        "echarts/components/TooltipComponent",
-        "echarts/components/LegendComponent",
-        "echarts/renderers/CanvasRenderer",
-        "vue-echarts",
         "nprogress",
         "js-cookie",
         "lodash-es",
@@ -164,15 +116,6 @@ export default defineConfig(({ mode }) => {
       // Remove console.log in production
       drop: isProduction ? ["console", "debugger"] : [],
     },
-    // Enable experimental features for better performance
-    experimental: {
-      renderBuiltUrl(filename, { hostType }) {
-        if (hostType === "js") {
-          return { js: `window.__staticBase + ${JSON.stringify(filename)}` };
-        } else {
-          return { relative: true };
-        }
-      },
-    },
+    // Removed experimental features to fix runtime errors
   };
 });

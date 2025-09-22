@@ -9,6 +9,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -32,11 +34,25 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 	return manager.Connect()
 }
 
-// Connect establishes database connection to external PostgreSQL only
+// Connect establishes database connection based on configuration
 func (dm *DBManager) Connect() (*gorm.DB, error) {
-	// Only PostgreSQL is supported - requires external database
-	dsn := dm.config.GetDSN()
-	dialector := postgres.Open(dsn)
+	var dialector gorm.Dialector
+
+	switch dm.config.Database.Type {
+	case "sqlite":
+		dialector = sqlite.Open(dm.config.Database.Path)
+		logrus.Infof("Using SQLite database: %s", dm.config.Database.Path)
+	case "postgres":
+		dsn := dm.config.GetDSN()
+		dialector = postgres.Open(dsn)
+		logrus.Info("Using PostgreSQL database")
+	case "mysql":
+		dsn := dm.config.GetDSN()
+		dialector = mysql.Open(dsn)
+		logrus.Info("Using MySQL database")
+	default:
+		return nil, fmt.Errorf("unsupported database type: %s", dm.config.Database.Type)
+	}
 
 	// Configure GORM logger with performance optimizations
 	var logLevel logger.LogLevel
@@ -126,6 +142,12 @@ func AutoMigrate(db *gorm.DB) error {
 	// Create indexes
 	if err := createIndexes(db); err != nil {
 		return fmt.Errorf("failed to create indexes: %w", err)
+	}
+
+	// Create default users for development
+	logrus.Info("Creating default users...")
+	if err := model.CreateDefaultUsers(db); err != nil {
+		return fmt.Errorf("failed to create default users: %w", err)
 	}
 
 	logrus.Info("Database migration completed successfully")

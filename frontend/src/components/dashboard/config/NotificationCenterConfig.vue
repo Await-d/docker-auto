@@ -1,16 +1,16 @@
 <template>
   <div class="notification-center-config">
     <el-form :model="localConfig" label-width="120px" size="small">
-      <el-form-item label="Notification Types">
+      <el-form-item label="通知类型">
         <el-checkbox-group v-model="localConfig.notificationTypes">
-          <el-checkbox label="info"> Information </el-checkbox>
-          <el-checkbox label="success"> Success </el-checkbox>
-          <el-checkbox label="warning"> Warning </el-checkbox>
-          <el-checkbox label="error"> Error </el-checkbox>
+          <el-checkbox label="info"> 信息 </el-checkbox>
+          <el-checkbox label="success"> 成功 </el-checkbox>
+          <el-checkbox label="warning"> 警告 </el-checkbox>
+          <el-checkbox label="error"> 错误 </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
 
-      <el-form-item label="Max Notifications">
+      <el-form-item label="最大通知数">
         <el-input-number
           v-model="localConfig.maxNotifications"
           :min="5"
@@ -20,12 +20,12 @@
         />
       </el-form-item>
 
-      <el-form-item label="Auto Dismiss">
+      <el-form-item label="自动关闭">
         <el-switch v-model="localConfig.autoDismiss" />
       </el-form-item>
 
       <el-form-item
-v-if="localConfig.autoDismiss" label="Dismiss Timeout"
+v-if="localConfig.autoDismiss" label="关闭超时"
 >
         <el-input-number
           v-model="localConfig.dismissTimeout"
@@ -34,14 +34,14 @@ v-if="localConfig.autoDismiss" label="Dismiss Timeout"
           :step="1"
           style="width: 100%"
         />
-        <span class="timeout-label">seconds</span>
+        <span class="timeout-label">秒</span>
       </el-form-item>
 
-      <el-form-item label="Show Timestamps">
+      <el-form-item label="显示时间戳">
         <el-switch v-model="localConfig.showTimestamps" />
       </el-form-item>
 
-      <el-form-item label="Group Similar">
+      <el-form-item label="分组相似">
         <el-switch v-model="localConfig.groupSimilar" />
       </el-form-item>
     </el-form>

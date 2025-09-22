@@ -62,7 +62,6 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: "Dashboard",
           icon: "Dashboard",
-          permission: "read",
         },
       },
 
@@ -75,6 +74,30 @@ const routes: RouteRecordRaw[] = [
           title: "Containers",
           icon: "Box",
           permission: "container:read",
+        },
+      },
+
+      // Image management
+      {
+        path: "/images",
+        name: "Images",
+        component: () => import("@/views/Images.vue"),
+        meta: {
+          title: "Images",
+          icon: "Picture",
+          permission: "image:read",
+        },
+      },
+
+      // Log management
+      {
+        path: "/logs",
+        name: "Logs",
+        component: () => import("@/views/Logs.vue"),
+        meta: {
+          title: "Logs",
+          icon: "Document",
+          permission: "system:logs",
         },
       },
       {
@@ -117,8 +140,8 @@ const routes: RouteRecordRaw[] = [
         component: () => import("@/views/Updates.vue"),
         meta: {
           title: "Updates Center",
-          icon: "UpdateFilled",
-          permission: "update:read",
+          icon: "Refresh",
+          permission: "update:create",
         },
       },
       {
@@ -128,7 +151,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: "Update History",
           icon: "Clock",
-          permission: "update:read",
+          permission: "container:read",
         },
       },
 
@@ -140,6 +163,18 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: "System Settings",
           icon: "Setting",
+          role: "admin",
+        },
+      },
+
+      // User management (Admin only)
+      {
+        path: "/users",
+        name: "Users",
+        component: () => import("@/views/Users.vue"),
+        meta: {
+          title: "User Management",
+          icon: "User",
           role: "admin",
         },
       },
@@ -191,6 +226,9 @@ const router = createRouter({
 });
 
 // Global navigation guards
+// Track if this is the initial navigation (page refresh)
+let isInitialNavigation = true;
+
 router.beforeEach(async (to, from, next) => {
   NProgress.start();
 
@@ -200,6 +238,25 @@ router.beforeEach(async (to, from, next) => {
       ? `${to.meta.title} - Docker Auto Update System`
       : "Docker Auto Update System";
     document.title = title;
+
+    // For initial navigation (page refresh) or when navigating to protected routes, wait for auth initialization
+    const shouldWaitForAuth = (isInitialNavigation && from.name === undefined) ||
+      (to.meta?.requireAuth && TokenManager.getAccessToken());
+
+    if (shouldWaitForAuth) {
+      const authStore = useAuthStore();
+      const maxWait = 3000; // 3 seconds max wait
+      const startTime = Date.now();
+
+      // Wait for auth store to be properly initialized
+      while (!authStore.user && TokenManager.getAccessToken() && (Date.now() - startTime) < maxWait) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      if (isInitialNavigation) {
+        isInitialNavigation = false;
+      }
+    }
 
     // Get stores
     const authStore = useAuthStore();
@@ -226,12 +283,14 @@ router.beforeEach(async (to, from, next) => {
             TokenManager.clearTokens();
             const redirectUrl = to.fullPath !== "/" ? to.fullPath : undefined;
             AuthUtils.redirectToLogin(redirectUrl);
+            next(false); // Stop navigation
             return;
           }
         } else {
           // No valid token, redirect to login
           const redirectUrl = to.fullPath !== "/" ? to.fullPath : undefined;
           AuthUtils.redirectToLogin(redirectUrl);
+          next(false); // Stop navigation
           return;
         }
       }

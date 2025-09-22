@@ -15,30 +15,30 @@
         <template #header>
           <div class="section-header">
             <el-icon><Refresh /></el-icon>
-            <span>Global Update Settings</span>
+            <span>全局更新设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item
-              label="Default Strategy"
+              label="默认策略"
               prop="defaultStrategy"
               required
             >
               <el-select
                 v-model="formData.defaultStrategy"
-                placeholder="Select update strategy"
+                placeholder="选择更新策略"
                 @change="handleFieldChange('defaultStrategy', $event)"
               >
-                <el-option label="Automatic" value="auto" />
-                <el-option label="Manual" value="manual" />
+                <el-option label="自动" value="auto" />
+                <el-option label="手动" value="manual" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item
-              label="Max Concurrent Updates"
+              label="最大并发更新数"
               prop="maxConcurrentUpdates"
               required
             >
@@ -54,7 +54,7 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Retry Attempts" prop="retryAttempts" required>
+            <el-form-item label="重试次数" prop="retryAttempts" required>
               <el-input-number
                 v-model="formData.retryAttempts"
                 :min="0"
@@ -65,7 +65,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item
-              label="Rollback Timeout"
+              label="回滚超时"
               prop="rollbackTimeout"
               required
             >
@@ -77,7 +77,7 @@
                   :step="30"
                   @change="handleFieldChange('rollbackTimeout', $event)"
                 />
-                <span class="timeout-unit">seconds</span>
+                <span class="timeout-unit">秒</span>
               </div>
             </el-form-item>
           </el-col>
@@ -89,32 +89,32 @@
         <template #header>
           <div class="section-header">
             <el-icon><Clock /></el-icon>
-            <span>Maintenance Windows</span>
+            <span>维护窗口</span>
           </div>
         </template>
 
         <div class="maintenance-windows">
           <div
-            v-if="formData.maintenanceWindows.length === 0"
+            v-if="!formData.maintenanceWindows || formData.maintenanceWindows.length === 0"
             class="empty-state"
           >
-            <el-empty description="No maintenance windows configured">
+            <el-empty description="未配置维护窗口">
               <el-button type="primary" @click="addMaintenanceWindow">
-                Add Maintenance Window
+                添加维护窗口
               </el-button>
             </el-empty>
           </div>
 
           <div v-else class="windows-list">
             <div
-              v-for="(window, index) in formData.maintenanceWindows"
+              v-for="(window, index) in (formData.maintenanceWindows || [])"
               :key="window.id"
               class="window-item"
             >
               <div class="window-header">
                 <el-input
                   v-model="window.name"
-                  placeholder="Window name"
+                  placeholder="窗口名称"
                   class="window-name"
                   @input="updateMaintenanceWindow(index)"
                 />
@@ -134,7 +134,7 @@
 
               <el-row :gutter="16">
                 <el-col :span="8">
-                  <el-form-item label="Start Time">
+                  <el-form-item label="开始时间">
                     <el-time-picker
                       v-model="window.startTime"
                       format="HH:mm"
@@ -144,7 +144,7 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="End Time">
+                  <el-form-item label="结束时间">
                     <el-time-picker
                       v-model="window.endTime"
                       format="HH:mm"
@@ -154,18 +154,18 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="Days">
+                  <el-form-item label="星期">
                     <el-checkbox-group
                       v-model="window.dayOfWeek"
                       @change="updateMaintenanceWindow(index)"
                     >
-                      <el-checkbox :label="0"> Sun </el-checkbox>
-                      <el-checkbox :label="1"> Mon </el-checkbox>
-                      <el-checkbox :label="2"> Tue </el-checkbox>
-                      <el-checkbox :label="3"> Wed </el-checkbox>
-                      <el-checkbox :label="4"> Thu </el-checkbox>
-                      <el-checkbox :label="5"> Fri </el-checkbox>
-                      <el-checkbox :label="6"> Sat </el-checkbox>
+                      <el-checkbox :label="0"> 日 </el-checkbox>
+                      <el-checkbox :label="1"> 一 </el-checkbox>
+                      <el-checkbox :label="2"> 二 </el-checkbox>
+                      <el-checkbox :label="3"> 三 </el-checkbox>
+                      <el-checkbox :label="4"> 四 </el-checkbox>
+                      <el-checkbox :label="5"> 五 </el-checkbox>
+                      <el-checkbox :label="6"> 六 </el-checkbox>
                     </el-checkbox-group>
                   </el-form-item>
                 </el-col>
@@ -174,7 +174,7 @@
 
             <el-button type="primary" @click="addMaintenanceWindow">
               <el-icon><Plus /></el-icon>
-              Add Window
+              添加窗口
             </el-button>
           </div>
         </div>
@@ -185,30 +185,30 @@
         <template #header>
           <div class="section-header">
             <el-icon><DocumentCopy /></el-icon>
-            <span>Version Comparison Rules</span>
+            <span>版本比较规则</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Semantic Versioning">
+            <el-form-item label="语义化版本控制">
               <el-switch
                 v-model="formData.semanticVersioning"
                 @change="handleFieldChange('semanticVersioning', $event)"
               />
               <div class="field-help">
-                Use semantic versioning for comparison
+                使用语义化版本进行比较
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Allow Pre-release">
+            <el-form-item label="允许预发布版本">
               <el-switch
                 v-model="formData.allowPrerelease"
                 @change="handleFieldChange('allowPrerelease', $event)"
               />
               <div class="field-help">
-Include pre-release versions
+包含预发布版本
 </div>
             </el-form-item>
           </el-col>
@@ -216,13 +216,13 @@ Include pre-release versions
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="Security Update Priority">
+            <el-form-item label="安全更新优先级">
               <el-switch
                 v-model="formData.securityUpdatePriority"
                 @change="handleFieldChange('securityUpdatePriority', $event)"
               />
               <div class="field-help">
-Prioritize security updates
+优先处理安全更新
 </div>
             </el-form-item>
           </el-col>
@@ -234,13 +234,13 @@ Prioritize security updates
         <template #header>
           <div class="section-header">
             <el-icon><Bell /></el-icon>
-            <span>Notification Preferences</span>
+            <span>通知偏好设置</span>
           </div>
         </template>
 
         <el-row :gutter="24">
           <el-col :span="8">
-            <el-form-item label="Update Available">
+            <el-form-item label="更新可用">
               <el-switch
                 v-model="formData.notifyOnAvailable"
                 @change="handleFieldChange('notifyOnAvailable', $event)"
@@ -248,7 +248,7 @@ Prioritize security updates
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Update Complete">
+            <el-form-item label="更新完成">
               <el-switch
                 v-model="formData.notifyOnComplete"
                 @change="handleFieldChange('notifyOnComplete', $event)"
@@ -256,7 +256,7 @@ Prioritize security updates
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="Update Failure">
+            <el-form-item label="更新失败">
               <el-switch
                 v-model="formData.notifyOnFailure"
                 @change="handleFieldChange('notifyOnFailure', $event)"
@@ -320,14 +320,14 @@ const formRules = computed(() => ({
   defaultStrategy: [
     {
       required: true,
-      message: "Default strategy is required",
+      message: "默认策略为必填项",
       trigger: "change",
     },
   ],
   maxConcurrentUpdates: [
     {
       required: true,
-      message: "Max concurrent updates is required",
+      message: "最大并发更新数为必填项",
       trigger: "blur",
     },
     {
@@ -337,7 +337,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 1 || value > 20) {
-          callback(new Error("Must be between 1 and 20"));
+          callback(new Error("必须在1咁20之间"));
         } else {
           callback();
         }
@@ -346,7 +346,7 @@ const formRules = computed(() => ({
     },
   ],
   retryAttempts: [
-    { required: true, message: "Retry attempts is required", trigger: "blur" },
+    { required: true, message: "重试次数为必填项", trigger: "blur" },
     {
       validator: (
         _rule: any,
@@ -354,7 +354,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 0 || value > 10) {
-          callback(new Error("Must be between 0 and 10"));
+          callback(new Error("必须在0咁10之间"));
         } else {
           callback();
         }
@@ -365,7 +365,7 @@ const formRules = computed(() => ({
   rollbackTimeout: [
     {
       required: true,
-      message: "Rollback timeout is required",
+      message: "回滚超时为必填项",
       trigger: "blur",
     },
     {
@@ -375,7 +375,7 @@ const formRules = computed(() => ({
         callback: (error?: Error) => void,
       ) => {
         if (value < 30 || value > 3600) {
-          callback(new Error("Must be between 30 and 3600 seconds"));
+          callback(new Error("必须在30到3600秒之间"));
         } else {
           callback();
         }
@@ -390,9 +390,14 @@ const generateId = (): string => {
 };
 
 const addMaintenanceWindow = () => {
+  // Ensure maintenanceWindows array exists
+  if (!formData.value.maintenanceWindows) {
+    formData.value.maintenanceWindows = [];
+  }
+  
   const newWindow: MaintenanceWindow = {
     id: generateId(),
-    name: `Window ${formData.value.maintenanceWindows.length + 1}`,
+    name: `窗口 ${formData.value.maintenanceWindows.length + 1}`,
     dayOfWeek: [1, 2, 3, 4, 5], // Monday to Friday
     startTime: "02:00",
     endTime: "04:00",
@@ -405,8 +410,10 @@ const addMaintenanceWindow = () => {
 };
 
 const removeMaintenanceWindow = (index: number) => {
-  formData.value.maintenanceWindows.splice(index, 1);
-  updateMaintenanceWindows();
+  if (formData.value.maintenanceWindows && formData.value.maintenanceWindows.length > index) {
+    formData.value.maintenanceWindows.splice(index, 1);
+    updateMaintenanceWindows();
+  }
 };
 
 const updateMaintenanceWindow = (_index: number) => {
@@ -434,7 +441,12 @@ watch(
   () => props.modelValue,
   (newValue) => {
     if (newValue) {
-      formData.value = { ...newValue };
+      formData.value = {
+        ...formData.value, // Keep existing defaults
+        ...newValue, // Override with new values
+        // Ensure required arrays are always present
+        maintenanceWindows: newValue.maintenanceWindows || [],
+      };
     }
   },
   { immediate: true, deep: true },

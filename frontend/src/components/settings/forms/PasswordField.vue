@@ -17,7 +17,7 @@
         <div class="password-actions">
           <el-tooltip
             v-if="showGenerator"
-            content="Generate password"
+            content="生成密码"
             placement="top"
           >
             <el-button
@@ -51,7 +51,7 @@
 
     <!-- Password Requirements -->
     <div v-if="showRequirements && focused" class="password-requirements">
-      <div class="requirement-title">Password Requirements:</div>
+      <div class="requirement-title">密码要求：</div>
       <div class="requirements-list">
         <div
           v-for="requirement in requirements"
@@ -85,7 +85,7 @@
       v-if="requireConfirmation && confirmValue && !passwordsMatch"
       class="confirm-error"
     >
-      Passwords do not match
+      密码不匹配
     </div>
   </div>
 </template>
@@ -123,8 +123,8 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: "Enter password",
-  confirmPlaceholder: "Confirm password",
+  placeholder: "输入密码",
+  confirmPlaceholder: "确认密码",
   disabled: false,
   size: "default",
   clearable: true,
@@ -182,11 +182,11 @@ const strengthLevel = computed(() => {
 const strengthText = computed(() => {
   const level = strengthLevel.value;
   const texts = {
-    none: "No password",
-    weak: "Weak",
-    fair: "Fair",
-    good: "Good",
-    strong: "Strong",
+    none: "无密码",
+    weak: "弱",
+    fair: "一般",
+    good: "良好",
+    strong: "强",
   };
   return texts[level] || "";
 });
@@ -199,27 +199,27 @@ const requirements = computed(() =>
   [
     {
       key: "length",
-      text: `At least ${props.policy.minLength} characters`,
+      text: `至少${props.policy.minLength}个字符`,
       met: inputValue.value.length >= props.policy.minLength,
     },
     {
       key: "uppercase",
-      text: "At least one uppercase letter",
+      text: "至少包含一个大写字母",
       met: !props.policy.requireUppercase || /[A-Z]/.test(inputValue.value),
     },
     {
       key: "lowercase",
-      text: "At least one lowercase letter",
+      text: "至少包含一个小写字母",
       met: !props.policy.requireLowercase || /[a-z]/.test(inputValue.value),
     },
     {
       key: "numbers",
-      text: "At least one number",
+      text: "至少包含一个数字",
       met: !props.policy.requireNumbers || /\d/.test(inputValue.value),
     },
     {
       key: "special",
-      text: "At least one special character",
+      text: "至少包含一个特殊字符",
       met:
         !props.policy.requireSpecialChars ||
         /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(inputValue.value),

@@ -7,22 +7,22 @@
     <div class="stats-header">
       <div class="total-containers">
         <span class="total-count">{{ containerData.total }}</span>
-        <span class="total-label">Total Containers</span>
+        <span class="total-label">容器总数</span>
       </div>
       <div class="status-summary">
         <div class="status-item running">
           <span class="status-count">{{ containerData.running }}</span>
-          <span class="status-label">Running</span>
+          <span class="status-label">运行中</span>
         </div>
         <div class="status-item stopped">
           <span class="status-count">{{ containerData.stopped }}</span>
-          <span class="status-label">Stopped</span>
+          <span class="status-label">已停止</span>
         </div>
         <div
 v-if="containerData.error > 0" class="status-item error"
 >
           <span class="status-count">{{ containerData.error }}</span>
-          <span class="status-label">Error</span>
+          <span class="status-label">错误</span>
         </div>
       </div>
     </div>
@@ -32,7 +32,7 @@ v-if="containerData.error > 0" class="status-item error"
 v-if="displayMode !== 'minimal'" class="chart-section"
 >
       <div class="chart-container">
-        <div class="chart-title">Container Status Distribution</div>
+        <div class="chart-title">容器状态分布</div>
         <!-- Donut Chart would be implemented with a chart library like Chart.js or ECharts -->
         <div
 ref="chartRef" class="donut-chart"
@@ -58,9 +58,9 @@ ref="canvasRef" width="200" height="200" />
     <!-- Container Categories -->
     <div class="categories-section">
       <div class="category-header">
-        <span class="category-title">By Image</span>
+        <span class="category-title">按镜像</span>
         <el-button size="small" type="text" @click="showAllImages">
-          View All
+          查看全部
         </el-button>
       </div>
       <div class="category-list">
@@ -92,7 +92,7 @@ class="category-item"
 v-if="displayMode === 'detailed'" class="registry-section"
 >
       <div class="registry-header">
-        <span class="registry-title">By Registry</span>
+        <span class="registry-title">按注册表</span>
       </div>
       <div class="registry-list">
         <div
@@ -119,22 +119,22 @@ v-if="displayMode === 'detailed'" class="registry-section"
 v-if="displayMode !== 'minimal'" class="resource-section"
 >
       <div class="resource-header">
-        <span class="resource-title">Resource Usage (Top 5)</span>
+        <span class="resource-title">资源使用率 (前5名)</span>
         <el-dropdown @command="handleSortChange">
           <el-button size="small" type="text">
-            Sort by {{ sortBy }}
+            排序方式 {{ sortBy }}
             <el-icon><ArrowDown /></el-icon>
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="cpu"> CPU Usage </el-dropdown-item>
+              <el-dropdown-item command="cpu"> CPU使用率 </el-dropdown-item>
               <el-dropdown-item command="memory">
-                Memory Usage
+                内存使用率
               </el-dropdown-item>
               <el-dropdown-item command="network">
-                Network I/O
+                网络I/O
               </el-dropdown-item>
-              <el-dropdown-item command="disk"> Disk I/O </el-dropdown-item>
+              <el-dropdown-item command="disk"> 磁盘I/O </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -195,15 +195,15 @@ v-if="displayMode === 'detailed'" class="actions-section"
       <el-button-group size="small">
         <el-button @click="startAllStopped">
           <el-icon><CaretRight /></el-icon>
-          Start All Stopped
+          启动所有已停止的
         </el-button>
         <el-button @click="pruneContainers">
           <el-icon><Delete /></el-icon>
-          Prune Unused
+          清理未使用
         </el-button>
         <el-button @click="viewAllContainers">
           <el-icon><View /></el-icon>
-          View All
+          查看全部
         </el-button>
       </el-button-group>
     </div>
@@ -214,7 +214,7 @@ v-if="displayMode === 'detailed'" class="actions-section"
       class="health-section"
     >
       <div class="health-header">
-        <span class="health-title">Health Checks</span>
+        <span class="health-title">健康检查</span>
         <span class="health-summary">{{ healthySummary }}</span>
       </div>
       <div class="health-grid">
@@ -239,7 +239,7 @@ v-if="displayMode === 'detailed'" class="actions-section"
       class="events-section"
     >
       <div class="events-header">
-        <span class="events-title">Recent Events</span>
+        <span class="events-title">最近事件</span>
         <span class="events-count">{{
           containerData.recentEvents.length
         }}</span>
@@ -593,14 +593,13 @@ const fetchContainerStats = async () => {
   try {
     emit("loading", true);
 
-    // Simulate API call
-    const response = await fetch("/api/v1/dashboard/container-stats");
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const { get } = await import('@/utils/request');
+    const data = await get("/api/dashboard/container-stats", {
+      showLoading: false,
+      showError: false,
+    });
 
-    const data = await response.json();
-    containerData.value = { ...containerData.value, ...data };
+    containerData.value = { ...containerData.value, ...(data as any) };
 
     emit("data-updated", containerData.value);
 

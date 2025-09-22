@@ -2,12 +2,15 @@ package controller
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"docker-auto/internal/middleware"
-	"docker-auto/internal/model"
+	"docker-auto/internal/service"
 	"docker-auto/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -16,13 +19,15 @@ import (
 
 // SystemController handles system-related HTTP requests
 type SystemController struct {
-	logger *logrus.Logger
+	logger     *logrus.Logger
+	logService *service.LogService
 }
 
 // NewSystemController creates a new system controller
 func NewSystemController(logger *logrus.Logger) *SystemController {
 	return &SystemController{
-		logger: logger,
+		logger:     logger,
+		logService: service.NewLogService(logger),
 	}
 }
 
@@ -559,7 +564,7 @@ func (sc *SystemController) HealthCheck(c *gin.Context) {
 	sc.logger.WithField("status", overallStatus).Debug("Health check performed")
 
 	if overallStatus == "unhealthy" {
-		c.JSON(http.StatusServiceUnavailable, utils.ErrorResponse("System is unhealthy"))
+		c.JSON(http.StatusServiceUnavailable, utils.ErrorResponse(http.StatusServiceUnavailable, "System is unhealthy"))
 		return
 	}
 
@@ -717,6 +722,7 @@ func (sc *SystemController) GetLogs(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100"))
 	sinceStr := c.Query("since")
 	component := c.Query("component")
+	search := c.Query("search")
 
 	if limit <= 0 || limit > 1000 {
 		limit = 100
@@ -734,28 +740,141 @@ func (sc *SystemController) GetLogs(c *gin.Context) {
 
 	rb := utils.NewResponseBuilder(c)
 
-	// For now, this is a placeholder implementation
-	// In a real implementation, you would:
-	// 1. Read from log files or log aggregation system
-	// 2. Apply filters for level, component, time range
-	// 3. Return formatted log entries
-
-	sc.logger.WithFields(logrus.Fields{
-		"level":     level,
-		"limit":     limit,
-		"since":     since,
-		"component": component,
-	}).Info("System logs requested (placeholder implementation)")
-
-	// Placeholder response
-	logs := []map[string]interface{}{
-		{
-			"timestamp": time.Now(),
-			"level":     "info",
-			"component": "system",
-			"message":   "Log retrieval not yet implemented",
-		},
+	// Create log filter
+	filter := service.LogFilter{
+		Level:     level,
+		Component: component,
+		Since:     since,
+		Search:    search,
+		Limit:     limit,
 	}
 
-	rb.Success(logs)
+	// Get logs using the log service
+	logs, err := sc.logService.GetSystemLogs(c.Request.Context(), filter)
+	if err != nil {
+		sc.logger.WithError(err).WithFields(logrus.Fields{
+			"level":     level,
+			"limit":     limit,
+			"since":     since,
+			"component": component,
+		}).Error("Failed to retrieve system logs")
+		rb.InternalServerError("Failed to retrieve system logs")
+		return
+	}
+
+	sc.logger.WithFields(logrus.Fields{
+		"level":       level,
+		"limit":       limit,
+		"since":       since,
+		"component":   component,
+		"logs_count":  len(logs),
+	}).Info("System logs retrieved successfully")
+
+	// Return logs with additional metadata
+	response := map[string]interface{}{
+		"logs":  logs,
+		"count": len(logs),
+		"filter": map[string]interface{}{
+			"level":     level,
+			"component": component,
+			"since":     since,
+			"search":    search,
+			"limit":     limit,
+		},
+		"log_files": sc.logService.GetLogFiles(),
+	}
+
+	rb.Success(response)
+}
+
+// GetLogStatistics godoc
+// @Summary Get log statistics
+// @Description Get statistics about system logs
+// @Tags System
+// @Produce json
+// @Security BearerAuth
+// @Param since query string false "Start time for statistics (RFC3339)" default("24h ago")
+// @Success 200 {object} utils.APIResponse{data=map[string]interface{}} "Log statistics"
+// @Failure 400 {object} utils.APIResponse "Invalid request parameters"
+// @Failure 401 {object} utils.APIResponse "Unauthorized"
+// @Failure 500 {object} utils.APIResponse "Internal server error"
+// @Router /api/system/logs/stats [get]
+func (sc *SystemController) GetLogStatistics(c *gin.Context) {
+	sinceStr := c.DefaultQuery("since", "24h")
+
+	// Parse since parameter
+	var since time.Time
+	if strings.HasSuffix(sinceStr, "h") {
+		if hours, err := strconv.Atoi(strings.TrimSuffix(sinceStr, "h")); err == nil {
+			since = time.Now().Add(-time.Duration(hours) * time.Hour)
+		} else {
+			since = time.Now().Add(-24 * time.Hour)
+		}
+	} else if strings.HasSuffix(sinceStr, "d") {
+		if days, err := strconv.Atoi(strings.TrimSuffix(sinceStr, "d")); err == nil {
+			since = time.Now().Add(-time.Duration(days) * 24 * time.Hour)
+		} else {
+			since = time.Now().Add(-24 * time.Hour)
+		}
+	} else {
+		if parsed, err := time.Parse(time.RFC3339, sinceStr); err == nil {
+			since = parsed
+		} else {
+			since = time.Now().Add(-24 * time.Hour)
+		}
+	}
+
+	rb := utils.NewResponseBuilder(c)
+
+	stats, err := sc.logService.GetLogStatistics(c.Request.Context(), since)
+	if err != nil {
+		sc.logger.WithError(err).Error("Failed to get log statistics")
+		rb.InternalServerError("Failed to get log statistics")
+		return
+	}
+
+	rb.Success(stats)
+}
+
+// GetLogFiles godoc
+// @Summary Get available log files
+// @Description Get list of available log files and their information
+// @Tags System
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} utils.APIResponse{data=[]map[string]interface{}} "Log files information"
+// @Failure 401 {object} utils.APIResponse "Unauthorized"
+// @Failure 500 {object} utils.APIResponse "Internal server error"
+// @Router /api/system/logs/files [get]
+func (sc *SystemController) GetLogFiles(c *gin.Context) {
+	rb := utils.NewResponseBuilder(c)
+
+	logFiles := sc.logService.GetLogFiles()
+	var fileInfos []map[string]interface{}
+
+	for _, filePath := range logFiles {
+		fileInfo := map[string]interface{}{
+			"path": filePath,
+			"name": filepath.Base(filePath),
+		}
+
+		// Get file statistics if file exists
+		if stat, err := os.Stat(filePath); err == nil {
+			fileInfo["size"] = stat.Size()
+			fileInfo["modified"] = stat.ModTime()
+			fileInfo["exists"] = true
+		} else {
+			fileInfo["exists"] = false
+			fileInfo["size"] = 0
+		}
+
+		fileInfos = append(fileInfos, fileInfo)
+	}
+
+	response := map[string]interface{}{
+		"files": fileInfos,
+		"count": len(fileInfos),
+	}
+
+	rb.Success(response)
 }

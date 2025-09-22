@@ -8,18 +8,29 @@
             <Box />
           </el-icon>
         </div>
-        <h1 class="title">Docker Auto</h1>
-        <p class="subtitle">Container Update Management System</p>
+        <h1 class="title">Docker 自动更新</h1>
+        <p class="subtitle">容器自动更新管理系统</p>
       </div>
 
       <!-- Login form -->
       <el-card class="login-card" shadow="hover">
         <template #header>
           <div class="card-header">
-            <h2>Sign In</h2>
-            <p>Enter your credentials to access the system</p>
+            <h2>登录系统</h2>
+            <p>请输入您的凭据以访问系统</p>
           </div>
         </template>
+
+        <!-- Error display area -->
+        <el-alert
+          v-if="loginError"
+          :title="loginError"
+          type="error"
+          :closable="true"
+          show-icon
+          @close="clearError"
+          style="margin-bottom: 20px;"
+        />
 
         <el-form
           ref="loginFormRef"
@@ -29,38 +40,40 @@
           size="large"
           @submit.prevent="handleLogin"
         >
-          <el-form-item label="Username" prop="username">
+          <el-form-item label="用户名" prop="username">
             <el-input
               v-model="loginForm.username"
-              placeholder="Enter your username"
+              placeholder="请输入用户名"
               :prefix-icon="User"
               clearable
               autocomplete="username"
               @keyup.enter="focusPassword"
+              @input="clearError"
             />
           </el-form-item>
 
-          <el-form-item label="Password" prop="password">
+          <el-form-item label="密码" prop="password">
             <el-input
               ref="passwordInputRef"
               v-model="loginForm.password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="请输入密码"
               :prefix-icon="Lock"
               :show-password="true"
               clearable
               autocomplete="current-password"
               @keyup.enter="handleLogin"
+              @input="clearError"
             />
           </el-form-item>
 
           <el-form-item>
             <div class="form-options">
               <el-checkbox v-model="loginForm.remember">
-                Remember me
+                记住我
               </el-checkbox>
               <el-link type="primary" @click="showForgotPassword">
-                Forgot password?
+                忘记密码？
               </el-link>
             </div>
           </el-form-item>
@@ -73,56 +86,23 @@
               :disabled="!isFormValid"
               @click="handleLogin"
             >
-              <span v-if="!isLoading">Sign In</span>
-              <span v-else>Signing In...</span>
+              <span v-if="!isLoading">登录</span>
+              <span v-else>登录中...</span>
             </el-button>
           </el-form-item>
         </el-form>
 
         <!-- Alternative login methods -->
         <div class="login-footer">
-          <el-divider>
-            <span class="divider-text">Or</span>
-          </el-divider>
-
-          <div class="alternative-login">
-            <el-tooltip content="Demo Admin Account" placement="top">
-              <el-button size="small" @click="fillDemoCredentials('admin')">
-                Demo Admin
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="Demo Operator Account" placement="top">
-              <el-button size="small" @click="fillDemoCredentials('operator')">
-                Demo Operator
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="Demo Viewer Account" placement="top">
-              <el-button size="small" @click="fillDemoCredentials('viewer')">
-                Demo Viewer
-              </el-button>
-            </el-tooltip>
-          </div>
-
           <p class="register-link">
-            Don't have an account?
+            没有账户？
             <el-link type="primary" @click="showRegister">
-              Sign up here
+              点此注册
             </el-link>
           </p>
         </div>
       </el-card>
 
-      <!-- System status -->
-      <div class="system-status">
-        <el-alert
-          v-if="systemStatus"
-          :title="systemStatus.title"
-          :description="systemStatus.description"
-          :type="systemStatus.type"
-          :closable="false"
-          show-icon
-        />
-      </div>
     </div>
 
     <!-- Background decoration -->
@@ -134,7 +114,7 @@
     <!-- Forgot password dialog -->
     <el-dialog
       v-model="forgotPasswordVisible"
-      title="Reset Password"
+      title="重置密码"
       width="400px"
       :close-on-click-modal="false"
     >
@@ -144,10 +124,10 @@
         :rules="forgotRules"
         label-position="top"
       >
-        <el-form-item label="Email Address" prop="email">
+        <el-form-item label="邮箱地址" prop="email">
           <el-input
             v-model="forgotForm.email"
-            placeholder="Enter your email address"
+            placeholder="请输入您的邮箱地址"
             :prefix-icon="Message"
             clearable
           />
@@ -156,14 +136,14 @@
 
       <template #footer>
         <el-button @click="forgotPasswordVisible = false">
-Cancel
-</el-button>
+          取消
+        </el-button>
         <el-button
           type="primary"
           :loading="isForgotLoading"
           @click="handleForgotPassword"
         >
-          Send Reset Link
+          发送重置链接
         </el-button>
       </template>
     </el-dialog>
@@ -176,7 +156,6 @@ import { useRouter } from "vue-router";
 import { Box, User, Lock, Message } from "@element-plus/icons-vue";
 import {
   ElMessage,
-  ElNotification,
   type FormInstance,
   type FormRules,
 } from "element-plus";
@@ -208,42 +187,37 @@ const forgotForm = ref({
 // UI state
 const forgotPasswordVisible = ref(false);
 const isForgotLoading = ref(false);
-const systemStatus = ref<{
-  title: string;
-  description: string;
-  type: "success" | "warning" | "error" | "info";
-} | null>(null);
+const loginError = ref<string>("");
 
 // Form validation rules
 const loginRules = computed<FormRules>(() => ({
   username: [
     {
       required: true,
-      message: "Username is required",
+      message: "用户名不能为空",
       trigger: "blur",
     },
     {
-      min: 3,
+      min: 2,
       max: 50,
-      message: "Username must be between 3 and 50 characters",
+      message: "用户名长度在 2 到 50 个字符之间",
       trigger: "blur",
     },
     {
       pattern: /^[a-zA-Z0-9_.-]+$/,
-      message:
-        "Username can only contain letters, numbers, dots, hyphens, and underscores",
+      message: "用户名只能包含字母、数字、点号、连字符和下划线",
       trigger: "blur",
     },
   ],
   password: [
     {
       required: true,
-      message: "Password is required",
+      message: "密码不能为空",
       trigger: "blur",
     },
     {
-      min: 6,
-      message: "Password must be at least 6 characters long",
+      min: 3,
+      message: "密码至少需要 3 个字符",
       trigger: "blur",
     },
   ],
@@ -253,12 +227,12 @@ const forgotRules = computed<FormRules>(() => ({
   email: [
     {
       required: true,
-      message: "Email is required",
+      message: "邮箱地址不能为空",
       trigger: "blur",
     },
     {
       type: "email",
-      message: "Please enter a valid email address",
+      message: "请输入有效的邮箱地址",
       trigger: "blur",
     },
   ],
@@ -277,59 +251,90 @@ const isFormValid = computed(() => {
 const handleLogin = async () => {
   if (!loginFormRef.value) return;
 
+  loginError.value = "";
+
   try {
     await loginFormRef.value.validate();
     await login(loginForm.value);
-
-    ElMessage.success("Login successful!");
-
-    // Navigation is handled by the auth store
   } catch (error: any) {
-    console.error("Login error:", error);
-
     if (error.validation) {
-      // Form validation errors are handled by Element Plus
       return;
     }
-
-    // Handle API errors
-    const errorMessage =
-      error.message || "Login failed. Please check your credentials.";
-    showError(errorMessage);
-
-    // Clear password on error
+    const errorMessage = getErrorMessage(error);
+    loginError.value = errorMessage;
+    if (!loginError.value) {
+      loginError.value = "登录失败：" + (error?.message || "请检查网络连接并重试");
+    }
     loginForm.value.password = "";
-
-    // Focus password field
     nextTick(() => {
       passwordInputRef.value?.focus();
     });
   }
 };
 
+const clearError = () => {
+  loginError.value = "";
+};
+
+const getErrorMessage = (error: any): string => {
+  // 直接返回错误消息，如果存在的话
+  if (error?.message) {
+    return error.message;
+  }
+  
+  // Handle errors from request utils (ApiError format)
+  if (error?.code !== undefined) {
+    switch (error.code) {
+      case 401:
+        return "用户名或密码错误，请重试";
+      case 403:
+        return "账户已被禁用，请联系管理员";
+      case 404:
+        return "用户不存在，请检查用户名";
+      case 429:
+        return "登录尝试过于频繁，请稍后再试";
+      case 500:
+        return "服务器内部错误，请稍后再试";
+      case 0:
+        return "网络连接失败，请检查网络连接";
+      default:
+        return `登录失败 (错误代码: ${error.code})`;
+    }
+  }
+  
+  // Handle direct Axios response errors (fallback)
+  if (error?.response) {
+    const status = error.response.status;
+    const message = error.response.data?.message || error.response.data?.error;
+    
+    if (message) {
+      return message;
+    }
+    
+    switch (status) {
+      case 401:
+        return "用户名或密码错误，请重试";
+      case 403:
+        return "账户已被禁用，请联系管理员";
+      case 404:
+        return "用户不存在，请检查用户名";
+      case 429:
+        return "登录尝试过于频繁，请稍后再试";
+      case 500:
+        return "服务器内部错误，请稍后再试";
+      default:
+        return `登录失败 (错误代码: ${status})`;
+    }
+  }
+  
+  // 最终回退
+  return typeof error === 'string' ? error : "登录失败，请检查您的凭据";
+};
+
 const focusPassword = () => {
   passwordInputRef.value?.focus();
 };
 
-const fillDemoCredentials = (role: "admin" | "operator" | "viewer") => {
-  const demoAccounts = {
-    admin: { username: "admin", password: "admin123" },
-    operator: { username: "operator", password: "operator123" },
-    viewer: { username: "viewer", password: "viewer123" },
-  };
-
-  const account = demoAccounts[role];
-  loginForm.value.username = account.username;
-  loginForm.value.password = account.password;
-  loginForm.value.remember = false;
-
-  ElNotification({
-    title: "Demo Account",
-    message: `Demo ${role} credentials have been filled in. Click "Sign In" to continue.`,
-    type: "info",
-    duration: 3000,
-  });
-};
 
 const showForgotPassword = () => {
   forgotPasswordVisible.value = true;
@@ -350,40 +355,19 @@ const handleForgotPassword = async () => {
     // Simulate API call for password reset
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    ElMessage.success("Password reset link has been sent to your email!");
+    ElMessage.success("密码重置链接已发送到您的邮箱！");
     forgotPasswordVisible.value = false;
   } catch (error: any) {
     if (error.validation) {
       return;
     }
 
-    showError("Failed to send reset link. Please try again.");
+    showError("发送重置链接失败，请重试。");
   } finally {
     isForgotLoading.value = false;
   }
 };
 
-const checkSystemStatus = async () => {
-  try {
-    // Simulate system health check
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // You would normally call your health check API here
-    // const response = await http.get('/system/health')
-
-    systemStatus.value = {
-      title: "System Online",
-      description: "All services are running normally.",
-      type: "success",
-    };
-  } catch (error) {
-    systemStatus.value = {
-      title: "System Unavailable",
-      description: "Some services may be temporarily unavailable.",
-      type: "warning",
-    };
-  }
-};
 
 // Lifecycle
 onMounted(() => {
@@ -394,9 +378,6 @@ onMounted(() => {
     ) as HTMLInputElement;
     usernameInput?.focus();
   });
-
-  // Check system status
-  checkSystemStatus();
 });
 </script>
 
@@ -493,12 +474,6 @@ onMounted(() => {
     padding: 0 16px;
   }
 
-  .alternative-login {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin: 16px 0;
-  }
 
   .register-link {
     text-align: center;
@@ -508,20 +483,6 @@ onMounted(() => {
   }
 }
 
-.system-status {
-  margin-top: 24px;
-
-  .el-alert {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-
-    .dark & {
-      background: rgba(0, 0, 0, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-  }
-}
 
 .login-background {
   position: fixed;
@@ -584,14 +545,6 @@ onMounted(() => {
     }
   }
 
-  .alternative-login {
-    flex-direction: column;
-    gap: 8px;
-
-    .el-button {
-      width: 100%;
-    }
-  }
 }
 
 @media (max-width: 480px) {
@@ -665,9 +618,7 @@ onMounted(() => {
 
 // Print styles
 @media print {
-  .login-background,
-  .system-status,
-  .alternative-login {
+  .login-background {
     display: none !important;
   }
 }

@@ -80,7 +80,7 @@ type="warning" class="update-badge"
             "
             class="failing-streak"
           >
-            Failed {{ container.health.failingStreak }} times
+            失败 {{ container.health.failingStreak }} 次
           </span>
         </div>
       </div>
@@ -149,7 +149,7 @@ type="warning" class="update-badge"
       <div v-if="container.ports.length > 0" class="ports-section">
         <div class="ports-header">
           <el-icon><Connection /></el-icon>
-          <span>Ports</span>
+          <span>端口</span>
         </div>
         <div class="ports-list">
           <el-tag
@@ -167,7 +167,7 @@ type="warning" class="update-badge"
             type="info"
             class="port-tag more-ports"
           >
-            +{{ container.ports.length - 3 }} more
+            +{{ container.ports.length - 3 }} 个
           </el-tag>
         </div>
       </div>
@@ -176,7 +176,7 @@ type="warning" class="update-badge"
       <div v-if="displayLabels.length > 0" class="labels-section">
         <div class="labels-header">
           <el-icon><Tag /></el-icon>
-          <span>Labels</span>
+          <span>标签</span>
         </div>
         <div class="labels-list">
           <el-tag
@@ -197,7 +197,7 @@ type="warning" class="update-badge"
       <!-- Timestamps -->
       <div class="timestamps">
         <div class="timestamp-item">
-          <span class="timestamp-label">Created:</span>
+          <span class="timestamp-label">创建时间:</span>
           <span
             class="timestamp-value"
             :title="formatFullDate(container.createdAt)"
@@ -206,7 +206,7 @@ type="warning" class="update-badge"
           </span>
         </div>
         <div v-if="container.startedAt" class="timestamp-item">
-          <span class="timestamp-label">Started:</span>
+          <span class="timestamp-label">启动时间:</span>
           <span
             class="timestamp-value"
             :title="formatFullDate(container.startedAt)"
@@ -277,7 +277,7 @@ type="warning" class="update-badge"
                 :disabled="!canPerformAction('logs')"
               >
                 <el-icon><Document /></el-icon>
-                View Logs
+                查看日志
               </el-dropdown-item>
 
               <el-dropdown-item
@@ -288,7 +288,7 @@ type="warning" class="update-badge"
                 "
               >
                 <el-icon><Monitor /></el-icon>
-                Terminal
+                终端
               </el-dropdown-item>
 
               <el-dropdown-item
@@ -296,7 +296,7 @@ type="warning" class="update-badge"
                 :disabled="!canPerformAction('inspect')"
               >
                 <el-icon><View /></el-icon>
-                Inspect
+                详细信息
               </el-dropdown-item>
 
               <el-dropdown-item
@@ -305,7 +305,7 @@ type="warning" class="update-badge"
                 divided
               >
                 <el-icon><Edit /></el-icon>
-                Edit Configuration
+                编辑配置
               </el-dropdown-item>
 
               <el-dropdown-item
@@ -313,7 +313,7 @@ type="warning" class="update-badge"
                 :disabled="!canPerformAction('clone')"
               >
                 <el-icon><CopyDocument /></el-icon>
-                Clone Container
+                克隆容器
               </el-dropdown-item>
 
               <el-dropdown-item
@@ -321,7 +321,7 @@ type="warning" class="update-badge"
                 :disabled="!canPerformAction('backup')"
               >
                 <el-icon><Upload /></el-icon>
-                Create Backup
+                创建备份
               </el-dropdown-item>
 
               <el-dropdown-item
@@ -329,7 +329,7 @@ type="warning" class="update-badge"
                 :disabled="!canPerformAction('export')"
               >
                 <el-icon><Download /></el-icon>
-                Export Config
+                导出配置
               </el-dropdown-item>
 
               <el-dropdown-item
@@ -338,7 +338,7 @@ type="warning" class="update-badge"
                 divided
               >
                 <el-icon><Delete /></el-icon>
-                Delete Container
+                删除容器
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -477,10 +477,10 @@ function getHealthIcon(health: string) {
 
 function formatHealthStatus(status: string): string {
   const statuses: Record<string, string> = {
-    healthy: "Healthy",
-    unhealthy: "Unhealthy",
-    starting: "Starting",
-    none: "No Check",
+    healthy: "健康",
+    unhealthy: "不健康",
+    starting: "启动中",
+    none: "无检查",
   };
   return statuses[status] || status;
 }
@@ -528,10 +528,10 @@ function formatRelativeTime(date: Date | string): string {
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMinutes < 1) return "Just now";
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffMinutes < 1) return "刚刚";
+  if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+  if (diffHours < 24) return `${diffHours}小时前`;
+  if (diffDays < 7) return `${diffDays}天前`;
 
   return target.toLocaleDateString();
 }

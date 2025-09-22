@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Update Details"
+    title="更新详情"
     width="60%"
     :before-close="handleClose"
   >
@@ -19,33 +19,33 @@ v-if="update" class="update-details"
         </template>
 
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="Update ID">
+          <el-descriptions-item label="更新ID">
             {{ update.id }}
           </el-descriptions-item>
-          <el-descriptions-item label="Container">
+          <el-descriptions-item label="容器">
             {{ update.containerName }}
           </el-descriptions-item>
-          <el-descriptions-item label="From Version">
+          <el-descriptions-item label="源版本">
             {{ update.fromVersion }}
           </el-descriptions-item>
-          <el-descriptions-item label="To Version">
+          <el-descriptions-item label="目标版本">
             {{ update.toVersion }}
           </el-descriptions-item>
-          <el-descriptions-item label="Status">
+          <el-descriptions-item label="状态">
             <el-tag :type="getStatusTagType(update.status)">
               {{ update.status }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="Started At">
+          <el-descriptions-item label="开始时间">
             {{ formatDate(update.startedAt) }}
           </el-descriptions-item>
           <el-descriptions-item
-v-if="update.completedAt" label="Completed At"
+v-if="update.completedAt" label="完成时间"
 >
             {{ formatDate(update.completedAt) }}
           </el-descriptions-item>
           <el-descriptions-item
-v-if="update.duration" label="Duration"
+v-if="update.duration" label="持续时间"
 >
             {{ formatDuration(update.duration) }}
           </el-descriptions-item>
@@ -54,7 +54,7 @@ v-if="update.duration" label="Duration"
 
       <el-card v-if="update.error" shadow="never" class="error-details">
         <template #header>
-          <h4>Error Details</h4>
+          <h4>错误详情</h4>
         </template>
         <el-alert
           :title="
@@ -74,7 +74,7 @@ v-if="update.duration" label="Duration"
 
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="handleClose">Close</el-button>
+        <el-button @click="handleClose">关闭</el-button>
       </span>
     </template>
   </el-dialog>

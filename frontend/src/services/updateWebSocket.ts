@@ -1,5 +1,5 @@
 /**
- * Update WebSocket service for real-time updates
+ * 更新WebSocket服务，用于实时更新
  */
 import type { UpdateWebSocketMessage } from "@/types/updates";
 
@@ -27,20 +27,22 @@ export class UpdateWebSocketService {
   private subscriptions = new Set<string>();
 
   constructor(url?: string) {
+    // Use backend server address for WebSocket connection
+    const wsHost = import.meta.env.DEV ? 'localhost:8080' : window.location.host;
     this.url =
       url ||
-      `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws/updates`;
+      `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${wsHost}/ws/updates`;
   }
 
   /**
-   * Connect to the WebSocket
+   * 连接到WebSocket
    */
   connect(callbacks?: UpdateWebSocketCallbacks): Promise<void> {
     if (callbacks) {
       this.callbacks = { ...this.callbacks, ...callbacks };
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
         resolve();
         return;
@@ -49,13 +51,14 @@ export class UpdateWebSocketService {
       this.isIntentionallyClosed = false;
 
       try {
-        const token = localStorage.getItem("authToken");
+        const { TokenManager } = await import('@/utils/auth');
+        const token = TokenManager.getAccessToken();
         const wsUrl = token ? `${this.url}?token=${token}` : this.url;
 
         this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
-          console.log("Update WebSocket connected");
+          console.log("更新WebSocket已连接");
           this.reconnectAttempts = 0;
           this.reconnectDelay = 1000;
           this.startHeartbeat();
@@ -70,7 +73,7 @@ export class UpdateWebSocketService {
             this.handleMessage(message);
           } catch (error) {
             console.error(
-              "Failed to parse WebSocket message:",
+              "解析WebSocket消息失败:",
               error,
               event.data,
             );
@@ -79,7 +82,7 @@ export class UpdateWebSocketService {
 
         this.ws.onclose = (event) => {
           console.log(
-            "Update WebSocket disconnected:",
+            "更新WebSocket已断开连接:",
             event.code,
             event.reason,
           );
@@ -95,19 +98,19 @@ export class UpdateWebSocketService {
         };
 
         this.ws.onerror = (error) => {
-          console.error("Update WebSocket error:", error);
+          console.error("更新WebSocket错误:", error);
           this.callbacks.onError?.(error);
           reject(error);
         };
       } catch (error) {
-        console.error("Failed to create WebSocket connection:", error);
+        console.error("创建 WebSocket 连接失败:", error);
         reject(error);
       }
     });
   }
 
   /**
-   * Disconnect from the WebSocket
+   * 从 WebSocket 断开连接
    */
   disconnect(): void {
     this.isIntentionallyClosed = true;
@@ -115,13 +118,13 @@ export class UpdateWebSocketService {
     this.clearReconnectTimer();
 
     if (this.ws) {
-      this.ws.close(1000, "Client disconnect");
+      this.ws.close(1000, "客户端断开连接");
       this.ws = null;
     }
   }
 
   /**
-   * Subscribe to specific update events
+   * 订阅特定更新事件
    */
   subscribe(subscription: string): void {
     this.subscriptions.add(subscription);
@@ -135,7 +138,7 @@ export class UpdateWebSocketService {
   }
 
   /**
-   * Unsubscribe from specific update events
+   * 取消订阅特定更新事件
    */
   unsubscribe(subscription: string): void {
     this.subscriptions.delete(subscription);
@@ -149,77 +152,77 @@ export class UpdateWebSocketService {
   }
 
   /**
-   * Subscribe to container-specific updates
+   * 订阅容器特定更新
    */
   subscribeToContainer(containerId: string): void {
     this.subscribe(`container:${containerId}`);
   }
 
   /**
-   * Unsubscribe from container-specific updates
+   * 取消订阅容器特定更新
    */
   unsubscribeFromContainer(containerId: string): void {
     this.unsubscribe(`container:${containerId}`);
   }
 
   /**
-   * Subscribe to update operation
+   * 订阅更新操作
    */
   subscribeToUpdate(updateId: string): void {
     this.subscribe(`update:${updateId}`);
   }
 
   /**
-   * Unsubscribe from update operation
+   * 取消订阅更新操作
    */
   unsubscribeFromUpdate(updateId: string): void {
     this.unsubscribe(`update:${updateId}`);
   }
 
   /**
-   * Subscribe to bulk update operation
+   * 订阅批量更新操作
    */
   subscribeToBulkUpdate(operationId: string): void {
     this.subscribe(`bulk:${operationId}`);
   }
 
   /**
-   * Unsubscribe from bulk update operation
+   * 取消订阅批量更新操作
    */
   unsubscribeFromBulkUpdate(operationId: string): void {
     this.unsubscribe(`bulk:${operationId}`);
   }
 
   /**
-   * Subscribe to all updates
+   * 订阅所有更新
    */
   subscribeToAllUpdates(): void {
     this.subscribe("updates:all");
   }
 
   /**
-   * Subscribe to security updates only
+   * 仅订阅安全更新
    */
   subscribeToSecurityUpdates(): void {
     this.subscribe("updates:security");
   }
 
   /**
-   * Subscribe to update notifications
+   * 订阅更新通知
    */
   subscribeToNotifications(): void {
     this.subscribe("notifications");
   }
 
   /**
-   * Check if WebSocket is connected
+   * 检查 WebSocket 是否已连接
    */
   isConnected(): boolean {
     return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
   }
 
   /**
-   * Get connection state
+   * 获取连接状态
    */
   getState(): "connecting" | "connected" | "disconnected" | "error" {
     if (!this.ws) return "disconnected";
@@ -238,7 +241,7 @@ export class UpdateWebSocketService {
   }
 
   /**
-   * Send message to server
+   * 向服务器发送消息
    */
   private send(message: any): void {
     if (this.isConnected()) {
@@ -247,7 +250,7 @@ export class UpdateWebSocketService {
   }
 
   /**
-   * Handle incoming WebSocket messages
+   * 处理传入的 WebSocket 消息
    */
   private handleMessage(message: UpdateWebSocketMessage): void {
     const { type, data } = message;
@@ -274,12 +277,12 @@ export class UpdateWebSocketService {
         break;
 
       default:
-        console.warn("Unknown WebSocket message type:", type);
+        console.warn("未知的 WebSocket 消息类型:", type);
     }
   }
 
   /**
-   * Schedule reconnection attempt
+   * 安排重连尝试
    */
   private scheduleReconnect(): void {
     this.clearReconnectTimer();
@@ -290,19 +293,19 @@ export class UpdateWebSocketService {
     );
 
     console.log(
-      `Scheduling WebSocket reconnect in ${delay}ms (attempt ${this.reconnectAttempts + 1})`,
+      `安排 WebSocket 重连，${delay}ms 后进行（第 ${this.reconnectAttempts + 1} 次尝试）`,
     );
 
     this.reconnectTimer = setTimeout(() => {
       this.reconnectAttempts++;
       this.connect().catch(() => {
-        // Reconnection failed, will be retried automatically
+        // 重连失败，将自动重试
       });
     }, delay);
   }
 
   /**
-   * Clear reconnection timer
+   * 清除重连定时器
    */
   private clearReconnectTimer(): void {
     if (this.reconnectTimer) {
@@ -312,7 +315,7 @@ export class UpdateWebSocketService {
   }
 
   /**
-   * Start heartbeat to keep connection alive
+   * 启动心跳以保持连接活跃
    */
   private startHeartbeat(): void {
     this.stopHeartbeat();
@@ -321,11 +324,11 @@ export class UpdateWebSocketService {
       if (this.isConnected()) {
         this.send({ type: "ping" });
       }
-    }, 30000); // 30 seconds
+    }, 30000); // 30秒
   }
 
   /**
-   * Stop heartbeat
+   * 停止心跳
    */
   private stopHeartbeat(): void {
     if (this.heartbeatTimer) {
@@ -335,7 +338,7 @@ export class UpdateWebSocketService {
   }
 
   /**
-   * Resubscribe to all subscriptions after reconnect
+   * 重连后重新订阅所有订阅
    */
   private resubscribe(): void {
     for (const subscription of this.subscriptions) {
@@ -347,21 +350,21 @@ export class UpdateWebSocketService {
   }
 
   /**
-   * Update callbacks
+   * 更新回调函数
    */
   setCallbacks(callbacks: UpdateWebSocketCallbacks): void {
     this.callbacks = { ...this.callbacks, ...callbacks };
   }
 
   /**
-   * Get current subscriptions
+   * 获取当前订阅
    */
   getSubscriptions(): string[] {
     return Array.from(this.subscriptions);
   }
 
   /**
-   * Clear all subscriptions
+   * 清除所有订阅
    */
   clearSubscriptions(): void {
     for (const subscription of this.subscriptions) {
@@ -371,10 +374,10 @@ export class UpdateWebSocketService {
   }
 }
 
-// Export singleton instance
+// 导出单例实例
 export const updateWebSocket = new UpdateWebSocketService();
 
-// Export for Vue composition API
+// 为 Vue 组合式 API 导出
 export function useUpdateWebSocket() {
   return {
     updateWebSocket,

@@ -4,14 +4,14 @@
     <div class="cron-expression">
       <el-input
         v-model="cronExpression"
-        placeholder="Enter cron expression"
+        placeholder="输入Cron表达式"
         :disabled="disabled"
         :size="size"
         @input="handleExpressionChange"
         @blur="validateExpression"
       >
         <template #prepend>
-          <span class="cron-label">Cron</span>
+          <span class="cron-label">Cron表达式</span>
         </template>
         <template #append>
           <el-button
@@ -29,7 +29,7 @@
       </div>
 
       <div v-if="nextRuns.length > 0" class="next-runs">
-        <div class="next-runs-title">Next runs:</div>
+        <div class="next-runs-title">下次运行时间：</div>
         <div class="next-runs-list">
           <div
 v-for="(run, index) in nextRuns" :key="index"
@@ -41,7 +41,7 @@ class="next-run"
       </div>
 
       <div v-if="!isValidExpression && cronExpression" class="cron-error">
-        Invalid cron expression
+        无效的Cron表达式
       </div>
     </div>
 
@@ -51,7 +51,7 @@ class="next-run"
         <el-card>
           <template #header>
             <div class="builder-header">
-              <span>Cron Expression Builder</span>
+              <span>Cron表达式生成器</span>
               <el-button type="text" @click="showBuilder = false">
                 <el-icon><Close /></el-icon>
               </el-button>
@@ -60,25 +60,25 @@ class="next-run"
 
           <el-tabs v-model="builderMode" @tab-change="handleModeChange">
             <!-- Simple Mode -->
-            <el-tab-pane label="Simple" name="simple">
+            <el-tab-pane label="简单模式" name="simple">
               <div class="simple-builder">
                 <el-form :model="simpleConfig" label-width="120px">
-                  <el-form-item label="Schedule Type">
+                  <el-form-item label="调度类型">
                     <el-select
                       v-model="simpleConfig.type"
                       @change="handleSimpleTypeChange"
                     >
-                      <el-option label="Every minute" value="minute" />
-                      <el-option label="Hourly" value="hourly" />
-                      <el-option label="Daily" value="daily" />
-                      <el-option label="Weekly" value="weekly" />
-                      <el-option label="Monthly" value="monthly" />
+                      <el-option label="每分钟" value="minute" />
+                      <el-option label="每小时" value="hourly" />
+                      <el-option label="每天" value="daily" />
+                      <el-option label="每周" value="weekly" />
+                      <el-option label="每月" value="monthly" />
                     </el-select>
                   </el-form-item>
 
                   <el-form-item
                     v-if="simpleConfig.type === 'hourly'"
-                    label="At minute"
+                    label="在分钟"
                   >
                     <el-input-number
                       v-model="simpleConfig.minute"
@@ -92,7 +92,7 @@ class="next-run"
                     v-if="
                       ['daily', 'weekly', 'monthly'].includes(simpleConfig.type)
                     "
-                    label="At time"
+                    label="在时间"
                   >
                     <el-time-picker
                       v-model="simpleConfig.time"
@@ -104,25 +104,25 @@ class="next-run"
 
                   <el-form-item
                     v-if="simpleConfig.type === 'weekly'"
-                    label="On days"
+                    label="在星期"
                   >
                     <el-checkbox-group
                       v-model="simpleConfig.weekdays"
                       @change="updateSimpleExpression"
                     >
-                      <el-checkbox :label="1"> Monday </el-checkbox>
-                      <el-checkbox :label="2"> Tuesday </el-checkbox>
-                      <el-checkbox :label="3"> Wednesday </el-checkbox>
-                      <el-checkbox :label="4"> Thursday </el-checkbox>
-                      <el-checkbox :label="5"> Friday </el-checkbox>
-                      <el-checkbox :label="6"> Saturday </el-checkbox>
-                      <el-checkbox :label="0"> Sunday </el-checkbox>
+                      <el-checkbox :label="1"> 周一 </el-checkbox>
+                      <el-checkbox :label="2"> 周二 </el-checkbox>
+                      <el-checkbox :label="3"> 周三 </el-checkbox>
+                      <el-checkbox :label="4"> 周四 </el-checkbox>
+                      <el-checkbox :label="5"> 周五 </el-checkbox>
+                      <el-checkbox :label="6"> 周六 </el-checkbox>
+                      <el-checkbox :label="0"> 周日 </el-checkbox>
                     </el-checkbox-group>
                   </el-form-item>
 
                   <el-form-item
                     v-if="simpleConfig.type === 'monthly'"
-                    label="On day"
+                    label="在日期"
                   >
                     <el-input-number
                       v-model="simpleConfig.dayOfMonth"
@@ -136,11 +136,11 @@ class="next-run"
             </el-tab-pane>
 
             <!-- Advanced Mode -->
-            <el-tab-pane label="Advanced" name="advanced">
+            <el-tab-pane label="高级模式" name="advanced">
               <div class="advanced-builder">
                 <div class="cron-fields">
                   <div class="field-group">
-                    <label>Minute (0-59)</label>
+                    <label>分钟 (0-59)</label>
                     <el-input
                       v-model="advancedConfig.minute"
                       placeholder="*"
@@ -149,7 +149,7 @@ class="next-run"
                   </div>
 
                   <div class="field-group">
-                    <label>Hour (0-23)</label>
+                    <label>小时 (0-23)</label>
                     <el-input
                       v-model="advancedConfig.hour"
                       placeholder="*"
@@ -158,7 +158,7 @@ class="next-run"
                   </div>
 
                   <div class="field-group">
-                    <label>Day of Month (1-31)</label>
+                    <label>月中的天 (1-31)</label>
                     <el-input
                       v-model="advancedConfig.dayOfMonth"
                       placeholder="*"
@@ -167,7 +167,7 @@ class="next-run"
                   </div>
 
                   <div class="field-group">
-                    <label>Month (1-12)</label>
+                    <label>月份 (1-12)</label>
                     <el-input
                       v-model="advancedConfig.month"
                       placeholder="*"
@@ -176,7 +176,7 @@ class="next-run"
                   </div>
 
                   <div class="field-group">
-                    <label>Day of Week (0-6)</label>
+                    <label>星期几 (0-6)</label>
                     <el-input
                       v-model="advancedConfig.dayOfWeek"
                       placeholder="*"
@@ -186,19 +186,19 @@ class="next-run"
                 </div>
 
                 <div class="cron-help">
-                  <h4>Cron Expression Format</h4>
+                  <h4>Cron表达式格式</h4>
                   <div class="help-content">
                     <div class="help-item">
-<strong>*</strong> - Any value
+                      <strong>*</strong> - 任何值
 </div>
                     <div class="help-item">
-                      <strong>,</strong> - Value list separator (e.g., 1,3,5)
+                      <strong>,</strong> - 值列表分隔符 (例如：1,3,5)
                     </div>
                     <div class="help-item">
-                      <strong>-</strong> - Range of values (e.g., 1-5)
+                      <strong>-</strong> - 值范围 (例如：1-5)
                     </div>
                     <div class="help-item">
-                      <strong>/</strong> - Step values (e.g., */5 = every 5)
+                      <strong>/</strong> - 步进值 (例如：*/5 = 每5个)
                     </div>
                   </div>
                 </div>
@@ -206,7 +206,7 @@ class="next-run"
             </el-tab-pane>
 
             <!-- Presets -->
-            <el-tab-pane label="Presets" name="presets">
+            <el-tab-pane label="预设" name="presets">
               <div class="presets">
                 <div
                   v-for="preset in cronPresets"

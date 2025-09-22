@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -758,9 +759,153 @@ func (c *imageChecker) generateVersionChanges(current, latest *model.ImageVersio
 
 // extractDigestFromMetadata extracts digest from container metadata
 func (c *imageChecker) extractDigestFromMetadata(metadata string) string {
-	// This would parse the metadata JSON and extract digest if available
-	// For now, return empty string as placeholder
+	if metadata == "" {
+		return ""
+	}
+
+	// Try to parse as JSON metadata
+	var metadataMap map[string]interface{}
+	if err := json.Unmarshal([]byte(metadata), &metadataMap); err != nil {
+		logrus.WithError(err).Debug("Failed to parse metadata as JSON, trying text extraction")
+		return c.extractDigestFromText(metadata)
+	}
+
+	// Look for digest in various possible JSON fields
+	digestFields := []string{
+		"digest",
+		"image_digest",
+		"sha256",
+		"content_digest",
+		"manifest_digest",
+	}
+
+	for _, field := range digestFields {
+		if digest, ok := metadataMap[field]; ok {
+			if digestStr, ok := digest.(string); ok && digestStr != "" {
+				// Validate digest format
+				if c.isValidDigest(digestStr) {
+					return digestStr
+				}
+			}
+		}
+	}
+
+	// Check nested structures
+	if config, ok := metadataMap["Config"]; ok {
+		if configMap, ok := config.(map[string]interface{}); ok {
+			for _, field := range digestFields {
+				if digest, ok := configMap[field]; ok {
+					if digestStr, ok := digest.(string); ok && digestStr != "" {
+						if c.isValidDigest(digestStr) {
+							return digestStr
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Check Image field (common in Docker inspect output)
+	if image, ok := metadataMap["Image"]; ok {
+		if imageStr, ok := image.(string); ok {
+			// Extract digest from image reference like "image@sha256:abc123..."
+			if strings.Contains(imageStr, "@sha256:") {
+				parts := strings.Split(imageStr, "@")
+				if len(parts) > 1 && c.isValidDigest(parts[len(parts)-1]) {
+					return parts[len(parts)-1]
+				}
+			}
+		}
+	}
+
+	// Check RepoDigests array (common in Docker inspect output)
+	if repoDigests, ok := metadataMap["RepoDigests"]; ok {
+		if digestsArray, ok := repoDigests.([]interface{}); ok {
+			for _, digestInterface := range digestsArray {
+				if digestStr, ok := digestInterface.(string); ok {
+					if strings.Contains(digestStr, "@sha256:") {
+						parts := strings.Split(digestStr, "@")
+						if len(parts) > 1 && c.isValidDigest(parts[len(parts)-1]) {
+							return parts[len(parts)-1]
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Fallback to text extraction
+	return c.extractDigestFromText(metadata)
+}
+
+// extractDigestFromText extracts digest using regex patterns from text
+func (c *imageChecker) extractDigestFromText(text string) string {
+	// Common patterns for SHA256 digests
+	patterns := []string{
+		`sha256:[a-f0-9]{64}`,           // Standard format
+		`"digest":\s*"(sha256:[a-f0-9]{64})"`, // JSON field
+		`digest=sha256:[a-f0-9]{64}`,    // Query parameter format
+		`@(sha256:[a-f0-9]{64})`,        // Registry reference format
+	}
+
+	for _, pattern := range patterns {
+		re := regexp.MustCompile(pattern)
+		matches := re.FindStringSubmatch(text)
+		if len(matches) > 0 {
+			digest := matches[0]
+			// Clean up the match
+			if strings.Contains(pattern, "(") && len(matches) > 1 {
+				digest = matches[1] // Use capture group
+			}
+			if strings.HasPrefix(digest, "@") {
+				digest = digest[1:] // Remove @ prefix
+			}
+			if strings.HasPrefix(digest, `"digest":`) {
+				// Extract from JSON-like string
+				parts := strings.Split(digest, `"`)
+				for _, part := range parts {
+					if strings.HasPrefix(part, "sha256:") && c.isValidDigest(part) {
+						return part
+					}
+				}
+			}
+			if c.isValidDigest(digest) {
+				return digest
+			}
+		}
+	}
+
 	return ""
+}
+
+// isValidDigest validates if a string is a valid SHA256 digest
+func (c *imageChecker) isValidDigest(digest string) bool {
+	if digest == "" {
+		return false
+	}
+
+	// Remove any whitespace
+	digest = strings.TrimSpace(digest)
+
+	// Check for standard SHA256 digest format: sha256:64_hex_chars
+	if !strings.HasPrefix(digest, "sha256:") {
+		return false
+	}
+
+	// Extract hex part
+	hexPart := digest[7:] // Remove "sha256:" prefix
+	if len(hexPart) != 64 {
+		return false
+	}
+
+	// Validate hex characters
+	for _, char := range hexPart {
+		if !((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Cache cleanup and maintenance

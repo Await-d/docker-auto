@@ -3,10 +3,10 @@
     <div class="register-container">
       <el-card>
         <template #header>
-          <h2>Register</h2>
+          <h2>注册</h2>
         </template>
-        <p>Registration functionality coming soon...</p>
-        <el-button @click="$router.push('/login')"> Back to Login </el-button>
+        <p>注册功能即将推出...</p>
+        <el-button @click="$router.push('/login')"> 返回登录 </el-button>
       </el-card>
     </div>
   </div>

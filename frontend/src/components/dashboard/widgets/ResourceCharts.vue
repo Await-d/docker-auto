@@ -4,21 +4,21 @@
       <el-icon :size="48">
         <DataAnalysis />
       </el-icon>
-      <h3>Resource Charts</h3>
-      <p>Historical resource usage charts will be displayed here.</p>
+      <h3>资源图表</h3>
+      <p>历史资源使用图表将在此处显示。</p>
       <div class="mock-chart">
         <div class="chart-legend">
           <div class="legend-item cpu">
             <div class="legend-color" />
-            <span>CPU Usage</span>
+            <span>CPU使用率</span>
           </div>
           <div class="legend-item memory">
             <div class="legend-color" />
-            <span>Memory Usage</span>
+            <span>内存使用率</span>
           </div>
           <div class="legend-item disk">
             <div class="legend-color" />
-            <span>Disk I/O</span>
+            <span>磁盘I/O</span>
           </div>
         </div>
         <div class="chart-area">

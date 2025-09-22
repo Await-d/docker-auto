@@ -13,11 +13,12 @@ import (
 
 // Claims represents JWT claims structure
 type Claims struct {
-	UserID   int64            `json:"user_id"`
-	Username string           `json:"username"`
-	Email    string           `json:"email"`
-	Role     model.UserRole   `json:"role"`
-	IsActive bool             `json:"is_active"`
+	UserID      int64            `json:"user_id"`
+	Username    string           `json:"username"`
+	Email       string           `json:"email"`
+	Role        model.UserRole   `json:"role"`
+	IsActive    bool             `json:"is_active"`
+	Permissions []string         `json:"permissions"`
 	jwt.RegisteredClaims
 }
 
@@ -37,6 +38,7 @@ type TokenPair struct {
 	ExpiresIn    int64     `json:"expires_in"`
 	ExpiresAt    time.Time `json:"expires_at"`
 }
+
 
 // RefreshClaims represents refresh token claims
 type RefreshClaims struct {
@@ -73,15 +75,19 @@ func (jm *JWTManager) GenerateAccessToken(user *model.User) (string, error) {
 		return "", fmt.Errorf("user cannot be nil")
 	}
 
+	// Get user permissions based on role
+	permissions := jm.GetUserPermissions(user)
+
 	now := time.Now().UTC()
 	expiresAt := now.Add(jm.expireDuration)
 
 	claims := &Claims{
-		UserID:   user.ID,
-		Username: user.Username,
-		Email:    user.Email,
-		Role:     user.Role,
-		IsActive: user.IsActive,
+		UserID:      user.ID,
+		Username:    user.Username,
+		Email:       user.Email,
+		Role:        user.Role,
+		IsActive:    user.IsActive,
+		Permissions: permissions,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    jm.issuer,
 			Subject:   fmt.Sprintf("%d", user.ID),
@@ -450,4 +456,43 @@ func (tb *TokenBlacklist) IsBlacklisted(tokenString string) bool {
 func (tb *TokenBlacklist) Cleanup() {
 	// The cache automatically handles cleanup of expired items
 	logrus.Debug("Token blacklist cleanup completed")
+}
+
+// GetUserPermissions returns permissions based on user role
+func (jm *JWTManager) GetUserPermissions(user *model.User) []string {
+	permissions := make([]string, 0)
+
+	switch user.Role {
+	case model.UserRoleAdmin:
+		permissions = []string{
+			// Administrator has all permissions
+			"container:read", "container:create", "container:update", "container:delete",
+			"container:start", "container:stop",
+			"image:read", "image:check", "image:update",
+			"update:read", "update:create", "update:rollback",
+			"system:read", "system:config", "system:logs",
+			"user:read", "user:create", "user:update", "user:delete",
+		}
+	case model.UserRoleOperator:
+		permissions = []string{
+			// Operator permissions
+			"container:read", "container:create", "container:update",
+			"container:start", "container:stop",
+			"image:read", "image:check", "image:update",
+			"update:read", "update:create", "update:rollback",
+			"system:read", "system:logs",
+		}
+	case model.UserRoleViewer:
+		permissions = []string{
+			// Viewer permissions (read-only)
+			"container:read",
+			"image:read",
+			"update:read",
+			"system:read",
+		}
+	default:
+		permissions = []string{"system:read"} // Basic read permission
+	}
+
+	return permissions
 }

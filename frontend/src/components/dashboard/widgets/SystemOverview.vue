@@ -32,22 +32,22 @@
           <el-icon class="metric-icon">
             <Box />
           </el-icon>
-          <span class="metric-label">Containers</span>
+          <span class="metric-label">容器</span>
         </div>
         <div class="metric-content">
           <div class="metric-main">
             <span class="metric-value">{{ systemData.containers.total }}</span>
-            <span class="metric-unit">total</span>
+            <span class="metric-unit">总计</span>
           </div>
           <div class="metric-breakdown">
             <div class="breakdown-item running">
-              <span class="breakdown-label">Running</span>
+              <span class="breakdown-label">运行中</span>
               <span class="breakdown-value">{{
                 systemData.containers.running
               }}</span>
             </div>
             <div class="breakdown-item stopped">
-              <span class="breakdown-label">Stopped</span>
+              <span class="breakdown-label">已停止</span>
               <span class="breakdown-value">{{
                 systemData.containers.stopped
               }}</span>
@@ -56,7 +56,7 @@
               v-if="systemData.containers.updating > 0"
               class="breakdown-item updating"
             >
-              <span class="breakdown-label">Updating</span>
+              <span class="breakdown-label">更新中</span>
               <span class="breakdown-value">{{
                 systemData.containers.updating
               }}</span>
@@ -71,25 +71,25 @@
           <el-icon class="metric-icon">
             <Refresh />
           </el-icon>
-          <span class="metric-label">Updates</span>
+          <span class="metric-label">更新</span>
         </div>
         <div class="metric-content">
           <div class="metric-main">
             <span class="metric-value">{{ systemData.updates.available }}</span>
-            <span class="metric-unit">available</span>
+            <span class="metric-unit">可用</span>
           </div>
           <div class="metric-breakdown">
             <div
               v-if="systemData.updates.security > 0"
               class="breakdown-item security"
             >
-              <span class="breakdown-label">Security</span>
+              <span class="breakdown-label">安全更新</span>
               <span class="breakdown-value">{{
                 systemData.updates.security
               }}</span>
             </div>
             <div class="breakdown-item recent">
-              <span class="breakdown-label">Recent</span>
+              <span class="breakdown-label">最近更新</span>
               <span class="breakdown-value">{{
                 systemData.updates.recent
               }}</span>
@@ -104,7 +104,7 @@
           <el-icon class="metric-icon">
             <CircleCheckFilled />
           </el-icon>
-          <span class="metric-label">Health</span>
+          <span class="metric-label">健康状态</span>
         </div>
         <div class="metric-content">
           <div class="health-score" :class="healthScoreClass">
@@ -134,7 +134,7 @@
           <el-icon class="metric-icon">
             <DataLine />
           </el-icon>
-          <span class="metric-label">Activity</span>
+          <span class="metric-label">活动统计</span>
         </div>
         <div class="metric-content">
           <div class="activity-stats">
@@ -142,15 +142,15 @@
               <span class="stat-value">{{
                 systemData.activity.events24h
               }}</span>
-              <span class="stat-label">Events (24h)</span>
+              <span class="stat-label">事件 (24小时)</span>
             </div>
             <div class="activity-stat">
               <span class="stat-value">{{ systemData.activity.errors }}</span>
-              <span class="stat-label">Errors</span>
+              <span class="stat-label">错误</span>
             </div>
             <div class="activity-stat">
               <span class="stat-value">{{ systemData.activity.warnings }}</span>
-              <span class="stat-label">Warnings</span>
+              <span class="stat-label">警告</span>
             </div>
           </div>
         </div>
@@ -163,7 +163,7 @@ v-if="displayMode !== 'minimal'" class="resource-usage"
 >
       <div class="resource-item cpu">
         <div class="resource-header">
-          <span class="resource-label">CPU Usage</span>
+          <span class="resource-label">CPU使用率</span>
           <span class="resource-value">{{ systemData.resources.cpu.toFixed(1) }}%</span>
         </div>
         <el-progress
@@ -176,7 +176,7 @@ v-if="displayMode !== 'minimal'" class="resource-usage"
 
       <div class="resource-item memory">
         <div class="resource-header">
-          <span class="resource-label">Memory Usage</span>
+          <span class="resource-label">内存使用率</span>
           <span class="resource-value">{{ formatBytes(systemData.resources.memory.used) }} /
             {{ formatBytes(systemData.resources.memory.total) }}</span>
         </div>
@@ -190,7 +190,7 @@ v-if="displayMode !== 'minimal'" class="resource-usage"
 
       <div class="resource-item disk">
         <div class="resource-header">
-          <span class="resource-label">Disk Usage</span>
+          <span class="resource-label">磁盘使用率</span>
           <span class="resource-value">{{ formatBytes(systemData.resources.disk.used) }} /
             {{ formatBytes(systemData.resources.disk.total) }}</span>
         </div>
@@ -210,15 +210,15 @@ v-if="displayMode === 'detailed'" class="quick-actions"
       <el-button-group>
         <el-button size="small" @click="triggerUpdateScan">
           <el-icon><Refresh /></el-icon>
-          Scan Updates
+          扫描更新
         </el-button>
         <el-button size="small" @click="viewSystemLogs">
           <el-icon><Document /></el-icon>
-          View Logs
+          查看日志
         </el-button>
         <el-button size="small" @click="openSystemSettings">
           <el-icon><Setting /></el-icon>
-          Settings
+          设置
         </el-button>
       </el-button-group>
     </div>
@@ -230,7 +230,7 @@ v-if="displayMode === 'detailed'" class="quick-actions"
     >
       <div class="alerts-header">
         <el-icon><Warning /></el-icon>
-        <span>Active Alerts ({{ systemData.alerts.length }})</span>
+        <span>活跃警报 ({{ systemData.alerts.length }})</span>
       </div>
       <div class="alerts-list">
         <div
@@ -260,26 +260,26 @@ v-if="displayMode === 'detailed'" class="system-info"
 >
       <div class="info-grid">
         <div class="info-item">
-          <span class="info-label">Version</span>
+          <span class="info-label">版本</span>
           <span class="info-value">{{ systemData.version }}</span>
         </div>
         <div class="info-item">
-          <span class="info-label">Docker Version</span>
+          <span class="info-label">Docker版本</span>
           <span class="info-value">{{ systemData.dockerVersion }}</span>
         </div>
         <div class="info-item">
-          <span class="info-label">Last Backup</span>
+          <span class="info-label">最后备份</span>
           <span class="info-value">{{
             formatRelativeTime(systemData.lastBackup)
           }}</span>
         </div>
         <div class="info-item">
-          <span class="info-label">Maintenance Mode</span>
+          <span class="info-label">维护模式</span>
           <el-tag
             :type="systemData.maintenanceMode ? 'warning' : 'success'"
             size="small"
           >
-            {{ systemData.maintenanceMode ? "Active" : "Inactive" }}
+            {{ systemData.maintenanceMode ? "活跃" : "非活跃" }}
           </el-tag>
         </div>
       </div>
@@ -367,13 +367,13 @@ const systemData = ref({
     {
       id: "1",
       severity: "warning",
-      message: "High memory usage detected on container web-server",
+      message: "检测到容器web-server内存使用率过高",
       timestamp: new Date(Date.now() - 300000), // 5 minutes ago
     },
     {
       id: "2",
       severity: "info",
-      message: "System backup completed successfully",
+      message: "系统备份已成功完成",
       timestamp: new Date(Date.now() - 3600000), // 1 hour ago
     },
   ],
@@ -402,21 +402,21 @@ const systemStatusClass = computed(() => {
 const systemStatusText = computed(() => {
   switch (systemData.value.status) {
     case "healthy":
-      return "System Healthy";
+      return "系统正常";
     case "warning":
-      return "Attention Required";
+      return "需要注意";
     case "critical":
-      return "Critical Issues";
+      return "严重问题";
     case "maintenance":
-      return "Maintenance Mode";
+      return "维护模式";
     default:
-      return "Unknown Status";
+      return "未知状态";
   }
 });
 
 const systemStatusSubtitle = computed(() => {
   const { containers, updates } = systemData.value;
-  return `${containers.running}/${containers.total} containers running • ${updates.available} updates available`;
+  return `${containers.running}/${containers.total} 个容器运行中 • ${updates.available} 个更新可用`;
 });
 
 const healthScoreClass = computed(() => {
@@ -429,17 +429,17 @@ const healthScoreClass = computed(() => {
 
 const healthIndicators = computed(() => [
   {
-    name: "Services",
+    name: "服务",
     status: systemData.value.health.score >= 90 ? "healthy" : "warning",
     icon: "CircleCheckFilled",
   },
   {
-    name: "Network",
+    name: "网络",
     status: systemData.value.health.score >= 80 ? "healthy" : "warning",
     icon: "CircleCheckFilled",
   },
   {
-    name: "Storage",
+    name: "存储",
     status: systemData.value.health.score >= 70 ? "healthy" : "warning",
     icon: "CircleCheckFilled",
   },
@@ -503,10 +503,10 @@ const formatRelativeTime = (date: Date): string => {
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
 
-  if (seconds < 60) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
+  if (seconds < 60) return "刚刚";
+  if (minutes < 60) return `${minutes}分钟前`;
+  if (hours < 24) return `${hours}小时前`;
+  if (days < 7) return `${days}天前`;
   return date.toLocaleDateString();
 };
 
@@ -515,17 +515,13 @@ const fetchSystemData = async () => {
     emit("loading", true);
     isLoading.value = true;
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const { get } = await import('@/utils/request');
+    const data = await get("/api/dashboard/system-overview", {
+      showLoading: false,
+      showError: false,
+    });
 
-    // In a real implementation, this would fetch from the API
-    const response = await fetch("/api/v1/dashboard/system-overview");
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    systemData.value = { ...systemData.value, ...data };
+    systemData.value = { ...systemData.value, ...(data as any) };
 
     emit("data-updated", systemData.value);
     emit("metrics-updated", {
