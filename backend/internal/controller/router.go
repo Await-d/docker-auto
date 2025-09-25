@@ -14,14 +14,15 @@ import (
 
 // RouterConfig holds configuration for the router setup
 type RouterConfig struct {
-	Config              *config.Config
-	Logger              *logrus.Logger
-	UserService         *service.UserService
-	AuthService         *service.AuthService
-	ContainerService    *service.ContainerService
-	ImageService        *service.ImageService
-	NotificationService *service.NotificationService
-	WebSocketManager    *api.WebSocketManager
+	Config                     *config.Config
+	Logger                     *logrus.Logger
+	UserService                *service.UserService
+	AuthService                *service.AuthService
+	ContainerService           *service.ContainerService
+	ImageService               *service.ImageService
+	NotificationService        *service.NotificationService
+	ContainerMonitoringService *service.ContainerMonitoringService
+	WebSocketManager           *api.WebSocketManager
 }
 
 // SetupRoutes configures all API routes with proper middleware chains
@@ -131,6 +132,7 @@ func setupAuthenticatedRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
 	setupLogRoutes(protected, cfg)
 	setupRegistryRoutes(protected, cfg)
 	setupNotificationRoutes(protected, cfg)
+	setupMonitoringRoutes(protected, cfg)
 	setupWebSocketRoutes(api, cfg)
 }
 
@@ -190,6 +192,7 @@ func setupContainerRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
 			containerRoutes.GET("/status", middleware.RequireContainerRead(), containerController.GetContainerStatus)
 			containerRoutes.GET("/logs", middleware.RequireContainerRead(), containerController.GetContainerLogs)
 			containerRoutes.GET("/stats", middleware.RequireContainerRead(), containerController.GetContainerStats)
+			containerRoutes.GET("/events", middleware.RequireContainerRead(), containerController.GetContainerEvents)
 
 			// Write operations
 			containerRoutes.PUT("", middleware.RequireContainerWrite(), containerController.UpdateContainer)
@@ -200,6 +203,9 @@ func setupContainerRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
 			containerRoutes.POST("/stop", middleware.RequireContainerManage(), containerController.StopContainer)
 			containerRoutes.POST("/restart", middleware.RequireContainerManage(), containerController.RestartContainer)
 			containerRoutes.POST("/update", middleware.RequireContainerManage(), containerController.UpdateContainerImage)
+
+			// WebSocket connections
+			containerRoutes.GET("/terminal", middleware.RequireContainerManage(), containerController.ContainerTerminal)
 		}
 	}
 }
@@ -513,5 +519,49 @@ func setupLogRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
 		logs.POST("/cleanup", middleware.RequireAdmin(), func(c *gin.Context) {
 			c.JSON(501, gin.H{"error": "Cleanup functionality not yet implemented"})
 		})
+	}
+}
+
+// setupMonitoringRoutes configures container monitoring and metrics routes
+func setupMonitoringRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
+	if cfg.ContainerMonitoringService == nil {
+		// Monitoring service not available, skip setup
+		return
+	}
+
+	monitoringController := NewMonitoringController(
+		cfg.ContainerMonitoringService,
+		cfg.ContainerService,
+		cfg.Logger,
+	)
+
+	monitoring := api.Group("/monitoring")
+	{
+		// System monitoring status
+		monitoring.GET("/status", middleware.RequireViewer(), monitoringController.GetMonitoringStatus)
+
+		// Container monitoring endpoints
+		containers := monitoring.Group("/containers")
+		{
+			// Bulk metrics operations
+			containers.GET("/metrics", middleware.RequireContainerRead(), monitoringController.GetAllContainerMetrics)
+
+			// Individual container monitoring
+			containerRoutes := containers.Group("/:id")
+			{
+				// Current metrics
+				containerRoutes.GET("/metrics", middleware.RequireContainerRead(), monitoringController.GetContainerMetrics)
+
+				// Historical metrics with time-range support
+				containerRoutes.GET("/metrics/historical", middleware.RequireContainerRead(), monitoringController.GetHistoricalMetrics)
+
+				// WebSocket metrics streaming
+				containerRoutes.GET("/metrics/stream", middleware.RequireContainerRead(), monitoringController.StreamContainerMetrics)
+
+				// Monitoring control operations
+				containerRoutes.POST("/start", middleware.RequireContainerManage(), monitoringController.StartContainerMonitoring)
+				containerRoutes.POST("/stop", middleware.RequireContainerManage(), monitoringController.StopContainerMonitoring)
+			}
+		}
 	}
 }

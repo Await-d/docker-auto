@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 	"docker-auto/internal/model"
+	"docker-auto/pkg/docker"
 )
 
 // UserRepository defines the interface for user repository operations
@@ -278,6 +279,60 @@ type NotificationLogRepository interface {
 	GetUnreadCount(ctx context.Context, userID int64) (int64, error)
 	DeleteOldLogs(ctx context.Context, retentionDays int) (int64, error)
 	CreateBatch(ctx context.Context, logs []*model.NotificationLog) error
+}
+
+// MonitoringMetricsRepository defines the interface for monitoring metrics repository operations
+type MonitoringMetricsRepository interface {
+	// Basic CRUD operations
+	Create(ctx context.Context, metrics *model.MonitoringMetrics) error
+	GetByID(ctx context.Context, id int64) (*model.MonitoringMetrics, error)
+	Update(ctx context.Context, metrics *model.MonitoringMetrics) error
+	Delete(ctx context.Context, id int64) error
+
+	// Query operations
+	List(ctx context.Context, filter *model.MonitoringMetricsFilter) ([]*model.MonitoringMetrics, int64, error)
+	GetByContainerID(ctx context.Context, containerID string, limit, offset int) ([]*model.MonitoringMetrics, int64, error)
+	GetByTimeRange(ctx context.Context, containerID string, start, end time.Time) ([]*model.MonitoringMetrics, error)
+	GetLatest(ctx context.Context, containerID string) (*model.MonitoringMetrics, error)
+
+	// Aggregation operations
+	GetAverageMetrics(ctx context.Context, containerID string, start, end time.Time) (*model.MonitoringMetrics, error)
+	GetMaxMetrics(ctx context.Context, containerID string, start, end time.Time) (*model.MonitoringMetrics, error)
+	GetMetricsSummary(ctx context.Context, containerID string, duration time.Duration) (*docker.MetricsSummary, error)
+
+	// Maintenance operations
+	DeleteOlderThan(ctx context.Context, cutoffDate time.Time) (int64, error)
+	CountOlderThan(ctx context.Context, cutoffDate time.Time) (int64, error)
+	CreateBatch(ctx context.Context, metrics []*model.MonitoringMetrics) error
+
+	// Search and analytics
+	GetHighUsageContainers(ctx context.Context, cpuThreshold, memoryThreshold float64) ([]*model.MonitoringMetrics, error)
+	GetContainerTrends(ctx context.Context, containerID string, hours int) ([]*model.MonitoringMetrics, error)
+}
+
+// TerminalSessionRepository defines the interface for terminal session repository operations
+type TerminalSessionRepository interface {
+	// Basic CRUD operations
+	Create(ctx context.Context, session *model.TerminalSession) error
+	GetByID(ctx context.Context, id string) (*model.TerminalSession, error)
+	Update(ctx context.Context, session *model.TerminalSession) error
+	Delete(ctx context.Context, id string) error
+
+	// Query operations
+	List(ctx context.Context, filter *model.TerminalSessionFilter) ([]*model.TerminalSession, int64, error)
+	GetByUserID(ctx context.Context, userID int64, limit, offset int) ([]*model.TerminalSession, int64, error)
+	GetByContainerID(ctx context.Context, containerID int64, limit, offset int) ([]*model.TerminalSession, int64, error)
+	GetActiveSessions(ctx context.Context) ([]*model.TerminalSession, error)
+
+	// Session management
+	UpdateStatus(ctx context.Context, id string, status string) error
+	UpdateActivity(ctx context.Context, id string) error
+	GetByStatus(ctx context.Context, status string) ([]*model.TerminalSession, error)
+
+	// Maintenance operations
+	DeleteOlderThan(ctx context.Context, cutoffDate time.Time) (int64, error)
+	CountOlderThan(ctx context.Context, cutoffDate time.Time) (int64, error)
+	CleanupInactiveSessions(ctx context.Context) (int64, error)
 }
 
 // ScheduledTaskRepository defines the interface for scheduled task repository operations

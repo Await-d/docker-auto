@@ -125,6 +125,7 @@ declare module 'vue' {
     UserManagement: typeof import('./src/components/settings/UserManagement.vue')['default']
     VersionComparison: typeof import('./src/components/update/VersionComparison.vue')['default']
     VirtualList: typeof import('./src/components/common/VirtualList.vue')['default']
+    WebTerminal: typeof import('./src/components/WebTerminal.vue')['default']
     WidgetConfigDialog: typeof import('./src/components/dashboard/WidgetConfigDialog.vue')['default']
     WidgetWrapper: typeof import('./src/components/dashboard/WidgetWrapper.vue')['default']
   }

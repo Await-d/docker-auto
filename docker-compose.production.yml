@@ -1,0 +1,348 @@
+# Docker Auto Update System - Production Deployment
+# Optimized for production with security, performance, and monitoring
+version: '3.8'
+
+services:
+  # Main application service
+  docker-auto:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      target: production
+      args:
+        - BUILD_VERSION=2.4.0
+        - BUILD_ENV=production
+    image: docker-auto:2.4.0-production
+    container_name: docker-auto-prod
+    restart: unless-stopped
+
+    # Security settings
+    read_only: false
+    user: "1001:1001"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Environment configuration
+    environment:
+      # Application
+      - APP_PORT=8080
+      - APP_ENV=production
+      - LOG_LEVEL=info
+      - LOG_FORMAT=json
+      - GIN_MODE=release
+
+      # Database
+      - DB_TYPE=sqlite
+      - DB_PATH=/app/data/docker-auto.db
+      - DB_DEBUG=false
+
+      # JWT Security
+      - JWT_SECRET=${JWT_SECRET:-production-change-me-secure-key-minimum-32-characters}
+      - JWT_EXPIRE_HOURS=8
+      - JWT_REFRESH_DAYS=1
+
+      # Docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DOCKER_API_VERSION=1.41
+      - DOCKER_TIMEOUT=30
+
+      # Security
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://your-domain.com}
+      - ENABLE_SWAGGER=false
+      - RATE_LIMIT_ENABLED=true
+      - RATE_LIMIT_REQUESTS=100
+      - RATE_LIMIT_WINDOW=60
+
+      # Monitoring
+      - ENABLE_METRICS=true
+      - METRICS_PORT=9090
+      - HEALTH_CHECK_INTERVAL=30
+
+      # Features
+      - ENABLE_AUTO_UPDATE=true
+      - ENABLE_NOTIFICATIONS=true
+      - ENABLE_WEBSOCKET=true
+      - ENABLE_TERMINAL=false
+
+      # Performance
+      - MAX_CONCURRENT_UPDATES=5
+      - UPDATE_CHECK_INTERVAL=3600
+      - CACHE_TTL=1800
+
+      # Timezone
+      - TZ=UTC
+
+    # Volume mounts with security considerations
+    volumes:
+      # Docker socket (read-only for security)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Application data (persistent)
+      - docker_auto_data:/app/data:rw
+      # Logs (persistent)
+      - docker_auto_logs:/app/logs:rw
+      # Configuration (if needed)
+      - ./config/production:/app/config:ro
+      # Backups
+      - docker_auto_backups:/app/backups:rw
+
+    # Network configuration
+    ports:
+      - "80:8080"
+      - "9090:9090"  # Metrics port (internal only in production)
+
+    networks:
+      - docker-auto-network
+
+    # Health checks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=docker-auto,environment=production"
+
+    # Dependencies (if using external services)
+    depends_on:
+      - redis
+      - postgres
+
+    # Labels for management
+    labels:
+      - "com.docker-auto.version=2.4.0"
+      - "com.docker-auto.environment=production"
+      - "com.docker-auto.service=main"
+
+  # Redis for caching (production)
+  redis:
+    image: redis:7-alpine
+    container_name: docker-auto-redis-prod
+    restart: unless-stopped
+
+    # Security
+    user: "999:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+    # Configuration
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 200mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+
+    volumes:
+      - redis_data:/data:rw
+
+    networks:
+      - docker-auto-network
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # PostgreSQL database (optional, for scale)
+  postgres:
+    image: postgres:15-alpine
+    container_name: docker-auto-postgres-prod
+    restart: unless-stopped
+
+    # Security
+    user: "999:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.2'
+          memory: 128M
+
+    environment:
+      POSTGRES_DB: docker_auto_prod
+      POSTGRES_USER: docker_auto_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-secure-password}
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data:rw
+
+    networks:
+      - docker-auto-network
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docker_auto_user -d docker_auto_prod"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx reverse proxy (production)
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: docker-auto-nginx-prod
+    restart: unless-stopped
+
+    # Security
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+    ports:
+      - "443:443"
+      - "8080:80"
+
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx_cache:/var/cache/nginx:rw
+
+    networks:
+      - docker-auto-network
+
+    depends_on:
+      - docker-auto
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# Persistent volumes
+volumes:
+  docker_auto_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/production
+
+  docker_auto_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs/production
+
+  docker_auto_backups:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./backups/production
+
+  redis_data:
+    driver: local
+
+  postgres_data:
+    driver: local
+
+  nginx_cache:
+    driver: local
+
+# Networks
+networks:
+  docker-auto-network:
+    driver: bridge
+    name: docker-auto-prod
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/16
+          gateway: 172.30.0.1
+    driver_opts:
+      com.docker.network.bridge.name: docker-auto-prod
+
+# Production deployment configurations
+configs:
+  nginx_config:
+    file: ./nginx/nginx.conf
+
+  app_config:
+    file: ./config/production/app.yml
+
+secrets:
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+
+  postgres_password:
+    file: ./secrets/postgres_password.txt

@@ -572,6 +572,7 @@ import {
 } from "@element-plus/icons-vue";
 
 import { useContainerStore } from "@/store/containers";
+import { useMonitoringStore } from "@/store/monitoring";
 import { useAuth } from "@/store/auth";
 import ContainerCard from "@/components/container/ContainerCard.vue";
 import ContainerForm from "@/components/container/ContainerForm.vue";
@@ -581,6 +582,7 @@ import type { Container, ContainerFormData } from "@/types/container";
 
 const router = useRouter();
 const containerStore = useContainerStore();
+const monitoringStore = useMonitoringStore();
 const { hasPermission } = useAuth();
 
 // Store refs
@@ -758,7 +760,8 @@ function handleContainerAction(action: string, containerId: string) {
       showLogsDialog.value = true;
       break;
     case "terminal":
-      // Handle terminal access
+      // Navigate to container detail with terminal tab
+      router.push(`/containers/${containerId}?tab=terminal`);
       break;
     case "update":
       containerStore.updateContainerImage(containerId);
@@ -919,10 +922,21 @@ watch(searchQuery, (newValue) => {
 });
 
 // Lifecycle
-onMounted(() => {
-  containerStore.fetchContainers();
-  containerStore.fetchTemplates();
-  containerStore.checkUpdates();
+onMounted(async () => {
+  // Initialize WebSocket connection
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+  const token = localStorage.getItem('token') || '';
+
+  if (token) {
+    containerStore.initializeWebSocket(baseUrl, token);
+    monitoringStore.initializeWebSocket(baseUrl, token);
+  }
+
+  // Load initial data
+  await containerStore.fetchContainers();
+  await containerStore.fetchTemplates();
+  await containerStore.checkUpdates();
+
   startAutoRefresh();
 });
 

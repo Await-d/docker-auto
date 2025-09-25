@@ -1,0 +1,21 @@
+{
+  "id": "approval_1758784269747_3pwymgyln",
+  "title": "Docker容器生命周期管理 - 任务分解 (修订版)",
+  "filePath": ".spec-workflow/specs/docker-container-lifecycle-management/tasks.md",
+  "type": "document",
+  "status": "needs-revision",
+  "createdAt": "2025-09-25T07:11:09.747Z",
+  "category": "spec",
+  "categoryName": "docker-container-lifecycle-management",
+  "response": "Feedback Summary (1 comments):\n\nGeneral Comments:\n1. 永远保持三大原则\n不可使用模拟方案！！！\n不可使用简化方案！！！\n不可使用临时方案！！！\n\n",
+  "annotations": "{\n  \"decision\": \"needs-revision\",\n  \"comments\": [\n    {\n      \"type\": \"general\",\n      \"comment\": \"永远保持三大原则\\n不可使用模拟方案！！！\\n不可使用简化方案！！！\\n不可使用临时方案！！！\",\n      \"timestamp\": \"2025-09-25T07:12:29.836Z\",\n      \"id\": \"comment_1758784349836_mi2to4du1\"\n    }\n  ],\n  \"summary\": \"Feedback Summary (1 comments):\\n\\nGeneral Comments:\\n1. 永远保持三大原则\\n不可使用模拟方案！！！\\n不可使用简化方案！！！\\n不可使用临时方案！！！\\n\\n\",\n  \"timestamp\": \"2025-09-25T07:12:31.600Z\"\n}",
+  "respondedAt": "2025-09-25T07:12:31.780Z",
+  "comments": [
+    {
+      "type": "general",
+      "comment": "永远保持三大原则\n不可使用模拟方案！！！\n不可使用简化方案！！！\n不可使用临时方案！！！",
+      "timestamp": "2025-09-25T07:12:29.836Z",
+      "id": "comment_1758784349836_mi2to4du1"
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { ElMessage, ElNotification } from "element-plus";
 import { containerAPI } from "@/api/container";
+import { handleApiError, handleDockerError } from "@/utils/error-handler";
 import type {
   Container,
   ContainerFilter,
@@ -140,7 +141,10 @@ export const useContainerStore = defineStore("containers", () => {
       selectedContainers.value.clear();
     } catch (error) {
       console.error("Failed to fetch containers:", error);
-      ElMessage.error("加载容器失败");
+      handleApiError(error, {
+        component: 'ContainerStore',
+        action: 'fetchContainers',
+      });
     } finally {
       loading.value = false;
     }
@@ -161,7 +165,11 @@ export const useContainerStore = defineStore("containers", () => {
       return container;
     } catch (error) {
       console.error("Failed to fetch container:", error);
-      ElMessage.error("加载容器详情失败");
+      handleApiError(error, {
+        component: 'ContainerStore',
+        action: 'fetchContainer',
+        containerId: id,
+      });
       throw error;
     } finally {
       loadingDetails.value = false;
@@ -280,7 +288,7 @@ export const useContainerStore = defineStore("containers", () => {
       ElMessage.success(`容器 ${operation} 操作完成`);
     } catch (error) {
       console.error(`Failed to ${operation} container:`, error);
-      ElMessage.error(`${operation} 容器失败`);
+      handleDockerError(error, operation, id);
       throw error;
     } finally {
       setOperationLoading(id, false);
@@ -523,6 +531,27 @@ export const useContainerStore = defineStore("containers", () => {
   }
 
   // WebSocket integration
+  function initializeWebSocket(baseUrl: string, token: string) {
+    try {
+      import("@/api/websocket").then(({ createDockerWebSocketAPI }) => {
+        const wsAPI = createDockerWebSocketAPI(baseUrl, token);
+
+        // Subscribe to all container status updates
+        wsAPI.subscribeToContainerStatus('all', handleStatusUpdate);
+
+        // Subscribe to Docker events
+        wsAPI.subscribeToDockerEvents(handleEventUpdate, {
+          type: ['container']
+        });
+
+        setWebSocketConnected(true);
+      });
+    } catch (error) {
+      console.error("Failed to initialize WebSocket:", error);
+      setWebSocketConnected(false);
+    }
+  }
+
   function handleWebSocketMessage(message: any) {
     const { type, data } = message;
 
@@ -690,6 +719,7 @@ export const useContainerStore = defineStore("containers", () => {
     setSorting,
     clearFilters,
     refreshData,
+    initializeWebSocket,
     handleWebSocketMessage,
     setWebSocketConnected,
     $reset,

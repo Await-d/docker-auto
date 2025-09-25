@@ -16,15 +16,17 @@ import (
 
 // RegistryController handles registry-related HTTP requests
 type RegistryController struct {
-	imageService *service.ImageService
-	logger       *logrus.Logger
+	registryService *service.RegistryService
+	imageService    *service.ImageService
+	logger          *logrus.Logger
 }
 
 // NewRegistryController creates a new registry controller
-func NewRegistryController(imageService *service.ImageService, logger *logrus.Logger) *RegistryController {
+func NewRegistryController(registryService *service.RegistryService, imageService *service.ImageService, logger *logrus.Logger) *RegistryController {
 	return &RegistryController{
-		imageService: imageService,
-		logger:       logger,
+		registryService: registryService,
+		imageService:    imageService,
+		logger:          logger,
 	}
 }
 
@@ -81,54 +83,96 @@ type RegistryTestResult struct {
 // @Failure 500 {object} utils.APIResponse "Internal server error"
 // @Router /api/registries [get]
 func (rc *RegistryController) ListRegistries(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		rb := utils.NewResponseBuilder(c)
+		rb.Error(401, "Unauthorized", err)
+		return
+	}
+
 	enabledStr := c.Query("enabled")
 	registryType := c.Query("type")
+	limitStr := c.Query("limit")
+	offsetStr := c.Query("offset")
 
 	rb := utils.NewResponseBuilder(c)
 
-	// For now, return a mock list of registries
-	// In a real implementation, you would query the registry repository
-	registries := []RegistryResponse{
-		{
-			ID:          1,
-			Name:        "Docker Hub",
-			URL:         "https://registry-1.docker.io",
-			Type:        "dockerhub",
-			Description: "Official Docker registry",
-			IsDefault:   true,
-			Enabled:     true,
-			Status:      "connected",
-			CreatedAt:   "2023-01-01T00:00:00Z",
-			UpdatedAt:   "2023-01-01T00:00:00Z",
-		},
+	// Create filter
+	filter := &service.RegistryFilter{
+		Type: registryType,
 	}
 
-	// Apply filters
-	filteredRegistries := []RegistryResponse{}
-	for _, reg := range registries {
-		// Filter by enabled status
-		if enabledStr != "" {
-			enabled, _ := strconv.ParseBool(enabledStr)
-			if reg.Enabled != enabled {
-				continue
-			}
+	// Parse enabled filter
+	if enabledStr != "" {
+		enabled, err := strconv.ParseBool(enabledStr)
+		if err != nil {
+			rb.Error(400, "Invalid enabled parameter", err)
+			return
 		}
+		filter.IsActive = &enabled
+	}
 
-		// Filter by type
-		if registryType != "" && reg.Type != registryType {
-			continue
+	// Parse limit and offset
+	if limitStr != "" {
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil {
+			rb.Error(400, "Invalid limit parameter", err)
+			return
 		}
+		filter.Limit = limit
+	}
 
-		filteredRegistries = append(filteredRegistries, reg)
+	if offsetStr != "" {
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			rb.Error(400, "Invalid offset parameter", err)
+			return
+		}
+		filter.Offset = offset
+	}
+
+	// Get registries using service
+	registries, total, err := rc.registryService.ListRegistries(c.Request.Context(), userID, filter)
+	if err != nil {
+		rc.logger.WithFields(logrus.Fields{
+			"user_id": userID,
+			"error":   err.Error(),
+		}).Error("Failed to list registries")
+		rb.Error(500, "Failed to list registries", err)
+		return
+	}
+
+	// Convert to response format with status
+	responses := make([]map[string]interface{}, len(registries))
+	for i, reg := range registries {
+		responses[i] = map[string]interface{}{
+			"id":          reg.ID,
+			"name":        reg.Name,
+			"url":         reg.URL,
+			"type":        reg.Type,
+			"description": reg.Description,
+			"is_default":  reg.IsDefault,
+			"enabled":     reg.IsActive,
+			"status":      "connected", // TODO: Add actual status checking
+			"created_at":  reg.CreatedAt,
+			"updated_at":  reg.UpdatedAt,
+		}
 	}
 
 	rc.logger.WithFields(logrus.Fields{
-		"enabled": enabledStr,
-		"type":    registryType,
-		"count":   len(filteredRegistries),
+		"user_id": userID,
+		"total":   total,
+		"count":   len(registries),
 	}).Info("Registries listed")
 
-	rb.Success(filteredRegistries)
+	// Return response with pagination info
+	response := map[string]interface{}{
+		"registries": responses,
+		"total":      total,
+		"count":      len(responses),
+	}
+
+	rb.Success(response)
 }
 
 // CreateRegistry godoc
@@ -196,34 +240,59 @@ func (rc *RegistryController) CreateRegistry(c *gin.Context) {
 		}
 	}
 
-	// For now, this is a placeholder implementation
-	// In a real implementation, you would:
-	// 1. Check if registry with same name/URL already exists
-	// 2. Save registry configuration to database
-	// 3. Register the registry with the image service
-	// 4. Return the created registry
-
-	rc.logger.WithFields(logrus.Fields{
-		"user_id": userID,
-		"name":    req.Name,
-		"url":     req.URL,
-		"type":    req.Type,
-	}).Info("Registry creation requested (placeholder implementation)")
-
-	// Mock response
-	response := RegistryResponse{
-		ID:          2, // Mock ID
+	// Create registry using service
+	createReq := &service.RegistryCreateRequest{
 		Name:        req.Name,
 		URL:         req.URL,
 		Type:        req.Type,
 		Description: req.Description,
 		IsDefault:   req.IsDefault,
-		Enabled:     req.Enabled,
-		Status:      "connected",
-		Settings:    req.Settings,
-		CreatedAt:   "2023-01-01T00:00:00Z",
-		UpdatedAt:   "2023-01-01T00:00:00Z",
 	}
+
+	// Extract auth information
+	if req.AuthConfig != nil {
+		createReq.Username = req.AuthConfig.Username
+		createReq.Password = req.AuthConfig.Password
+		createReq.Token = req.AuthConfig.Token
+	}
+
+	registry, err := rc.registryService.CreateRegistry(c.Request.Context(), userID, createReq)
+	if err != nil {
+		rc.logger.WithFields(logrus.Fields{
+			"user_id": userID,
+			"name":    req.Name,
+			"url":     req.URL,
+			"error":   err.Error(),
+		}).Error("Failed to create registry")
+
+		// Handle specific error types
+		if strings.Contains(err.Error(), "already exists") {
+			rb.Error(409, "Registry already exists", err)
+		} else {
+			rb.Error(500, "Failed to create registry", err)
+		}
+		return
+	}
+
+	// Convert to controller response format
+	response := RegistryResponse{
+		ID:          registry.ID,
+		Name:        registry.Name,
+		URL:         registry.URL,
+		Type:        registry.Type,
+		Description: registry.Description,
+		IsDefault:   registry.IsDefault,
+		Enabled:     registry.IsActive,
+		Status:      "connected",
+		CreatedAt:   registry.CreatedAt,
+		UpdatedAt:   registry.UpdatedAt,
+	}
+
+	rc.logger.WithFields(logrus.Fields{
+		"user_id":     userID,
+		"registry_id": registry.ID,
+		"name":        req.Name,
+	}).Info("Registry created successfully")
 
 	rb.Created(response)
 }
@@ -243,6 +312,13 @@ func (rc *RegistryController) CreateRegistry(c *gin.Context) {
 // @Failure 500 {object} utils.APIResponse "Internal server error"
 // @Router /api/registries/{id} [get]
 func (rc *RegistryController) GetRegistry(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		rb := utils.NewResponseBuilder(c)
+		rb.Error(401, "Unauthorized", err)
+		return
+	}
+
 	registryIDStr := c.Param("id")
 	registryID, err := strconv.ParseInt(registryIDStr, 10, 64)
 	if err != nil {
@@ -252,27 +328,38 @@ func (rc *RegistryController) GetRegistry(c *gin.Context) {
 
 	rb := utils.NewResponseBuilder(c)
 
-	// For now, return mock data
-	// In a real implementation, you would query the registry repository
-	if registryID == 1 {
-		response := RegistryResponse{
-			ID:          1,
-			Name:        "Docker Hub",
-			URL:         "https://registry-1.docker.io",
-			Type:        "dockerhub",
-			Description: "Official Docker registry",
-			IsDefault:   true,
-			Enabled:     true,
-			Status:      "connected",
-			CreatedAt:   "2023-01-01T00:00:00Z",
-			UpdatedAt:   "2023-01-01T00:00:00Z",
+	// Get registry using service
+	registry, err := rc.registryService.GetRegistry(c.Request.Context(), userID, registryID)
+	if err != nil {
+		rc.logger.WithFields(logrus.Fields{
+			"user_id":     userID,
+			"registry_id": registryID,
+			"error":       err.Error(),
+		}).Error("Failed to get registry")
+
+		if strings.Contains(err.Error(), "not found") {
+			rb.NotFound("Registry not found")
+		} else {
+			rb.Error(500, "Failed to get registry", err)
 		}
-		rb.Success(response)
 		return
 	}
 
-	rc.logger.WithField("registry_id", registryID).Warn("Registry not found")
-	rb.NotFound("Registry not found")
+	// Convert to controller response format
+	response := RegistryResponse{
+		ID:          registry.ID,
+		Name:        registry.Name,
+		URL:         registry.URL,
+		Type:        registry.Type,
+		Description: registry.Description,
+		IsDefault:   registry.IsDefault,
+		Enabled:     registry.IsActive,
+		Status:      "connected", // TODO: Add actual status checking
+		CreatedAt:   registry.CreatedAt,
+		UpdatedAt:   registry.UpdatedAt,
+	}
+
+	rb.Success(response)
 }
 
 // UpdateRegistry godoc
@@ -445,49 +532,34 @@ func (rc *RegistryController) TestRegistryConnection(c *gin.Context) {
 
 	rb := utils.NewResponseBuilder(c)
 
-	// For testing purposes, use hardcoded registry URL
-	// In a real implementation, you would get the URL from the database
-	var registryURL string
-	switch registryID {
-	case 1:
-		registryURL = "https://registry-1.docker.io"
-	default:
-		rb.NotFound("Registry not found")
-		return
-	}
-
-	// Measure connection test duration
-	start := time.Now()
-	err = rc.imageService.TestRegistryConnection(c.Request.Context(), registryURL, authConfig)
-	duration := time.Since(start)
-
-	result := RegistryTestResult{
-		Success:  err == nil,
-		Duration: duration.String(),
-	}
-
+	// Test connection using registry service
+	testResult, err := rc.registryService.TestConnection(c.Request.Context(), userID, registryID)
 	if err != nil {
-		result.Message = "Connection failed"
-		result.Error = err.Error()
-		rc.logger.WithError(err).WithFields(logrus.Fields{
-			"user_id":     userID,
-			"registry_id": registryID,
-			"duration":    duration,
-		}).Warn("Registry connection test failed")
-	} else {
-		result.Message = "Connection successful"
-		result.Capabilities = []string{"push", "pull", "search"} // Mock capabilities
-
-		// Try to get registry info
-		if info, err := rc.imageService.GetRegistryInfo(c.Request.Context(), registryURL); err == nil {
-			result.Info = info
-		}
-
 		rc.logger.WithFields(logrus.Fields{
 			"user_id":     userID,
 			"registry_id": registryID,
-			"duration":    duration,
-		}).Info("Registry connection test successful")
+			"error":       err.Error(),
+		}).Error("Failed to test registry connection")
+
+		if strings.Contains(err.Error(), "not found") {
+			rb.NotFound("Registry not found")
+		} else {
+			rb.Error(500, "Failed to test registry connection", err)
+		}
+		return
+	}
+
+	// Convert to controller response format
+	result := RegistryTestResult{
+		Success:      testResult.Success,
+		Message:      testResult.Message,
+		Duration:     testResult.ResponseTime,
+		Capabilities: testResult.Capabilities,
+		Info:         testResult.Info,
+	}
+
+	if !testResult.Success {
+		result.Error = testResult.Message
 	}
 
 	rb.Success(result)
@@ -625,6 +697,13 @@ func (rc *RegistryController) SearchRegistryImages(c *gin.Context) {
 // @Failure 500 {object} utils.APIResponse "Internal server error"
 // @Router /api/registries/{id}/stats [get]
 func (rc *RegistryController) GetRegistryStatistics(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		rb := utils.NewResponseBuilder(c)
+		rb.Error(401, "Unauthorized", err)
+		return
+	}
+
 	registryIDStr := c.Param("id")
 	registryID, err := strconv.ParseInt(registryIDStr, 10, 64)
 	if err != nil {
@@ -634,33 +713,41 @@ func (rc *RegistryController) GetRegistryStatistics(c *gin.Context) {
 
 	rb := utils.NewResponseBuilder(c)
 
-	// For now, return mock statistics
-	// In a real implementation, you would:
-	// 1. Query database for containers using this registry
-	// 2. Get pull/push statistics
-	// 3. Calculate usage metrics
+	// Get statistics using registry service
+	stats, err := rc.registryService.GetStatistics(c.Request.Context(), userID, registryID)
+	if err != nil {
+		rc.logger.WithFields(logrus.Fields{
+			"user_id":     userID,
+			"registry_id": registryID,
+			"error":       err.Error(),
+		}).Error("Failed to get registry statistics")
 
-	stats := map[string]interface{}{
-		"registry_id":        registryID,
-		"containers_using":   0, // Number of containers using this registry
-		"images_tracked":     0, // Number of different images tracked
-		"total_pulls":        0, // Total image pulls
-		"total_pushes":       0, // Total image pushes (if supported)
-		"last_pull":          nil, // Last pull timestamp
-		"last_push":          nil, // Last push timestamp
-		"popular_images":     []interface{}{}, // Most pulled images
-		"recent_activity":    []interface{}{}, // Recent pull/push activity
-		"storage_usage":      map[string]interface{}{ // Storage usage if available
-			"total_size":     0,
-			"image_count":    0,
-			"layer_count":    0,
-		},
-		"error_rate":         0.0, // Error rate for registry operations
-		"availability":       100.0, // Registry availability percentage
+		if strings.Contains(err.Error(), "not found") {
+			rb.NotFound("Registry not found")
+		} else {
+			rb.Error(500, "Failed to get registry statistics", err)
+		}
+		return
 	}
 
-	rc.logger.WithField("registry_id", registryID).Info("Registry statistics requested")
-	rb.Success(stats)
+	// Convert to response format
+	response := map[string]interface{}{
+		"registry_id":          registryID,
+		"total_containers":     stats.TotalContainers,
+		"active_containers":    stats.ActiveContainers,
+		"total_pulls":          stats.TotalPulls,
+		"recent_pulls":         stats.RecentPulls,
+		"last_pull_time":       stats.LastPullTime,
+		"average_response_time": stats.AverageResponseTime,
+		"success_rate":         stats.SuccessRate,
+	}
+
+	rc.logger.WithFields(logrus.Fields{
+		"user_id":     userID,
+		"registry_id": registryID,
+	}).Info("Registry statistics retrieved")
+
+	rb.Success(response)
 }
 
 // SetDefaultRegistry godoc

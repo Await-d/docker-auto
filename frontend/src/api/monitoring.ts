@@ -1,308 +1,217 @@
 /**
- * Real-time monitoring and metrics API service
+ * Monitoring and metrics API service
  */
-import { get } from "@/utils/request";
+import { get, post } from "@/utils/request";
+import type { ResourceMetrics, ContainerStats } from "@/types/container";
 
-export interface MonitoringMetrics {
-  cpu: number;
-  memory: {
-    used: number;
-    total: number;
+export interface SystemMetrics {
+  cpu: {
+    usage: number;
+    cores: number;
+    loadAvg: [number, number, number];
   };
-  network: {
-    in: number;
-    out: number;
+  memory: {
     total: number;
+    used: number;
+    free: number;
+    available: number;
+    percentage: number;
   };
   disk: {
-    read: number;
-    write: number;
     total: number;
+    used: number;
+    free: number;
+    percentage: number;
+    devices: Array<{
+      device: string;
+      mountpoint: string;
+      total: number;
+      used: number;
+      free: number;
+      percentage: number;
+    }>;
   };
-  timestamp: string;
+  network: {
+    interfaces: Array<{
+      name: string;
+      rxBytes: number;
+      txBytes: number;
+      rxPackets: number;
+      txPackets: number;
+      rxErrors: number;
+      txErrors: number;
+    }>;
+  };
+  docker: {
+    containers: {
+      total: number;
+      running: number;
+      stopped: number;
+      paused: number;
+    };
+    images: {
+      total: number;
+      size: number;
+    };
+    volumes: {
+      total: number;
+      size: number;
+    };
+    networks: number;
+  };
+  timestamp: Date;
 }
 
-export interface ActivityEvent {
-  id: string;
-  type: "container" | "update" | "system" | "security" | "network";
-  severity: "info" | "warning" | "error" | "success";
-  title: string;
-  description: string;
-  timestamp: string;
-  source?: string;
-  metadata?: Record<string, any>;
-}
-
-export interface SystemAlert {
-  id: string;
-  type: "cpu" | "memory" | "disk" | "network" | "security" | "other";
-  severity: "low" | "medium" | "high" | "critical";
-  title: string;
-  message: string;
-  timestamp: string;
-  acknowledged: boolean;
-  resolvedAt?: string;
-  data?: Record<string, any>;
-}
-
-export interface PerformanceMetrics {
-  responseTime: number;
-  throughput: number;
-  errorRate: number;
-  uptime: number;
-  activeConnections: number;
-}
-
-export interface HealthCheckResult {
-  status: "healthy" | "unhealthy" | "degraded";
-  checks: Array<{
-    name: string;
-    status: "pass" | "fail" | "warn";
-    message: string;
-    duration: number;
-    timestamp: string;
-  }>;
-  overallHealth: number; // 0-100
-}
-
-export interface ResourceUsageHistory {
-  timestamps: string[];
-  cpu: number[];
-  memory: number[];
-  network: number[];
-  disk: number[];
-}
-
-export const monitoringAPI = {
-  /**
-   * Get current system metrics
-   */
-  async getCurrentMetrics(): Promise<MonitoringMetrics> {
-    return get<MonitoringMetrics>("/api/monitoring/metrics", {
-      showLoading: false,
-      showError: false,
-    });
-  },
+export class MonitoringAPI {
+  private readonly baseUrl = "/api/monitoring";
 
   /**
-   * Get metrics history for a time range
+   * Get real-time system metrics
    */
-  async getMetricsHistory(
-    timeRange: "1m" | "5m" | "15m" | "1h" | "1d" = "1h",
-    resolution?: number
-  ): Promise<ResourceUsageHistory> {
-    const params = new URLSearchParams({ timeRange });
-    if (resolution) params.set("resolution", resolution.toString());
-
-    return get<ResourceUsageHistory>(`/api/monitoring/metrics/history?${params}`, {
-      showLoading: false,
-      showError: false,
-    });
-  },
+  async getSystemMetrics(): Promise<SystemMetrics> {
+    return get<SystemMetrics>(`${this.baseUrl}/system`);
+  }
 
   /**
-   * Get recent activity events
+   * Get container metrics with query options
    */
-  async getActivityEvents(
-    limit = 50,
-    types?: string[],
-    severity?: string[]
-  ): Promise<ActivityEvent[]> {
-    const params = new URLSearchParams({ limit: limit.toString() });
+  async getContainerMetrics(
+    containerId: string,
+    timeRange?: { start: Date; end: Date },
+    interval?: string
+  ): Promise<ResourceMetrics[]> {
+    const params = new URLSearchParams();
 
-    if (types?.length) {
-      types.forEach(type => params.append("type", type));
-    }
-    if (severity?.length) {
-      severity.forEach(sev => params.append("severity", sev));
+    if (timeRange) {
+      params.append("start", timeRange.start.toISOString());
+      params.append("end", timeRange.end.toISOString());
     }
 
-    return get<ActivityEvent[]>(`/api/monitoring/activity?${params}`, {
-      showLoading: false,
-      showError: false,
-    });
-  },
+    if (interval) {
+      params.append("interval", interval);
+    }
+
+    return get<ResourceMetrics[]>(
+      `${this.baseUrl}/containers/${containerId}/metrics?${params.toString()}`
+    );
+  }
 
   /**
-   * Get active system alerts
+   * Get historical statistics for multiple containers
    */
-  async getActiveAlerts(): Promise<SystemAlert[]> {
-    return get<SystemAlert[]>("/api/monitoring/alerts", {
-      showLoading: false,
-      showError: false,
-    });
-  },
+  async getMultiContainerStats(
+    containerIds: string[],
+    period: string = "1h",
+    interval: string = "5m"
+  ): Promise<Record<string, ContainerStats[]>> {
+    return post<Record<string, ContainerStats[]>>(
+      `${this.baseUrl}/containers/stats/bulk`,
+      {
+        containerIds,
+        period,
+        interval
+      }
+    );
+  }
 
   /**
-   * Acknowledge an alert
+   * Get aggregated metrics across containers
    */
-  async acknowledgeAlert(alertId: string): Promise<void> {
-    return get<void>(`/api/monitoring/alerts/${alertId}/acknowledge`, {
-      showLoading: false,
-      showSuccess: true,
-    });
-  },
-
-  /**
-   * Resolve an alert
-   */
-  async resolveAlert(alertId: string, resolution?: string): Promise<void> {
-    const requestData = resolution ? { resolution } : {};
-    return get<void>(`/api/monitoring/alerts/${alertId}/resolve`, {
-      data: requestData,
-      showLoading: false,
-      showSuccess: true,
-    });
-  },
-
-  /**
-   * Get performance metrics
-   */
-  async getPerformanceMetrics(): Promise<PerformanceMetrics> {
-    return get<PerformanceMetrics>("/api/monitoring/performance", {
-      showLoading: false,
-      showError: false,
-    });
-  },
-
-  /**
-   * Get system health check results
-   */
-  async getHealthCheck(): Promise<HealthCheckResult> {
-    return get<HealthCheckResult>("/api/monitoring/health", {
-      showLoading: false,
-      showError: false,
-    });
-  },
-
-  /**
-   * Get container-specific metrics
-   */
-  async getContainerMetrics(containerId: string): Promise<{
-    cpu: number;
-    memory: number;
-    network: {
-      in: number;
-      out: number;
-    };
-    disk: {
-      read: number;
-      write: number;
-    };
-    status: string;
-    uptime: number;
+  async getAggregatedMetrics(
+    containerIds: string[],
+    timeRange: { start: Date; end: Date }
+  ): Promise<{
+    cpu: { avg: number; max: number; min: number };
+    memory: { avg: number; max: number; min: number };
+    network: { rxTotal: number; txTotal: number };
+    disk: { readTotal: number; writeTotal: number };
   }> {
-    return get<{
-      cpu: number;
-      memory: number;
-      network: {
-        in: number;
-        out: number;
-      };
-      disk: {
-        read: number;
-        write: number;
-      };
-      status: string;
-      uptime: number;
-    }>(`/api/monitoring/containers/${containerId}/metrics`, {
-      showLoading: false,
-      showError: false,
+    return post<any>(`${this.baseUrl}/containers/aggregate`, {
+      containerIds,
+      timeRange
     });
-  },
+  }
 
   /**
-   * Get monitoring configuration
-   */
-  async getMonitoringConfig(): Promise<{
-    updateInterval: number;
-    alertThresholds: {
-      cpu: number;
-      memory: number;
-      disk: number;
-      network: number;
-    };
-    retentionPeriod: number;
-    enabledCollectors: string[];
-  }> {
-    return get<{
-      updateInterval: number;
-      alertThresholds: {
-        cpu: number;
-        memory: number;
-        disk: number;
-        network: number;
-      };
-      retentionPeriod: number;
-      enabledCollectors: string[];
-    }>("/api/monitoring/config", {
-      showLoading: false,
-      showError: false,
-    });
-  },
-
-  /**
-   * Update monitoring configuration
-   */
-  async updateMonitoringConfig(config: {
-    updateInterval?: number;
-    alertThresholds?: {
-      cpu?: number;
-      memory?: number;
-      disk?: number;
-      network?: number;
-    };
-    retentionPeriod?: number;
-    enabledCollectors?: string[];
-  }): Promise<void> {
-    return get<void>("/api/monitoring/config", {
-      data: config,
-      showLoading: true,
-      showSuccess: true,
-    });
-  },
-
-  /**
-   * Export monitoring data
+   * Export metrics data
    */
   async exportMetrics(
-    format: "csv" | "json" | "excel",
-    timeRange: "1h" | "1d" | "1w" | "1m" = "1d",
-    metrics?: string[]
+    containerId: string,
+    timeRange: { start: Date; end: Date },
+    format: 'csv' | 'json' = 'json'
   ): Promise<Blob> {
-    const params = new URLSearchParams({ format, timeRange });
+    const params = new URLSearchParams({
+      start: timeRange.start.toISOString(),
+      end: timeRange.end.toISOString(),
+      format
+    });
 
-    if (metrics?.length) {
-      metrics.forEach(metric => params.append("metric", metric));
+    const response = await fetch(`${this.baseUrl}/containers/${containerId}/export?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.statusText}`);
     }
 
-    const { request } = await import('@/utils/request');
-    const response = await request({
-      url: `/api/monitoring/export?${params}`,
-      method: "GET",
-      responseType: 'blob',
-    });
-
-    return response.data as Blob;
-  },
+    return response.blob();
+  }
 
   /**
-   * Test monitoring connectivity
+   * Get resource usage summary
    */
-  async testConnection(): Promise<{
-    status: "connected" | "disconnected" | "degraded";
-    latency: number;
-    lastUpdate: string;
-    errors?: string[];
+  async getResourceSummary(
+    timeRange: { start: Date; end: Date }
+  ): Promise<{
+    containers: Array<{
+      id: string;
+      name: string;
+      avgCpu: number;
+      maxCpu: number;
+      avgMemory: number;
+      maxMemory: number;
+      networkTraffic: number;
+      diskIO: number;
+    }>;
+    system: {
+      avgCpu: number;
+      avgMemory: number;
+      totalNetworkTraffic: number;
+      totalDiskIO: number;
+    };
   }> {
-    return get<{
-      status: "connected" | "disconnected" | "degraded";
-      latency: number;
-      lastUpdate: string;
-      errors?: string[];
-    }>("/api/monitoring/test", {
-      showLoading: false,
-      showError: false,
+    return post<any>(`${this.baseUrl}/analytics/summary`, { timeRange });
+  }
+
+  /**
+   * Get top resource consumers
+   */
+  async getTopConsumers(
+    metric: 'cpu' | 'memory' | 'network' | 'disk',
+    limit: number = 10,
+    timeRange?: { start: Date; end: Date }
+  ): Promise<Array<{
+    containerId: string;
+    containerName: string;
+    value: number;
+    percentage: number;
+  }>> {
+    const params = new URLSearchParams({
+      metric,
+      limit: limit.toString()
     });
-  },
-};
+
+    if (timeRange) {
+      params.append("start", timeRange.start.toISOString());
+      params.append("end", timeRange.end.toISOString());
+    }
+
+    return get<any>(`${this.baseUrl}/analytics/top-consumers?${params.toString()}`);
+  }
+}
+
+// Export singleton instance
+export const monitoringAPI = new MonitoringAPI();

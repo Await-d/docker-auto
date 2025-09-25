@@ -387,6 +387,169 @@ export class ContainerAPI {
   ): Promise<Container> {
     return post<Container>(`${this.baseUrl}/restore/${backupId}`, options);
   }
+
+  // Terminal Management
+
+  /**
+   * Create a new terminal session for container
+   */
+  async createTerminalSession(
+    id: string,
+    options: {
+      command?: string[];
+      workingDir?: string;
+      user?: string;
+      env?: Record<string, string>;
+      tty?: boolean;
+      cols?: number;
+      rows?: number;
+    } = {},
+  ): Promise<{
+    sessionId: string;
+    wsUrl: string;
+    initialSize: { cols: number; rows: number };
+  }> {
+    return post<{
+      sessionId: string;
+      wsUrl: string;
+      initialSize: { cols: number; rows: number };
+    }>(`${this.baseUrl}/${id}/terminal`, {
+      command: options.command || ['/bin/bash'],
+      workingDir: options.workingDir || '/',
+      user: options.user || 'root',
+      env: options.env || {},
+      tty: options.tty !== false,
+      cols: options.cols || 80,
+      rows: options.rows || 24,
+    });
+  }
+
+  /**
+   * Resize terminal session
+   */
+  async resizeTerminalSession(
+    id: string,
+    sessionId: string,
+    cols: number,
+    rows: number,
+  ): Promise<void> {
+    return post<void>(
+      `${this.baseUrl}/${id}/terminal/${sessionId}/resize`,
+      { cols, rows },
+    );
+  }
+
+  /**
+   * Get terminal session info
+   */
+  async getTerminalSession(
+    id: string,
+    sessionId: string,
+  ): Promise<{
+    sessionId: string;
+    containerId: string;
+    command: string[];
+    workingDir: string;
+    user: string;
+    tty: boolean;
+    size: { cols: number; rows: number };
+    createdAt: Date;
+    status: 'running' | 'exited';
+    exitCode?: number;
+  }> {
+    return get<any>(`${this.baseUrl}/${id}/terminal/${sessionId}`);
+  }
+
+  /**
+   * List active terminal sessions
+   */
+  async listTerminalSessions(id: string): Promise<Array<{
+    sessionId: string;
+    command: string[];
+    user: string;
+    createdAt: Date;
+    status: 'running' | 'exited';
+  }>> {
+    return get<any[]>(`${this.baseUrl}/${id}/terminal`);
+  }
+
+  /**
+   * Close terminal session
+   */
+  async closeTerminalSession(id: string, sessionId: string): Promise<void> {
+    return post<void>(`${this.baseUrl}/${id}/terminal/${sessionId}/close`, {});
+  }
+
+  /**
+   * Send input to terminal session
+   */
+  async sendTerminalInput(
+    id: string,
+    sessionId: string,
+    input: string,
+  ): Promise<void> {
+    return post<void>(
+      `${this.baseUrl}/${id}/terminal/${sessionId}/input`,
+      { input },
+    );
+  }
+
+  // Real-time Monitoring
+
+  /**
+   * Start real-time monitoring for container
+   */
+  async startRealTimeMonitoring(
+    id: string,
+    options: {
+      interval?: number;
+      metrics?: ('cpu' | 'memory' | 'network' | 'disk')[];
+    } = {},
+  ): Promise<{ monitoringId: string; wsUrl: string }> {
+    return post<{ monitoringId: string; wsUrl: string }>(
+      `${this.baseUrl}/${id}/monitoring/start`,
+      {
+        interval: options.interval || 2000,
+        metrics: options.metrics || ['cpu', 'memory', 'network', 'disk'],
+      },
+    );
+  }
+
+  /**
+   * Stop real-time monitoring for container
+   */
+  async stopRealTimeMonitoring(id: string, monitoringId: string): Promise<void> {
+    return post<void>(
+      `${this.baseUrl}/${id}/monitoring/${monitoringId}/stop`,
+      {},
+    );
+  }
+
+  /**
+   * Get container process list
+   */
+  async getContainerProcesses(id: string): Promise<Array<{
+    pid: number;
+    ppid: number;
+    user: string;
+    cmd: string;
+    cpu: number;
+    memory: number;
+    startTime: string;
+  }>> {
+    return get<any[]>(`${this.baseUrl}/${id}/processes`);
+  }
+
+  /**
+   * Kill process in container
+   */
+  async killContainerProcess(
+    id: string,
+    pid: number,
+    signal: string = 'TERM',
+  ): Promise<void> {
+    return post<void>(`${this.baseUrl}/${id}/processes/${pid}/kill`, { signal });
+  }
 }
 
 // Export singleton instance

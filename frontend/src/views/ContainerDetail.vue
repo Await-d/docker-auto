@@ -559,14 +559,12 @@ v-if="hasAvailableUpdate" class="info-section"
                 :closable="false"
               />
             </div>
-            <div v-else class="terminal-container">
-              <!-- Terminal component would go here -->
-              <div class="terminal-placeholder">
-                <p>终端功能将在此处实现。</p>
-                <p>
-                  这将提供基于Web的容器终端访问。
-                </p>
-              </div>
+            <div v-else class="terminal-wrapper">
+              <WebTerminal
+                :container-id="currentContainer.id"
+                :container-name="currentContainer.name"
+                :auto-connect="activeTab === 'terminal'"
+              />
             </div>
           </el-tab-pane>
 
@@ -648,17 +646,20 @@ import {
 } from "@element-plus/icons-vue";
 
 import { useContainerStore } from "@/store/containers";
+import { useMonitoringStore } from "@/store/monitoring";
 import { useAuthStore } from "@/store/auth";
 import ResourceMonitor from "@/components/container/ResourceMonitor.vue";
 import LogViewer from "@/components/container/LogViewer.vue";
 import UpdateManager from "@/components/container/UpdateManager.vue";
 import ContainerForm from "@/components/container/ContainerForm.vue";
+import WebTerminal from "@/components/WebTerminal.vue";
 
 import type { ContainerFormData } from "@/types/container";
 
 const route = useRoute();
 const router = useRouter();
 const containerStore = useContainerStore();
+const monitoringStore = useMonitoringStore();
 const authStore = useAuthStore();
 
 // Store refs
@@ -837,8 +838,18 @@ function handleTabChange(tabName: string | number) {
   // Load data specific to the tab
   const tabNameString = tabName.toString();
   if (tabNameString === "monitoring" && currentContainer.value) {
-    containerStore.fetchStats(currentContainer.value.id);
-    containerStore.fetchHistoricalStats(currentContainer.value.id);
+    // Start real-time monitoring for this container
+    monitoringStore.startMonitoring(currentContainer.value.id, {
+      enableRealTime: true,
+      enableHistorical: true,
+      historicalPeriod: "1h",
+      historicalInterval: "1m",
+    });
+  } else if (tabNameString !== "monitoring" && currentContainer.value) {
+    // Stop monitoring when leaving monitoring tab to save resources
+    if (monitoringStore.isMonitored(currentContainer.value.id)) {
+      monitoringStore.stopMonitoring(currentContainer.value.id);
+    }
   }
 }
 
@@ -884,13 +895,31 @@ watch(
 // Lifecycle
 onMounted(() => {
   if (containerId.value) {
+    // Initialize WebSocket connection
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+    const token = localStorage.getItem('token') || '';
+
+    if (token) {
+      containerStore.initializeWebSocket(baseUrl, token);
+      monitoringStore.initializeWebSocket(baseUrl, token);
+    }
+
     containerStore.fetchContainer(containerId.value);
     containerStore.checkUpdates(containerId.value);
+
+    // Check if we should open a specific tab from URL
+    const tabFromQuery = route.query.tab as string;
+    if (tabFromQuery && ['overview', 'configuration', 'logs', 'monitoring', 'terminal', 'events'].includes(tabFromQuery)) {
+      activeTab.value = tabFromQuery;
+    }
   }
 });
 
 onUnmounted(() => {
-  // Cleanup if needed
+  // Stop monitoring if active
+  if (currentContainer.value && monitoringStore.isMonitored(currentContainer.value.id)) {
+    monitoringStore.stopMonitoring(currentContainer.value.id);
+  }
 });
 </script>
 
@@ -1204,11 +1233,11 @@ onUnmounted(() => {
   padding: 24px;
 }
 
-.terminal-container {
-  height: 500px;
-  background: #000;
-  color: #fff;
-  font-family: "Courier New", monospace;
+.terminal-wrapper {
+  height: 600px;
+  background: #1e1e1e;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .terminal-placeholder {

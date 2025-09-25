@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/docker-container-lifecycle-management/design.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-09-25T07:04:51.442Z",
+      "trigger": "initial",
+      "approvalId": "approval_1758783891434_7u7pchz4y",
+      "approvalTitle": "Docker容器生命周期管理 - 技术设计"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-09-25T07:05:13.617Z",
+      "trigger": "approved",
+      "approvalId": "approval_1758783891434_7u7pchz4y",
+      "approvalTitle": "Docker容器生命周期管理 - 技术设计"
+    }
+  ]
+}

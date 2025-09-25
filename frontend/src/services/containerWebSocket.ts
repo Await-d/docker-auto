@@ -406,21 +406,6 @@ export class ContainerWebSocketService {
     };
   }
 
-  /**
-   * 断开连接并清理
-   */
-  disconnect() {
-    this.unsubscribeAll();
-
-    if (this.client) {
-      this.client.disconnect();
-      this.client = null;
-    }
-
-    this.state.value = "disconnected";
-    this.isInitialized = false;
-    console.log("容器WebSocket服务已断开连接");
-  }
 
   /**
    * 检查是否已连接

@@ -1,0 +1,140 @@
+# Docker Auto Update System v2.4.0 - Production Optimized
+# Multi-stage build for minimal image size and security
+
+# Stage 1: Frontend build stage
+FROM node:20-alpine AS frontend-builder
+
+# Set working directory
+WORKDIR /app/frontend
+
+# Install security updates and necessary packages
+RUN apk add --no-cache --update \
+    ca-certificates \
+    tzdata \
+    git
+
+# Copy package files for better caching
+COPY frontend/package*.json ./
+
+# Install dependencies with production optimizations
+RUN npm ci --frozen-lockfile --production=false && \
+    npm cache clean --force
+
+# Copy frontend source
+COPY frontend/ ./
+
+# Build production frontend with optimizations
+RUN npm run build:prod && \
+    # Verify build succeeded
+    ls -la dist/ && \
+    # Clean up node_modules to reduce layer size
+    rm -rf node_modules
+
+# Stage 2: Go backend build stage
+FROM golang:1.23-alpine AS backend-builder
+
+# Install build dependencies
+RUN apk add --no-cache --update \
+    git \
+    ca-certificates \
+    tzdata \
+    gcc \
+    musl-dev \
+    sqlite-dev
+
+# Set working directory
+WORKDIR /app/backend
+
+# Copy go module files for better caching
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download && go mod verify
+
+# Copy backend source
+COPY backend/ ./
+
+# Copy built frontend assets for embedding
+COPY --from=frontend-builder /app/frontend/dist ./cmd/server/frontend/dist
+
+# Verify frontend files are copied correctly
+RUN ls -la ./cmd/server/frontend/dist/ && \
+    wc -l ./cmd/server/frontend/dist/index.html
+
+# Build optimized Go binary with all optimizations
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build \
+    -tags "embed production" \
+    -a -installsuffix cgo \
+    -ldflags="-w -s -extldflags '-static' \
+              -X main.version=2.4.0-production \
+              -X main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+              -X main.gitCommit=$(echo 'production-build') \
+              -X main.environment=production" \
+    -trimpath \
+    -o docker-auto-server ./cmd/server && \
+    # Verify binary
+    file docker-auto-server && \
+    ls -lh docker-auto-server
+
+# Stage 3: Final production image (minimal)
+FROM alpine:3.18
+
+# Install only essential runtime dependencies
+RUN apk add --no-cache --update \
+    ca-certificates \
+    tzdata \
+    curl \
+    sqlite && \
+    # Clean package cache
+    rm -rf /var/cache/apk/*
+
+# Set timezone to UTC for production
+ENV TZ=UTC
+
+# Create non-root user with specific UID/GID for security
+RUN addgroup -g 1001 -S dockerauto && \
+    adduser -u 1001 -S dockerauto -G dockerauto -s /bin/sh
+
+# Create application directories with proper permissions
+RUN mkdir -p /app/logs /app/data /app/config /app/backups && \
+    chown -R dockerauto:dockerauto /app
+
+# Copy binary from build stage
+COPY --from=backend-builder /app/backend/docker-auto-server /app/docker-auto-server
+
+# Set binary permissions and ownership
+RUN chmod +x /app/docker-auto-server && \
+    chown dockerauto:dockerauto /app/docker-auto-server
+
+# Switch to non-root user
+USER dockerauto
+WORKDIR /app
+
+# Expose application port
+EXPOSE 8080
+
+# Health check with more robust checking
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8080/api/health || exit 1
+
+# Production environment defaults
+ENV APP_PORT=8080 \
+    APP_ENV=production \
+    LOG_LEVEL=info \
+    LOG_FORMAT=json \
+    GIN_MODE=release \
+    DB_TYPE=sqlite \
+    DB_PATH=/app/data/docker-auto.db \
+    LOG_PATH=/app/logs \
+    ENABLE_PPROF=false \
+    RATE_LIMIT_ENABLED=true \
+    CORS_ORIGINS="*" \
+    TZ=UTC
+
+# Production startup command
+CMD ["./docker-auto-server"]
+
+# Labels for better maintainability
+LABEL maintainer="Docker Auto Team"
+LABEL version="2.4.0"
+LABEL description="Docker Auto Update System - Production Build"
+LABEL architecture="amd64"
+LABEL build-date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"

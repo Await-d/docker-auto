@@ -12,13 +12,19 @@ type EventType string
 
 const (
 	// Container lifecycle events
-	EventContainerStarted   EventType = "container.started"
-	EventContainerStopped   EventType = "container.stopped"
-	EventContainerUpdated   EventType = "container.updated"
-	EventContainerError     EventType = "container.error"
-	EventContainerCreated   EventType = "container.created"
-	EventContainerDeleted   EventType = "container.deleted"
-	EventContainerRestarted EventType = "container.restarted"
+	EventContainerStarted         EventType = "container.started"
+	EventContainerStopped         EventType = "container.stopped"
+	EventContainerUpdated         EventType = "container.updated"
+	EventContainerError           EventType = "container.error"
+	EventContainerCreated         EventType = "container.created"
+	EventContainerDeleted         EventType = "container.deleted"
+	EventContainerRestarted       EventType = "container.restarted"
+
+	// Container monitoring events
+	EventContainerMetricsUpdated  EventType = "container.metrics_updated"
+	EventContainerResourceAlert   EventType = "container.resource_alert"
+	EventContainerHealthAlert     EventType = "container.health_alert"
+	EventContainerLogUpdated      EventType = "container.log_updated"
 
 	// Image update events
 	EventImageUpdateAvailable EventType = "image.update_available"
@@ -29,11 +35,12 @@ const (
 	EventImageDeleted         EventType = "image.deleted"
 
 	// System events
-	EventSystemHealthChanged EventType = "system.health_changed"
-	EventSystemResourceAlert EventType = "system.resource_alert"
-	EventSystemStarted       EventType = "system.started"
-	EventSystemStopped       EventType = "system.stopped"
-	EventSystemError         EventType = "system.error"
+	EventSystemHealthChanged  EventType = "system.health_changed"
+	EventSystemResourceAlert  EventType = "system.resource_alert"
+	EventSystemStarted        EventType = "system.started"
+	EventSystemStopped        EventType = "system.stopped"
+	EventSystemError          EventType = "system.error"
+	EventSystemMetricsUpdated EventType = "system.metrics_updated"
 
 	// User events
 	EventUserLoggedIn        EventType = "user.logged_in"

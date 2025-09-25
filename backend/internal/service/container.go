@@ -26,6 +26,8 @@ type ContainerService struct {
 	dockerClient      *docker.DockerClient
 	dockerManager     *docker.ClientManager
 	updateEngine      *docker.UpdateEngine
+	monitor           *docker.ContainerMonitor
+	terminalManager   *docker.TerminalManager
 	cache             *CacheService
 	config            *config.Config
 	userService       *UserService
@@ -47,6 +49,79 @@ func NewContainerService(
 		updateEngine = docker.NewUpdateEngine(dockerManager, logrus.StandardLogger())
 	}
 
+	// Initialize monitoring with production-grade configuration
+	var monitor *docker.ContainerMonitor
+	if dockerClient != nil {
+		monitorConfig := &docker.MonitoringConfig{
+			UpdateInterval:   time.Duration(config.Monitoring.UpdateInterval) * time.Second,
+			CacheTTL:         time.Duration(config.Monitoring.CacheTTL) * time.Second,
+			MaxCacheSize:     config.Monitoring.MaxCacheSize,
+			MaxHistorySize:   config.Monitoring.MaxHistorySize,
+			EnableMetrics:    config.Monitoring.EnableMetrics,
+			BufferSize:       config.Monitoring.BufferSize,
+		}
+
+		// Use defaults if config values are not set
+		if monitorConfig.UpdateInterval <= 0 {
+			monitorConfig.UpdateInterval = 2 * time.Second
+		}
+		if monitorConfig.CacheTTL <= 0 {
+			monitorConfig.CacheTTL = 30 * time.Second
+		}
+		if monitorConfig.MaxCacheSize <= 0 {
+			monitorConfig.MaxCacheSize = 1000
+		}
+		if monitorConfig.MaxHistorySize <= 0 {
+			monitorConfig.MaxHistorySize = 100
+		}
+		if monitorConfig.BufferSize <= 0 {
+			monitorConfig.BufferSize = 100
+		}
+
+		monitor = docker.NewContainerMonitor(dockerClient, monitorConfig)
+	}
+
+	// Initialize terminal manager with security-hardened configuration
+	var terminalManager *docker.TerminalManager
+	if dockerClient != nil {
+		terminalConfig := &docker.TerminalConfig{
+			SessionTimeout:    time.Duration(config.Terminal.SessionTimeout) * time.Minute,
+			IdleTimeout:       time.Duration(config.Terminal.IdleTimeout) * time.Minute,
+			MaxSessions:       config.Terminal.MaxSessions,
+			BufferSize:        config.Terminal.BufferSize,
+			PingInterval:      time.Duration(config.Terminal.PingInterval) * time.Second,
+			WriteTimeout:      time.Duration(config.Terminal.WriteTimeout) * time.Second,
+			ReadTimeout:       time.Duration(config.Terminal.ReadTimeout) * time.Second,
+			EnableCompression: config.Terminal.EnableCompression,
+			AllowPrivileged:   config.Terminal.AllowPrivileged,
+		}
+
+		// Use secure defaults if config values are not set
+		if terminalConfig.SessionTimeout <= 0 {
+			terminalConfig.SessionTimeout = 30 * time.Minute
+		}
+		if terminalConfig.IdleTimeout <= 0 {
+			terminalConfig.IdleTimeout = 10 * time.Minute
+		}
+		if terminalConfig.MaxSessions <= 0 {
+			terminalConfig.MaxSessions = 100
+		}
+		if terminalConfig.BufferSize <= 0 {
+			terminalConfig.BufferSize = 8192
+		}
+		if terminalConfig.PingInterval <= 0 {
+			terminalConfig.PingInterval = 30 * time.Second
+		}
+		if terminalConfig.WriteTimeout <= 0 {
+			terminalConfig.WriteTimeout = 10 * time.Second
+		}
+		if terminalConfig.ReadTimeout <= 0 {
+			terminalConfig.ReadTimeout = 10 * time.Second
+		}
+
+		terminalManager = docker.NewTerminalManager(dockerClient, terminalConfig)
+	}
+
 	return &ContainerService{
 		containerRepo:     containerRepo,
 		updateHistoryRepo: updateHistoryRepo,
@@ -54,6 +129,8 @@ func NewContainerService(
 		dockerClient:      dockerClient,
 		dockerManager:     dockerManager,
 		updateEngine:      updateEngine,
+		monitor:           monitor,
+		terminalManager:   terminalManager,
 		cache:             cache,
 		config:            config,
 		userService:       userService,
@@ -471,8 +548,20 @@ func (s *ContainerService) StartContainer(ctx context.Context, userID int64, con
 		logrus.WithError(err).WithField("container_id", containerID).Warn("Failed to update container status")
 	}
 
+	// Start monitoring for the running container
+	if s.monitor != nil {
+		if err := s.monitor.StartMonitoring(ctx, container.ContainerID); err != nil {
+			logrus.WithError(err).WithField("container_id", container.ContainerID).Warn("Failed to start container monitoring")
+		} else {
+			logrus.WithField("container_id", container.ContainerID).Debug("Started monitoring for container")
+		}
+	}
+
 	// Log activity
-	s.logContainerActivity(userID, containerID, "container_started", "Container started successfully", nil)
+	s.logContainerActivity(userID, containerID, "container_started", "Container started successfully", map[string]interface{}{
+		"docker_container_id": container.ContainerID,
+		"monitoring_enabled":  s.monitor != nil,
+	})
 
 	// Invalidate cache
 	s.cache.Delete(fmt.Sprintf("container:status:%d", containerID))
@@ -495,6 +584,13 @@ func (s *ContainerService) StopContainer(ctx context.Context, userID int64, cont
 		return fmt.Errorf("container has no Docker instance")
 	}
 
+	// Stop monitoring before stopping container
+	if s.monitor != nil && s.monitor.IsMonitoring(container.ContainerID) {
+		if err := s.monitor.StopMonitoring(container.ContainerID); err != nil {
+			logrus.WithError(err).WithField("container_id", container.ContainerID).Warn("Failed to stop container monitoring")
+		}
+	}
+
 	// Stop Docker container
 	timeout := 30 // seconds
 	if err := s.dockerClient.StopContainer(ctx, container.ContainerID, &timeout); err != nil {
@@ -507,7 +603,10 @@ func (s *ContainerService) StopContainer(ctx context.Context, userID int64, cont
 	}
 
 	// Log activity
-	s.logContainerActivity(userID, containerID, "container_stopped", "Container stopped successfully", nil)
+	s.logContainerActivity(userID, containerID, "container_stopped", "Container stopped successfully", map[string]interface{}{
+		"docker_container_id": container.ContainerID,
+		"monitoring_stopped":  s.monitor != nil,
+	})
 
 	// Invalidate cache
 	s.cache.Delete(fmt.Sprintf("container:status:%d", containerID))

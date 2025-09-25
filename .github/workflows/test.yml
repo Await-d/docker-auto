@@ -1,0 +1,628 @@
+name: Comprehensive Test Suite
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+  workflow_dispatch:
+    inputs:
+      run_performance_tests:
+        description: 'Run performance benchmarks'
+        required: false
+        default: false
+        type: boolean
+      run_e2e_tests:
+        description: 'Run E2E tests'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  GO_VERSION: '1.23'
+  NODE_VERSION: '18'
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  # Static analysis and linting
+  lint-and-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install Go dependencies
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Install Node.js dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Lint Go code
+        working-directory: ./backend
+        run: |
+          go vet ./...
+          go fmt ./...
+          # Check if go fmt made any changes
+          if [ -n "$(git diff --name-only)" ]; then
+            echo "Go code is not properly formatted"
+            git diff
+            exit 1
+          fi
+
+      - name: Lint frontend code
+        working-directory: ./frontend
+        run: |
+          npm run lint:check
+          npm run format:check
+
+      - name: Type check frontend
+        working-directory: ./frontend
+        run: npm run type-check
+
+  # Unit tests
+  unit-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: docker_auto_test
+          POSTGRES_USER: testuser
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Go dependencies
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Install Node.js dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run Go unit tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgres://testuser:testpass@localhost:5432/docker_auto_test?sslmode=disable
+          REDIS_URL: redis://localhost:6379
+        run: |
+          go test -v -race -coverprofile=coverage.out ./internal/... ./pkg/...
+          go tool cover -html=coverage.out -o coverage.html
+
+      - name: Run frontend unit tests
+        working-directory: ./frontend
+        run: |
+          npm run test -- --coverage --reporter=verbose
+
+      - name: Upload Go coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./backend/coverage.out
+          flags: backend
+          name: backend-coverage
+
+      - name: Upload frontend coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./frontend/coverage
+          flags: frontend
+          name: frontend-coverage
+
+  # Integration tests
+  integration-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: docker_auto_test
+          POSTGRES_USER: testuser
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Go dependencies
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Install Node.js dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Start Docker daemon
+        run: |
+          sudo systemctl start docker
+          sudo chmod 666 /var/run/docker.sock
+
+      - name: Pull required Docker images
+        run: |
+          docker pull postgres:15-alpine
+          docker pull redis:7-alpine
+          docker pull nginx:alpine
+          docker pull alpine:latest
+
+      - name: Run backend integration tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgres://testuser:testpass@localhost:5432/docker_auto_test?sslmode=disable
+          REDIS_URL: redis://localhost:6379
+          DOCKER_HOST: unix:///var/run/docker.sock
+        run: |
+          go test -v -tags=integration ./tests/integration/...
+
+      - name: Run frontend integration tests
+        working-directory: ./frontend
+        run: |
+          npm run test:integration
+
+      - name: Cleanup Docker resources
+        if: always()
+        run: |
+          docker system prune -af --volumes
+
+  # Performance benchmarks
+  performance-tests:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_performance_tests == 'true' || github.ref == 'refs/heads/master'
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: docker_auto_test
+          POSTGRES_USER: testuser
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install Go dependencies
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Start Docker daemon
+        run: |
+          sudo systemctl start docker
+          sudo chmod 666 /var/run/docker.sock
+
+      - name: Pull required Docker images
+        run: |
+          docker pull postgres:15-alpine
+          docker pull redis:7-alpine
+          docker pull alpine:latest
+          docker pull busybox:latest
+
+      - name: Run performance benchmarks
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgres://testuser:testpass@localhost:5432/docker_auto_test?sslmode=disable
+          REDIS_URL: redis://localhost:6379
+          DOCKER_HOST: unix:///var/run/docker.sock
+        run: |
+          go test -v -bench=. -benchmem -run=^# ./tests/integration/ > benchmark_results.txt
+          cat benchmark_results.txt
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: ./backend/benchmark_results.txt
+
+      - name: Cleanup Docker resources
+        if: always()
+        run: |
+          docker system prune -af --volumes
+
+  # Security scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run Go security scan
+        uses: securecodewarrior/github-action-add-sarif@v1
+        with:
+          sarif-file: 'gosec-results.sarif'
+        continue-on-error: true
+
+      - name: Run Gosec Security Scanner
+        uses: securecodewarrior/github-action-gosec@master
+        with:
+          args: '-fmt sarif -out gosec-results.sarif ./...'
+        working-directory: ./backend
+
+      - name: Run npm audit
+        working-directory: ./frontend
+        run: |
+          npm audit --audit-level high
+        continue-on-error: true
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Build and test Docker images
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, unit-tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: docker-auto:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          # Start the application in Docker
+          docker run -d --name docker-auto-test \
+            -p 8080:8080 \
+            -e DB_TYPE=sqlite \
+            -e DB_PATH=/app/data/test.db \
+            docker-auto:test
+
+          # Wait for startup
+          sleep 10
+
+          # Basic health check
+          curl -f http://localhost:8080/health || exit 1
+
+          # Cleanup
+          docker stop docker-auto-test
+          docker rm docker-auto-test
+
+  # End-to-End tests
+  e2e-tests:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_e2e_tests == 'true' || github.event.inputs.run_e2e_tests == null
+    needs: [integration-tests]
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: docker_auto_test
+          POSTGRES_USER: testuser
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd backend && go mod download
+          cd ../frontend && npm ci
+
+      - name: Build application
+        run: |
+          # Build backend
+          cd backend
+          go build -o ../docker-auto-server ./cmd/server
+          cd ..
+
+          # Build frontend
+          cd frontend
+          npm run build
+          cd ..
+
+      - name: Start Docker daemon
+        run: |
+          sudo systemctl start docker
+          sudo chmod 666 /var/run/docker.sock
+
+      - name: Start application
+        env:
+          DB_TYPE: postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: testuser
+          DB_PASSWORD: testpass
+          DB_NAME: docker_auto_test
+          DOCKER_HOST: unix:///var/run/docker.sock
+          PORT: 8080
+        run: |
+          ./docker-auto-server &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+
+          # Wait for server to start
+          timeout=30
+          while [ $timeout -gt 0 ]; do
+            if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+              echo "Server started successfully"
+              break
+            fi
+            sleep 1
+            timeout=$((timeout - 1))
+          done
+
+          if [ $timeout -eq 0 ]; then
+            echo "Server failed to start"
+            exit 1
+          fi
+
+      - name: Install Playwright
+        working-directory: ./frontend
+        run: |
+          npm install -D @playwright/test
+          npx playwright install
+
+      - name: Run E2E tests
+        working-directory: ./frontend
+        env:
+          BASE_URL: http://localhost:8080
+        run: |
+          npx playwright test
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            kill $SERVER_PID
+          fi
+
+      - name: Cleanup Docker resources
+        if: always()
+        run: |
+          docker system prune -af --volumes
+
+  # Test result aggregation
+  test-summary:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, docker-build, e2e-tests]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Generate test summary
+        run: |
+          echo "# Test Results Summary" > test_summary.md
+          echo "" >> test_summary.md
+          echo "## Job Results" >> test_summary.md
+          echo "- Unit Tests: ${{ needs.unit-tests.result }}" >> test_summary.md
+          echo "- Integration Tests: ${{ needs.integration-tests.result }}" >> test_summary.md
+          echo "- Docker Build: ${{ needs.docker-build.result }}" >> test_summary.md
+          echo "- E2E Tests: ${{ needs.e2e-tests.result }}" >> test_summary.md
+          echo "" >> test_summary.md
+
+          if [ "${{ needs.unit-tests.result }}" == "success" ] && \
+             [ "${{ needs.integration-tests.result }}" == "success" ] && \
+             [ "${{ needs.docker-build.result }}" == "success" ] && \
+             [ "${{ needs.e2e-tests.result }}" == "success" ]; then
+            echo "## ✅ All tests passed!" >> test_summary.md
+            echo "The Docker container lifecycle management system is ready for deployment." >> test_summary.md
+          else
+            echo "## ❌ Some tests failed" >> test_summary.md
+            echo "Please review the failing tests before merging." >> test_summary.md
+          fi
+
+      - name: Upload test summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-summary
+          path: test_summary.md
+
+      - name: Comment PR with test results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('test_summary.md', 'utf8');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+  # Deployment readiness check
+  deployment-ready:
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, unit-tests, integration-tests, security-scan, docker-build, e2e-tests]
+    if: always()
+    steps:
+      - name: Check deployment readiness
+        run: |
+          echo "Checking deployment readiness..."
+
+          # Check if all required jobs passed
+          if [ "${{ needs.lint-and-format.result }}" == "success" ] && \
+             [ "${{ needs.unit-tests.result }}" == "success" ] && \
+             [ "${{ needs.integration-tests.result }}" == "success" ] && \
+             [ "${{ needs.docker-build.result }}" == "success" ] && \
+             [ "${{ needs.e2e-tests.result }}" == "success" ]; then
+            echo "✅ All critical tests passed - deployment ready"
+            echo "DEPLOYMENT_READY=true" >> $GITHUB_ENV
+          else
+            echo "❌ Critical tests failed - deployment not ready"
+            echo "DEPLOYMENT_READY=false" >> $GITHUB_ENV
+            exit 1
+          fi
+
+      - name: Set deployment status
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const status = process.env.DEPLOYMENT_READY === 'true' ? 'success' : 'failure';
+            const description = process.env.DEPLOYMENT_READY === 'true' ?
+              'All tests passed - ready for deployment' :
+              'Tests failed - not ready for deployment';
+
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: status,
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              description: description,
+              context: 'deployment-ready'
+            });

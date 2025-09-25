@@ -48,6 +48,9 @@ type Config struct {
 
 	// Scheduler settings
 	Scheduler SchedulerConfig `mapstructure:",squash"`
+
+	// Terminal settings
+	Terminal TerminalConfig `mapstructure:",squash"`
 }
 
 type DatabaseConfig struct {
@@ -217,6 +220,14 @@ type MonitoringConfig struct {
 	PrometheusPath          string `mapstructure:"PROMETHEUS_PATH"`
 	HealthCheckInterval     int    `mapstructure:"HEALTH_CHECK_INTERVAL"`
 	HealthCheckTimeout      int    `mapstructure:"HEALTH_CHECK_TIMEOUT"`
+
+	// Container monitoring settings
+	UpdateInterval   int  `mapstructure:"MONITORING_UPDATE_INTERVAL"`   // seconds
+	CacheTTL         int  `mapstructure:"MONITORING_CACHE_TTL"`         // seconds
+	MaxCacheSize     int  `mapstructure:"MONITORING_MAX_CACHE_SIZE"`
+	MaxHistorySize   int  `mapstructure:"MONITORING_MAX_HISTORY_SIZE"`
+	EnableMetrics    bool `mapstructure:"MONITORING_ENABLE_METRICS"`
+	BufferSize       int  `mapstructure:"MONITORING_BUFFER_SIZE"`
 }
 
 // Load reads configuration from environment variables and config files
@@ -362,6 +373,25 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("PROMETHEUS_PATH", "/metrics")
 	v.SetDefault("HEALTH_CHECK_INTERVAL", 30)
 	v.SetDefault("HEALTH_CHECK_TIMEOUT", 10)
+
+	// Container monitoring defaults
+	v.SetDefault("MONITORING_UPDATE_INTERVAL", 2)     // 2 seconds
+	v.SetDefault("MONITORING_CACHE_TTL", 30)          // 30 seconds
+	v.SetDefault("MONITORING_MAX_CACHE_SIZE", 1000)   // 1000 entries
+	v.SetDefault("MONITORING_MAX_HISTORY_SIZE", 100)  // 100 entries
+	v.SetDefault("MONITORING_ENABLE_METRICS", true)   // enable metrics
+	v.SetDefault("MONITORING_BUFFER_SIZE", 100)       // 100 buffer size
+
+	// Terminal defaults
+	v.SetDefault("TERMINAL_SESSION_TIMEOUT", 30)      // 30 minutes
+	v.SetDefault("TERMINAL_IDLE_TIMEOUT", 10)         // 10 minutes
+	v.SetDefault("TERMINAL_MAX_SESSIONS", 100)        // 100 sessions
+	v.SetDefault("TERMINAL_BUFFER_SIZE", 8192)        // 8KB buffer
+	v.SetDefault("TERMINAL_PING_INTERVAL", 30)        // 30 seconds
+	v.SetDefault("TERMINAL_WRITE_TIMEOUT", 10)        // 10 seconds
+	v.SetDefault("TERMINAL_READ_TIMEOUT", 10)         // 10 seconds
+	v.SetDefault("TERMINAL_ENABLE_COMPRESSION", true) // enable compression
+	v.SetDefault("TERMINAL_ALLOW_PRIVILEGED", false)  // security: disable privileged
 }
 
 func validate(config *Config) error {
@@ -458,4 +488,17 @@ type SchedulerConfig struct {
 	LogLevel           string        `mapstructure:"SCHEDULER_LOG_LEVEL"`
 	EnableMetrics      bool          `mapstructure:"SCHEDULER_ENABLE_METRICS"`
 	TimeZone           string        `mapstructure:"SCHEDULER_TIMEZONE"`
+}
+
+// TerminalConfig holds terminal configuration
+type TerminalConfig struct {
+	SessionTimeout    int  `mapstructure:"TERMINAL_SESSION_TIMEOUT"`    // minutes
+	IdleTimeout       int  `mapstructure:"TERMINAL_IDLE_TIMEOUT"`       // minutes
+	MaxSessions       int  `mapstructure:"TERMINAL_MAX_SESSIONS"`
+	BufferSize        int  `mapstructure:"TERMINAL_BUFFER_SIZE"`
+	PingInterval      int  `mapstructure:"TERMINAL_PING_INTERVAL"`      // seconds
+	WriteTimeout      int  `mapstructure:"TERMINAL_WRITE_TIMEOUT"`      // seconds
+	ReadTimeout       int  `mapstructure:"TERMINAL_READ_TIMEOUT"`       // seconds
+	EnableCompression bool `mapstructure:"TERMINAL_ENABLE_COMPRESSION"`
+	AllowPrivileged   bool `mapstructure:"TERMINAL_ALLOW_PRIVILEGED"`
 }

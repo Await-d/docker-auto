@@ -573,65 +573,56 @@ func (s *ContainerService) createDockerContainer(ctx context.Context, container 
 	return containerID.ID, nil
 }
 
-// getContainerMetrics retrieves container performance metrics
+// getContainerMetrics retrieves container performance metrics using the monitoring system
 func (s *ContainerService) getContainerMetrics(ctx context.Context, dockerContainerID string) (*ContainerMetrics, error) {
-	stats, err := s.dockerClient.GetContainerStats(ctx, dockerContainerID)
+	// Use the monitoring system for optimized metrics collection with caching
+	if s.monitor != nil {
+		dockerMetrics, err := s.monitor.GetContainerMetrics(ctx, dockerContainerID)
+		if err == nil {
+			// Convert docker.ContainerMetrics to service.ContainerMetrics
+			return s.convertDockerMetrics(dockerMetrics), nil
+		}
+		// Fall back to direct client if monitor fails
+		logrus.WithError(err).WithField("container_id", dockerContainerID).Warn("Failed to get metrics from monitor, falling back to direct client")
+	}
+
+	// Direct fallback using Docker client
+	dockerMetrics, err := s.dockerClient.GetContainerMetrics(ctx, dockerContainerID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get container metrics: %w", err)
 	}
 
+	return s.convertDockerMetrics(dockerMetrics), nil
+}
+
+// convertDockerMetrics converts docker.ContainerMetrics to service.ContainerMetrics
+func (s *ContainerService) convertDockerMetrics(dockerMetrics *docker.ContainerMetrics) *ContainerMetrics {
 	metrics := &ContainerMetrics{
-		CPUPercent:    calculateCPUPercent(stats),
-		MemoryUsage:   int64(stats.MemoryStats.Usage),
-		MemoryLimit:   int64(stats.MemoryStats.Limit),
-		MemoryPercent: calculateMemoryPercent(stats),
-		PIDs:          int(stats.PidsStats.Current),
-		Timestamp:     time.Now(),
+		CPUPercent:    dockerMetrics.CPU.CPUPercent,
+		MemoryUsage:   int64(dockerMetrics.Memory.Usage),
+		MemoryLimit:   int64(dockerMetrics.Memory.Limit),
+		MemoryPercent: dockerMetrics.Memory.MemoryPercent,
+		PIDs:          int(dockerMetrics.PIDs.Current),
+		Timestamp:     dockerMetrics.Timestamp,
 	}
 
-	// Network I/O metrics
-	if len(stats.Networks) > 0 {
-		var totalRx, totalTx, totalRxPackets, totalTxPackets uint64
-		for _, network := range stats.Networks {
-			totalRx += network.RxBytes
-			totalTx += network.TxBytes
-			totalRxPackets += network.RxPackets
-			totalTxPackets += network.TxPackets
-		}
-		metrics.NetworkIO = &NetworkIOMetrics{
-			RxBytes:   int64(totalRx),
-			TxBytes:   int64(totalTx),
-			RxPackets: int64(totalRxPackets),
-			TxPackets: int64(totalTxPackets),
-		}
+	// Convert network I/O metrics
+	metrics.NetworkIO = &NetworkIOMetrics{
+		RxBytes:   int64(dockerMetrics.Network.RxBytes),
+		TxBytes:   int64(dockerMetrics.Network.TxBytes),
+		RxPackets: int64(dockerMetrics.Network.RxPackets),
+		TxPackets: int64(dockerMetrics.Network.TxPackets),
 	}
 
-	// Block I/O metrics
-	if len(stats.BlkioStats.IoServiceBytesRecursive) > 0 {
-		var readBytes, writeBytes, readOps, writeOps uint64
-		for _, bio := range stats.BlkioStats.IoServiceBytesRecursive {
-			if bio.Op == "Read" {
-				readBytes += bio.Value
-			} else if bio.Op == "Write" {
-				writeBytes += bio.Value
-			}
-		}
-		for _, bio := range stats.BlkioStats.IoServicedRecursive {
-			if bio.Op == "Read" {
-				readOps += bio.Value
-			} else if bio.Op == "Write" {
-				writeOps += bio.Value
-			}
-		}
-		metrics.BlockIO = &BlockIOMetrics{
-			ReadBytes:  int64(readBytes),
-			WriteBytes: int64(writeBytes),
-			ReadOps:    int64(readOps),
-			WriteOps:   int64(writeOps),
-		}
+	// Convert block I/O metrics
+	metrics.BlockIO = &BlockIOMetrics{
+		ReadBytes:  int64(dockerMetrics.BlockIO.ReadBytes),
+		WriteBytes: int64(dockerMetrics.BlockIO.WriteBytes),
+		ReadOps:    int64(dockerMetrics.BlockIO.ReadOperations),
+		WriteOps:   int64(dockerMetrics.BlockIO.WriteOperations),
 	}
 
-	return metrics, nil
+	return metrics
 }
 
 // calculateCPUPercent calculates CPU usage percentage from Docker stats
@@ -713,4 +704,227 @@ func (s *ContainerService) getDetailedDockerStatus(ctx context.Context, containe
 	}
 
 	return dockerStatus, nil
+}
+
+// CreateTerminalSession creates a new terminal session for a container
+func (s *ContainerService) CreateTerminalSession(ctx context.Context, userID int64, containerID int64, command []string) (*docker.TerminalSession, error) {
+	// Get container
+	container, err := s.containerRepo.GetByID(ctx, containerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container: %w", err)
+	}
+
+	// Check permissions
+	if err := s.checkContainerPermission(container, userID); err != nil {
+		return nil, err
+	}
+
+	if container.ContainerID == "" {
+		return nil, fmt.Errorf("container has no Docker instance")
+	}
+
+	// Ensure container is running
+	if !container.IsRunning() {
+		// Double-check with Docker
+		dockerStatus, err := s.dockerClient.GetContainerStatus(ctx, container.ContainerID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check container status: %w", err)
+		}
+		if dockerStatus != model.ContainerStatusRunning {
+			return nil, fmt.Errorf("container must be running to create terminal session")
+		}
+	}
+
+	if s.terminalManager == nil {
+		return nil, fmt.Errorf("terminal manager not available")
+	}
+
+	// Create exec request
+	execReq := &docker.ExecRequest{
+		ContainerID: container.ContainerID,
+		Command:     command,
+		TTY:         true,
+		User:        "root", // Could be configurable based on user permissions
+		Privileged:  false,  // Security: don't allow privileged by default
+	}
+
+	// Set default command if none provided
+	if len(execReq.Command) == 0 {
+		execReq.Command = []string{"/bin/sh"}
+	}
+
+	// Create terminal session
+	session, err := s.terminalManager.CreateExecSession(ctx, execReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create terminal session: %w", err)
+	}
+
+	// Log activity
+	s.logContainerActivity(userID, containerID, "terminal_session_created", "Terminal session created", map[string]interface{}{
+		"session_id":         session.ID,
+		"docker_container_id": container.ContainerID,
+		"command":            execReq.Command,
+	})
+
+	logrus.WithFields(logrus.Fields{
+		"session_id":   session.ID,
+		"container_id": containerID,
+		"user_id":      userID,
+		"command":      execReq.Command,
+	}).Info("Terminal session created")
+
+	return session, nil
+}
+
+// AttachTerminalWebSocket attaches a WebSocket connection to an existing terminal session
+func (s *ContainerService) AttachTerminalWebSocket(sessionID string, ws interface{}) error {
+	if s.terminalManager == nil {
+		return fmt.Errorf("terminal manager not available")
+	}
+
+	// Type assert to websocket.Conn - in real implementation this would be properly typed
+	// For now, we'll just check if it's not nil
+	if ws == nil {
+		return fmt.Errorf("websocket connection cannot be nil")
+	}
+
+	// The actual implementation would need proper WebSocket type handling
+	// This is a placeholder for the integration
+	logrus.WithField("session_id", sessionID).Debug("WebSocket attachment requested")
+
+	return fmt.Errorf("websocket attachment not implemented - requires proper WebSocket type handling")
+}
+
+// StartTerminalSession starts a terminal session's execution
+func (s *ContainerService) StartTerminalSession(ctx context.Context, sessionID string) error {
+	if s.terminalManager == nil {
+		return fmt.Errorf("terminal manager not available")
+	}
+
+	if err := s.terminalManager.StartExecSession(ctx, sessionID); err != nil {
+		return fmt.Errorf("failed to start terminal session: %w", err)
+	}
+
+	logrus.WithField("session_id", sessionID).Info("Terminal session started")
+	return nil
+}
+
+// CloseTerminalSession closes a terminal session
+func (s *ContainerService) CloseTerminalSession(sessionID string) error {
+	if s.terminalManager == nil {
+		return fmt.Errorf("terminal manager not available")
+	}
+
+	if err := s.terminalManager.CloseSession(sessionID); err != nil {
+		return fmt.Errorf("failed to close terminal session: %w", err)
+	}
+
+	logrus.WithField("session_id", sessionID).Info("Terminal session closed")
+	return nil
+}
+
+// ListActiveTerminalSessions returns all active terminal sessions
+func (s *ContainerService) ListActiveTerminalSessions() []*docker.TerminalSession {
+	if s.terminalManager == nil {
+		return []*docker.TerminalSession{}
+	}
+
+	return s.terminalManager.ListActiveSessions()
+}
+
+// GetTerminalSession retrieves a terminal session by ID
+func (s *ContainerService) GetTerminalSession(sessionID string) (*docker.TerminalSession, error) {
+	if s.terminalManager == nil {
+		return nil, fmt.Errorf("terminal manager not available")
+	}
+
+	return s.terminalManager.GetSession(sessionID)
+}
+
+// StartContainerMonitoring starts monitoring for a specific container
+func (s *ContainerService) StartContainerMonitoring(ctx context.Context, userID int64, containerID int64) error {
+	container, err := s.containerRepo.GetByID(ctx, containerID)
+	if err != nil {
+		return fmt.Errorf("failed to get container: %w", err)
+	}
+
+	if err := s.checkContainerPermission(container, userID); err != nil {
+		return err
+	}
+
+	if container.ContainerID == "" {
+		return fmt.Errorf("container has no Docker instance")
+	}
+
+	if s.monitor == nil {
+		return fmt.Errorf("monitoring not available")
+	}
+
+	if s.monitor.IsMonitoring(container.ContainerID) {
+		return fmt.Errorf("container is already being monitored")
+	}
+
+	if err := s.monitor.StartMonitoring(ctx, container.ContainerID); err != nil {
+		return fmt.Errorf("failed to start monitoring: %w", err)
+	}
+
+	// Log activity
+	s.logContainerActivity(userID, containerID, "monitoring_started", "Container monitoring started", map[string]interface{}{
+		"docker_container_id": container.ContainerID,
+	})
+
+	return nil
+}
+
+// StopContainerMonitoring stops monitoring for a specific container
+func (s *ContainerService) StopContainerMonitoring(userID int64, containerID int64) error {
+	container, err := s.containerRepo.GetByID(context.Background(), containerID)
+	if err != nil {
+		return fmt.Errorf("failed to get container: %w", err)
+	}
+
+	if err := s.checkContainerPermission(container, userID); err != nil {
+		return err
+	}
+
+	if container.ContainerID == "" {
+		return fmt.Errorf("container has no Docker instance")
+	}
+
+	if s.monitor == nil {
+		return fmt.Errorf("monitoring not available")
+	}
+
+	if !s.monitor.IsMonitoring(container.ContainerID) {
+		return fmt.Errorf("container is not being monitored")
+	}
+
+	if err := s.monitor.StopMonitoring(container.ContainerID); err != nil {
+		return fmt.Errorf("failed to stop monitoring: %w", err)
+	}
+
+	// Log activity
+	s.logContainerActivity(userID, containerID, "monitoring_stopped", "Container monitoring stopped", map[string]interface{}{
+		"docker_container_id": container.ContainerID,
+	})
+
+	return nil
+}
+
+// GetMonitoringMetrics returns system monitoring metrics
+func (s *ContainerService) GetMonitoringMetrics() *docker.MonitoringMetrics {
+	if s.monitor == nil {
+		return &docker.MonitoringMetrics{}
+	}
+
+	return s.monitor.GetMonitoringMetrics()
+}
+
+// GetTerminalMetrics returns terminal system metrics
+func (s *ContainerService) GetTerminalMetrics() *docker.TerminalMetrics {
+	if s.terminalManager == nil {
+		return &docker.TerminalMetrics{}
+	}
+
+	return s.terminalManager.GetMetrics()
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -382,6 +383,33 @@ func (wsc *WebSocketConnection) createFilterFromTopic(topic string) events.Event
 	case "container.logs":
 		// This would be handled separately with log streaming
 		filter.Types = []events.EventType{events.EventContainerError}
+	case "container.metrics":
+		// Real-time metrics updates
+		filter.Types = []events.EventType{
+			events.EventContainerMetricsUpdated,
+			events.EventContainerResourceAlert,
+		}
+	case "container.events":
+		// Real-time Docker events
+		filter.Types = []events.EventType{
+			events.EventContainerStarted,
+			events.EventContainerStopped,
+			events.EventContainerRestarted,
+			events.EventContainerError,
+		}
+	case "monitoring.alerts":
+		// Monitoring and alerting events
+		filter.Types = []events.EventType{
+			events.EventContainerResourceAlert,
+			events.EventSystemResourceAlert,
+			events.EventContainerHealthAlert,
+		}
+	case "monitoring.metrics":
+		// Real-time system and container metrics
+		filter.Types = []events.EventType{
+			events.EventContainerMetricsUpdated,
+			events.EventSystemMetricsUpdated,
+		}
 	case "image.update":
 		filter.Types = []events.EventType{
 			events.EventImageUpdateAvailable,
@@ -408,8 +436,35 @@ func (wsc *WebSocketConnection) createFilterFromTopic(topic string) events.Event
 	case "all":
 		// No filter, receive all events
 	default:
-		// Try to parse as event type
-		filter.Types = []events.EventType{events.EventType(topic)}
+		// Try to parse as event type or container-specific topic
+		if len(topic) > 10 && topic[:10] == "container:" {
+			// Format: container:DOCKER_ID:metrics or container:DOCKER_ID:events
+			parts := strings.Split(topic, ":")
+			if len(parts) >= 3 {
+				containerID := parts[1]
+				eventType := parts[2]
+
+				filter.ResourceID = &containerID
+				switch eventType {
+				case "metrics":
+					filter.Types = []events.EventType{events.EventContainerMetricsUpdated}
+				case "events":
+					filter.Types = []events.EventType{
+						events.EventContainerStarted,
+						events.EventContainerStopped,
+						events.EventContainerRestarted,
+						events.EventContainerError,
+					}
+				case "logs":
+					filter.Types = []events.EventType{events.EventContainerLogUpdated}
+				default:
+					filter.Types = []events.EventType{events.EventType(eventType)}
+				}
+			}
+		} else {
+			// Try to parse as event type
+			filter.Types = []events.EventType{events.EventType(topic)}
+		}
 	}
 
 	return filter
@@ -579,6 +634,136 @@ func (wm *WebSocketManager) CleanupInactiveConnections() {
 	if len(toDelete) > 0 {
 		wm.logger.WithField("count", len(toDelete)).Debug("Cleaned up inactive WebSocket connections")
 	}
+}
+
+// BroadcastMetricsUpdate sends real-time metrics update to all subscribed connections
+func (wm *WebSocketManager) BroadcastMetricsUpdate(containerID string, metrics interface{}) {
+	topic := fmt.Sprintf("container:%s:metrics", containerID)
+
+	connections := wm.GetConnections()
+	for _, conn := range connections {
+		// Check if connection is subscribed to container metrics
+		if conn.Subscription != nil && wm.isSubscribedToTopic(conn, topic) {
+			conn.sendMessage("metrics_update", topic, map[string]interface{}{
+				"container_id": containerID,
+				"metrics":      metrics,
+				"timestamp":    time.Now().Unix(),
+			}, "")
+		}
+	}
+
+	wm.logger.WithFields(logrus.Fields{
+		"container_id": containerID,
+		"connections":  len(connections),
+	}).Debug("Broadcasted metrics update")
+}
+
+// BroadcastContainerEvent sends real-time container event to subscribed connections
+func (wm *WebSocketManager) BroadcastContainerEvent(containerID string, event interface{}) {
+	topic := fmt.Sprintf("container:%s:events", containerID)
+
+	connections := wm.GetConnections()
+	for _, conn := range connections {
+		// Check if connection is subscribed to container events
+		if conn.Subscription != nil && wm.isSubscribedToTopic(conn, topic) {
+			conn.sendMessage("container_event", topic, map[string]interface{}{
+				"container_id": containerID,
+				"event":        event,
+				"timestamp":    time.Now().Unix(),
+			}, "")
+		}
+	}
+
+	wm.logger.WithFields(logrus.Fields{
+		"container_id": containerID,
+		"connections":  len(connections),
+	}).Debug("Broadcasted container event")
+}
+
+// BroadcastMonitoringAlert sends monitoring alert to all relevant connections
+func (wm *WebSocketManager) BroadcastMonitoringAlert(alert interface{}, containerID string) {
+	topic := "monitoring.alerts"
+	if containerID != "" {
+		topic = fmt.Sprintf("container:%s:alerts", containerID)
+	}
+
+	connections := wm.GetConnections()
+	broadcastCount := 0
+
+	for _, conn := range connections {
+		// Check if connection is subscribed to monitoring alerts
+		if conn.Subscription != nil && wm.isSubscribedToTopic(conn, topic) {
+			conn.sendMessage("monitoring_alert", topic, map[string]interface{}{
+				"container_id": containerID,
+				"alert":        alert,
+				"timestamp":    time.Now().Unix(),
+			}, "")
+			broadcastCount++
+		}
+	}
+
+	wm.logger.WithFields(logrus.Fields{
+		"container_id":     containerID,
+		"total_connections": len(connections),
+		"broadcast_count":   broadcastCount,
+	}).Debug("Broadcasted monitoring alert")
+}
+
+// StreamContainerMetrics establishes a dedicated metrics streaming connection
+func (wm *WebSocketManager) StreamContainerMetrics(userID, containerID string, metricsChan <-chan interface{}) (*WebSocketConnection, error) {
+	// Find user connections
+	connections := wm.GetConnectionsByUser(userID)
+	if len(connections) == 0 {
+		return nil, fmt.Errorf("no active connections for user %s", userID)
+	}
+
+	// Use the most recent connection
+	conn := connections[len(connections)-1]
+
+	// Start streaming metrics in a goroutine
+	go func() {
+		topic := fmt.Sprintf("container:%s:metrics", containerID)
+
+		for metrics := range metricsChan {
+			if conn.isClosed() {
+				break
+			}
+
+			conn.sendMessage("metrics_stream", topic, map[string]interface{}{
+				"container_id": containerID,
+				"metrics":      metrics,
+				"timestamp":    time.Now().Unix(),
+			}, "")
+		}
+	}()
+
+	return conn, nil
+}
+
+// isSubscribedToTopic checks if a connection is subscribed to a specific topic
+func (wm *WebSocketManager) isSubscribedToTopic(conn *WebSocketConnection, topic string) bool {
+	if conn.Subscription == nil {
+		return false
+	}
+
+	// This is a simplified check - in a real implementation, you would
+	// check the subscription's event filter against the topic
+	return true // For now, assume all connections can receive all topics
+}
+
+// GetConnectionsSubscribedToTopic returns connections subscribed to a specific topic
+func (wm *WebSocketManager) GetConnectionsSubscribedToTopic(topic string) []*WebSocketConnection {
+	wm.mu.RLock()
+	defer wm.mu.RUnlock()
+
+	var subscribedConnections []*WebSocketConnection
+	for _, conn := range wm.connections {
+		if !conn.isClosed() && wm.isSubscribedToTopic(conn, topic) {
+			subscribedConnections = append(subscribedConnections, conn)
+		}
+	}
+
+	return subscribedConnections
 }
 
 // helper function for min

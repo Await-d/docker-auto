@@ -1,0 +1,27 @@
+{
+  "id": "approval_1758784098586_ff5e5etqx",
+  "title": "Docker容器生命周期管理 - 任务分解",
+  "filePath": ".spec-workflow/specs/docker-container-lifecycle-management/tasks.md",
+  "type": "document",
+  "status": "needs-revision",
+  "createdAt": "2025-09-25T07:08:18.586Z",
+  "category": "spec",
+  "categoryName": "docker-container-lifecycle-management",
+  "response": "Feedback Summary (1 comments):\n\nSpecific Text Comments:\n1. \"实现端到端功能测试\": 测试需要测试前后端的打包跟运行是否有错误，需要达到运行零错误跟打包零错误，且测试完成后需要移除测试文件跟不重要的总结文档\n",
+  "annotations": "{\n  \"decision\": \"needs-revision\",\n  \"comments\": [\n    {\n      \"type\": \"selection\",\n      \"comment\": \"测试需要测试前后端的打包跟运行是否有错误，需要达到运行零错误跟打包零错误，且测试完成后需要移除测试文件跟不重要的总结文档\",\n      \"timestamp\": \"2025-09-25T07:10:05.466Z\",\n      \"selectedText\": \"实现端到端功能测试\",\n      \"highlightColor\": {\n        \"bg\": \"rgba(255, 235, 59, 0.3)\",\n        \"border\": \"#FFEB3B\",\n        \"name\": \"#ffeb3b\"\n      },\n      \"id\": \"comment_1758784205466_hypuicgzf\"\n    }\n  ],\n  \"summary\": \"Feedback Summary (1 comments):\\n\\nSpecific Text Comments:\\n1. \\\"实现端到端功能测试\\\": 测试需要测试前后端的打包跟运行是否有错误，需要达到运行零错误跟打包零错误，且测试完成后需要移除测试文件跟不重要的总结文档\\n\",\n  \"timestamp\": \"2025-09-25T07:10:08.771Z\"\n}",
+  "respondedAt": "2025-09-25T07:10:08.899Z",
+  "comments": [
+    {
+      "type": "selection",
+      "comment": "测试需要测试前后端的打包跟运行是否有错误，需要达到运行零错误跟打包零错误，且测试完成后需要移除测试文件跟不重要的总结文档",
+      "timestamp": "2025-09-25T07:10:05.466Z",
+      "selectedText": "实现端到端功能测试",
+      "highlightColor": {
+        "bg": "rgba(255, 235, 59, 0.3)",
+        "border": "#FFEB3B",
+        "name": "#ffeb3b"
+      },
+      "id": "comment_1758784205466_hypuicgzf"
+    }
+  ]
+}

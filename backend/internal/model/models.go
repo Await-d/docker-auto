@@ -19,6 +19,8 @@ func AllModels() []interface{} {
 		&NotificationLog{},
 		&ScheduledTask{},
 		&TaskExecutionLog{},
+		&TerminalSession{},
+		&MonitoringMetrics{},
 	}
 }
 
@@ -126,6 +128,18 @@ func ValidateModelConstraints() []string {
 		errors = append(errors, "No valid task types defined")
 	}
 
+	// Check TerminalStatus constraints
+	validTerminalStatuses := GetValidTerminalStatuses()
+	if len(validTerminalStatuses) == 0 {
+		errors = append(errors, "No valid terminal statuses defined")
+	}
+
+	// Check health status constraints
+	validHealthStatuses := GetValidHealthStatuses()
+	if len(validHealthStatuses) == 0 {
+		errors = append(errors, "No valid health statuses defined")
+	}
+
 	return errors
 }
 
@@ -144,6 +158,8 @@ func GetModelTableNames() map[string]string {
 		"NotificationLog":      NotificationLog{}.TableName(),
 		"ScheduledTask":        ScheduledTask{}.TableName(),
 		"TaskExecutionLog":     TaskExecutionLog{}.TableName(),
+		"TerminalSession":      TerminalSession{}.TableName(),
+		"MonitoringMetrics":    MonitoringMetrics{}.TableName(),
 	}
 }
 
@@ -166,6 +182,16 @@ func CleanupExpiredData(db *gorm.DB) error {
 
 	// Clean up old task execution logs (older than 30 days)
 	if err := db.Where("started_at < ?", "NOW() - INTERVAL '30 days'").Delete(&TaskExecutionLog{}).Error; err != nil {
+		return err
+	}
+
+	// Clean up expired terminal sessions
+	if err := CleanupExpiredSessions(db).Delete(&TerminalSession{}).Error; err != nil {
+		return err
+	}
+
+	// Clean up old monitoring metrics (older than 90 days for raw data)
+	if err := db.Where("timestamp < ?", "NOW() - INTERVAL '90 days'").Delete(&MonitoringMetrics{}).Error; err != nil {
 		return err
 	}
 
