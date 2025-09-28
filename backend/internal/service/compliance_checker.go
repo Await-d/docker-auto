@@ -335,15 +335,17 @@ func (cc *ComplianceChecker) checkAppArmorProfile(ctx context.Context, container
 	}
 
 	// Check for AppArmor profile in security options
-	if container.HostConfig.SecurityOpt != nil {
-		for _, opt := range container.HostConfig.SecurityOpt {
-			if strings.HasPrefix(opt, "apparmor=") {
-				profile := strings.TrimPrefix(opt, "apparmor=")
-				if profile != "unconfined" {
-					check.Status = ComplianceStatusPass
-					check.Details = fmt.Sprintf("AppArmor profile configured: %s", profile)
-					check.Evidence["apparmor_profile"] = profile
-					return check
+	if securityOpt, ok := container.HostConfig["SecurityOpt"].([]interface{}); ok && securityOpt != nil {
+		for _, optInterface := range securityOpt {
+			if opt, ok := optInterface.(string); ok {
+				if strings.HasPrefix(opt, "apparmor=") {
+					profile := strings.TrimPrefix(opt, "apparmor=")
+					if profile != "unconfined" {
+						check.Status = ComplianceStatusPass
+						check.Details = fmt.Sprintf("AppArmor profile configured: %s", profile)
+						check.Evidence["apparmor_profile"] = profile
+						return check
+					}
 				}
 			}
 		}
@@ -372,13 +374,15 @@ func (cc *ComplianceChecker) checkSELinuxOptions(ctx context.Context, container 
 	}
 
 	// Check for SELinux options in security options
-	if container.HostConfig.SecurityOpt != nil {
-		for _, opt := range container.HostConfig.SecurityOpt {
-			if strings.HasPrefix(opt, "label=") {
-				check.Status = ComplianceStatusPass
-				check.Details = fmt.Sprintf("SELinux label configured: %s", opt)
-				check.Evidence["selinux_label"] = opt
-				return check
+	if securityOpt, ok := container.HostConfig["SecurityOpt"].([]interface{}); ok && securityOpt != nil {
+		for _, optInterface := range securityOpt {
+			if opt, ok := optInterface.(string); ok {
+				if strings.HasPrefix(opt, "label=") {
+					check.Status = ComplianceStatusPass
+					check.Details = fmt.Sprintf("SELinux label configured: %s", opt)
+					check.Evidence["selinux_label"] = opt
+					return check
+				}
 			}
 		}
 	}
@@ -408,25 +412,26 @@ func (cc *ComplianceChecker) checkCapabilities(ctx context.Context, container *d
 	dangerousCaps := []string{"SYS_ADMIN", "NET_ADMIN", "SYS_PTRACE", "SYS_MODULE"}
 
 	// Check added capabilities
-	if container.HostConfig.CapAdd != nil {
-		for _, cap := range container.HostConfig.CapAdd {
-			for _, dangerous := range dangerousCaps {
-				if strings.ToUpper(cap) == dangerous || cap == "ALL" {
-					check.Status = ComplianceStatusFail
-					check.Details = fmt.Sprintf("Dangerous capability added: %s", cap)
-					check.Remediation = "Remove dangerous capabilities or use --cap-drop ALL and only add required capabilities"
-					check.Evidence["dangerous_caps"] = container.HostConfig.CapAdd
-					return check
+	if capAdd, ok := container.HostConfig["CapAdd"].([]interface{}); ok && capAdd != nil {
+		for _, capInterface := range capAdd {
+			if cap, ok := capInterface.(string); ok {
+				for _, dangerous := range dangerousCaps {
+					if strings.ToUpper(cap) == dangerous || cap == "ALL" {
+						check.Status = ComplianceStatusFail
+						check.Details = fmt.Sprintf("Dangerous capability added: %s", cap)
+						check.Remediation = "Remove dangerous capabilities or use --cap-drop ALL and only add required capabilities"
+						check.Evidence["dangerous_caps"] = capAdd
+						return check
+					}
 				}
 			}
 		}
-		check.Evidence["cap_add"] = container.HostConfig.CapAdd
 	}
 
 	// Check dropped capabilities
-	if container.HostConfig.CapDrop != nil {
-		check.Evidence["cap_drop"] = container.HostConfig.CapDrop
-		if len(container.HostConfig.CapDrop) > 0 {
+	if capDrop, ok := container.HostConfig["CapDrop"].([]interface{}); ok && capDrop != nil {
+		check.Evidence["cap_drop"] = capDrop
+		if len(capDrop) > 0 {
 			check.Status = ComplianceStatusPass
 			check.Details = "Capabilities have been dropped"
 		}
@@ -453,7 +458,7 @@ func (cc *ComplianceChecker) checkPrivilegedContainer(ctx context.Context, conta
 		Evidence:    make(map[string]interface{}),
 	}
 
-	if container.HostConfig.Privileged {
+	if privileged, ok := container.HostConfig["Privileged"].(bool); ok && privileged {
 		check.Status = ComplianceStatusFail
 		check.Details = "Container is running in privileged mode"
 		check.Remediation = "Do not use --privileged flag unless absolutely necessary"
@@ -487,15 +492,17 @@ func (cc *ComplianceChecker) checkSensitiveMounts(ctx context.Context, container
 	}
 
 	var violations []string
-	if container.HostConfig.Binds != nil {
-		for _, bind := range container.HostConfig.Binds {
-			parts := strings.Split(bind, ":")
-			if len(parts) >= 2 {
-				hostPath := parts[0]
-				for _, sensitive := range sensitivePaths {
-					if hostPath == sensitive || strings.HasPrefix(hostPath, sensitive+"/") {
-						violations = append(violations, bind)
-						break
+	if binds, ok := container.HostConfig["Binds"].([]interface{}); ok && binds != nil {
+		for _, bindInterface := range binds {
+			if bind, ok := bindInterface.(string); ok {
+				parts := strings.Split(bind, ":")
+				if len(parts) >= 2 {
+					hostPath := parts[0]
+					for _, sensitive := range sensitivePaths {
+						if hostPath == sensitive || strings.HasPrefix(hostPath, sensitive+"/") {
+							violations = append(violations, bind)
+							break
+						}
 					}
 				}
 			}
@@ -530,11 +537,11 @@ func (cc *ComplianceChecker) checkUlimits(ctx context.Context, container *docker
 		Evidence:    make(map[string]interface{}),
 	}
 
-	if container.HostConfig.Ulimits != nil && len(container.HostConfig.Ulimits) > 0 {
+	if ulimits, ok := container.HostConfig["Ulimits"].([]interface{}); ok && ulimits != nil && len(ulimits) > 0 {
 		check.Status = ComplianceStatusPass
 		check.Details = "Ulimits are configured"
 		check.Evidence["ulimits_configured"] = true
-		check.Evidence["ulimits"] = container.HostConfig.Ulimits
+		check.Evidence["ulimits"] = ulimits
 	} else {
 		check.Status = ComplianceStatusWarning
 		check.Details = "No ulimits configured"
@@ -559,10 +566,10 @@ func (cc *ComplianceChecker) checkMemoryLimits(ctx context.Context, container *d
 		Evidence:    make(map[string]interface{}),
 	}
 
-	if container.HostConfig.Memory > 0 {
+	if memory, ok := container.HostConfig["Memory"].(int64); ok && memory > 0 {
 		check.Status = ComplianceStatusPass
-		check.Details = fmt.Sprintf("Memory limit configured: %d bytes", container.HostConfig.Memory)
-		check.Evidence["memory_limit"] = container.HostConfig.Memory
+		check.Details = fmt.Sprintf("Memory limit configured: %d bytes", memory)
+		check.Evidence["memory_limit"] = memory
 	} else {
 		check.Status = ComplianceStatusWarning
 		check.Details = "No memory limit configured"
@@ -590,24 +597,24 @@ func (cc *ComplianceChecker) checkCPULimits(ctx context.Context, container *dock
 	hasCPULimit := false
 	evidence := make(map[string]interface{})
 
-	if container.HostConfig.CPUShares > 0 {
+	if cpuShares, ok := container.HostConfig["CPUShares"].(int64); ok && cpuShares > 0 {
 		hasCPULimit = true
-		evidence["cpu_shares"] = container.HostConfig.CPUShares
+		evidence["cpu_shares"] = cpuShares
 	}
 
-	if container.HostConfig.CPUPeriod > 0 {
+	if cpuPeriod, ok := container.HostConfig["CPUPeriod"].(int64); ok && cpuPeriod > 0 {
 		hasCPULimit = true
-		evidence["cpu_period"] = container.HostConfig.CPUPeriod
+		evidence["cpu_period"] = cpuPeriod
 	}
 
-	if container.HostConfig.CPUQuota > 0 {
+	if cpuQuota, ok := container.HostConfig["CPUQuota"].(int64); ok && cpuQuota > 0 {
 		hasCPULimit = true
-		evidence["cpu_quota"] = container.HostConfig.CPUQuota
+		evidence["cpu_quota"] = cpuQuota
 	}
 
-	if container.HostConfig.CpusetCpus != "" {
+	if cpusetCpus, ok := container.HostConfig["CpusetCpus"].(string); ok && cpusetCpus != "" {
 		hasCPULimit = true
-		evidence["cpuset_cpus"] = container.HostConfig.CpusetCpus
+		evidence["cpuset_cpus"] = cpusetCpus
 	}
 
 	if hasCPULimit {
@@ -638,7 +645,7 @@ func (cc *ComplianceChecker) checkReadOnlyRootFS(ctx context.Context, container 
 		Evidence:    make(map[string]interface{}),
 	}
 
-	if container.HostConfig.ReadonlyRootfs {
+	if readonlyRootfs, ok := container.HostConfig["ReadonlyRootfs"].(bool); ok && readonlyRootfs {
 		check.Status = ComplianceStatusPass
 		check.Details = "Root filesystem is read-only"
 		check.Evidence["readonly_rootfs"] = true
@@ -666,7 +673,7 @@ func (cc *ComplianceChecker) checkProcessNamespace(ctx context.Context, containe
 		Evidence:    make(map[string]interface{}),
 	}
 
-	pidMode := container.HostConfig.PidMode
+	pidMode, _ := container.HostConfig["PidMode"].(string)
 	if pidMode == "host" {
 		check.Status = ComplianceStatusFail
 		check.Details = "Container shares host process namespace"
@@ -695,7 +702,7 @@ func (cc *ComplianceChecker) checkNetworkNamespace(ctx context.Context, containe
 		Evidence:    make(map[string]interface{}),
 	}
 
-	networkMode := container.HostConfig.NetworkMode
+	networkMode, _ := container.HostConfig["NetworkMode"].(string)
 	if networkMode == "host" {
 		check.Status = ComplianceStatusFail
 		check.Details = "Container shares host network namespace"
@@ -758,8 +765,9 @@ func (cc *ComplianceChecker) checkAccessEnforcement(ctx context.Context, contain
 
 	// Check for security options (AppArmor, SELinux)
 	hasSecurityEnforcement := false
-	if container.HostConfig.SecurityOpt != nil {
-		for _, opt := range container.HostConfig.SecurityOpt {
+	securityOpt, _ := container.HostConfig["SecurityOpt"].([]string)
+	if securityOpt != nil {
+		for _, opt := range securityOpt {
 			if strings.HasPrefix(opt, "apparmor=") || strings.HasPrefix(opt, "label=") {
 				hasSecurityEnforcement = true
 				break
@@ -770,7 +778,7 @@ func (cc *ComplianceChecker) checkAccessEnforcement(ctx context.Context, contain
 	if hasSecurityEnforcement {
 		check.Status = ComplianceStatusPass
 		check.Details = "Security enforcement mechanisms configured"
-		check.Evidence["security_opt"] = container.HostConfig.SecurityOpt
+		check.Evidence["security_opt"] = securityOpt
 	} else {
 		check.Status = ComplianceStatusWarning
 		check.Details = "No explicit security enforcement mechanisms detected"
@@ -799,6 +807,9 @@ func (cc *ComplianceChecker) checkBaselineConfiguration(ctx context.Context, con
 	configScore := 0
 	evidence := make(map[string]interface{})
 
+	// Get healthcheck for later use
+	healthcheck, _ := container.Config.Healthcheck.(map[string]interface{})
+
 	// Check if image uses specific tag (not latest)
 	if !strings.HasSuffix(container.Config.Image, ":latest") && strings.Contains(container.Config.Image, ":") {
 		configScore++
@@ -808,7 +819,7 @@ func (cc *ComplianceChecker) checkBaselineConfiguration(ctx context.Context, con
 	}
 
 	// Check if health check is configured
-	if container.Config.Healthcheck != nil {
+	if healthcheck != nil {
 		configScore++
 		evidence["health_check"] = true
 	} else {
@@ -852,7 +863,7 @@ func (cc *ComplianceChecker) checkBoundaryProtection(ctx context.Context, contai
 	}
 
 	// Check network mode
-	networkMode := container.HostConfig.NetworkMode
+	networkMode, _ := container.HostConfig["NetworkMode"].(string)
 	if networkMode == "host" {
 		check.Status = ComplianceStatusFail
 		check.Details = "Host network mode breaks boundary protection"
@@ -890,6 +901,9 @@ func (cc *ComplianceChecker) checkAccessControls(ctx context.Context, container 
 	controlsScore := 0
 	evidence := make(map[string]interface{})
 
+	// Get CapDrop for later use
+	capDrop, _ := container.HostConfig["CapDrop"].([]interface{})
+
 	// Check user configuration
 	user := container.Config.User
 	if user != "" && user != "root" && user != "0" {
@@ -900,7 +914,7 @@ func (cc *ComplianceChecker) checkAccessControls(ctx context.Context, container 
 	}
 
 	// Check for capabilities restrictions
-	if container.HostConfig.CapDrop != nil && len(container.HostConfig.CapDrop) > 0 {
+	if capDrop != nil && len(capDrop) > 0 {
 		controlsScore++
 		evidence["caps_dropped"] = true
 	} else {
@@ -908,7 +922,7 @@ func (cc *ComplianceChecker) checkAccessControls(ctx context.Context, container 
 	}
 
 	// Check for read-only root filesystem
-	if container.HostConfig.ReadonlyRootfs {
+	if readonlyRootfs, ok := container.HostConfig["ReadonlyRootfs"].(bool); ok && readonlyRootfs {
 		controlsScore++
 		evidence["readonly_rootfs"] = true
 	} else {
@@ -943,7 +957,7 @@ func (cc *ComplianceChecker) checkNetworkAccessControls(ctx context.Context, con
 	}
 
 	// Check network mode
-	networkMode := container.HostConfig.NetworkMode
+	networkMode, _ := container.HostConfig["NetworkMode"].(string)
 	if networkMode == "host" {
 		check.Status = ComplianceStatusFail
 		check.Details = "Host network mode provides insufficient network access controls"
@@ -985,8 +999,11 @@ func (cc *ComplianceChecker) checkSystemMonitoring(ctx context.Context, containe
 	monitoringScore := 0
 	evidence := make(map[string]interface{})
 
+	// Get healthcheck for later use
+	healthcheck, _ := container.Config.Healthcheck.(map[string]interface{})
+
 	// Check for health check configuration
-	if container.Config.Healthcheck != nil {
+	if healthcheck != nil {
 		monitoringScore++
 		evidence["health_check"] = true
 	} else {

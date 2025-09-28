@@ -870,11 +870,11 @@ function setupWebSocketSubscription() {
       props.containerId,
       (data) => {
         console.log('Received real-time stats via WebSocket:', data);
-        if (data.metrics) {
-          monitoringStore.updateRealTimeMetrics(props.containerId, data.metrics);
+        if (data.stats) {
+          monitoringStore.updateRealTimeMetrics(props.containerId, data.stats);
           checkAlerts();
           // Update charts in real-time if they exist
-          updateChartsRealTime(data.metrics);
+          updateChartsRealTime(data.stats);
         }
       }
     );
