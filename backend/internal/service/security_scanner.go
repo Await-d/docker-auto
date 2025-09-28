@@ -126,19 +126,19 @@ type SecurityOverview struct {
 	LastScanTime         time.Time               `json:"lastScanTime"`
 	TopVulnerabilities   []SecurityVulnerability `json:"topVulnerabilities"`
 	RiskDistribution     map[string]int          `json:"riskDistribution"`
-	ComplianceStatus     ComplianceStatus        `json:"complianceStatus"`
+	ComplianceReport     ComplianceReport        `json:"complianceReport"`
 }
 
-// ComplianceStatus represents security compliance status
-type ComplianceStatus struct {
+// ComplianceReport represents security compliance status
+type ComplianceReport struct {
 	OverallScore     float64            `json:"overallScore"`
 	Policies         map[string]bool    `json:"policies"`
 	Recommendations  []string           `json:"recommendations"`
 	LastAssessment   time.Time          `json:"lastAssessment"`
 }
 
-// SecurityAlert represents a security alert
-type SecurityAlert struct {
+// ScanSecurityAlert represents a security alert from scanning
+type ScanSecurityAlert struct {
 	ID            uint      `json:"id" gorm:"primaryKey"`
 	AlertType     string    `json:"alertType"` // vulnerability, policy, compliance
 	Severity      string    `json:"severity"`

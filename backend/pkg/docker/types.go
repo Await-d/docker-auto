@@ -32,6 +32,48 @@ type Container struct {
 	Mounts  []MountPoint      `json:"mounts,omitempty"`
 }
 
+// ContainerConfig represents container configuration for deployment
+type ContainerConfig struct {
+	Name        string            `json:"name"`
+	Image       string            `json:"image"`
+	Tag         string            `json:"tag,omitempty"`
+	Environment map[string]string `json:"environment,omitempty"`
+	Ports       []PortBinding     `json:"ports,omitempty"`
+	Volumes     []MountPoint      `json:"volumes,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	RestartPolicy string          `json:"restart_policy,omitempty"`
+	Command     []string          `json:"command,omitempty"`
+	Entrypoint  []string          `json:"entrypoint,omitempty"`
+	WorkingDir  string            `json:"working_dir,omitempty"`
+	User        string            `json:"user,omitempty"`
+	Networks    []string          `json:"networks,omitempty"`
+}
+
+// ContainerInfo represents detailed container information for security auditing
+type ContainerInfo struct {
+	Container
+	Config       *ContainerConfig  `json:"config,omitempty"`
+	HostConfig   map[string]interface{} `json:"host_config,omitempty"`
+	NetworkSettings map[string]interface{} `json:"network_settings,omitempty"`
+	Processes    []ProcessInfo     `json:"processes,omitempty"`
+	FileSystem   *FileSystemInfo   `json:"filesystem,omitempty"`
+}
+
+// ProcessInfo represents process information inside a container
+type ProcessInfo struct {
+	PID     int    `json:"pid"`
+	PPID    int    `json:"ppid"`
+	Command string `json:"command"`
+	User    string `json:"user"`
+}
+
+// FileSystemInfo represents filesystem information for a container
+type FileSystemInfo struct {
+	Layers      []string          `json:"layers,omitempty"`
+	Size        int64             `json:"size"`
+	Permissions map[string]string `json:"permissions,omitempty"`
+}
+
 // Image represents a Docker image
 type Image struct {
 	ID          string            `json:"id"`

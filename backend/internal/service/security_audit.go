@@ -18,11 +18,11 @@ import (
 
 // SecurityAuditService provides comprehensive security audit capabilities
 type SecurityAuditService struct {
-	auditRepo       repository.AuditLogRepository
+	// auditRepo       repository.AuditLogRepository  // TODO: Implement AuditLogRepository
 	containerRepo   repository.ContainerRepository
 	userRepo        repository.UserRepository
 	dockerClient    *docker.DockerClient
-	securityScanner *security.SecurityScanner
+	// securityScanner *security.SecurityScanner  // TODO: Implement security.SecurityScanner
 	complianceChecker *ComplianceChecker
 	riskAnalyzer    *RiskAnalyzer
 	config          *config.Config
@@ -271,7 +271,7 @@ type SecurityAlertManager struct {
 
 // NewSecurityAuditService creates a new security audit service
 func NewSecurityAuditService(
-	auditRepo repository.AuditLogRepository,
+	// auditRepo repository.AuditLogRepository,  // TODO: Implement AuditLogRepository
 	containerRepo repository.ContainerRepository,
 	userRepo repository.UserRepository,
 	dockerClient *docker.DockerClient,
@@ -308,11 +308,11 @@ func NewSecurityAuditService(
 	}
 
 	service := &SecurityAuditService{
-		auditRepo:         auditRepo,
+		// auditRepo:         auditRepo,  // TODO: Implement AuditLogRepository
 		containerRepo:     containerRepo,
 		userRepo:          userRepo,
 		dockerClient:      dockerClient,
-		securityScanner:   securityScanner,
+		// securityScanner:   securityScanner,  // TODO: Implement security.SecurityScanner
 		complianceChecker: complianceChecker,
 		riskAnalyzer:      riskAnalyzer,
 		config:            config,

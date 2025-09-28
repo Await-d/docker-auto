@@ -129,19 +129,19 @@
           <div class="container-info">
             <div class="info-item">
               <span class="label">停止时间:</span>
-              <span class="value">{{ formatStopTime(container.finishedAt) }}</span>
+              <span class="value">{{ formatStopTime(container.state.finishedAt) }}</span>
             </div>
 
             <div class="info-item">
               <span class="label">退出码:</span>
-              <span class="value" :class="{ error: container.exitCode !== 0 }">
-                {{ container.exitCode || 0 }}
+              <span class="value" :class="{ error: container.state.exitCode !== 0 }">
+                {{ container.state.exitCode || 0 }}
               </span>
             </div>
 
-            <div v-if="container.exitReason" class="info-item">
+            <div v-if="container.state.error" class="info-item">
               <span class="label">退出原因:</span>
-              <span class="value">{{ container.exitReason }}</span>
+              <span class="value">{{ container.state.error }}</span>
             </div>
           </div>
 
@@ -149,7 +149,7 @@
           <div class="last-run-info">
             <div class="info-item">
               <span class="label">最后运行:</span>
-              <span class="value">{{ formatRunDuration(container.startedAt, container.finishedAt) }}</span>
+              <span class="value">{{ formatRunDuration(container.state.startedAt, container.state.finishedAt) }}</span>
             </div>
           </div>
         </div>
@@ -220,11 +220,11 @@ const selectedContainers = ref<Set<string>>(new Set());
 
 // Computed properties
 const stoppedContainers = computed(() =>
-  containers.value.filter(c => c.status === 'exited' || c.status === 'stopped')
+  containers.value.filter(c => c.status === 'exited')
 );
 
 const exitedContainers = computed(() =>
-  stoppedContainers.value.filter(c => c.exitCode !== 0)
+  stoppedContainers.value.filter(c => c.state.exitCode !== 0)
 );
 
 // Methods

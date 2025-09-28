@@ -550,6 +550,48 @@ export class ContainerAPI {
   ): Promise<void> {
     return post<void>(`${this.baseUrl}/${id}/processes/${pid}/kill`, { signal });
   }
+
+  /**
+   * Get containers summary
+   */
+  async getContainersSummary(): Promise<any> {
+    return get<any>(`${this.baseUrl}/summary`);
+  }
+
+  /**
+   * Prune system (remove unused containers, images, networks, volumes)
+   */
+  async pruneSystem(): Promise<any> {
+    return post<any>(`/api/system/prune`, {});
+  }
+
+  /**
+   * Start all containers
+   */
+  async startAllContainers(): Promise<BulkOperationResult> {
+    return post<BulkOperationResult>(`${this.baseUrl}/bulk/start`, {});
+  }
+
+  /**
+   * Stop all containers
+   */
+  async stopAllContainers(): Promise<BulkOperationResult> {
+    return post<BulkOperationResult>(`${this.baseUrl}/bulk/stop`, {});
+  }
+
+  /**
+   * Restart all containers
+   */
+  async restartAllContainers(): Promise<BulkOperationResult> {
+    return post<BulkOperationResult>(`${this.baseUrl}/bulk/restart`, {});
+  }
+
+  /**
+   * Execute command in container
+   */
+  async executeCommand(id: string, command: string[]): Promise<any> {
+    return post<any>(`${this.baseUrl}/${id}/exec`, { command });
+  }
 }
 
 // Export singleton instance

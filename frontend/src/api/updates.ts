@@ -594,4 +594,33 @@ export const updatesAPI = {
       };
     }>(`/api/updates/${updateId}/simulate`);
   },
+
+  /**
+   * Get updates summary
+   */
+  async getUpdatesSummary(): Promise<any> {
+    return get<any>("/api/updates/summary");
+  },
+
+  /**
+   * Get activity log
+   */
+  async getActivityLog(filters?: any): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.keys(filters).forEach(key => {
+        if (filters[key] !== undefined) {
+          params.append(key, filters[key].toString());
+        }
+      });
+    }
+    return get<any[]>(`/api/activity/logs?${params.toString()}`);
+  },
+
+  /**
+   * Create backup
+   */
+  async createBackup(options?: any): Promise<any> {
+    return post<any>("/api/backups", options || {});
+  },
 };

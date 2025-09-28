@@ -114,6 +114,27 @@ export const useContainerStore = defineStore("containers", () => {
     return result;
   });
 
+  // Container operation shortcuts
+  async function startContainer(id: string) {
+    return performOperation(id, "start");
+  }
+
+  async function stopContainer(id: string, timeout?: number) {
+    return performOperation(id, "stop", { timeout });
+  }
+
+  async function restartContainer(id: string, timeout?: number) {
+    return performOperation(id, "restart", { timeout });
+  }
+
+  async function pauseContainer(id: string) {
+    return performOperation(id, "pause");
+  }
+
+  async function unpauseContainer(id: string) {
+    return performOperation(id, "unpause");
+  }
+
   // Actions
   async function fetchContainers(page?: number) {
     if (page) currentPage.value = page;
@@ -701,6 +722,11 @@ export const useContainerStore = defineStore("containers", () => {
     createContainer,
     updateContainer,
     deleteContainer,
+    startContainer,
+    stopContainer,
+    restartContainer,
+    pauseContainer,
+    unpauseContainer,
     performOperation,
     performBulkOperation,
     checkUpdates,

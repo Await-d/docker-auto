@@ -211,6 +211,55 @@ export class MonitoringAPI {
 
     return get<any>(`${this.baseUrl}/analytics/top-consumers?${params.toString()}`);
   }
+
+  /**
+   * Get health services
+   */
+  async getHealthServices(): Promise<any[]> {
+    return get<any[]>(`${this.baseUrl}/health/services`);
+  }
+
+  /**
+   * Get health alerts
+   */
+  async getHealthAlerts(): Promise<any[]> {
+    return get<any[]>(`${this.baseUrl}/health/alerts`);
+  }
+
+  /**
+   * Get health events
+   */
+  async getHealthEvents(): Promise<any[]> {
+    return get<any[]>(`${this.baseUrl}/health/events`);
+  }
+
+  /**
+   * Run health check
+   */
+  async runHealthCheck(serviceId: string): Promise<any> {
+    return post<any>(`${this.baseUrl}/health/check/${serviceId}`, {});
+  }
+
+  /**
+   * Acknowledge alert
+   */
+  async acknowledgeAlert(alertId: string): Promise<any> {
+    return post<any>(`${this.baseUrl}/health/alerts/${alertId}/acknowledge`, {});
+  }
+
+  /**
+   * Resolve alert
+   */
+  async resolveAlert(alertId: string): Promise<any> {
+    return post<any>(`${this.baseUrl}/health/alerts/${alertId}/resolve`, {});
+  }
+
+  /**
+   * Get active alerts
+   */
+  async getActiveAlerts(): Promise<any[]> {
+    return get<any[]>(`${this.baseUrl}/health/alerts/active`);
+  }
 }
 
 // Export singleton instance
