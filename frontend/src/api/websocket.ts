@@ -1,14 +1,9 @@
 /**
  * Enhanced WebSocket API for Docker container management
  */
-import { containerAPI } from "./container";
 import { WebSocketClient, createEventSubscription } from "@/utils/websocket";
 import type {
-  Container,
   ResourceMetrics,
-  ContainerLog,
-  ContainerEvent,
-  WebSocketMessage,
   ContainerStatusUpdate,
   ContainerStatsUpdate,
   ContainerLogUpdate
@@ -284,6 +279,17 @@ export class DockerWebSocketAPI {
     this.subscriptions.get(topic)!.push(unsubscribe);
 
     return unsubscribe;
+  }
+
+  /**
+   * Subscribe to terminal data
+   */
+  subscribeToTerminalData(
+    sessionId: string,
+    callback: (data: TerminalData) => void
+  ): () => void {
+    const topic = `terminal.${sessionId}`;
+    return this.subscribe(topic, callback);
   }
 
   /**

@@ -3,8 +3,52 @@
     class="system-overview-widget"
     :class="{ 'compact-mode': displayMode === 'compact' }"
   >
-    <!-- System Status Header -->
-    <div class="status-header">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="loading-state">
+      <div class="status-skeleton">
+        <el-skeleton animated>
+          <template #template>
+            <div class="skeleton-status">
+              <el-skeleton-item variant="circle" style="width: 12px; height: 12px; margin-right: 12px;" />
+              <div>
+                <el-skeleton-item variant="text" style="width: 120px; height: 18px; margin-bottom: 4px;" />
+                <el-skeleton-item variant="text" style="width: 200px; height: 12px;" />
+              </div>
+            </div>
+          </template>
+        </el-skeleton>
+      </div>
+
+      <div class="metrics-grid">
+        <div v-for="i in 4" :key="i" class="metric-skeleton">
+          <el-skeleton animated>
+            <template #template>
+              <div class="skeleton-header">
+                <el-skeleton-item variant="circle" style="width: 16px; height: 16px; margin-right: 8px;" />
+                <el-skeleton-item variant="text" style="width: 80px;" />
+              </div>
+              <el-skeleton-item variant="text" style="width: 60px; height: 24px; margin: 8px 0;" />
+              <el-skeleton-item variant="text" style="width: 100%; height: 12px;" />
+              <el-skeleton-item variant="text" style="width: 80%; height: 12px; margin-top: 4px;" />
+            </template>
+          </el-skeleton>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-state">
+      <el-result icon="warning" title="加载失败" :sub-title="error">
+        <template #extra>
+          <el-button type="primary" @click="fetchSystemData">重试</el-button>
+        </template>
+      </el-result>
+    </div>
+
+    <!-- Normal Content -->
+    <template v-else>
+      <!-- System Status Header -->
+      <div class="status-header">
       <div class="system-status" :class="systemStatusClass">
         <div class="status-indicator">
           <div class="status-dot" />
@@ -284,6 +328,7 @@ v-if="displayMode === 'detailed'" class="system-info"
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
@@ -987,6 +1032,50 @@ watch(
   50% {
     opacity: 0.7;
   }
+}
+
+// Loading and Error States
+.loading-state {
+  padding: 16px;
+
+  .status-skeleton {
+    margin-bottom: 16px;
+
+    .skeleton-status {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: var(--el-fill-color-extra-light);
+      border-radius: 8px;
+    }
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+
+    .metric-skeleton {
+      background: var(--el-fill-color-extra-light);
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid var(--el-border-color-lighter);
+
+      .skeleton-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+    }
+  }
+}
+
+.error-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
 }
 
 // Responsive design

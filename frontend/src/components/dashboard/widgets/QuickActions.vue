@@ -380,43 +380,16 @@ const customActionRules = {
   ],
 };
 
-const customActions = ref([
-  {
-    id: "custom1",
-    name: "Restart Nginx",
-    command: "docker restart nginx",
-    icon: "Refresh",
-    requiresConfirmation: true,
-  },
-  {
-    id: "custom2",
-    name: "Clear Logs",
-    command: "docker system prune --volumes",
-    icon: "Delete",
-    requiresConfirmation: true,
-  },
-]);
-
-const recentActions = ref([
-  {
-    id: "recent1",
-    action: "Container restart: web-server",
-    status: "success",
-    timestamp: new Date(Date.now() - 300000),
-  },
-  {
-    id: "recent2",
-    action: "System cleanup",
-    status: "success",
-    timestamp: new Date(Date.now() - 600000),
-  },
-  {
-    id: "recent3",
-    action: "Update scan",
-    status: "failed",
-    timestamp: new Date(Date.now() - 900000),
-  },
-]);
+const customActions = ref<any[]>([]);
+const recentActions = ref<any[]>([]);
+const systemStats = ref({
+  containerCount: 0,
+  availableUpdates: 0,
+  warningLogs: 0,
+  errorLogs: 0,
+});
+const isLoading = ref(false);
+const error = ref('');
 
 // Computed properties
 const primaryActions = computed(() => [
@@ -426,7 +399,7 @@ const primaryActions = computed(() => [
     description: "检查新的更新",
     icon: "Search",
     type: "primary",
-    badge: 3,
+    badge: systemStats.value.availableUpdates || null,
     disabled: false,
   },
   {
@@ -463,7 +436,7 @@ const navigationItems = computed(() => [
     path: "/containers",
     label: "容器",
     icon: "Box",
-    badge: 12,
+    badge: systemStats.value.containerCount || null,
     badgeType: "primary",
   },
   {
@@ -482,8 +455,8 @@ const navigationItems = computed(() => [
     path: "/logs",
     label: "日志",
     icon: "Document",
-    badge: 5,
-    badgeType: "warning",
+    badge: systemStats.value.warningLogs + systemStats.value.errorLogs || null,
+    badgeType: systemStats.value.errorLogs > 0 ? "danger" : "warning",
   },
   {
     path: "/settings",
@@ -499,39 +472,183 @@ const navigationItems = computed(() => [
   },
 ]);
 
+// 加载初始数据
+const loadWidgetData = async () => {
+  try {
+    isLoading.value = true;
+    error.value = '';
+
+    // 并行加载各种数据
+    const [containerSummary, updateSummary, activityLogs, savedActions] = await Promise.all([
+      loadContainerSummary(),
+      loadUpdateSummary(),
+      loadRecentActions(),
+      loadCustomActions()
+    ]);
+
+    systemStats.value = {
+      containerCount: containerSummary.total || 0,
+      availableUpdates: updateSummary.available || 0,
+      warningLogs: activityLogs.warnings || 0,
+      errorLogs: activityLogs.errors || 0,
+    };
+
+    recentActions.value = activityLogs.recentActions || [];
+    customActions.value = savedActions || [];
+
+  } catch (err: any) {
+    console.error('Failed to load widget data:', err);
+    error.value = err.message || '加载数据失败';
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// 加载容器摘要
+const loadContainerSummary = async () => {
+  try {
+    const { containerAPI } = await import('@/api/container');
+    return await containerAPI.getContainersSummary();
+  } catch (err) {
+    console.error('Failed to load container summary:', err);
+    return { total: 0, running: 0, stopped: 0 };
+  }
+};
+
+// 加载更新摘要
+const loadUpdateSummary = async () => {
+  try {
+    const { updatesAPI } = await import('@/api/updates');
+    return await updatesAPI.getUpdatesSummary();
+  } catch (err) {
+    console.error('Failed to load update summary:', err);
+    return { available: 0, security: 0 };
+  }
+};
+
+// 加载最近操作
+const loadRecentActions = async () => {
+  try {
+    const { updatesAPI } = await import('@/api/updates');
+    const activities = await updatesAPI.getActivityLog({ limit: 5, timeRange: '24h' });
+    return {
+      recentActions: activities.activities?.map((a: any) => ({
+        id: a.id,
+        action: a.title || a.description,
+        status: a.status || (a.type === 'error' ? 'failed' : 'success'),
+        timestamp: new Date(a.timestamp)
+      })) || [],
+      warnings: activities.activities?.filter((a: any) => a.type === 'warning').length || 0,
+      errors: activities.activities?.filter((a: any) => a.type === 'error').length || 0,
+    };
+  } catch (err) {
+    console.error('Failed to load recent actions:', err);
+    return { recentActions: [], warnings: 0, errors: 0 };
+  }
+};
+
+// 加载自定义操作
+const loadCustomActions = async () => {
+  try {
+    // 从本地存储或API加载自定义操作
+    const saved = localStorage.getItem('customActions');
+    return saved ? JSON.parse(saved) : [];
+  } catch (err) {
+    console.error('Failed to load custom actions:', err);
+    return [];
+  }
+};
+
 // Methods
 const executeAction = async (action: any) => {
   if (action.disabled || loadingActions.value.has(action.id)) return;
 
   try {
     loadingActions.value.add(action.id);
+    let result;
 
-    // Simulate action execution
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // 执行真实的API调用
+    switch (action.id) {
+      case 'update-scan':
+        result = await executeUpdateScan();
+        break;
+      case 'system-health':
+        result = await executeHealthCheck();
+        break;
+      case 'container-prune':
+        result = await executeSystemCleanup();
+        break;
+      case 'backup-create':
+        result = await executeSystemBackup();
+        break;
+      default:
+        throw new Error(`Unknown action: ${action.id}`);
+    }
 
-    // Add to recent actions
+    // 添加到最近操作
     recentActions.value.unshift({
       id: Date.now().toString(),
-      action: `${action.title}: ${action.description}`,
+      action: `${action.title}: ${result.message || action.description}`,
       status: "success",
       timestamp: new Date(),
     });
 
-    ElMessage.success(`${action.title} completed successfully`);
+    ElMessage.success(`${action.title}执行成功`);
     emit("data-updated", { recentActions: recentActions.value });
-  } catch (error) {
+
+    // 刷新相关数据
+    await loadWidgetData();
+  } catch (error: any) {
     recentActions.value.unshift({
       id: Date.now().toString(),
-      action: `${action.title}: ${action.description}`,
+      action: `${action.title}: ${error.message || action.description}`,
       status: "failed",
       timestamp: new Date(),
     });
 
-    ElMessage.error(`${action.title} failed`);
+    ElMessage.error(`${action.title}执行失败: ${error.message}`);
     emit("error", error);
   } finally {
     loadingActions.value.delete(action.id);
   }
+};
+
+// 执行更新扫描
+const executeUpdateScan = async () => {
+  const { updatesAPI } = await import('@/api/updates');
+  const result = await updatesAPI.checkUpdates();
+  return { message: `发现${result.availableUpdates || 0}个可用更新` };
+};
+
+// 执行健康检查
+const executeHealthCheck = async () => {
+  const { monitoringAPI } = await import('@/api/monitoring');
+  const systemMetrics = await monitoringAPI.getSystemMetrics();
+  const healthScore = calculateHealthScore(systemMetrics);
+  return { message: `系统健康评分: ${healthScore}/100` };
+};
+
+// 计算健康评分
+const calculateHealthScore = (metrics: any) => {
+  let score = 100;
+  if (metrics.cpu?.usage > 80) score -= 20;
+  if (metrics.memory && (metrics.memory.used / metrics.memory.total) > 0.85) score -= 25;
+  if (metrics.disk && (metrics.disk.used / metrics.disk.total) > 0.8) score -= 15;
+  return Math.max(0, score);
+};
+
+// 执行系统清理
+const executeSystemCleanup = async () => {
+  const { containerAPI } = await import('@/api/container');
+  await containerAPI.pruneSystem();
+  return { message: '系统清理完成' };
+};
+
+// 执行系统备份
+const executeSystemBackup = async () => {
+  const { updatesAPI } = await import('@/api/updates');
+  const backupId = await updatesAPI.createBackup();
+  return { message: `备份已创建 (ID: ${backupId})` };
 };
 
 const executeContainerAction = async (actionType: string) => {
@@ -539,21 +656,43 @@ const executeContainerAction = async (actionType: string) => {
 
   try {
     loadingActions.value.add(actionType);
+    const { containerAPI } = await import('@/api/container');
 
-    const actionMap = {
-      "start-all": "Starting all containers...",
-      "stop-all": "Stopping all containers...",
-      "restart-all": "Restarting all containers...",
-    };
+    let result;
+    let message = '';
 
-    ElMessage.info(actionMap[actionType as keyof typeof actionMap]);
+    switch (actionType) {
+      case 'start-all':
+        ElMessage.info('正在启动所有容器...');
+        result = await containerAPI.startAllContainers();
+        message = `已启动 ${result.started || 0} 个容器`;
+        break;
+      case 'stop-all':
+        ElMessage.info('正在停止所有容器...');
+        result = await containerAPI.stopAllContainers();
+        message = `已停止 ${result.stopped || 0} 个容器`;
+        break;
+      case 'restart-all':
+        ElMessage.info('正在重启所有容器...');
+        result = await containerAPI.restartAllContainers();
+        message = `已重启 ${result.restarted || 0} 个容器`;
+        break;
+      default:
+        throw new Error(`Unknown container action: ${actionType}`);
+    }
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // 添加到最近操作
+    recentActions.value.unshift({
+      id: Date.now().toString(),
+      action: message,
+      status: "success",
+      timestamp: new Date(),
+    });
 
-    ElMessage.success("Container action completed");
-  } catch (error) {
-    ElMessage.error("Container action failed");
+    ElMessage.success('容器操作完成');
+    await loadWidgetData(); // 刷新数据
+  } catch (error: any) {
+    ElMessage.error(`容器操作失败: ${error.message}`);
     emit("error", error);
   } finally {
     loadingActions.value.delete(actionType);
@@ -565,21 +704,41 @@ const executeSystemAction = async (actionType: string) => {
 
   try {
     loadingActions.value.add(actionType);
+    let result;
+    let message = '';
 
-    const actionMap = {
-      "scan-updates": "Scanning for updates...",
-      cleanup: "Cleaning up system...",
-      backup: "Creating backup...",
-    };
+    switch (actionType) {
+      case 'scan-updates':
+        ElMessage.info('正在扫描更新...');
+        result = await executeUpdateScan();
+        message = result.message;
+        break;
+      case 'cleanup':
+        ElMessage.info('正在清理系统...');
+        result = await executeSystemCleanup();
+        message = result.message;
+        break;
+      case 'backup':
+        ElMessage.info('正在创建备份...');
+        result = await executeSystemBackup();
+        message = result.message;
+        break;
+      default:
+        throw new Error(`Unknown system action: ${actionType}`);
+    }
 
-    ElMessage.info(actionMap[actionType as keyof typeof actionMap]);
+    // 添加到最近操作
+    recentActions.value.unshift({
+      id: Date.now().toString(),
+      action: message,
+      status: "success",
+      timestamp: new Date(),
+    });
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    ElMessage.success("System action completed");
-  } catch (error) {
-    ElMessage.error("System action failed");
+    ElMessage.success('系统操作完成');
+    await loadWidgetData(); // 刷新数据
+  } catch (error: any) {
+    ElMessage.error(`系统操作失败: ${error.message}`);
     emit("error", error);
   } finally {
     loadingActions.value.delete(actionType);
@@ -590,25 +749,43 @@ const executeCustomAction = async (action: any) => {
   try {
     if (action.requiresConfirmation) {
       await ElMessageBox.confirm(
-        `Are you sure you want to execute: ${action.command}?`,
-        "Confirm Action",
+        `确定要执行自定义操作: ${action.command}?`,
+        "确认操作",
         {
           type: "warning",
-          confirmButtonText: "Execute",
-          cancelButtonText: "Cancel",
+          confirmButtonText: "执行",
+          cancelButtonText: "取消",
         },
       );
     }
 
-    ElMessage.info(`Executing: ${action.name}`);
+    ElMessage.info(`正在执行: ${action.name}`);
 
-    // Simulate command execution
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // 执行真实的命令
+    const { containerAPI } = await import('@/api/container');
+    const result = await containerAPI.executeCommand(action.command);
 
-    ElMessage.success(`${action.name} executed successfully`);
-  } catch (error) {
+    // 添加到最近操作
+    recentActions.value.unshift({
+      id: Date.now().toString(),
+      action: `自定义操作: ${action.name}`,
+      status: "success",
+      timestamp: new Date(),
+    });
+
+    ElMessage.success(`${action.name} 执行成功`);
+    await loadWidgetData(); // 刷新数据
+  } catch (error: any) {
     if (error !== "cancel") {
-      ElMessage.error(`Failed to execute ${action.name}`);
+      // 添加失败记录
+      recentActions.value.unshift({
+        id: Date.now().toString(),
+        action: `自定义操作: ${action.name} (失败)`,
+        status: "failed",
+        timestamp: new Date(),
+      });
+
+      ElMessage.error(`执行失败 ${action.name}: ${error.message}`);
     }
   }
 };
@@ -619,31 +796,43 @@ const executeEmergencyAction = async (actionType: string) => {
   try {
     const confirmMessage =
       actionType === "maintenance-mode"
-        ? `Are you sure you want to ${maintenanceMode.value ? "exit" : "enter"} maintenance mode?`
-        : "Are you sure you want to perform an emergency stop? This will stop all containers immediately.";
+        ? `确定要${maintenanceMode.value ? "退出" : "进入"}维护模式吗?`
+        : "确定要执行紧急停止吗？这将立即停止所有容器。";
 
-    await ElMessageBox.confirm(confirmMessage, "Confirm Emergency Action", {
+    await ElMessageBox.confirm(confirmMessage, "确认紧急操作", {
       type: "warning",
-      confirmButtonText: "Confirm",
-      cancelButtonText: "Cancel",
+      confirmButtonText: "确认",
+      cancelButtonText: "取消",
     });
 
     loadingActions.value.add(actionType);
+    const { containerAPI } = await import('@/api/container');
 
+    let message = '';
     if (actionType === "maintenance-mode") {
-      maintenanceMode.value = !maintenanceMode.value;
-      ElMessage.success(
-        `Maintenance mode ${maintenanceMode.value ? "activated" : "deactivated"}`,
-      );
+      const newMode = !maintenanceMode.value;
+      await containerAPI.setMaintenanceMode(newMode);
+      maintenanceMode.value = newMode;
+      message = `维护模式已${newMode ? "激活" : "停用"}`;
+      ElMessage.success(message);
     } else {
-      ElMessage.warning("Emergency stop initiated");
+      await containerAPI.emergencyStop();
+      message = "紧急停止已执行";
+      ElMessage.warning(message);
     }
 
-    // Simulate action
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  } catch (error) {
+    // 添加到最近操作
+    recentActions.value.unshift({
+      id: Date.now().toString(),
+      action: message,
+      status: "success",
+      timestamp: new Date(),
+    });
+
+    await loadWidgetData(); // 刷新数据
+  } catch (error: any) {
     if (error !== "cancel") {
-      ElMessage.error("Emergency action failed");
+      ElMessage.error(`紧急操作失败: ${error.message}`);
     }
   } finally {
     loadingActions.value.delete(actionType);
@@ -675,33 +864,47 @@ const saveCustomAction = async () => {
     };
 
     customActions.value.push(newAction);
+
+    // 保存到本地存储或API
+    localStorage.setItem('customActions', JSON.stringify(customActions.value));
+
     customActionDialogVisible.value = false;
-    ElMessage.success("Custom action added");
+    ElMessage.success("自定义操作已添加");
   } catch (error) {
-    console.error("Form validation failed:", error);
+    console.error("表单验证失败:", error);
   }
 };
 
 const handleCustomActionMenu = (command: string, action: any) => {
   switch (command) {
     case "edit":
-      ElMessage.info(`Editing ${action.name}`);
+      // 编辑自定义操作
+      customActionForm.value = {
+        name: action.name,
+        command: action.command,
+        icon: action.icon,
+        requiresConfirmation: action.requiresConfirmation,
+      };
+      customActionDialogVisible.value = true;
+      ElMessage.info(`正在编辑 ${action.name}`);
       break;
     case "duplicate": {
       const duplicated = {
         ...action,
         id: Date.now().toString(),
-        name: `${action.name} (Copy)`,
+        name: `${action.name} (副本)`,
       };
       customActions.value.push(duplicated);
-      ElMessage.success("Action duplicated");
+      localStorage.setItem('customActions', JSON.stringify(customActions.value));
+      ElMessage.success("操作已复制");
       break;
     }
     case "delete": {
       const index = customActions.value.findIndex((a) => a.id === action.id);
       if (index !== -1) {
         customActions.value.splice(index, 1);
-        ElMessage.success("Action deleted");
+        localStorage.setItem('customActions', JSON.stringify(customActions.value));
+        ElMessage.success("操作已删除");
       }
       break;
     }
@@ -761,11 +964,14 @@ const formatRelativeTime = (date: Date): string => {
 };
 
 // Lifecycle hooks
-onMounted(() => {
+onMounted(async () => {
+  await loadWidgetData();
+
   emit("data-updated", {
     customActions: customActions.value,
     recentActions: recentActions.value,
     maintenanceMode: maintenanceMode.value,
+    systemStats: systemStats.value,
   });
 });
 </script>

@@ -286,6 +286,10 @@ import {
 } from "@element-plus/icons-vue";
 
 import { useContainerStore } from "@/store/containers";
+import { useMonitoringStore } from "@/store/monitoring";
+import * as echarts from 'echarts';
+import { useDockerWebSocket } from "@/api/websocket";
+import type { ECBasicOption } from "@/types/echarts";
 
 interface Props {
   containerId: string;
@@ -309,7 +313,9 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const containerStore = useContainerStore();
+const monitoringStore = useMonitoringStore();
 const { stats, historicalStats } = storeToRefs(containerStore);
+const { realTimeMetrics, historicalData } = storeToRefs(monitoringStore);
 
 // Local state
 const loading = ref(false);
@@ -324,15 +330,31 @@ const memoryChartRef = ref<HTMLElement>();
 const networkChartRef = ref<HTMLElement>();
 const diskChartRef = ref<HTMLElement>();
 
+// Chart instances
+let cpuChart: echarts.ECharts | null = null;
+let memoryChart: echarts.ECharts | null = null;
+let networkChart: echarts.ECharts | null = null;
+let diskChart: echarts.ECharts | null = null;
+
 // Auto-refresh interval
 let refreshInterval: NodeJS.Timeout | null = null;
 
+// WebSocket connection
+const { api: wsAPI } = useDockerWebSocket();
+let unsubscribeStats: (() => void) | null = null;
+
 // Computed
 const currentStats = computed(() => {
-  return stats.value.get(props.containerId);
+  // Try to get from monitoring store first (real-time), fallback to container store
+  return realTimeMetrics.value.get(props.containerId) || stats.value.get(props.containerId);
 });
 
 const containerHistoricalStats = computed(() => {
+  // Try monitoring store first, fallback to container store
+  const monitoringHistorical = historicalData.value.get(props.containerId);
+  if (monitoringHistorical) {
+    return monitoringHistorical.data;
+  }
   return historicalStats.value.get(props.containerId) || [];
 });
 
@@ -440,7 +462,12 @@ function getResourceColor(percentage: number): string {
 async function refreshStats() {
   loading.value = true;
   try {
-    await containerStore.fetchStats(props.containerId);
+    // Use monitoring store for real-time stats if available
+    if (monitoringStore.isMonitored(props.containerId)) {
+      await monitoringStore.fetchRealTimeMetrics(props.containerId);
+    } else {
+      await containerStore.fetchStats(props.containerId);
+    }
     checkAlerts();
   } catch (error) {
     console.error("Failed to refresh stats:", error);
@@ -454,7 +481,8 @@ async function fetchHistoricalData() {
   if (!props.showHistorical) return;
 
   try {
-    await containerStore.fetchHistoricalStats(
+    // Use monitoring store for historical data
+    await monitoringStore.fetchHistoricalData(
       props.containerId,
       timeRange.value,
       getIntervalForRange(timeRange.value),
@@ -490,12 +518,38 @@ function toggleAutoRefresh() {
 function startAutoRefresh() {
   if (refreshInterval) return;
 
-  refreshInterval = setInterval(() => {
-    refreshStats();
-  }, 10000); // Refresh every 10 seconds
+  // Start monitoring with the monitoring store
+  monitoringStore.startMonitoring(props.containerId, {
+    enableRealTime: true,
+    enableHistorical: props.showHistorical,
+    historicalPeriod: timeRange.value,
+    historicalInterval: getIntervalForRange(timeRange.value),
+  }).then(() => {
+    console.log(`Started monitoring for container ${props.containerId}`);
+    // Subscribe to WebSocket updates
+    setupWebSocketSubscription();
+  }).catch(error => {
+    console.warn('Monitoring start failed, falling back to polling:', error);
+    // Fallback to polling
+    refreshInterval = setInterval(() => {
+      refreshStats();
+    }, 10000);
+  });
 }
 
 function stopAutoRefresh() {
+  // Stop monitoring
+  if (monitoringStore.isMonitored(props.containerId)) {
+    monitoringStore.stopMonitoring(props.containerId);
+  }
+
+  // Clean up WebSocket subscription
+  if (unsubscribeStats) {
+    unsubscribeStats();
+    unsubscribeStats = null;
+  }
+
+  // Stop polling fallback
   if (refreshInterval) {
     clearInterval(refreshInterval);
     refreshInterval = null;
@@ -562,39 +616,330 @@ async function exportMetrics() {
 }
 
 function renderCharts() {
-  // This would integrate with a charting library like Chart.js or ECharts
-  // For now, we'll just log that charts would be rendered
-  console.log("Rendering charts with data:", containerHistoricalStats.value);
+  const historicalStats = containerHistoricalStats.value;
+  if (!historicalStats.length) {
+    console.log('No historical data available for charts');
+    return;
+  }
 
-  // Example Chart.js integration:
-  /*
+  console.log("Rendering charts with data:", historicalStats.length, "data points");
+
+  // Prepare data
+  const timestamps = historicalStats.map(stat =>
+    new Date(stat.timestamp).toLocaleTimeString()
+  );
+
+  // Render CPU Chart
   if (cpuChartRef.value) {
-    new Chart(cpuChartRef.value, {
-      type: 'line',
-      data: {
-        labels: containerHistoricalStats.value.map(stat =>
-          new Date(stat.timestamp).toLocaleTimeString()
-        ),
-        datasets: [{
-          label: 'CPU Usage (%)',
-          data: containerHistoricalStats.value.map(stat => stat.metrics.cpu.usage),
-          borderColor: '#409eff',
-          backgroundColor: 'rgba(64, 158, 255, 0.1)',
-          tension: 0.4
-        }]
+    if (!cpuChart) {
+      cpuChart = echarts.init(cpuChartRef.value);
+    }
+
+    const cpuOption: ECBasicOption = {
+      title: {
+        text: 'CPU 使用率',
+        textStyle: { fontSize: 14, color: '#606266' },
       },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 100
-          }
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: any) => {
+          const data = params[0];
+          return `${data.name}<br/>CPU: ${data.value.toFixed(2)}%`;
+        },
+      },
+      xAxis: {
+        type: 'category',
+        data: timestamps,
+        axisLabel: { fontSize: 10 },
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        max: 100,
+        axisLabel: { formatter: '{value}%', fontSize: 10 },
+      },
+      series: [{
+        name: 'CPU Usage',
+        type: 'line',
+        data: historicalStats.map(stat => stat.metrics.cpu.usage),
+        smooth: true,
+        lineStyle: { color: '#409eff', width: 2 },
+        areaStyle: { color: 'rgba(64, 158, 255, 0.1)' },
+        symbol: 'circle',
+        symbolSize: 4,
+      }],
+      grid: {
+        left: '10%',
+        right: '10%',
+        bottom: '20%',
+        top: '20%',
+      },
+    };
+
+    cpuChart.setOption(cpuOption);
+  }
+
+  // Render Memory Chart
+  if (memoryChartRef.value) {
+    if (!memoryChart) {
+      memoryChart = echarts.init(memoryChartRef.value);
+    }
+
+    const memoryOption: ECBasicOption = {
+      title: {
+        text: '内存使用率',
+        textStyle: { fontSize: 14, color: '#606266' },
+      },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: any) => {
+          const data = params[0];
+          return `${data.name}<br/>内存: ${data.value.toFixed(2)}%`;
+        },
+      },
+      xAxis: {
+        type: 'category',
+        data: timestamps,
+        axisLabel: { fontSize: 10 },
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        max: 100,
+        axisLabel: { formatter: '{value}%', fontSize: 10 },
+      },
+      series: [{
+        name: 'Memory Usage',
+        type: 'line',
+        data: historicalStats.map(stat => stat.metrics.memory.percentage),
+        smooth: true,
+        lineStyle: { color: '#67c23a', width: 2 },
+        areaStyle: { color: 'rgba(103, 194, 58, 0.1)' },
+        symbol: 'circle',
+        symbolSize: 4,
+      }],
+      grid: {
+        left: '10%',
+        right: '10%',
+        bottom: '20%',
+        top: '20%',
+      },
+    };
+
+    memoryChart.setOption(memoryOption);
+  }
+
+  // Render Network Chart
+  if (networkChartRef.value) {
+    if (!networkChart) {
+      networkChart = echarts.init(networkChartRef.value);
+    }
+
+    const networkOption: ECBasicOption = {
+      title: {
+        text: '网络 I/O',
+        textStyle: { fontSize: 14, color: '#606266' },
+      },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: any) => {
+          let result = params[0].name + '<br/>';
+          params.forEach((param: any) => {
+            result += `${param.seriesName}: ${formatBytes(param.value)}<br/>`;
+          });
+          return result;
+        },
+      },
+      legend: {
+        data: ['接收', '发送'],
+        bottom: 0,
+        textStyle: { fontSize: 10 },
+      },
+      xAxis: {
+        type: 'category',
+        data: timestamps,
+        axisLabel: { fontSize: 10 },
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          formatter: (value: number) => formatBytes(value),
+          fontSize: 10,
+        },
+      },
+      series: [{
+        name: '接收',
+        type: 'line',
+        data: historicalStats.map(stat => stat.metrics.network.rxBytes),
+        smooth: true,
+        lineStyle: { color: '#e6a23c', width: 2 },
+        symbol: 'circle',
+        symbolSize: 4,
+      }, {
+        name: '发送',
+        type: 'line',
+        data: historicalStats.map(stat => stat.metrics.network.txBytes),
+        smooth: true,
+        lineStyle: { color: '#f56c6c', width: 2 },
+        symbol: 'circle',
+        symbolSize: 4,
+      }],
+      grid: {
+        left: '10%',
+        right: '10%',
+        bottom: '25%',
+        top: '20%',
+      },
+    };
+
+    networkChart.setOption(networkOption);
+  }
+
+  // Render Disk Chart
+  if (diskChartRef.value) {
+    if (!diskChart) {
+      diskChart = echarts.init(diskChartRef.value);
+    }
+
+    const diskOption: ECBasicOption = {
+      title: {
+        text: '磁盘 I/O',
+        textStyle: { fontSize: 14, color: '#606266' },
+      },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: any) => {
+          let result = params[0].name + '<br/>';
+          params.forEach((param: any) => {
+            result += `${param.seriesName}: ${formatBytes(param.value)}<br/>`;
+          });
+          return result;
+        },
+      },
+      legend: {
+        data: ['读取', '写入'],
+        bottom: 0,
+        textStyle: { fontSize: 10 },
+      },
+      xAxis: {
+        type: 'category',
+        data: timestamps,
+        axisLabel: { fontSize: 10 },
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          formatter: (value: number) => formatBytes(value),
+          fontSize: 10,
+        },
+      },
+      series: [{
+        name: '读取',
+        type: 'line',
+        data: historicalStats.map(stat => stat.metrics.disk.readBytes),
+        smooth: true,
+        lineStyle: { color: '#909399', width: 2 },
+        symbol: 'circle',
+        symbolSize: 4,
+      }, {
+        name: '写入',
+        type: 'line',
+        data: historicalStats.map(stat => stat.metrics.disk.writeBytes),
+        smooth: true,
+        lineStyle: { color: '#409eff', width: 2 },
+        symbol: 'circle',
+        symbolSize: 4,
+      }],
+      grid: {
+        left: '10%',
+        right: '10%',
+        bottom: '25%',
+        top: '20%',
+      },
+    };
+
+    diskChart.setOption(diskOption);
+  }
+}
+
+// Setup WebSocket subscription
+function setupWebSocketSubscription() {
+  if (wsAPI?.isConnected()) {
+    console.log('Setting up WebSocket subscription for container stats:', props.containerId);
+    unsubscribeStats = wsAPI.subscribeToContainerStats(
+      props.containerId,
+      (data) => {
+        console.log('Received real-time stats via WebSocket:', data);
+        if (data.metrics) {
+          monitoringStore.updateRealTimeMetrics(props.containerId, data.metrics);
+          checkAlerts();
+          // Update charts in real-time if they exist
+          updateChartsRealTime(data.metrics);
         }
       }
-    })
+    );
   }
-  */
+}
+
+// Update charts with real-time data
+function updateChartsRealTime(metrics: any) {
+  if (!props.showHistorical) return;
+
+  const now = new Date().toLocaleTimeString();
+
+  // Update CPU chart
+  if (cpuChart) {
+    cpuChart.setOption({
+      xAxis: {
+        data: [...(cpuChart.getOption().xAxis[0].data || []), now].slice(-20) // Keep last 20 points
+      },
+      series: [{
+        data: [...(cpuChart.getOption().series[0].data || []), metrics.cpu.usage].slice(-20)
+      }]
+    });
+  }
+
+  // Update Memory chart
+  if (memoryChart) {
+    memoryChart.setOption({
+      xAxis: {
+        data: [...(memoryChart.getOption().xAxis[0].data || []), now].slice(-20)
+      },
+      series: [{
+        data: [...(memoryChart.getOption().series[0].data || []), metrics.memory.percentage].slice(-20)
+      }]
+    });
+  }
+
+  // Update Network chart
+  if (networkChart) {
+    const currentOption = networkChart.getOption();
+    networkChart.setOption({
+      xAxis: {
+        data: [...(currentOption.xAxis[0].data || []), now].slice(-20)
+      },
+      series: [{
+        data: [...(currentOption.series[0].data || []), metrics.network.rxBytes].slice(-20)
+      }, {
+        data: [...(currentOption.series[1].data || []), metrics.network.txBytes].slice(-20)
+      }]
+    });
+  }
+
+  // Update Disk chart
+  if (diskChart) {
+    const currentOption = diskChart.getOption();
+    diskChart.setOption({
+      xAxis: {
+        data: [...(currentOption.xAxis[0].data || []), now].slice(-20)
+      },
+      series: [{
+        data: [...(currentOption.series[0].data || []), metrics.disk.readBytes].slice(-20)
+      }, {
+        data: [...(currentOption.series[1].data || []), metrics.disk.writeBytes].slice(-20)
+      }]
+    });
+  }
 }
 
 // Lifecycle
@@ -610,20 +955,60 @@ onMounted(() => {
       startAutoRefresh();
     }
   }
+
+  // Handle window resize for charts
+  const handleResize = () => {
+    cpuChart?.resize();
+    memoryChart?.resize();
+    networkChart?.resize();
+    diskChart?.resize();
+  };
+
+  window.addEventListener('resize', handleResize);
+
+  // Cleanup on unmount
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleResize);
+    cpuChart?.dispose();
+    memoryChart?.dispose();
+    networkChart?.dispose();
+    diskChart?.dispose();
+  });
 });
 
 onUnmounted(() => {
   stopAutoRefresh();
+
+  // Dispose chart instances
+  cpuChart?.dispose();
+  memoryChart?.dispose();
+  networkChart?.dispose();
+  diskChart?.dispose();
 });
 
 // Watch for container changes
 watch(
   () => props.containerId,
-  (newId) => {
+  (newId, oldId) => {
+    if (oldId && oldId !== newId) {
+      // Stop monitoring old container
+      if (monitoringStore.isMonitored(oldId)) {
+        monitoringStore.stopMonitoring(oldId);
+      }
+      // Clean up WebSocket subscription
+      if (unsubscribeStats) {
+        unsubscribeStats();
+        unsubscribeStats = null;
+      }
+    }
+
     if (newId) {
       refreshStats();
       if (props.showHistorical) {
         fetchHistoricalData();
+      }
+      if (autoRefresh.value) {
+        startAutoRefresh();
       }
     }
   },
@@ -808,13 +1193,8 @@ watch(timeRange, () => {
 
 .chart {
   height: 200px;
-  background: #f8f9fa;
   border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #909399;
-  font-size: 12px;
+  min-height: 200px;
 }
 
 .detailed-metrics {

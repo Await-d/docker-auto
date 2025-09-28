@@ -263,6 +263,33 @@ func IsRetryableError(err error) bool {
 	return isTransientError(err)
 }
 
+// IsConflictError checks if error is a conflict error
+func IsConflictError(err error) bool {
+	dockerErr, ok := err.(*DockerError)
+	if ok {
+		return dockerErr.Type == ErrorTypeConflict
+	}
+	return isConflictError(err)
+}
+
+// IsImageNotFoundError checks if error is an image not found error
+func IsImageNotFoundError(err error) bool {
+	dockerErr, ok := err.(*DockerError)
+	if ok {
+		return dockerErr.Type == ErrorTypeNotFound && strings.Contains(dockerErr.Resource, "image")
+	}
+	return isImageNotFoundError(err)
+}
+
+// IsInvalidParameterError checks if error is an invalid parameter error
+func IsInvalidParameterError(err error) bool {
+	dockerErr, ok := err.(*DockerError)
+	if ok {
+		return dockerErr.Type == ErrorTypeInvalidConfig
+	}
+	return isInvalidParameterError(err)
+}
+
 // Specific error checking functions
 
 func isNetworkError(err error) bool {
@@ -665,5 +692,39 @@ func getSuggestionsForError(err error) []string {
 	}
 
 	return suggestions
+}
+
+// Low-level error checking functions
+
+func isConflictError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "conflict") ||
+		strings.Contains(errStr, "already exists") ||
+		strings.Contains(errStr, "is already in use") ||
+		strings.Contains(errStr, "name is already in use")
+}
+
+func isImageNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "no such image") ||
+		strings.Contains(errStr, "image not found") ||
+		strings.Contains(errStr, "not found") && strings.Contains(errStr, "image")
+}
+
+func isInvalidParameterError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "invalid parameter") ||
+		strings.Contains(errStr, "invalid argument") ||
+		strings.Contains(errStr, "bad parameter") ||
+		strings.Contains(errStr, "validation error")
 }
 

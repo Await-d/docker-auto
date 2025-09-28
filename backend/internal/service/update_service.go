@@ -139,6 +139,12 @@ type UpdateScheduler struct {
 	config             *config.Config
 	logger             *logrus.Entry
 	mu                 sync.RWMutex
+
+	// Advanced scheduling features
+	scheduledUpdates   map[string]*ScheduledUpdate
+	maintenanceWindows []*MaintenanceWindow
+	updatePriorities   map[string]UpdatePriority
+	resourceLimits     *ResourceLimits
 }
 
 // NewUpdateService creates a new update service
@@ -1124,6 +1130,500 @@ func (s *UpdateService) cleanupOldOperations() {
 			delete(s.activeUpdates, containerID)
 		}
 	}
+}
+
+// Advanced update strategy types and structures
+
+// ScheduledUpdate represents a scheduled update operation
+type ScheduledUpdate struct {
+	ID              string                     `json:"id"`
+	ContainerID     string                     `json:"container_id"`
+	ScheduledTime   time.Time                  `json:"scheduled_time"`
+	Request         *UpdateRequest             `json:"request"`
+	Priority        UpdatePriority             `json:"priority"`
+	CreatedAt       time.Time                  `json:"created_at"`
+	Status          ScheduledUpdateStatus      `json:"status"`
+}
+
+// MaintenanceWindow defines a maintenance window for updates
+type MaintenanceWindow struct {
+	ID              string         `json:"id"`
+	Name            string         `json:"name"`
+	StartTime       time.Time      `json:"start_time"`
+	EndTime         time.Time      `json:"end_time"`
+	Recurring       bool           `json:"recurring"`
+	RecurringType   RecurringType  `json:"recurring_type,omitempty"`
+	AllowedServices []string       `json:"allowed_services"`
+	MaxConcurrent   int            `json:"max_concurrent"`
+	Enabled         bool           `json:"enabled"`
+}
+
+// ResourceLimits defines resource limits for update operations
+type ResourceLimits struct {
+	MaxConcurrentUpdates int     `json:"max_concurrent_updates"`
+	MaxCPUUsage         float64 `json:"max_cpu_usage"`
+	MaxMemoryUsage      float64 `json:"max_memory_usage"`
+	MinDiskSpace        int64   `json:"min_disk_space"`
+}
+
+// UpdatePriority defines update priority levels
+type UpdatePriority int
+
+const (
+	PriorityLow UpdatePriority = iota
+	PriorityNormal
+	PriorityHigh
+	PriorityCritical
+)
+
+// ScheduledUpdateStatus represents the status of a scheduled update
+type ScheduledUpdateStatus string
+
+const (
+	ScheduledStatusPending   ScheduledUpdateStatus = "pending"
+	ScheduledStatusExecuting ScheduledUpdateStatus = "executing"
+	ScheduledStatusCompleted ScheduledUpdateStatus = "completed"
+	ScheduledStatusFailed    ScheduledUpdateStatus = "failed"
+	ScheduledStatusCancelled ScheduledUpdateStatus = "cancelled"
+)
+
+// RecurringType defines types of recurring maintenance windows
+type RecurringType string
+
+const (
+	RecurringDaily   RecurringType = "daily"
+	RecurringWeekly  RecurringType = "weekly"
+	RecurringMonthly RecurringType = "monthly"
+)
+
+// Smart Update Strategy Methods
+
+// ScheduleUpdate schedules an update for a specific time
+func (s *UpdateService) ScheduleUpdate(ctx context.Context, userID int64, req *UpdateRequest, scheduledTime time.Time, priority UpdatePriority) (*ScheduledUpdate, error) {
+	// Validate request
+	if err := s.validateUpdateRequest(req); err != nil {
+		return nil, fmt.Errorf("invalid update request: %w", err)
+	}
+
+	// Check if update can be scheduled during the requested time
+	if !s.updateScheduler.CanScheduleAt(scheduledTime, req.ContainerID) {
+		// Find next available maintenance window
+		nextWindow := s.updateScheduler.FindNextMaintenanceWindow(scheduledTime, req.ContainerID)
+		if nextWindow == nil {
+			return nil, fmt.Errorf("no suitable maintenance window found")
+		}
+		scheduledTime = nextWindow.StartTime
+	}
+
+	scheduled := &ScheduledUpdate{
+		ID:            fmt.Sprintf("scheduled_%s_%d", req.ContainerID, time.Now().UnixNano()),
+		ContainerID:   req.ContainerID,
+		ScheduledTime: scheduledTime,
+		Request:       req,
+		Priority:      priority,
+		CreatedAt:     time.Now(),
+		Status:        ScheduledStatusPending,
+	}
+
+	s.updateScheduler.mu.Lock()
+	s.updateScheduler.scheduledUpdates[scheduled.ID] = scheduled
+	s.updateScheduler.mu.Unlock()
+
+	s.logger.WithFields(logrus.Fields{
+		"scheduled_id":   scheduled.ID,
+		"container_id":   req.ContainerID,
+		"scheduled_time": scheduledTime,
+		"priority":       priority,
+	}).Info("Update scheduled")
+
+	return scheduled, nil
+}
+
+// CanScheduleAt checks if an update can be scheduled at the given time
+func (us *UpdateScheduler) CanScheduleAt(scheduledTime time.Time, containerID string) bool {
+	us.mu.RLock()
+	defer us.mu.RUnlock()
+
+	// Check if within maintenance window
+	for _, window := range us.maintenanceWindows {
+		if !window.Enabled {
+			continue
+		}
+
+		if us.isTimeInWindow(scheduledTime, window) {
+			// Check concurrent update limits
+			concurrent := us.countConcurrentUpdates(scheduledTime, containerID)
+			if concurrent < window.MaxConcurrent {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// FindNextMaintenanceWindow finds the next available maintenance window
+func (us *UpdateScheduler) FindNextMaintenanceWindow(after time.Time, containerID string) *MaintenanceWindow {
+	us.mu.RLock()
+	defer us.mu.RUnlock()
+
+	var nextWindow *MaintenanceWindow
+	var nextTime time.Time
+
+	for _, window := range us.maintenanceWindows {
+		if !window.Enabled {
+			continue
+		}
+
+		windowStart := us.getNextWindowStart(after, window)
+		if nextWindow == nil || windowStart.Before(nextTime) {
+			nextWindow = window
+			nextTime = windowStart
+		}
+	}
+
+	return nextWindow
+}
+
+// OptimizeUpdateStrategy optimizes the update strategy based on system state
+func (s *UpdateService) OptimizeUpdateStrategy(ctx context.Context, req *UpdateRequest) *dockerTypes.UpdateStrategy {
+	// Get container metrics
+	metrics, err := s.monitoringService.GetContainerMetrics(ctx, req.ContainerID)
+	if err != nil {
+		s.logger.WithError(err).Warn("Failed to get container metrics for optimization")
+		return &dockerTypes.UpdateStrategyRecreate // Fallback to safe strategy
+	}
+
+	// Get system load
+	systemLoad := s.getSystemLoad(ctx)
+
+	// Optimize based on container characteristics
+	container, err := s.containerRepo.GetByContainerID(ctx, req.ContainerID)
+	if err != nil {
+		return &dockerTypes.UpdateStrategyRecreate
+	}
+
+	// Decision algorithm
+	if s.shouldUseRollingUpdate(container, metrics, systemLoad) {
+		return &dockerTypes.UpdateStrategyRolling
+	} else if s.shouldUseBlueGreenUpdate(container, metrics, systemLoad) {
+		return &dockerTypes.UpdateStrategyBlueGreen
+	} else {
+		return &dockerTypes.UpdateStrategyRecreate
+	}
+}
+
+// shouldUseRollingUpdate determines if rolling update is optimal
+func (s *UpdateService) shouldUseRollingUpdate(container *model.Container, metrics *ContainerMetrics, systemLoad *SystemLoad) bool {
+	// Rolling update is good for:
+	// 1. Low resource usage containers
+	// 2. Stateless services
+	// 3. Services with multiple replicas
+
+	if metrics != nil && metrics.CPUPercent < 30 && metrics.MemoryPercent < 50 {
+		return true
+	}
+
+	// Check if container has health check
+	if container.HealthCheck != nil && container.HealthCheck != "" {
+		return true
+	}
+
+	return false
+}
+
+// shouldUseBlueGreenUpdate determines if blue-green update is optimal
+func (s *UpdateService) shouldUseBlueGreenUpdate(container *model.Container, metrics *ContainerMetrics, systemLoad *SystemLoad) bool {
+	// Blue-green is good for:
+	// 1. Critical services
+	// 2. Services requiring zero downtime
+	// 3. When system has sufficient resources
+
+	if systemLoad != nil && systemLoad.CPUUsage < 60 && systemLoad.MemoryUsage < 70 {
+		// Check if container is critical
+		if container.Priority != nil && *container.Priority == "high" {
+			return true
+		}
+	}
+
+	return false
+}
+
+// BatchUpdateOptimization performs intelligent batch updates
+func (s *UpdateService) BatchUpdateOptimization(ctx context.Context, userID int64, requests []*UpdateRequest) ([]*UpdateOperation, error) {
+	if len(requests) == 0 {
+		return nil, fmt.Errorf("no update requests provided")
+	}
+
+	// Group requests by dependency and priority
+	batches := s.groupUpdatesByDependency(requests)
+
+	var allOperations []*UpdateOperation
+
+	// Process batches in order
+	for i, batch := range batches {
+		s.logger.WithFields(logrus.Fields{
+			"batch_number": i + 1,
+			"batch_size":   len(batch),
+		}).Info("Processing update batch")
+
+		var batchOperations []*UpdateOperation
+
+		// Process batch with optimal concurrency
+		concurrency := s.calculateOptimalConcurrency(batch)
+		semaphore := make(chan struct{}, concurrency)
+
+		var wg sync.WaitGroup
+		var mu sync.Mutex
+
+		for _, req := range batch {
+			wg.Add(1)
+			go func(request *UpdateRequest) {
+				defer wg.Done()
+				semaphore <- struct{}{}
+				defer func() { <-semaphore }()
+
+				operation, err := s.UpdateContainer(ctx, userID, request)
+				if err != nil {
+					s.logger.WithError(err).WithField("container_id", request.ContainerID).Error("Batch update failed")
+					return
+				}
+
+				mu.Lock()
+				batchOperations = append(batchOperations, operation)
+				mu.Unlock()
+			}(req)
+		}
+
+		wg.Wait()
+		allOperations = append(allOperations, batchOperations...)
+
+		// Wait for batch completion before next batch
+		s.waitForBatchCompletion(batchOperations)
+	}
+
+	return allOperations, nil
+}
+
+// groupUpdatesByDependency groups updates by their dependencies
+func (s *UpdateService) groupUpdatesByDependency(requests []*UpdateRequest) [][]*UpdateRequest {
+	// Simple implementation - could be enhanced with dependency analysis
+	var batches [][]*UpdateRequest
+
+	// Group by priority first
+	priorityGroups := make(map[UpdatePriority][]*UpdateRequest)
+
+	for _, req := range requests {
+		priority := s.getUpdatePriority(req.ContainerID)
+		priorityGroups[priority] = append(priorityGroups[priority], req)
+	}
+
+	// Create batches in priority order
+	priorities := []UpdatePriority{PriorityCritical, PriorityHigh, PriorityNormal, PriorityLow}
+	for _, priority := range priorities {
+		if group, exists := priorityGroups[priority]; exists {
+			// Split large groups into smaller batches
+			batchSize := 5 // Configurable
+			for i := 0; i < len(group); i += batchSize {
+				end := i + batchSize
+				if end > len(group) {
+					end = len(group)
+				}
+				batches = append(batches, group[i:end])
+			}
+		}
+	}
+
+	return batches
+}
+
+// calculateOptimalConcurrency calculates optimal concurrency for a batch
+func (s *UpdateService) calculateOptimalConcurrency(batch []*UpdateRequest) int {
+	systemLoad := s.getSystemLoad(context.Background())
+
+	baseConcurrency := 3
+	if systemLoad != nil {
+		if systemLoad.CPUUsage < 50 && systemLoad.MemoryUsage < 60 {
+			baseConcurrency = 5
+		} else if systemLoad.CPUUsage > 80 || systemLoad.MemoryUsage > 85 {
+			baseConcurrency = 1
+		}
+	}
+
+	// Don't exceed batch size
+	if baseConcurrency > len(batch) {
+		return len(batch)
+	}
+
+	return baseConcurrency
+}
+
+// SystemLoad represents current system load
+type SystemLoad struct {
+	CPUUsage    float64 `json:"cpu_usage"`
+	MemoryUsage float64 `json:"memory_usage"`
+	DiskUsage   float64 `json:"disk_usage"`
+	LoadAvg     float64 `json:"load_avg"`
+}
+
+// getSystemLoad gets current system load
+func (s *UpdateService) getSystemLoad(ctx context.Context) *SystemLoad {
+	// This would integrate with monitoring service
+	// For now, return mock data
+	return &SystemLoad{
+		CPUUsage:    45.0,
+		MemoryUsage: 60.0,
+		DiskUsage:   30.0,
+		LoadAvg:     1.2,
+	}
+}
+
+// getUpdatePriority gets the priority for a container update
+func (s *UpdateService) getUpdatePriority(containerID string) UpdatePriority {
+	s.updateScheduler.mu.RLock()
+	defer s.updateScheduler.mu.RUnlock()
+
+	if priority, exists := s.updateScheduler.updatePriorities[containerID]; exists {
+		return priority
+	}
+
+	return PriorityNormal // Default priority
+}
+
+// waitForBatchCompletion waits for a batch of operations to complete
+func (s *UpdateService) waitForBatchCompletion(operations []*UpdateOperation) {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		allCompleted := true
+		for _, op := range operations {
+			op.mu.RLock()
+			if op.Status == UpdateStatusPending || op.Status == UpdateStatusRunning {
+				allCompleted = false
+			}
+			op.mu.RUnlock()
+		}
+
+		if allCompleted {
+			break
+		}
+
+		<-ticker.C
+	}
+}
+
+// Helper methods for maintenance windows
+
+// isTimeInWindow checks if a time falls within a maintenance window
+func (us *UpdateScheduler) isTimeInWindow(t time.Time, window *MaintenanceWindow) bool {
+	if !window.Recurring {
+		return t.After(window.StartTime) && t.Before(window.EndTime)
+	}
+
+	// Handle recurring windows
+	switch window.RecurringType {
+	case RecurringDaily:
+		return us.isTimeInDailyWindow(t, window)
+	case RecurringWeekly:
+		return us.isTimeInWeeklyWindow(t, window)
+	case RecurringMonthly:
+		return us.isTimeInMonthlyWindow(t, window)
+	}
+
+	return false
+}
+
+// isTimeInDailyWindow checks if time is in daily recurring window
+func (us *UpdateScheduler) isTimeInDailyWindow(t time.Time, window *MaintenanceWindow) bool {
+	startHour := window.StartTime.Hour()
+	startMin := window.StartTime.Minute()
+	endHour := window.EndTime.Hour()
+	endMin := window.EndTime.Minute()
+
+	timeOfDay := t.Hour()*60 + t.Minute()
+	startOfDay := startHour*60 + startMin
+	endOfDay := endHour*60 + endMin
+
+	if endOfDay > startOfDay {
+		return timeOfDay >= startOfDay && timeOfDay <= endOfDay
+	} else {
+		// Window crosses midnight
+		return timeOfDay >= startOfDay || timeOfDay <= endOfDay
+	}
+}
+
+// isTimeInWeeklyWindow checks if time is in weekly recurring window
+func (us *UpdateScheduler) isTimeInWeeklyWindow(t time.Time, window *MaintenanceWindow) bool {
+	if t.Weekday() != window.StartTime.Weekday() {
+		return false
+	}
+	return us.isTimeInDailyWindow(t, window)
+}
+
+// isTimeInMonthlyWindow checks if time is in monthly recurring window
+func (us *UpdateScheduler) isTimeInMonthlyWindow(t time.Time, window *MaintenanceWindow) bool {
+	if t.Day() != window.StartTime.Day() {
+		return false
+	}
+	return us.isTimeInDailyWindow(t, window)
+}
+
+// countConcurrentUpdates counts concurrent updates at a given time
+func (us *UpdateScheduler) countConcurrentUpdates(t time.Time, excludeContainer string) int {
+	count := 0
+	for _, scheduled := range us.scheduledUpdates {
+		if scheduled.ContainerID == excludeContainer {
+			continue
+		}
+		if scheduled.Status == ScheduledStatusExecuting {
+			// Estimate if it would be running at time t
+			estimatedDuration := 10 * time.Minute // Configurable
+			if t.After(scheduled.ScheduledTime) && t.Before(scheduled.ScheduledTime.Add(estimatedDuration)) {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+// getNextWindowStart gets the next start time for a recurring window
+func (us *UpdateScheduler) getNextWindowStart(after time.Time, window *MaintenanceWindow) time.Time {
+	if !window.Recurring {
+		if window.StartTime.After(after) {
+			return window.StartTime
+		}
+		return time.Time{} // No future occurrence
+	}
+
+	switch window.RecurringType {
+	case RecurringDaily:
+		next := time.Date(after.Year(), after.Month(), after.Day(),
+			window.StartTime.Hour(), window.StartTime.Minute(), 0, 0, after.Location())
+		if next.Before(after) {
+			next = next.Add(24 * time.Hour)
+		}
+		return next
+
+	case RecurringWeekly:
+		daysUntilWindow := int(window.StartTime.Weekday()) - int(after.Weekday())
+		if daysUntilWindow <= 0 {
+			daysUntilWindow += 7
+		}
+		next := after.Add(time.Duration(daysUntilWindow) * 24 * time.Hour)
+		return time.Date(next.Year(), next.Month(), next.Day(),
+			window.StartTime.Hour(), window.StartTime.Minute(), 0, 0, next.Location())
+
+	case RecurringMonthly:
+		next := time.Date(after.Year(), after.Month(), window.StartTime.Day(),
+			window.StartTime.Hour(), window.StartTime.Minute(), 0, 0, after.Location())
+		if next.Before(after) {
+			next = next.AddDate(0, 1, 0)
+		}
+		return next
+	}
+
+	return time.Time{}
 }
 
 // Close gracefully shuts down the update service

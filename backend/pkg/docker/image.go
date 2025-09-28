@@ -397,10 +397,6 @@ func (d *DockerClient) ImageExists(ctx context.Context, imageName string) (bool,
 }
 
 // IsImageNotFoundError checks if an error is an image not found error
-func IsImageNotFoundError(err error) bool {
-	return err != nil && (strings.Contains(err.Error(), "No such image") ||
-		strings.Contains(err.Error(), "not found"))
-}
 
 // GetImageSize gets the size of an image
 func (d *DockerClient) GetImageSize(ctx context.Context, imageName string) (int64, error) {

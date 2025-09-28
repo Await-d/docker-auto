@@ -109,7 +109,7 @@
 
 ## API控制器增强
 
-- [ ] 10. 增强容器API端点实现真实功能 (🚫绝不使用模拟/简化/临时方案)
+- [x] 10. 增强容器API端点实现真实功能 (🚫绝不使用模拟/简化/临时方案)
   - File: backend/cmd/server/main.go (setupContainerAPIRoutes函数)
   - **完全消除所有模拟响应**，替换为真实Docker操作调用
   - **集成完整的监控数据和生产级WebSocket终端端点**
@@ -120,7 +120,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
   - _Prompt: Implement the task for spec docker-container-lifecycle-management, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Senior Go API Developer with expertise in production-grade REST API design and Docker integration | Task: COMPLETELY enhance container API endpoints in backend/cmd/server/main.go setupContainerAPIRoutes function following requirements 1.1, 1.2, 1.3, and 1.4, COMPLETELY ELIMINATING ALL MOCK RESPONSES and replacing with real Docker operations, integrating FULL monitoring data and PRODUCTION-GRADE WebSocket terminal endpoints with comprehensive error handling for all Docker API scenarios | Restrictions: NEVER use mock/temporary/simplified responses, must implement complete production-ready HTTP status codes and error handling, ensure full backward compatibility, implement comprehensive API performance optimizations, use real Docker data exclusively, implement production-grade security and rate limiting | _Leverage: existing API route structure from setupContainerAPIRoutes function, enhanced ContainerService | _Requirements: Requirement 1.1 (container operations), Requirement 1.2 (real-time status), Requirement 1.3 (terminal access), Requirement 1.4 (monitoring data) | Success: ALL API endpoints return EXCLUSIVELY real Docker data with ZERO mock responses remaining, WebSocket terminal endpoints work with full production-grade functionality, monitoring data is completely integrated and optimized, API responses maintain existing contracts while providing real data, comprehensive error handling covers all production scenarios | Instructions: Mark this task as in-progress in tasks.md by changing [ ] to [-], then mark as complete [x] when COMPLETE production-grade implementation eliminates all mock data_
 
-- [ ] 11. 实现实时监控API端点
+- [x] 11. 实现实时监控API端点
   - File: backend/cmd/server/main.go (添加新的监控路由组)
   - 创建监控数据API和WebSocket实时推送端点
   - 实现指标聚合和历史数据查询
@@ -131,7 +131,7 @@
 
 ## 前端组件集成
 
-- [ ] 12. 增强Containers.vue组件集成真实数据 (🚫绝不使用模拟/简化/临时方案)
+- [x] 12. 增强Containers.vue组件集成真实数据 (🚫绝不使用模拟/简化/临时方案)
   - File: frontend/src/views/Containers.vue
   - **完全消除所有模拟数据**，替换为真实API调用
   - **实现完整的实时状态更新和生产级操作反馈**
@@ -142,7 +142,7 @@
   - _Requirements: 1.1, 1.6_
   - _Prompt: Implement the task for spec docker-container-lifecycle-management, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Senior Vue Frontend Developer with expertise in production-grade API integration and real-time user interfaces | Task: COMPLETELY enhance Containers.vue component following requirements 1.1 and 1.6, COMPLETELY ELIMINATING ALL MOCK DATA and replacing with real API calls, implementing FULL real-time status updates and PRODUCTION-GRADE operation feedback with comprehensive error handling for all network and API scenarios | Restrictions: NEVER use mock/temporary/simplified data or interfaces, must implement complete production-ready error handling and user feedback, ensure optimal UI/UX for all operation states, maintain existing design while enhancing functionality, implement comprehensive loading states and error recovery | _Leverage: existing Containers.vue component structure, axios API client patterns | _Requirements: Requirement 1.1 (container operations), Requirement 1.6 (real-time updates) | Success: Component displays EXCLUSIVELY real container data from API with ZERO mock data remaining, ALL operations work with comprehensive feedback and error handling, real-time updates reflect actual container state changes instantly, UI provides production-grade responsiveness and user experience during all operations | Instructions: Mark this task as in-progress in tasks.md by changing [ ] to [-], then mark as complete [x] when COMPLETE production-grade implementation eliminates all mock data_
 
-- [ ] 13. 实现ContainerDetail.vue真实监控数据显示
+- [x] 13. 实现ContainerDetail.vue真实监控数据显示
   - File: frontend/src/views/ContainerDetail.vue
   - 集成实时监控图表和性能数据显示
   - 添加WebSocket连接用于实时数据更新
@@ -151,7 +151,7 @@
   - _Requirements: 2.1, 2.2, 2.6_
   - _Prompt: Implement the task for spec docker-container-lifecycle-management, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Vue Frontend Developer with expertise in data visualization and WebSocket integration | Task: Enhance ContainerDetail.vue component following requirements 2.1, 2.2, and 2.6, integrating real-time monitoring charts and performance data display using ECharts and WebSocket connections for live updates | Restrictions: Must maintain existing component layout, ensure efficient chart updates without performance issues, handle WebSocket connection lifecycle properly, implement graceful fallback for connection failures | _Leverage: existing ContainerDetail.vue structure, ECharts library for charts, WebSocket client patterns | _Requirements: Requirement 2.1 (real-time monitoring), Requirement 2.2 (performance charts), Requirement 2.6 (detailed metrics) | Success: Component displays real-time monitoring charts with live data, performance metrics are visualized effectively, WebSocket updates work smoothly without memory leaks, user experience is responsive and informative | Instructions: Mark this task as in-progress in tasks.md by changing [ ] to [-], then mark as complete [x] when implementation and testing are done_
 
-- [ ] 14. 创建WebTerminal组件
+- [x] 14. 创建WebTerminal组件
   - File: frontend/src/components/container/WebTerminal.vue
   - 实现基于WebSocket的Web终端组件
   - 添加终端样式和交互功能
@@ -162,7 +162,7 @@
 
 ## 集成测试和验证
 
-- [ ] 15. 创建Docker集成测试套件
+- [x] 15. 创建Docker集成测试套件
   - File: backend/tests/integration/docker_integration_test.go
   - 编写Docker操作的集成测试
   - 设置测试容器环境和清理机制
@@ -171,7 +171,7 @@
   - _Requirements: 所有Docker相关需求_
   - _Prompt: Implement the task for spec docker-container-lifecycle-management, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Go Test Engineer with expertise in Docker testing and integration testing frameworks | Task: Create comprehensive Docker integration tests in backend/tests/integration/docker_integration_test.go covering all Docker-related requirements, setting up test container environments with proper setup and cleanup mechanisms | Restrictions: Must use isolated test containers, ensure tests don't affect production Docker environment, implement proper test cleanup to prevent resource leaks, tests should be deterministic and reliable | _Leverage: Go testing framework, Docker test container patterns | _Requirements: Cover all Docker operations, monitoring, terminal access, and update functionality | Success: Integration tests cover all Docker functionality comprehensively, tests run reliably in CI environment, test containers are properly managed and cleaned up, test coverage meets quality standards | Instructions: Mark this task as in-progress in tasks.md by changing [ ] to [-], then mark as complete [x] when implementation and testing are done_
 
-- [ ] 16. 实现端到端功能测试和构建验证
+- [x] 16. 实现端到端功能测试和构建验证
   - File: frontend/tests/e2e/container-lifecycle.spec.ts, backend/tests/e2e/build-test.go
   - 创建完整的用户流程端到端测试
   - 测试前后端集成的关键用户场景
@@ -193,7 +193,7 @@
   - _Requirements: 文档完整性需求_
   - _Prompt: Implement the task for spec docker-container-lifecycle-management, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Technical Writer with expertise in API documentation and user guide creation | Task: Update API documentation and create user guides for new container lifecycle management features, ensuring documentation reflects actual functionality and helps users understand monitoring and terminal capabilities | Restrictions: Must maintain documentation consistency with existing style, ensure accuracy with implemented features, provide clear examples and use cases, follow existing documentation structure | _Leverage: existing documentation templates and structure from docs/ | _Requirements: Comprehensive documentation for all implemented features | Success: API documentation accurately reflects all endpoints and functionality, user guides provide clear instructions for new features, documentation is well-structured and easy to follow, examples are practical and helpful | Instructions: Mark this task as in-progress in tasks.md by changing [ ] to [-], then mark as complete [x] when implementation and testing are done_
 
-- [ ] 18. 系统集成验证和性能优化
+- [x] 18. 系统集成验证和性能优化
   - File: 跨多个文件的系统级验证
   - 进行完整系统的性能测试和优化
   - 验证所有组件集成后的稳定性和性能

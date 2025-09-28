@@ -1,0 +1,1148 @@
+{
+  "metadata": {
+    "report_time": "2025-09-26 09:21:11",
+    "tool_version": "1.0.0",
+    "project_root": "/home/await/project/docker-auto",
+    "analysis_scope": "Dashboard Widgets"
+  },
+  "summary": {
+    "total_components": 10,
+    "total_detections": 67,
+    "critical_detections": 18,
+    "high_detections": 23,
+    "components_with_real_data": 1,
+    "components_without_real_data": 9,
+    "avg_completion_score": 50.5,
+    "overall_status": "🚨 临界风险 - 存在严重模拟数据问题"
+  },
+  "component_analyses": [
+    {
+      "component_name": "UpdateActivity Widget",
+      "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/UpdateActivity.vue",
+      "total_lines": 79,
+      "mock_detections_count": 4,
+      "api_calls_count": 0,
+      "has_real_data_integration": false,
+      "completion_score": 50.0,
+      "status": "🚨 临界",
+      "mock_detections": [
+        {
+          "line_number": 3,
+          "content": "<div class=\"widget-placeholder\">",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "  1: <template>",
+            "  2:   <div class=\"update-activity-widget\">",
+            "  3:     <div class=\"widget-placeholder\">",
+            "  4:       <el-icon :size=\"48\">",
+            "  5:         <Refresh />"
+          ]
+        },
+        {
+          "line_number": 9,
+          "content": "<div class=\"mock-data\">",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            "  7:       <h3>更新活动</h3>",
+            "  8:       <p>最近的更新和更新统计将在此处显示。</p>",
+            "  9:       <div class=\"mock-data\">",
+            " 10:         <div class=\"update-item\">",
+            " 11:           <span class=\"update-name\">nginx:latest</span>"
+          ]
+        },
+        {
+          "line_number": 39,
+          "content": ".widget-placeholder {",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            " 37: }",
+            " 38: ",
+            " 39: .widget-placeholder {",
+            " 40:   display: flex;",
+            " 41:   flex-direction: column;"
+          ]
+        },
+        {
+          "line_number": 58,
+          "content": ".mock-data {",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            " 56:   }",
+            " 57: ",
+            " 58:   .mock-data {",
+            " 59:     width: 100%;",
+            " 60:     max-width: 200px;"
+          ]
+        }
+      ],
+      "api_calls": []
+    },
+    {
+      "component_name": "RealtimeMonitor Widget",
+      "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/RealtimeMonitor.vue",
+      "total_lines": 1315,
+      "mock_detections_count": 28,
+      "api_calls_count": 7,
+      "has_real_data_integration": true,
+      "completion_score": 0.0,
+      "status": "🚨 临界",
+      "mock_detections": [
+        {
+          "line_number": 338,
+          "content": "timestamp: new Date(Date.now() - 30000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "336:     message: \"High network traffic detected\",",
+            "337:     source: \"monitoring\",",
+            "338:     timestamp: new Date(Date.now() - 30000),",
+            "339:   },",
+            "340:   {"
+          ]
+        },
+        {
+          "line_number": 345,
+          "content": "timestamp: new Date(Date.now() - 60000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "343:     message: \"System backup completed\",",
+            "344:     source: \"system\",",
+            "345:     timestamp: new Date(Date.now() - 60000),",
+            "346:   },",
+            "347: ]);"
+          ]
+        },
+        {
+          "line_number": 362,
+          "content": "timestamp: new Date(Date.now() - 120000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "360:     action: \"restarted\",",
+            "361:     status: \"success\",",
+            "362:     timestamp: new Date(Date.now() - 120000),",
+            "363:   },",
+            "364:   {"
+          ]
+        },
+        {
+          "line_number": 369,
+          "content": "timestamp: new Date(Date.now() - 180000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "367:     action: \"stopped\",",
+            "368:     status: \"warning\",",
+            "369:     timestamp: new Date(Date.now() - 180000),",
+            "370:   },",
+            "371: ]);"
+          ]
+        },
+        {
+          "line_number": 378,
+          "content": "timestamp: new Date(Date.now() - 300000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "376:     severity: \"warning\",",
+            "377:     message: \"High CPU usage on container web-server\",",
+            "378:     timestamp: new Date(Date.now() - 300000),",
+            "379:   },",
+            "380:   {"
+          ]
+        },
+        {
+          "line_number": 384,
+          "content": "timestamp: new Date(Date.now() - 600000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "382:     severity: \"critical\",",
+            "383:     message: \"Container database unhealthy\",",
+            "384:     timestamp: new Date(Date.now() - 600000),",
+            "385:   },",
+            "386: ]);"
+          ]
+        },
+        {
+          "line_number": 509,
+          "content": "const generateMockData = () => {",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            "507: };",
+            "508: ",
+            "509: const generateMockData = () => {",
+            "510:   // Fallback mock data generation when API is unavailable",
+            "511:   const cpuVariation = (Math.random() - 0.5) * 10;"
+          ]
+        },
+        {
+          "line_number": 509,
+          "content": "const generateMockData = () => {",
+          "severity": "critical",
+          "pattern_matched": "mockData\\s*[:=]",
+          "description": "检测到critical级别的模拟数据模式",
+          "context_lines": [
+            "507: };",
+            "508: ",
+            "509: const generateMockData = () => {",
+            "510:   // Fallback mock data generation when API is unavailable",
+            "511:   const cpuVariation = (Math.random() - 0.5) * 10;"
+          ]
+        },
+        {
+          "line_number": 509,
+          "content": "const generateMockData = () => {",
+          "severity": "critical",
+          "pattern_matched": "generateMock.*\\(",
+          "description": "检测到模拟数据生成函数",
+          "context_lines": [
+            "507: };",
+            "508: ",
+            "509: const generateMockData = () => {",
+            "510:   // Fallback mock data generation when API is unavailable",
+            "511:   const cpuVariation = (Math.random() - 0.5) * 10;"
+          ]
+        },
+        {
+          "line_number": 509,
+          "content": "const generateMockData = () => {",
+          "severity": "critical",
+          "pattern_matched": "const\\s+\\w*[Mm]ock\\w*\\s*=",
+          "description": "检测到critical级别的模拟数据模式",
+          "context_lines": [
+            "507: };",
+            "508: ",
+            "509: const generateMockData = () => {",
+            "510:   // Fallback mock data generation when API is unavailable",
+            "511:   const cpuVariation = (Math.random() - 0.5) * 10;"
+          ]
+        },
+        {
+          "line_number": 510,
+          "content": "// Fallback mock data generation when API is unavailable",
+          "severity": "low",
+          "pattern_matched": "\\/\\/.*mock",
+          "description": "检测到low级别的模拟数据模式",
+          "context_lines": [
+            "508: ",
+            "509: const generateMockData = () => {",
+            "510:   // Fallback mock data generation when API is unavailable",
+            "511:   const cpuVariation = (Math.random() - 0.5) * 10;",
+            "512:   const memoryVariation = (Math.random() - 0.5) * 0.1;"
+          ]
+        },
+        {
+          "line_number": 511,
+          "content": "const cpuVariation = (Math.random() - 0.5) * 10;",
+          "severity": "high",
+          "pattern_matched": "Math\\.random\\(\\)",
+          "description": "检测到随机数生成",
+          "context_lines": [
+            "509: const generateMockData = () => {",
+            "510:   // Fallback mock data generation when API is unavailable",
+            "511:   const cpuVariation = (Math.random() - 0.5) * 10;",
+            "512:   const memoryVariation = (Math.random() - 0.5) * 0.1;",
+            "513:   const networkVariation = (Math.random() - 0.5) * 0.5;"
+          ]
+        },
+        {
+          "line_number": 512,
+          "content": "const memoryVariation = (Math.random() - 0.5) * 0.1;",
+          "severity": "high",
+          "pattern_matched": "Math\\.random\\(\\)",
+          "description": "检测到随机数生成",
+          "context_lines": [
+            "510:   // Fallback mock data generation when API is unavailable",
+            "511:   const cpuVariation = (Math.random() - 0.5) * 10;",
+            "512:   const memoryVariation = (Math.random() - 0.5) * 0.1;",
+            "513:   const networkVariation = (Math.random() - 0.5) * 0.5;",
+            "514:   const diskVariation = (Math.random() - 0.5) * 0.3;"
+          ]
+        },
+        {
+          "line_number": 513,
+          "content": "const networkVariation = (Math.random() - 0.5) * 0.5;",
+          "severity": "high",
+          "pattern_matched": "Math\\.random\\(\\)",
+          "description": "检测到随机数生成",
+          "context_lines": [
+            "511:   const cpuVariation = (Math.random() - 0.5) * 10;",
+            "512:   const memoryVariation = (Math.random() - 0.5) * 0.1;",
+            "513:   const networkVariation = (Math.random() - 0.5) * 0.5;",
+            "514:   const diskVariation = (Math.random() - 0.5) * 0.3;",
+            "515: "
+          ]
+        },
+        {
+          "line_number": 514,
+          "content": "const diskVariation = (Math.random() - 0.5) * 0.3;",
+          "severity": "high",
+          "pattern_matched": "Math\\.random\\(\\)",
+          "description": "检测到随机数生成",
+          "context_lines": [
+            "512:   const memoryVariation = (Math.random() - 0.5) * 0.1;",
+            "513:   const networkVariation = (Math.random() - 0.5) * 0.5;",
+            "514:   const diskVariation = (Math.random() - 0.5) * 0.3;",
+            "515: ",
+            "516:   previousMetrics.value = { ...currentMetrics.value };"
+          ]
+        },
+        {
+          "line_number": 562,
+          "content": "if (Math.random() < 0.1) {",
+          "severity": "high",
+          "pattern_matched": "Math\\.random\\(\\)",
+          "description": "检测到随机数生成",
+          "context_lines": [
+            "560: ",
+            "561:   // Occasionally add activity events",
+            "562:   if (Math.random() < 0.1) {",
+            "563:     addRandomActivityEvent();",
+            "564:   }"
+          ]
+        },
+        {
+          "line_number": 587,
+          "content": "const randomEvent = events[Math.floor(Math.random() * events.length)];",
+          "severity": "high",
+          "pattern_matched": "Math\\.random\\(\\)",
+          "description": "检测到随机数生成",
+          "context_lines": [
+            "585:   ];",
+            "586: ",
+            "587:   const randomEvent = events[Math.floor(Math.random() * events.length)];",
+            "588:   activityFeed.value.unshift({",
+            "589:     id: Date.now().toString(),"
+          ]
+        },
+        {
+          "line_number": 792,
+          "content": "if (Date.now() % 5000 < 1000) { // Every 5 seconds",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "790: ",
+            "791:         // Fetch activity feed and alerts less frequently",
+            "792:         if (Date.now() % 5000 < 1000) { // Every 5 seconds",
+            "793:           await fetchActivityFeed();",
+            "794:           await fetchActiveAlerts();"
+          ]
+        },
+        {
+          "line_number": 803,
+          "content": "// Fallback to mock data if API is unavailable",
+          "severity": "low",
+          "pattern_matched": "\\/\\/.*mock",
+          "description": "检测到low级别的模拟数据模式",
+          "context_lines": [
+            "801:         });",
+            "802:       } catch (error) {",
+            "803:         // Fallback to mock data if API is unavailable",
+            "804:         console.warn(\"API unavailable, using mock data:\", error);",
+            "805:         generateMockData();"
+          ]
+        },
+        {
+          "line_number": 805,
+          "content": "generateMockData();",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            "803:         // Fallback to mock data if API is unavailable",
+            "804:         console.warn(\"API unavailable, using mock data:\", error);",
+            "805:         generateMockData();",
+            "806:         emit(\"data-updated\", {",
+            "807:           metrics: currentMetrics.value,"
+          ]
+        },
+        {
+          "line_number": 805,
+          "content": "generateMockData();",
+          "severity": "critical",
+          "pattern_matched": "generateMock.*\\(",
+          "description": "检测到模拟数据生成函数",
+          "context_lines": [
+            "803:         // Fallback to mock data if API is unavailable",
+            "804:         console.warn(\"API unavailable, using mock data:\", error);",
+            "805:         generateMockData();",
+            "806:         emit(\"data-updated\", {",
+            "807:           metrics: currentMetrics.value,"
+          ]
+        },
+        {
+          "line_number": 826,
+          "content": "// Initialize with real data or fallback to mock data",
+          "severity": "low",
+          "pattern_matched": "\\/\\/.*mock",
+          "description": "检测到low级别的模拟数据模式",
+          "context_lines": [
+            "824:   startUpdates();",
+            "825: ",
+            "826:   // Initialize with real data or fallback to mock data",
+            "827:   try {",
+            "828:     await fetchRealTimeData();"
+          ]
+        },
+        {
+          "line_number": 839,
+          "content": "// Initialize with mock data",
+          "severity": "low",
+          "pattern_matched": "\\/\\/.*mock",
+          "description": "检测到low级别的模拟数据模式",
+          "context_lines": [
+            "837:   } catch (error) {",
+            "838:     console.warn(\"Failed to initialize with real data, using mock data:\", error);",
+            "839:     // Initialize with mock data",
+            "840:     for (let i = 0; i < 30; i++) {",
+            "841:       generateMockData();"
+          ]
+        },
+        {
+          "line_number": 841,
+          "content": "generateMockData();",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            "839:     // Initialize with mock data",
+            "840:     for (let i = 0; i < 30; i++) {",
+            "841:       generateMockData();",
+            "842:     }",
+            "843:   }"
+          ]
+        },
+        {
+          "line_number": 841,
+          "content": "generateMockData();",
+          "severity": "critical",
+          "pattern_matched": "generateMock.*\\(",
+          "description": "检测到模拟数据生成函数",
+          "context_lines": [
+            "839:     // Initialize with mock data",
+            "840:     for (let i = 0; i < 30; i++) {",
+            "841:       generateMockData();",
+            "842:     }",
+            "843:   }"
+          ]
+        },
+        {
+          "line_number": 970,
+          "content": "color: var(--el-text-color-placeholder);",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "968: ",
+            "969:       &.trend-stable {",
+            "970:         color: var(--el-text-color-placeholder);",
+            "971:       }",
+            "972:     }"
+          ]
+        },
+        {
+          "line_number": 1054,
+          "content": "color: var(--el-text-color-placeholder);",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "1052: ",
+            "1053:       .event-time {",
+            "1054:         color: var(--el-text-color-placeholder);",
+            "1055:         font-family: monospace;",
+            "1056:       }"
+          ]
+        },
+        {
+          "line_number": 1180,
+          "content": "color: var(--el-text-color-placeholder);",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "1178:           display: block;",
+            "1179:           font-size: 10px;",
+            "1180:           color: var(--el-text-color-placeholder);",
+            "1181:         }",
+            "1182:       }"
+          ]
+        }
+      ],
+      "api_calls": [
+        "monitoringAPI.getActivityEvents(",
+        "API.getActivityEvents(",
+        "API.getCurrentMetrics(",
+        "API.getActiveAlerts(",
+        "await monitoringAPI.",
+        "monitoringAPI.getCurrentMetrics(",
+        "monitoringAPI.getActiveAlerts("
+      ]
+    },
+    {
+      "component_name": "SecurityDashboard Widget",
+      "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/SecurityDashboard.vue",
+      "total_lines": 130,
+      "mock_detections_count": 4,
+      "api_calls_count": 0,
+      "has_real_data_integration": false,
+      "completion_score": 50.0,
+      "status": "🚨 临界",
+      "mock_detections": [
+        {
+          "line_number": 3,
+          "content": "<div class=\"widget-placeholder\">",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "  1: <template>",
+            "  2:   <div class=\"security-dashboard-widget\">",
+            "  3:     <div class=\"widget-placeholder\">",
+            "  4:       <el-icon :size=\"48\">",
+            "  5:         <Lock />"
+          ]
+        },
+        {
+          "line_number": 11,
+          "content": "<div class=\"mock-data\">",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            "  9:         安全状态和漏洞监控将在此处显示。",
+            " 10:       </p>",
+            " 11:       <div class=\"mock-data\">",
+            " 12:         <div class=\"security-metric\">",
+            " 13:           <span class=\"metric-label\">安全评分</span>"
+          ]
+        },
+        {
+          "line_number": 55,
+          "content": ".widget-placeholder {",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            " 53: }",
+            " 54: ",
+            " 55: .widget-placeholder {",
+            " 56:   display: flex;",
+            " 57:   flex-direction: column;"
+          ]
+        },
+        {
+          "line_number": 74,
+          "content": ".mock-data {",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            " 72:   }",
+            " 73: ",
+            " 74:   .mock-data {",
+            " 75:     width: 100%;",
+            " 76:     max-width: 250px;"
+          ]
+        }
+      ],
+      "api_calls": []
+    },
+    {
+      "component_name": "HealthMonitor Widget",
+      "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/HealthMonitor.vue",
+      "total_lines": 86,
+      "mock_detections_count": 4,
+      "api_calls_count": 0,
+      "has_real_data_integration": false,
+      "completion_score": 50.0,
+      "status": "🚨 临界",
+      "mock_detections": [
+        {
+          "line_number": 3,
+          "content": "<div class=\"widget-placeholder\">",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "  1: <template>",
+            "  2:   <div class=\"health-monitor-widget\">",
+            "  3:     <div class=\"widget-placeholder\">",
+            "  4:       <el-icon :size=\"48\">",
+            "  5:         <CircleCheckFilled />"
+          ]
+        },
+        {
+          "line_number": 9,
+          "content": "<div class=\"mock-data\">",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            "  7:       <h3>健康监控</h3>",
+            "  8:       <p>服务健康状态和可用性指标将在此处显示。</p>",
+            "  9:       <div class=\"mock-data\">",
+            " 10:         <div class=\"health-item\">",
+            " 11:           <span class=\"service-name\">Web服务器</span>"
+          ]
+        },
+        {
+          "line_number": 43,
+          "content": ".widget-placeholder {",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            " 41: }",
+            " 42: ",
+            " 43: .widget-placeholder {",
+            " 44:   display: flex;",
+            " 45:   flex-direction: column;"
+          ]
+        },
+        {
+          "line_number": 62,
+          "content": ".mock-data {",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            " 60:   }",
+            " 61: ",
+            " 62:   .mock-data {",
+            " 63:     width: 100%;",
+            " 64:     max-width: 200px;"
+          ]
+        }
+      ],
+      "api_calls": []
+    },
+    {
+      "component_name": "RecentActivities Widget",
+      "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/RecentActivities.vue",
+      "total_lines": 84,
+      "mock_detections_count": 5,
+      "api_calls_count": 0,
+      "has_real_data_integration": false,
+      "completion_score": 45.0,
+      "status": "🚨 临界",
+      "mock_detections": [
+        {
+          "line_number": 3,
+          "content": "<div class=\"widget-placeholder\">",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "  1: <template>",
+            "  2:   <div class=\"recent-activities-widget\">",
+            "  3:     <div class=\"widget-placeholder\">",
+            "  4:       <el-icon :size=\"48\">",
+            "  5:         <Document />"
+          ]
+        },
+        {
+          "line_number": 9,
+          "content": "<div class=\"mock-data\">",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            "  7:       <h3>最近活动</h3>",
+            "  8:       <p>最近系统活动的时间线将在此处显示。</p>",
+            "  9:       <div class=\"mock-data\">",
+            " 10:         <div class=\"activity-item\">",
+            " 11:           <span class=\"activity-time\">2分钟前</span>"
+          ]
+        },
+        {
+          "line_number": 43,
+          "content": ".widget-placeholder {",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            " 41: }",
+            " 42: ",
+            " 43: .widget-placeholder {",
+            " 44:   display: flex;",
+            " 45:   flex-direction: column;"
+          ]
+        },
+        {
+          "line_number": 62,
+          "content": ".mock-data {",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            " 60:   }",
+            " 61: ",
+            " 62:   .mock-data {",
+            " 63:     width: 100%;",
+            " 64:     max-width: 250px;"
+          ]
+        },
+        {
+          "line_number": 74,
+          "content": "color: var(--el-text-color-placeholder);",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            " 72: ",
+            " 73:       .activity-time {",
+            " 74:         color: var(--el-text-color-placeholder);",
+            " 75:         min-width: 40px;",
+            " 76:       }"
+          ]
+        }
+      ],
+      "api_calls": []
+    },
+    {
+      "component_name": "SystemOverview Widget",
+      "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/SystemOverview.vue",
+      "total_lines": 1016,
+      "mock_detections_count": 5,
+      "api_calls_count": 0,
+      "has_real_data_integration": false,
+      "completion_score": 55.0,
+      "status": "⚠️ 高风险",
+      "mock_detections": [
+        {
+          "line_number": 371,
+          "content": "timestamp: new Date(Date.now() - 300000), // 5 minutes ago",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "369:       severity: \"warning\",",
+            "370:       message: \"检测到容器web-server内存使用率过高\",",
+            "371:       timestamp: new Date(Date.now() - 300000), // 5 minutes ago",
+            "372:     },",
+            "373:     {"
+          ]
+        },
+        {
+          "line_number": 377,
+          "content": "timestamp: new Date(Date.now() - 3600000), // 1 hour ago",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "375:       severity: \"info\",",
+            "376:       message: \"系统备份已成功完成\",",
+            "377:       timestamp: new Date(Date.now() - 3600000), // 1 hour ago",
+            "378:     },",
+            "379:   ],"
+          ]
+        },
+        {
+          "line_number": 382,
+          "content": "lastBackup: new Date(Date.now() - 3600000), // 1 hour ago",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "380:   version: \"1.2.3\",",
+            "381:   dockerVersion: \"24.0.7\",",
+            "382:   lastBackup: new Date(Date.now() - 3600000), // 1 hour ago",
+            "383:   maintenanceMode: false,",
+            "384: });"
+          ]
+        },
+        {
+          "line_number": 528,
+          "content": "loadTime: Date.now() - performance.now(),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "526:     emit(\"data-updated\", systemData.value);",
+            "527:     emit(\"metrics-updated\", {",
+            "528:       loadTime: Date.now() - performance.now(),",
+            "529:       dataSize: JSON.stringify(systemData.value).length,",
+            "530:     });"
+          ]
+        },
+        {
+          "line_number": 946,
+          "content": "color: var(--el-text-color-placeholder);",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "944:         .alert-time {",
+            "945:           font-size: 11px;",
+            "946:           color: var(--el-text-color-placeholder);",
+            "947:         }",
+            "948:       }"
+          ]
+        }
+      ],
+      "api_calls": []
+    },
+    {
+      "component_name": "QuickActions Widget",
+      "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/QuickActions.vue",
+      "total_lines": 1074,
+      "mock_detections_count": 7,
+      "api_calls_count": 0,
+      "has_real_data_integration": false,
+      "completion_score": 50.0,
+      "status": "⚠️ 高风险",
+      "mock_detections": [
+        {
+          "line_number": 265,
+          "content": "<el-input v-model=\"customActionForm.name\" placeholder=\"操作名称\" />",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "263:       >",
+            "264:         <el-form-item label=\"名称\" prop=\"name\">",
+            "265:           <el-input v-model=\"customActionForm.name\" placeholder=\"操作名称\" />",
+            "266:         </el-form-item>",
+            "267:         <el-form-item label=\"命令\" prop=\"command\">"
+          ]
+        },
+        {
+          "line_number": 270,
+          "content": "placeholder=\"要执行的命令\"",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "268:           <el-input",
+            "269:             v-model=\"customActionForm.command\"",
+            "270:             placeholder=\"要执行的命令\"",
+            "271:           />",
+            "272:         </el-form-item>"
+          ]
+        },
+        {
+          "line_number": 274,
+          "content": "<el-select v-model=\"customActionForm.icon\" placeholder=\"选择图标\">",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "272:         </el-form-item>",
+            "273:         <el-form-item label=\"图标\" prop=\"icon\">",
+            "274:           <el-select v-model=\"customActionForm.icon\" placeholder=\"选择图标\">",
+            "275:             <el-option label=\"设置\" value=\"Setting\" />",
+            "276:             <el-option label=\"工具\" value=\"Tools\" />"
+          ]
+        },
+        {
+          "line_number": 405,
+          "content": "timestamp: new Date(Date.now() - 300000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "403:     action: \"Container restart: web-server\",",
+            "404:     status: \"success\",",
+            "405:     timestamp: new Date(Date.now() - 300000),",
+            "406:   },",
+            "407:   {"
+          ]
+        },
+        {
+          "line_number": 411,
+          "content": "timestamp: new Date(Date.now() - 600000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "409:     action: \"System cleanup\",",
+            "410:     status: \"success\",",
+            "411:     timestamp: new Date(Date.now() - 600000),",
+            "412:   },",
+            "413:   {"
+          ]
+        },
+        {
+          "line_number": 417,
+          "content": "timestamp: new Date(Date.now() - 900000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "415:     action: \"Update scan\",",
+            "416:     status: \"failed\",",
+            "417:     timestamp: new Date(Date.now() - 900000),",
+            "418:   },",
+            "419: ]);"
+          ]
+        },
+        {
+          "line_number": 1029,
+          "content": "color: var(--el-text-color-placeholder);",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "1027:         .recent-time {",
+            "1028:           font-size: 11px;",
+            "1029:           color: var(--el-text-color-placeholder);",
+            "1030:         }",
+            "1031:       }"
+          ]
+        }
+      ],
+      "api_calls": []
+    },
+    {
+      "component_name": "NotificationCenter Widget",
+      "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/NotificationCenter.vue",
+      "total_lines": 98,
+      "mock_detections_count": 4,
+      "api_calls_count": 0,
+      "has_real_data_integration": false,
+      "completion_score": 50.0,
+      "status": "🚨 临界",
+      "mock_detections": [
+        {
+          "line_number": 3,
+          "content": "<div class=\"widget-placeholder\">",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "  1: <template>",
+            "  2:   <div class=\"notification-center-widget\">",
+            "  3:     <div class=\"widget-placeholder\">",
+            "  4:       <el-icon :size=\"48\">",
+            "  5:         <Bell />"
+          ]
+        },
+        {
+          "line_number": 9,
+          "content": "<div class=\"mock-data\">",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            "  7:       <h3>通知中心</h3>",
+            "  8:       <p>实时通知和警报将在此处显示。</p>",
+            "  9:       <div class=\"mock-data\">",
+            " 10:         <div class=\"notification-item warning\">",
+            " 11:           <el-icon><Warning /></el-icon>"
+          ]
+        },
+        {
+          "line_number": 48,
+          "content": ".widget-placeholder {",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            " 46: }",
+            " 47: ",
+            " 48: .widget-placeholder {",
+            " 49:   display: flex;",
+            " 50:   flex-direction: column;"
+          ]
+        },
+        {
+          "line_number": 67,
+          "content": ".mock-data {",
+          "severity": "critical",
+          "pattern_matched": "mock[-_]?data",
+          "description": "检测到mock-data相关代码",
+          "context_lines": [
+            " 65:   }",
+            " 66: ",
+            " 67:   .mock-data {",
+            " 68:     width: 100%;",
+            " 69:     max-width: 250px;"
+          ]
+        }
+      ],
+      "api_calls": []
+    },
+    {
+      "component_name": "ResourceCharts Widget",
+      "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/ResourceCharts.vue",
+      "total_lines": 129,
+      "mock_detections_count": 2,
+      "api_calls_count": 0,
+      "has_real_data_integration": false,
+      "completion_score": 90.0,
+      "status": "✅ 良好",
+      "mock_detections": [
+        {
+          "line_number": 3,
+          "content": "<div class=\"widget-placeholder\">",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "  1: <template>",
+            "  2:   <div class=\"resource-charts-widget\">",
+            "  3:     <div class=\"widget-placeholder\">",
+            "  4:       <el-icon :size=\"48\">",
+            "  5:         <DataAnalysis />"
+          ]
+        },
+        {
+          "line_number": 67,
+          "content": ".widget-placeholder {",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            " 65: }",
+            " 66: ",
+            " 67: .widget-placeholder {",
+            " 68:   display: flex;",
+            " 69:   flex-direction: column;"
+          ]
+        }
+      ],
+      "api_calls": []
+    },
+    {
+      "component_name": "ContainerStats Widget",
+      "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/ContainerStats.vue",
+      "total_lines": 1061,
+      "mock_detections_count": 4,
+      "api_calls_count": 0,
+      "has_real_data_integration": false,
+      "completion_score": 65.0,
+      "status": "🔶 中等风险",
+      "mock_detections": [
+        {
+          "line_number": 337,
+          "content": "timestamp: new Date(Date.now() - 300000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "335:       action: \"Container started\",",
+            "336:       type: \"start\",",
+            "337:       timestamp: new Date(Date.now() - 300000),",
+            "338:     },",
+            "339:     {"
+          ]
+        },
+        {
+          "line_number": 344,
+          "content": "timestamp: new Date(Date.now() - 600000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "342:       action: \"Health check failed\",",
+            "343:       type: \"health\",",
+            "344:       timestamp: new Date(Date.now() - 600000),",
+            "345:     },",
+            "346:     {"
+          ]
+        },
+        {
+          "line_number": 351,
+          "content": "timestamp: new Date(Date.now() - 900000),",
+          "severity": "high",
+          "pattern_matched": "Date\\.now\\(\\)\\s*[-+%]",
+          "description": "检测到high级别的模拟数据模式",
+          "context_lines": [
+            "349:       action: \"Container restarted\",",
+            "350:       type: \"restart\",",
+            "351:       timestamp: new Date(Date.now() - 900000),",
+            "352:     },",
+            "353:   ],"
+          ]
+        },
+        {
+          "line_number": 1030,
+          "content": "color: var(--el-text-color-placeholder);",
+          "severity": "medium",
+          "pattern_matched": "placeholder",
+          "description": "检测到占位符内容",
+          "context_lines": [
+            "1028:           display: block;",
+            "1029:           font-size: 10px;",
+            "1030:           color: var(--el-text-color-placeholder);",
+            "1031:         }",
+            "1032:       }"
+          ]
+        }
+      ],
+      "api_calls": []
+    }
+  ],
+  "risk_assessment": {
+    "critical_components": [
+      {
+        "name": "UpdateActivity Widget",
+        "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/UpdateActivity.vue",
+        "critical_issues": 2
+      },
+      {
+        "name": "RealtimeMonitor Widget",
+        "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/RealtimeMonitor.vue",
+        "critical_issues": 8
+      },
+      {
+        "name": "SecurityDashboard Widget",
+        "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/SecurityDashboard.vue",
+        "critical_issues": 2
+      },
+      {
+        "name": "HealthMonitor Widget",
+        "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/HealthMonitor.vue",
+        "critical_issues": 2
+      },
+      {
+        "name": "RecentActivities Widget",
+        "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/RecentActivities.vue",
+        "critical_issues": 2
+      },
+      {
+        "name": "NotificationCenter Widget",
+        "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/NotificationCenter.vue",
+        "critical_issues": 2
+      }
+    ],
+    "high_risk_components": [
+      {
+        "name": "RealtimeMonitor Widget",
+        "file_path": "/home/await/project/docker-auto/frontend/src/components/dashboard/widgets/RealtimeMonitor.vue",
+        "total_issues": 28,
+        "completion_score": 0.0
+      }
+    ]
+  },
+  "recommendations": [
+    "立即清理 6 个组件中的硬编码模拟数据",
+    "为 9 个组件集成真实API数据源",
+    "优化 8 个低分组件的数据集成",
+    "实施自动化测试验证所有组件都使用真实数据",
+    "建立CI/CD检查防止模拟数据重新引入",
+    "为所有组件添加错误处理和优雅降级机制",
+    "实施性能监控确保真实数据集成不影响用户体验",
+    "建立数据一致性检查机制"
+  ]
+}

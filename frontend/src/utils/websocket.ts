@@ -2,7 +2,7 @@
 import { ref, readonly, computed, onMounted, onUnmounted } from "vue";
 
 export interface ClientMessage {
-  type: "subscribe" | "unsubscribe" | "ping" | "ack" | "batch";
+  type: "subscribe" | "unsubscribe" | "ping" | "ack" | "batch" | "terminal_input" | "terminal_resize" | "request_stats" | "start_monitoring" | "stop_monitoring";
   topic?: string;
   data?: any;
   messageId?: string;
@@ -497,7 +497,7 @@ export class WebSocketClient {
     }
   }
 
-  private sendMessage(message: ClientMessage): void {
+  public sendMessage(message: ClientMessage): void {
     // Add performance tracking
     message.timestamp = Date.now();
 

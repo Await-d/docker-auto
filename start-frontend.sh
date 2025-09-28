@@ -22,8 +22,8 @@ cd frontend
 if [[ ! -f ".env.development" ]]; then
     echo "📝 创建前端开发环境配置..."
     cat > .env.development << 'EOF'
-VITE_API_BASE_URL=http://localhost:8080/api/v1
-VITE_WS_URL=ws://localhost:8080/ws
+VITE_API_BASE_URL=http://localhost:8080
+VITE_WS_URL=ws://localhost:8080/api/ws
 VITE_APP_TITLE=Docker Auto Update System
 VITE_DEV_MODE=true
 VITE_HOST=0.0.0.0

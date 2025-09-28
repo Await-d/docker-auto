@@ -4,7 +4,7 @@
 import { get, post } from "@/utils/request";
 import type { ResourceMetrics, ContainerStats } from "@/types/container";
 
-export interface SystemMetrics {
+export interface MonitoringSystemMetrics {
   cpu: {
     usage: number;
     cores: number;
@@ -68,8 +68,8 @@ export class MonitoringAPI {
   /**
    * Get real-time system metrics
    */
-  async getSystemMetrics(): Promise<SystemMetrics> {
-    return get<SystemMetrics>(`${this.baseUrl}/system`);
+  async getSystemMetrics(): Promise<MonitoringSystemMetrics> {
+    return get<MonitoringSystemMetrics>(`${this.baseUrl}/system`);
   }
 
   /**

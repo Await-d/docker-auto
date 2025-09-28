@@ -303,93 +303,53 @@ const updateInterval = ref<NodeJS.Timeout>();
 const chartUpdateInterval = ref<NodeJS.Timeout>();
 
 const currentMetrics = ref({
-  cpu: 45.2,
+  cpu: 0,
   memory: {
-    used: 3221225472, // 3GB
-    total: 8589934592, // 8GB
+    used: 0,
+    total: 0,
   },
   network: {
-    in: 1048576, // 1MB/s
-    out: 524288, // 512KB/s
-    total: 1572864, // 1.5MB/s
+    in: 0,
+    out: 0,
+    total: 0,
   },
   disk: {
-    read: 2097152, // 2MB/s
-    write: 1048576, // 1MB/s
-    total: 3145728, // 3MB/s
+    read: 0,
+    write: 0,
+    total: 0,
   },
 });
 
 const previousMetrics = ref({ ...currentMetrics.value });
 
-const activityFeed = ref([
-  {
-    id: "1",
-    type: "container",
-    message: "Container web-server started",
-    source: "docker",
-    timestamp: new Date(),
-  },
-  {
-    id: "2",
-    type: "network",
-    message: "High network traffic detected",
-    source: "monitoring",
-    timestamp: new Date(Date.now() - 30000),
-  },
-  {
-    id: "3",
-    type: "system",
-    message: "System backup completed",
-    source: "system",
-    timestamp: new Date(Date.now() - 60000),
-  },
-]);
+const activityFeed = ref<Array<{
+  id: string;
+  type: string;
+  message: string;
+  source: string;
+  timestamp: Date;
+}>>([]);
 
-const containerEvents = ref([
-  {
-    id: "1",
-    container: "web-server-1",
-    action: "started",
-    status: "success",
-    timestamp: new Date(),
-  },
-  {
-    id: "2",
-    container: "database",
-    action: "restarted",
-    status: "success",
-    timestamp: new Date(Date.now() - 120000),
-  },
-  {
-    id: "3",
-    container: "cache",
-    action: "stopped",
-    status: "warning",
-    timestamp: new Date(Date.now() - 180000),
-  },
-]);
+const containerEvents = ref<Array<{
+  id: string;
+  container: string;
+  action: string;
+  status: string;
+  timestamp: Date;
+}>>([]);
 
-const activeAlerts = ref([
-  {
-    id: "1",
-    severity: "warning",
-    message: "High CPU usage on container web-server",
-    timestamp: new Date(Date.now() - 300000),
-  },
-  {
-    id: "2",
-    severity: "critical",
-    message: "Container database unhealthy",
-    timestamp: new Date(Date.now() - 600000),
-  },
-]);
+const activeAlerts = ref<Array<{
+  id: string;
+  severity: string;
+  message: string;
+  timestamp: Date;
+}>>([]);
 
 const performanceStats = ref({
-  containers: 12,
-  loadAverage: 1.45,
-  processes: 156,
-  uptime: 86400000, // 1 day in ms
+  containers: 0,
+  loadAverage: 0,
+  processes: 0,
+  uptime: 0,
 });
 
 // Chart data
@@ -506,103 +466,38 @@ const fetchActiveAlerts = async () => {
   }
 };
 
-const generateMockData = () => {
-  // Fallback mock data generation when API is unavailable
-  const cpuVariation = (Math.random() - 0.5) * 10;
-  const memoryVariation = (Math.random() - 0.5) * 0.1;
-  const networkVariation = (Math.random() - 0.5) * 0.5;
-  const diskVariation = (Math.random() - 0.5) * 0.3;
-
-  previousMetrics.value = { ...currentMetrics.value };
-
-  currentMetrics.value = {
-    cpu: Math.max(0, Math.min(100, currentMetrics.value.cpu + cpuVariation)),
-    memory: {
-      used: Math.max(
-        0,
-        currentMetrics.value.memory.used +
-          currentMetrics.value.memory.used * memoryVariation,
-      ),
-      total: currentMetrics.value.memory.total,
-    },
-    network: {
-      in: Math.max(0, currentMetrics.value.network.in * (1 + networkVariation)),
-      out: Math.max(
-        0,
-        currentMetrics.value.network.out * (1 + networkVariation),
-      ),
-      total: 0,
-    },
-    disk: {
-      read: Math.max(0, currentMetrics.value.disk.read * (1 + diskVariation)),
-      write: Math.max(0, currentMetrics.value.disk.write * (1 + diskVariation)),
-      total: 0,
-    },
-  };
-
-  // Update totals
-  currentMetrics.value.network.total =
-    currentMetrics.value.network.in + currentMetrics.value.network.out;
-  currentMetrics.value.disk.total =
-    currentMetrics.value.disk.read + currentMetrics.value.disk.write;
-
-  // Add to chart data
-  cpuHistory.value.push(currentMetrics.value.cpu);
-  memoryHistory.value.push(memoryPercentage.value);
-
-  // Trim data to max points
-  if (cpuHistory.value.length > maxDataPoints.value) {
-    cpuHistory.value = cpuHistory.value.slice(-maxDataPoints.value);
-  }
-  if (memoryHistory.value.length > maxDataPoints.value) {
-    memoryHistory.value = memoryHistory.value.slice(-maxDataPoints.value);
-  }
-
-  // Occasionally add activity events
-  if (Math.random() < 0.1) {
-    addRandomActivityEvent();
+const fetchContainerEvents = async () => {
+  try {
+    const events = await monitoringAPI.getContainerEvents(5);
+    containerEvents.value = events.map(event => ({
+      id: event.id,
+      container: event.containerName,
+      action: event.action,
+      status: event.status,
+      timestamp: new Date(event.timestamp)
+    }));
+  } catch (error) {
+    console.error("Failed to fetch container events:", error);
   }
 };
 
-const addRandomActivityEvent = () => {
-  const events = [
-    {
-      type: "container",
-      message: "Container health check passed",
-      source: "docker",
-    },
-    {
-      type: "network",
-      message: "Network connection established",
-      source: "networking",
-    },
-    { type: "system", message: "Disk cleanup completed", source: "system" },
-    {
-      type: "security",
-      message: "Security scan completed",
-      source: "security",
-    },
-  ];
-
-  const randomEvent = events[Math.floor(Math.random() * events.length)];
-  activityFeed.value.unshift({
-    id: Date.now().toString(),
-    ...randomEvent,
-    timestamp: new Date(),
-  });
-
-  // Limit feed size
-  if (activityFeed.value.length > 100) {
-    activityFeed.value = activityFeed.value.slice(0, 100);
+const fetchPerformanceStats = async () => {
+  try {
+    const stats = await monitoringAPI.getSystemStats();
+    performanceStats.value = {
+      containers: stats.containers.total,
+      loadAverage: stats.system.loadAverage[0],
+      processes: stats.system.processes,
+      uptime: stats.system.uptime,
+    };
+  } catch (error) {
+    console.error("Failed to fetch performance stats:", error);
   }
-
-  // Auto-scroll feed
-  nextTick(() => {
-    if (feedContentRef.value) {
-      feedContentRef.value.scrollTop = 0;
-    }
-  });
 };
+
+// generateMockData function removed - using real API data only
+
+// addRandomActivityEvent function removed - using real API data only
 
 const drawChart = (
   canvas: HTMLCanvasElement,
@@ -785,13 +680,15 @@ const startUpdates = () => {
   updateInterval.value = setInterval(async () => {
     if (!isPaused.value) {
       try {
-        // Try to fetch real-time data first
+        // Fetch real-time data
         await fetchRealTimeData();
 
-        // Fetch activity feed and alerts less frequently
+        // Fetch activity feed, alerts, events and stats less frequently
         if (Date.now() % 5000 < 1000) { // Every 5 seconds
           await fetchActivityFeed();
           await fetchActiveAlerts();
+          await fetchContainerEvents();
+          await fetchPerformanceStats();
         }
 
         emit("data-updated", {
@@ -800,14 +697,14 @@ const startUpdates = () => {
           alerts: activeAlerts.value,
         });
       } catch (error) {
-        // Fallback to mock data if API is unavailable
-        console.warn("API unavailable, using mock data:", error);
-        generateMockData();
-        emit("data-updated", {
-          metrics: currentMetrics.value,
-          activityFeed: activityFeed.value,
-          alerts: activeAlerts.value,
-        });
+        // Log API errors without fallback to mock data
+        console.error("Failed to fetch real-time data:", error);
+
+        // Update connection status to indicate failure
+        isConnected.value = false;
+
+        // Emit error event for proper error handling
+        emit("error", error);
       }
     }
   }, 1000);
@@ -823,28 +720,28 @@ const startUpdates = () => {
 onMounted(async () => {
   startUpdates();
 
-  // Initialize with real data or fallback to mock data
+  // Initialize with real data only
   try {
     await fetchRealTimeData();
     await fetchActivityFeed();
     await fetchActiveAlerts();
+    await fetchContainerEvents();
+    await fetchPerformanceStats();
 
     // Initialize chart history with current data
     for (let i = 0; i < 30; i++) {
       cpuHistory.value.push(currentMetrics.value.cpu);
       memoryHistory.value.push(memoryPercentage.value);
     }
-  } catch (error) {
-    console.warn("Failed to initialize with real data, using mock data:", error);
-    // Initialize with mock data
-    for (let i = 0; i < 30; i++) {
-      generateMockData();
-    }
-  }
 
-  nextTick(() => {
-    updateCharts();
-  });
+    nextTick(() => {
+      updateCharts();
+    });
+  } catch (error) {
+    console.error("Failed to initialize real-time monitoring:", error);
+    isConnected.value = false;
+    emit("error", error);
+  }
 });
 
 onUnmounted(() => {

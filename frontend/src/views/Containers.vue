@@ -745,44 +745,107 @@ function handleBulkAction(command: string) {
 
 function handleContainerAction(action: string, containerId: string) {
   const container = containers.value.find((c) => c.id === containerId);
-  if (!container) return;
+  if (!container) {
+    ElMessage.error('容器不存在或已被删除');
+    return;
+  }
 
+  // Enhanced action handling with better error feedback
   switch (action) {
     case "start":
     case "stop":
     case "restart":
     case "pause":
     case "unpause":
-      containerStore.performOperation(containerId, action);
+      containerStore.performOperation(containerId, action as any)
+        .then(() => {
+          const actionName = {
+            start: '启动',
+            stop: '停止',
+            restart: '重启',
+            pause: '暂停',
+            unpause: '恢复'
+          }[action];
+          ElMessage.success(`容器 "${container.name}" ${actionName}成功`);
+        })
+        .catch((error: any) => {
+          console.error(`Container ${action} failed:`, error);
+          let errorMsg = `容器${action}操作失败`;
+          if (error.response?.status === 409) {
+            errorMsg = '容器状态冲突，请刷新后重试';
+          } else if (error.response?.status === 404) {
+            errorMsg = '容器不存在，可能已被删除';
+            // Refresh the list to sync state
+            containerStore.fetchContainers();
+          }
+          ElMessage.error(errorMsg);
+        });
       break;
+
     case "logs":
       logsContainer.value = container;
       showLogsDialog.value = true;
       break;
+
     case "terminal":
-      // Navigate to container detail with terminal tab
+      if (container.status !== 'running') {
+        ElMessage.warning('只有运行中的容器才能访问终端');
+        return;
+      }
       router.push(`/containers/${containerId}?tab=terminal`);
       break;
+
     case "update":
-      containerStore.updateContainerImage(containerId);
+      ElMessageBox.confirm(
+        `确定要更新容器 "${container.name}" 的镜像吗？`,
+        "确认更新",
+        {
+          type: "info",
+          confirmButtonText: "更新",
+          cancelButtonText: "取消",
+        },
+      ).then(() => {
+        containerStore.updateContainerImage(containerId)
+          .catch((error: any) => {
+            console.error('Update failed:', error);
+            ElMessage.error('容器更新失败');
+          });
+      });
       break;
+
     case "edit":
       editingContainer.value = container;
       showEditDialog.value = true;
       break;
+
     case "delete":
+      const isRunning = container.status === 'running';
       ElMessageBox.confirm(
-        `确定要删除容器 "${container.name}" 吗?`,
+        `确定要删除容器 "${container.name}" 吗?${isRunning ? '\n注意：容器正在运行，删除将强制停止。' : ''}`,
         "确认删除",
         {
           type: "warning",
           confirmButtonText: "删除",
           cancelButtonText: "取消",
+          distinguishCancelAndClose: true,
         },
       ).then(() => {
-        containerStore.deleteContainer(containerId);
+        containerStore.deleteContainer(containerId, isRunning)
+          .then(() => {
+            ElMessage.success(`容器 "${container.name}" 已删除`);
+          })
+          .catch((error: any) => {
+            console.error('Delete failed:', error);
+            ElMessage.error('容器删除失败');
+          });
+      }).catch(() => {
+        // User cancelled - no action needed
       });
       break;
+
+    default:
+      console.warn(`Unknown action: ${action}`);
+      ElMessage.warning('未知操作');
   }
 }
 
@@ -821,16 +884,31 @@ function toggleSortDirection() {
 }
 
 function applyFilters() {
-  const newFilters = {
-    search: searchQuery.value,
-    status:
-      statusFilter.value.length > 0 ? (statusFilter.value as any) : undefined,
-    image: imageFilter.value || undefined,
-    registry: registryFilter.value || undefined,
-    updatePolicy: updatePolicyFilter.value || undefined,
-  };
+  try {
+    const newFilters = {
+      search: searchQuery.value?.trim(),
+      status:
+        statusFilter.value.length > 0 ? (statusFilter.value as any) : undefined,
+      image: imageFilter.value?.trim() || undefined,
+      registry: registryFilter.value?.trim() || undefined,
+      updatePolicy: updatePolicyFilter.value?.trim() || undefined,
+      // Add label filter support
+      labels: labelFilter.value?.trim() ?
+        labelFilter.value.split(',').reduce((acc: any, item) => {
+          const [key, value] = item.split('=');
+          if (key && value) {
+            acc[key.trim()] = value.trim();
+          }
+          return acc;
+        }, {}) : undefined,
+    };
 
-  containerStore.setFilters(newFilters);
+    console.log('应用过滤条件:', newFilters);
+    containerStore.setFilters(newFilters);
+  } catch (error) {
+    console.error('过滤器应用失败:', error);
+    ElMessage.error('过滤条件格式错误');
+  }
 }
 
 function clearAllFilters() {
@@ -897,11 +975,24 @@ function startAutoRefresh() {
     clearInterval(autoRefreshInterval);
   }
 
+  // Enhanced auto-refresh with adaptive intervals
   autoRefreshInterval = setInterval(() => {
-    if (!loading.value) {
-      containerStore.refreshData();
+    if (!loading.value && document.visibilityState === 'visible') {
+      // Only refresh when page is visible to save resources
+      containerStore.refreshData().catch(error => {
+        console.warn('自动刷新失败:', error);
+        // Don't show error for auto-refresh failures
+      });
     }
   }, 30000); // Refresh every 30 seconds
+
+  // Handle page visibility changes
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !loading.value) {
+      // Refresh when page becomes visible
+      containerStore.refreshData();
+    }
+  });
 }
 
 function stopAutoRefresh() {
@@ -923,21 +1014,49 @@ watch(searchQuery, (newValue) => {
 
 // Lifecycle
 onMounted(async () => {
-  // Initialize WebSocket connection
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
-  const token = localStorage.getItem('token') || '';
+  try {
+    // Initialize WebSocket connection with enhanced error handling
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+    const token = localStorage.getItem('token') || '';
 
-  if (token) {
-    containerStore.initializeWebSocket(baseUrl, token);
-    monitoringStore.initializeWebSocket(baseUrl, token);
+    if (token) {
+      try {
+        console.log('初始化WebSocket连接...');
+        containerStore.initializeWebSocket(baseUrl, token);
+        monitoringStore.initializeWebSocket(baseUrl, token);
+        console.log('WebSocket连接初始化完成');
+      } catch (wsError) {
+        console.error('WebSocket连接失败:', wsError);
+        ElMessage.warning('实时功能暂时不可用，将继续使用轮询模式');
+      }
+    } else {
+      console.warn('未找到认证令牌，跳过WebSocket初始化');
+      ElMessage.warning('请重新登录以启用实时功能');
+    }
+
+    // Load initial data with progress tracking
+    console.log('开始加载容器数据...');
+    const loadingTasks = [
+      containerStore.fetchContainers().then(() => console.log('容器列表加载完成')),
+      containerStore.fetchTemplates().then(() => console.log('容器模板加载完成')).catch(err => {
+        console.warn('模板加载失败:', err);
+        // Templates are not critical, continue
+      }),
+      containerStore.checkUpdates().then(() => console.log('更新检查完成')).catch(err => {
+        console.warn('更新检查失败:', err);
+        // Update check is not critical, continue
+      })
+    ];
+
+    await Promise.allSettled(loadingTasks);
+
+    startAutoRefresh();
+    console.log('容器管理页面初始化完成');
+
+  } catch (error) {
+    console.error('页面初始化失败:', error);
+    ElMessage.error('页面加载失败，请刷新重试');
   }
-
-  // Load initial data
-  await containerStore.fetchContainers();
-  await containerStore.fetchTemplates();
-  await containerStore.checkUpdates();
-
-  startAutoRefresh();
 });
 
 onUnmounted(() => {

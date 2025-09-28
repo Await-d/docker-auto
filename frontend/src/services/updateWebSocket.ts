@@ -31,7 +31,7 @@ export class UpdateWebSocketService {
     const wsHost = import.meta.env.DEV ? 'localhost:8080' : window.location.host;
     this.url =
       url ||
-      `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${wsHost}/ws/updates`;
+      `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${wsHost}/api/ws`;
   }
 
   /**

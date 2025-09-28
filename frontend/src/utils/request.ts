@@ -218,7 +218,7 @@ class HttpRequest {
     refreshToken: string,
   ): Promise<TokenRefreshResponse> {
     const response = await axios.post<ApiResponse<TokenRefreshResponse>>(
-      `${API_BASE_URL}/auth/refresh`,
+      `${API_BASE_URL}/api/auth/refresh`,
       { refresh_token: refreshToken },
       {
         headers: {

@@ -1,10 +1,13 @@
 /**
- * UX Enhancement composables for better user experience
+ * UX Enhancement composables for better user experience with production logging
  */
 import { ref, onMounted, onUnmounted } from "vue";
 import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 import { retryWithBackoff, debounce, throttle } from "@/utils/network";
+import { createLogger } from "@/services/logging";
 import type { LoadingInstance } from "element-plus";
+
+const logger = createLogger('useUXEnhancements');
 
 export interface LoadingState {
   isLoading: boolean;
@@ -99,7 +102,13 @@ export const useErrorHandling = () => {
     key?: string,
     showMessage: boolean = true
   ) => {
-    console.error("Error handled:", error);
+    logger.error("Error handled in UX composable", error, {
+      action: 'handle-error',
+      errorKey: key,
+      showMessage,
+      errorType: error.name,
+      errorCode: (error as any).code,
+    });
 
     if (key) {
       errors.value.set(key, error);
@@ -317,14 +326,36 @@ export const usePerformanceOptimization = () => {
   ): Promise<T> => {
     const start = performance.now();
 
+    logger.debug(`Starting operation: ${label}`, {
+      action: 'performance-start',
+      operation: label,
+      startTime: start,
+    });
+
     try {
       const result = await operation();
       const end = performance.now();
-      console.log(`${label} took ${(end - start).toFixed(2)}ms`);
+      const duration = end - start;
+
+      logger.info(`Operation completed: ${label}`, {
+        action: 'performance-complete',
+        operation: label,
+        duration: `${duration.toFixed(2)}ms`,
+        success: true,
+      });
+
       return result;
     } catch (error) {
       const end = performance.now();
-      console.error(`${label} failed after ${(end - start).toFixed(2)}ms:`, error);
+      const duration = end - start;
+
+      logger.error(`Operation failed: ${label}`, error as Error, {
+        action: 'performance-failed',
+        operation: label,
+        duration: `${duration.toFixed(2)}ms`,
+        success: false,
+      });
+
       throw error;
     }
   };
@@ -373,7 +404,12 @@ export const useAutoSave = <T>(
       hasUnsavedChanges.value = false;
       lastDataSnapshot = currentSnapshot;
     } catch (error) {
-      console.error("Auto-save failed:", error);
+      logger.error("Auto-save operation failed", error as Error, {
+        action: 'auto-save',
+        dataType: typeof data(),
+        interval,
+        hasUnsavedChanges: hasUnsavedChanges.value,
+      });
     } finally {
       saving.value = false;
     }
@@ -383,12 +419,24 @@ export const useAutoSave = <T>(
     if (autoSaveTimer) clearInterval(autoSaveTimer);
 
     autoSaveTimer = setInterval(triggerAutoSave, interval);
+
+    logger.debug('Auto-save started', {
+      action: 'start-auto-save',
+      interval: `${interval}ms`,
+      enabled: autoSaveEnabled.value,
+    });
   };
 
   const stopAutoSave = () => {
     if (autoSaveTimer) {
       clearInterval(autoSaveTimer);
       autoSaveTimer = null;
+
+      logger.debug('Auto-save stopped', {
+        action: 'stop-auto-save',
+        lastSaved: lastSaved.value,
+        hasUnsavedChanges: hasUnsavedChanges.value,
+      });
     }
   };
 
@@ -421,53 +469,116 @@ export const useAutoSave = <T>(
  * Accessibility enhancements
  */
 export const useAccessibility = () => {
+  const accessibilityLogger = createLogger('useAccessibility');
+
   const announceToScreenReader = (message: string) => {
-    const announcement = document.createElement("div");
-    announcement.setAttribute("aria-live", "polite");
-    announcement.setAttribute("aria-atomic", "true");
-    announcement.style.position = "absolute";
-    announcement.style.left = "-10000px";
-    announcement.style.width = "1px";
-    announcement.style.height = "1px";
-    announcement.style.overflow = "hidden";
+    try {
+      const announcement = document.createElement("div");
+      announcement.setAttribute("aria-live", "polite");
+      announcement.setAttribute("aria-atomic", "true");
+      announcement.style.position = "absolute";
+      announcement.style.left = "-10000px";
+      announcement.style.width = "1px";
+      announcement.style.height = "1px";
+      announcement.style.overflow = "hidden";
 
-    document.body.appendChild(announcement);
-    announcement.textContent = message;
+      document.body.appendChild(announcement);
+      announcement.textContent = message;
 
-    setTimeout(() => {
-      document.body.removeChild(announcement);
-    }, 1000);
+      setTimeout(() => {
+        if (document.body.contains(announcement)) {
+          document.body.removeChild(announcement);
+        }
+      }, 1000);
+
+      accessibilityLogger.debug('Screen reader announcement created', {
+        action: 'announce-to-screen-reader',
+        messageLength: message.length,
+        messagePreview: message.substring(0, 50),
+      });
+
+    } catch (error) {
+      accessibilityLogger.error('Failed to create screen reader announcement', error as Error, {
+        action: 'announce-to-screen-reader',
+        message: message.substring(0, 100),
+      });
+    }
   };
 
   const trapFocus = (element: HTMLElement) => {
-    const focusableElements = element.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
+    try {
+      const focusableElements = element.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
 
-    const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+      if (focusableElements.length === 0) {
+        accessibilityLogger.warn('No focusable elements found for focus trap', {
+          action: 'trap-focus',
+          elementTag: element.tagName,
+          elementId: element.id,
+          elementClasses: element.className,
+        });
+        return () => {}; // Return no-op cleanup function
+      }
 
-    const handleTabKey = (e: KeyboardEvent) => {
-      if (e.key === "Tab") {
-        if (e.shiftKey) {
-          if (document.activeElement === firstElement) {
-            lastElement.focus();
-            e.preventDefault();
-          }
-        } else {
-          if (document.activeElement === lastElement) {
-            firstElement.focus();
-            e.preventDefault();
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      const handleTabKey = (e: KeyboardEvent) => {
+        if (e.key === "Tab") {
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              lastElement.focus();
+              e.preventDefault();
+
+              accessibilityLogger.debug('Focus wrapped to last element', {
+                action: 'focus-wrap',
+                direction: 'backward',
+                elementTag: lastElement.tagName,
+              });
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              firstElement.focus();
+              e.preventDefault();
+
+              accessibilityLogger.debug('Focus wrapped to first element', {
+                action: 'focus-wrap',
+                direction: 'forward',
+                elementTag: firstElement.tagName,
+              });
+            }
           }
         }
-      }
-    };
+      };
 
-    element.addEventListener("keydown", handleTabKey);
+      element.addEventListener("keydown", handleTabKey);
 
-    return () => {
-      element.removeEventListener("keydown", handleTabKey);
-    };
+      accessibilityLogger.info('Focus trap established', {
+        action: 'trap-focus',
+        focusableCount: focusableElements.length,
+        elementTag: element.tagName,
+        elementId: element.id,
+      });
+
+      return () => {
+        element.removeEventListener("keydown", handleTabKey);
+        accessibilityLogger.debug('Focus trap removed', {
+          action: 'remove-focus-trap',
+          elementTag: element.tagName,
+          elementId: element.id,
+        });
+      };
+
+    } catch (error) {
+      accessibilityLogger.error('Failed to establish focus trap', error as Error, {
+        action: 'trap-focus',
+        elementTag: element?.tagName,
+        elementId: element?.id,
+      });
+
+      return () => {}; // Return no-op cleanup function
+    }
   };
 
   return {

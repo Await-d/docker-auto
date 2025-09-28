@@ -652,7 +652,7 @@ import ResourceMonitor from "@/components/container/ResourceMonitor.vue";
 import LogViewer from "@/components/container/LogViewer.vue";
 import UpdateManager from "@/components/container/UpdateManager.vue";
 import ContainerForm from "@/components/container/ContainerForm.vue";
-import WebTerminal from "@/components/WebTerminal.vue";
+import WebTerminal from "@/components/container/WebTerminal.vue";
 
 import type { ContainerFormData } from "@/types/container";
 
