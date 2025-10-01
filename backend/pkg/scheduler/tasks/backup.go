@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
+	"hash"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -18,10 +19,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"docker-auto/internal/model"
@@ -963,7 +962,7 @@ func (t *BackupTask) backupContainerConfigs(ctx context.Context, session *Backup
 		// Get live container info from Docker if client is available
 		var liveContainerInfo map[string]interface{}
 		if t.dockerClient != nil {
-			if containerInfo, err := t.dockerClient.InspectContainer(ctx, container.Name); err == nil {
+			if containerInfo, err := t.dockerClient.GetContainer(ctx, container.ContainerID); err == nil {
 				liveContainerInfo = map[string]interface{}{
 					"config":          containerInfo.Config,
 					"host_config":     containerInfo.HostConfig,
@@ -1223,7 +1222,7 @@ func (t *BackupTask) backupImages(ctx context.Context, session *BackupSession, p
 	}
 
 	// List Docker images
-	images, err := t.dockerClient.ImageList(ctx, types.ImageListOptions{
+	images, err := t.dockerClient.ListImages(ctx, types.ImageListOptions{
 		All: false, // Only show tagged images by default
 	})
 	if err != nil {

@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -619,4 +622,171 @@ func (cm *CacheManager) RefreshLock(ctx context.Context, lockKey string, ownerID
 	}
 
 	return nil
+}
+
+// ConfigSet sets Redis configuration parameter using CONFIG SET command
+func (cm *CacheManager) ConfigSet(ctx context.Context, parameter string, value string) error {
+	if cm.redisClient == nil {
+		return fmt.Errorf("Redis is required for configuration operations")
+	}
+
+	client := cm.redisClient.GetClient()
+	result := client.ConfigSet(ctx, parameter, value)
+	if err := result.Err(); err != nil {
+		return fmt.Errorf("failed to set Redis config parameter %s: %w", parameter, err)
+	}
+
+	cm.logger.WithFields(logrus.Fields{
+		"parameter": parameter,
+		"value":     value,
+	}).Debug("Redis configuration parameter updated")
+
+	return nil
+}
+
+// CleanupExpired removes expired keys from both memory and Redis caches
+func (cm *CacheManager) CleanupExpired(ctx context.Context) error {
+	var errors []error
+
+	// Clean up memory cache
+	if cm.memoryCache != nil {
+		// Memory cache has automatic cleanup, but we can trigger manual cleanup
+		cm.memoryCache.CleanupExpired()
+		cm.logger.Debug("Memory cache expired keys cleaned up")
+	}
+
+	// Clean up Redis cache using SCAN and TTL to find and remove expired keys
+	if cm.redisClient != nil {
+		client := cm.redisClient.GetClient()
+
+		// Use SCAN to iterate through keys and check TTL
+		var cursor uint64 = 0
+		cleanedCount := 0
+
+		for {
+			keys, nextCursor, err := client.Scan(ctx, cursor, "*", 1000).Result()
+			if err != nil {
+				errors = append(errors, fmt.Errorf("Redis SCAN failed: %w", err))
+				break
+			}
+
+			// Check TTL for each key and remove if expired
+			for _, key := range keys {
+				ttl, err := client.TTL(ctx, key).Result()
+				if err != nil {
+					cm.logger.WithError(err).WithField("key", key).Warn("Failed to get TTL for key")
+					continue
+				}
+
+				// Remove keys that have expired (TTL <= 0) but still exist
+				if ttl == -1 {
+					// Key exists but has no expiration, skip
+					continue
+				} else if ttl <= 0 {
+					// Key should be expired, manually delete
+					if err := client.Del(ctx, key).Err(); err != nil {
+						cm.logger.WithError(err).WithField("key", key).Warn("Failed to delete expired key")
+					} else {
+						cleanedCount++
+					}
+				}
+			}
+
+			cursor = nextCursor
+			if cursor == 0 {
+				break
+			}
+		}
+
+		cm.logger.WithField("cleaned_count", cleanedCount).Debug("Redis expired keys cleanup completed")
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("cache cleanup errors: %v", errors)
+	}
+
+	return nil
+}
+
+// Info returns comprehensive cache information including Redis and memory cache statistics
+func (cm *CacheManager) Info(ctx context.Context) (map[string]interface{}, error) {
+	info := make(map[string]interface{})
+
+	// Basic cache manager info
+	info["enabled"] = cm.enabled
+	info["redis_enabled"] = cm.redisClient != nil
+	info["memory_enabled"] = cm.memoryCache != nil
+
+	// Get memory cache info
+	if cm.memoryCache != nil {
+		memoryStats := cm.memoryCache.GetAdvancedStats()
+		info["memory_cache"] = memoryStats
+	}
+
+	// Get Redis info
+	if cm.redisClient != nil {
+		client := cm.redisClient.GetClient()
+
+		// Get Redis INFO
+		redisInfo, err := client.Info(ctx).Result()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get Redis info: %w", err)
+		}
+
+		// Parse Redis INFO into structured data
+		redisStats := make(map[string]interface{})
+		lines := strings.Split(redisInfo, "\r\n")
+
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "#") {
+				// Skip comments and empty lines
+				continue
+			}
+
+			if strings.Contains(line, ":") {
+				parts := strings.SplitN(line, ":", 2)
+				if len(parts) == 2 {
+					key := parts[0]
+					value := parts[1]
+
+					// Try to parse as number
+					if intVal, err := strconv.ParseInt(value, 10, 64); err == nil {
+						redisStats[key] = intVal
+					} else if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
+						redisStats[key] = floatVal
+					} else {
+						redisStats[key] = value
+					}
+				}
+			}
+		}
+
+		// Get additional Redis statistics
+		dbSize, err := client.DBSize(ctx).Result()
+		if err == nil {
+			redisStats["db_size"] = dbSize
+		}
+
+		// Get Redis connection info
+		redisStats["connection_stats"] = cm.redisClient.GetStats()
+
+		info["redis_cache"] = redisStats
+	}
+
+	// Add system performance metrics
+	info["timestamp"] = time.Now()
+
+	// Runtime memory statistics
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	info["system_memory"] = map[string]interface{}{
+		"alloc_bytes":      memStats.Alloc,
+		"total_alloc_bytes": memStats.TotalAlloc,
+		"sys_bytes":        memStats.Sys,
+		"gc_runs":          memStats.NumGC,
+		"heap_objects":     memStats.HeapObjects,
+	}
+
+	return info, nil
 }

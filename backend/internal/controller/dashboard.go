@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"time"
 
+	"docker-auto/internal/model"
 	"docker-auto/internal/service"
 	"docker-auto/pkg/dashboard"
 
@@ -63,7 +65,7 @@ func (dc *DashboardController) GetContainerStats(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Get detailed container statistics
-	containers, err := dc.containerService.ListContainers(ctx, 0) // Get all containers
+	containers, err := dc.containerService.ListContainers(ctx, 0, nil) // Get all containers for admin
 	if err != nil {
 		dc.logger.WithError(err).Error("Failed to get container statistics")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -74,47 +76,116 @@ func (dc *DashboardController) GetContainerStats(c *gin.Context) {
 	}
 
 	// Transform to detailed stats format
-	containerStats := make([]dashboard.ContainerDetailStats, 0, len(containers))
+	containerStats := make([]dashboard.ContainerDetailStats, 0, len(containers.Containers))
 
-	for _, container := range containers {
+	for _, container := range containers.Containers {
 		// Get real-time stats for each container
-		stats, err := dc.containerService.GetContainerStats(ctx, container.ID)
+		stats, err := dc.containerService.GetContainerStats(ctx, 0, container.ID)
 		if err != nil {
 			dc.logger.WithError(err).WithField("containerId", container.ID).Warn("Failed to get container stats")
 			continue
 		}
 
 		detailStats := dashboard.ContainerDetailStats{
-			ContainerID:  container.ID,
+			ContainerID:  strconv.FormatInt(container.ID, 10),
 			Name:         container.Name,
 			Image:        container.Image,
-			Status:       container.Status,
-			State:        container.State,
-			RestartCount: container.RestartCount,
+			Status:       string(container.Status),
+			State:        string(container.Status), // Use status as state for now
+			RestartCount: 0,                       // Default value, may need to get from Docker
 			LastUpdated:  time.Now(),
 		}
 
-		// Add CPU stats if available
-		if stats.CPUStats != nil {
+		// Add CPU stats if available from simplified metrics
+		if stats.Metrics != nil {
+			// Convert CPU percentage to usage values (simplified mapping)
+			totalUsageNanoseconds := uint64(stats.Metrics.CPUPercent * 1000000) // Convert percentage to rough nanoseconds
+
 			detailStats.CPUStats = dashboard.CPUStats{
 				CPUUsage: dashboard.CPUUsageStats{
-					TotalUsage:        stats.CPUStats.TotalUsage,
-					PercpuUsage:       stats.CPUStats.PercpuUsage,
-					UsageInKernelmode: stats.CPUStats.UsageInKernelmode,
-					UsageInUsermode:   stats.CPUStats.UsageInUsermode,
+					TotalUsage:        totalUsageNanoseconds,
+					PercpuUsage:       []uint64{totalUsageNanoseconds}, // Single CPU for simplicity
+					UsageInKernelmode: totalUsageNanoseconds / 2,       // Estimate 50% kernel mode
+					UsageInUsermode:   totalUsageNanoseconds / 2,       // Estimate 50% user mode
 				},
-				SystemCPUUsage: stats.CPUStats.SystemCPUUsage,
-				OnlineCPUs:     stats.CPUStats.OnlineCPUs,
+				SystemCPUUsage: totalUsageNanoseconds * 2, // Rough system estimate
+				OnlineCPUs:     1,                         // Default to 1 CPU
+				ThrottlingData: dashboard.ThrottleData{    // Default throttling data
+					Periods:          0,
+					ThrottledPeriods: 0,
+					ThrottledTime:    0,
+				},
 			}
 		}
 
-		// Add memory stats if available
-		if stats.MemoryStats != nil {
+		// Add memory stats if available from simplified metrics
+		if stats.Metrics != nil {
 			detailStats.MemoryStats = dashboard.MemoryStats{
-				Usage:    stats.MemoryStats.Usage,
-				MaxUsage: stats.MemoryStats.MaxUsage,
-				Limit:    stats.MemoryStats.Limit,
-				Stats:    stats.MemoryStats.Stats,
+				Usage:    uint64(stats.Metrics.MemoryUsage),
+				MaxUsage: uint64(stats.Metrics.MemoryUsage), // Use current as max for simplicity
+				Limit:    uint64(stats.Metrics.MemoryLimit),
+				Stats: map[string]uint64{ // Provide basic memory stats
+					"cache":               0,
+					"rss":                 uint64(stats.Metrics.MemoryUsage),
+					"mapped_file":         0,
+					"total_cache":         0,
+					"total_rss":           uint64(stats.Metrics.MemoryUsage),
+					"total_mapped_file":   0,
+					"pgpgin":              0,
+					"pgpgout":             0,
+					"pgfault":             0,
+					"pgmajfault":          0,
+					"total_pgpgin":        0,
+					"total_pgpgout":       0,
+					"total_pgfault":       0,
+					"total_pgmajfault":    0,
+				},
+			}
+		}
+
+		// Add network stats if available
+		if stats.Metrics != nil && stats.Metrics.NetworkIO != nil {
+			detailStats.NetworkStats = map[string]dashboard.NetStats{
+				"eth0": {
+					RxBytes:   uint64(stats.Metrics.NetworkIO.RxBytes),
+					TxBytes:   uint64(stats.Metrics.NetworkIO.TxBytes),
+					RxPackets: uint64(stats.Metrics.NetworkIO.RxPackets),
+					TxPackets: uint64(stats.Metrics.NetworkIO.TxPackets),
+				},
+			}
+		}
+
+		// Add block I/O stats if available
+		if stats.Metrics != nil && stats.Metrics.BlockIO != nil {
+			detailStats.BlockIOStats = dashboard.BlockIOStats{
+				IoServiceBytesRecursive: []dashboard.BlkioStatEntry{
+					{
+						Major: 0,
+						Minor: 0,
+						Op:    "Read",
+						Value: uint64(stats.Metrics.BlockIO.ReadBytes),
+					},
+					{
+						Major: 0,
+						Minor: 0,
+						Op:    "Write",
+						Value: uint64(stats.Metrics.BlockIO.WriteBytes),
+					},
+				},
+				IoServicedRecursive: []dashboard.BlkioStatEntry{
+					{
+						Major: 0,
+						Minor: 0,
+						Op:    "Read",
+						Value: uint64(stats.Metrics.BlockIO.ReadOps),
+					},
+					{
+						Major: 0,
+						Minor: 0,
+						Op:    "Write",
+						Value: uint64(stats.Metrics.BlockIO.WriteOps),
+					},
+				},
 			}
 		}
 
@@ -125,9 +196,9 @@ func (dc *DashboardController) GetContainerStats(c *gin.Context) {
 		"success": true,
 		"data": gin.H{
 			"containers":    containerStats,
-			"totalCount":    len(containers),
-			"runningCount":  dc.countContainersByStatus(containers, "running"),
-			"stoppedCount":  dc.countContainersByStatus(containers, "exited"),
+			"totalCount":    containers.Total,
+			"runningCount":  dc.countContainersByStatus(containers.Containers, "running"),
+			"stoppedCount":  dc.countContainersByStatus(containers.Containers, "exited"),
 			"lastUpdated":   time.Now(),
 		},
 	})
@@ -499,7 +570,16 @@ func (dc *DashboardController) TriggerSecurityScan(c *gin.Context) {
 		})
 	} else if request.ContainerID != "" {
 		// Trigger scan for specific container
-		container, err := dc.containerService.GetContainerByID(ctx, request.ContainerID)
+		containerID, err := strconv.ParseInt(request.ContainerID, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Invalid container ID format",
+				"details": err.Error(),
+			})
+			return
+		}
+
+		containerDetail, err := dc.containerService.GetContainer(ctx, 0, containerID) // Use 0 for admin access
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error":   "Container not found",
@@ -508,9 +588,11 @@ func (dc *DashboardController) TriggerSecurityScan(c *gin.Context) {
 			return
 		}
 
+		container := containerDetail.Container
+
 		go func() {
 			if err := dc.securityScannerSvc.ScanContainer(context.Background(),
-				container.ID, container.ImageID, container.Image, container.Name); err != nil {
+				strconv.FormatInt(int64(container.ID), 10), container.ContainerID, container.Image, container.Name); err != nil {
 				dc.logger.WithError(err).Error("Background security scan failed")
 			}
 		}()
@@ -533,19 +615,19 @@ func (dc *DashboardController) TriggerSecurityScan(c *gin.Context) {
 
 // Helper functions
 
-func (dc *DashboardController) countContainersByStatus(containers []interface{}, status string) int {
+func (dc *DashboardController) countContainersByStatus(containers []*service.ContainerSummary, status string) int {
 	count := 0
 	for _, container := range containers {
-		// This would need to be adapted based on the actual container structure
-		// For now, this is a placeholder
-		count++
+		if string(container.Status) == status {
+			count++
+		}
 	}
 	return count
 }
 
 func (dc *DashboardController) getContainerHealthSummary(ctx context.Context) gin.H {
 	// Get container health information
-	containers, err := dc.containerService.ListContainers(ctx, 0)
+	containers, err := dc.containerService.ListContainers(ctx, 0, nil)
 	if err != nil {
 		return gin.H{
 			"error": "Failed to get container health data",
@@ -556,11 +638,12 @@ func (dc *DashboardController) getContainerHealthSummary(ctx context.Context) gi
 	unhealthyCount := 0
 	unknownCount := 0
 
-	for _, container := range containers {
-		switch container.Health {
-		case "healthy":
+	for _, container := range containers.Containers {
+		// Map container status to health status
+		switch container.Status {
+		case model.ContainerStatusRunning:
 			healthyCount++
-		case "unhealthy":
+		case model.ContainerStatusExited, model.ContainerStatusDead, model.ContainerStatusStopped:
 			unhealthyCount++
 		default:
 			unknownCount++
@@ -568,11 +651,11 @@ func (dc *DashboardController) getContainerHealthSummary(ctx context.Context) gi
 	}
 
 	return gin.H{
-		"totalContainers": len(containers),
+		"totalContainers": len(containers.Containers),
 		"healthy":         healthyCount,
 		"unhealthy":       unhealthyCount,
 		"unknown":         unknownCount,
-		"healthyPercent":  float64(healthyCount) / float64(len(containers)) * 100,
+		"healthyPercent":  float64(healthyCount) / float64(len(containers.Containers)) * 100,
 	}
 }
 

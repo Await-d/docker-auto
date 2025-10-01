@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"docker-auto/internal/config"
-	"docker-auto/internal/model"
 	"docker-auto/internal/repository"
 	"docker-auto/pkg/docker"
 

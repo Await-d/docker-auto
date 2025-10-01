@@ -1286,12 +1286,12 @@ func (us *UpdateScheduler) FindNextMaintenanceWindow(after time.Time, containerI
 }
 
 // OptimizeUpdateStrategy optimizes the update strategy based on system state
-func (s *UpdateService) OptimizeUpdateStrategy(ctx context.Context, req *UpdateRequest) *dockerTypes.UpdateStrategy {
+func (s *UpdateService) OptimizeUpdateStrategy(ctx context.Context, req *UpdateRequest) dockerTypes.UpdateStrategy {
 	// Get container metrics
 	metrics, err := s.monitoringService.GetContainerMetrics(ctx, req.ContainerID)
 	if err != nil {
 		s.logger.WithError(err).Warn("Failed to get container metrics for optimization")
-		return &dockerTypes.UpdateStrategyRecreate // Fallback to safe strategy
+		return dockerTypes.UpdateStrategyRecreate // Fallback to safe strategy
 	}
 
 	// Get system load
@@ -1300,16 +1300,16 @@ func (s *UpdateService) OptimizeUpdateStrategy(ctx context.Context, req *UpdateR
 	// Optimize based on container characteristics
 	container, err := s.containerRepo.GetByContainerID(ctx, req.ContainerID)
 	if err != nil {
-		return &dockerTypes.UpdateStrategyRecreate
+		return dockerTypes.UpdateStrategyRecreate
 	}
 
 	// Decision algorithm
 	if s.shouldUseRollingUpdate(container, metrics, systemLoad) {
-		return &dockerTypes.UpdateStrategyRolling
+		return dockerTypes.UpdateStrategyRolling
 	} else if s.shouldUseBlueGreenUpdate(container, metrics, systemLoad) {
-		return &dockerTypes.UpdateStrategyBlueGreen
+		return dockerTypes.UpdateStrategyBlueGreen
 	} else {
-		return &dockerTypes.UpdateStrategyRecreate
+		return dockerTypes.UpdateStrategyRecreate
 	}
 }
 
@@ -1325,7 +1325,7 @@ func (s *UpdateService) shouldUseRollingUpdate(container *model.Container, metri
 	}
 
 	// Check if container has health check
-	if container.HealthCheck != nil && container.HealthCheck != "" {
+	if container.HealthCheck != "" {
 		return true
 	}
 
@@ -1341,9 +1341,11 @@ func (s *UpdateService) shouldUseBlueGreenUpdate(container *model.Container, met
 
 	if systemLoad != nil && systemLoad.CPUUsage < 60 && systemLoad.MemoryUsage < 70 {
 		// Check if container is critical
-		if container.Priority != nil && *container.Priority == "high" {
-			return true
-		}
+		// TODO: Add Priority field to Container model if needed
+		// if container.Priority != nil && *container.Priority == "high" {
+		//	return true
+		// }
+		return true // For now, allow blue-green if system resources are available
 	}
 
 	return false

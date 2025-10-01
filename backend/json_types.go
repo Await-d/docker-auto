@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"docker-auto/internal/model"
 )
@@ -13,7 +14,7 @@ type JSONContainerMetrics model.ContainerMetricsSnapshot
 
 // Value implements driver.Valuer interface
 func (j JSONContainerMetrics) Value() (driver.Value, error) {
-	if (model.ContainerMetricsSnapshot)(j) == (model.ContainerMetricsSnapshot{}) {
+	if reflect.DeepEqual((model.ContainerMetricsSnapshot)(j), model.ContainerMetricsSnapshot{}) {
 		return nil, nil
 	}
 	return json.Marshal(j)
@@ -44,7 +45,7 @@ type JSONResourceUsage model.ResourceUsageData
 
 // Value implements driver.Valuer interface
 func (j JSONResourceUsage) Value() (driver.Value, error) {
-	if (model.ResourceUsageData)(j) == (model.ResourceUsageData{}) {
+	if reflect.DeepEqual((model.ResourceUsageData)(j), model.ResourceUsageData{}) {
 		return nil, nil
 	}
 	return json.Marshal(j)
@@ -75,7 +76,7 @@ type JSONProcessInfo model.ProcessInfo
 
 // Value implements driver.Valuer interface
 func (j JSONProcessInfo) Value() (driver.Value, error) {
-	if (model.ProcessInfo)(j) == (model.ProcessInfo{}) {
+	if reflect.DeepEqual((model.ProcessInfo)(j), model.ProcessInfo{}) {
 		return nil, nil
 	}
 	return json.Marshal(j)
@@ -106,7 +107,7 @@ type JSONExtendedMetrics model.ExtendedMetricsData
 
 // Value implements driver.Valuer interface
 func (j JSONExtendedMetrics) Value() (driver.Value, error) {
-	if (model.ExtendedMetricsData)(j) == (model.ExtendedMetricsData{}) {
+	if reflect.DeepEqual((model.ExtendedMetricsData)(j), model.ExtendedMetricsData{}) {
 		return nil, nil
 	}
 	return json.Marshal(j)
@@ -137,7 +138,7 @@ type JSONAnomalies model.AnomaliesData
 
 // Value implements driver.Valuer interface
 func (j JSONAnomalies) Value() (driver.Value, error) {
-	if (model.AnomaliesData)(j) == (model.AnomaliesData{}) {
+	if reflect.DeepEqual((model.AnomaliesData)(j), model.AnomaliesData{}) {
 		return nil, nil
 	}
 	return json.Marshal(j)
@@ -168,7 +169,7 @@ type JSONTTYSettings model.TTYSettings
 
 // Value implements driver.Valuer interface
 func (j JSONTTYSettings) Value() (driver.Value, error) {
-	if (model.TTYSettings)(j) == (model.TTYSettings{}) {
+	if reflect.DeepEqual((model.TTYSettings)(j), model.TTYSettings{}) {
 		return nil, nil
 	}
 	return json.Marshal(j)
@@ -199,7 +200,7 @@ type JSONSessionCapabilities model.SessionCapabilities
 
 // Value implements driver.Valuer interface
 func (j JSONSessionCapabilities) Value() (driver.Value, error) {
-	if (model.SessionCapabilities)(j) == (model.SessionCapabilities{}) {
+	if reflect.DeepEqual((model.SessionCapabilities)(j), model.SessionCapabilities{}) {
 		return nil, nil
 	}
 	return json.Marshal(j)
@@ -230,7 +231,7 @@ type JSONSessionHistory model.SessionHistory
 
 // Value implements driver.Valuer interface
 func (j JSONSessionHistory) Value() (driver.Value, error) {
-	if (model.SessionHistory)(j) == (model.SessionHistory{}) {
+	if reflect.DeepEqual((model.SessionHistory)(j), model.SessionHistory{}) {
 		return nil, nil
 	}
 	return json.Marshal(j)

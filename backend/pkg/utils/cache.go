@@ -438,6 +438,11 @@ func (c *MemoryCache) cleanup() {
 	}
 }
 
+// CleanupExpired manually triggers cleanup of expired items
+func (c *MemoryCache) CleanupExpired() {
+	c.cleanup()
+}
+
 // Stop stops all cache background workers
 func (c *MemoryCache) Stop() {
 	close(c.cleanupDone)

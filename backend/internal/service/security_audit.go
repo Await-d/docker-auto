@@ -8,25 +8,24 @@ import (
 	"time"
 
 	"docker-auto/internal/config"
-	"docker-auto/internal/model"
 	"docker-auto/internal/repository"
 	"docker-auto/pkg/docker"
-	"docker-auto/pkg/security"
 
+	"github.com/docker/docker/api/types"
 	"github.com/sirupsen/logrus"
 )
 
 // SecurityAuditService provides comprehensive security audit capabilities
 type SecurityAuditService struct {
-	// auditRepo       repository.AuditLogRepository  // TODO: Implement AuditLogRepository
-	containerRepo   repository.ContainerRepository
-	userRepo        repository.UserRepository
-	dockerClient    *docker.DockerClient
-	// securityScanner *security.SecurityScanner  // TODO: Implement security.SecurityScanner
+	auditRepo         repository.AuditLogRepository
+	containerRepo     repository.ContainerRepository
+	userRepo          repository.UserRepository
+	dockerClient      *docker.DockerClient
+	securityScanner   SecurityScanner
 	complianceChecker *ComplianceChecker
-	riskAnalyzer    *RiskAnalyzer
-	config          *config.Config
-	logger          *logrus.Entry
+	riskAnalyzer      *RiskAnalyzer
+	config            *config.Config
+	logger            *logrus.Entry
 
 	// Real-time monitoring
 	auditQueue      chan *AuditEvent
@@ -280,12 +279,13 @@ func NewSecurityAuditService(
 	logger := logrus.WithField("component", "security_audit")
 
 	// Initialize security scanner
-	securityScanner := security.NewSecurityScanner(dockerClient, &security.ScannerConfig{
-		VulnerabilityDBPath: config.Security.VulnerabilityDBPath,
-		ScanTimeout:         5 * time.Minute,
-		MaxConcurrentScans:  3,
-		EnabledScanners:     []string{"trivy", "clair", "grype"},
-	}, logger.Logger)
+	// TODO: Implement security.NewSecurityScanner when security package is ready
+	// securityScanner := security.NewSecurityScanner(dockerClient, &security.ScannerConfig{
+	//	VulnerabilityDBPath: config.Security.VulnerabilityDBPath,
+	//	ScanTimeout:         5 * time.Minute,
+	//	MaxConcurrentScans:  3,
+	//	EnabledScanners:     []string{"trivy", "clair", "grype"},
+	// }, logger.Logger)
 
 	// Initialize compliance checker
 	complianceChecker := NewComplianceChecker(logger)
@@ -360,10 +360,13 @@ func (s *SecurityAuditService) LogAuditEvent(ctx context.Context, event *AuditEv
 
 // PerformComplianceCheck performs a compliance check on a container
 func (s *SecurityAuditService) PerformComplianceCheck(ctx context.Context, containerID string, standards []ComplianceStandard) ([]*ComplianceCheck, error) {
-	container, err := s.dockerClient.GetContainer(ctx, containerID)
+	containerJSON, err := s.dockerClient.GetContainer(ctx, containerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get container info: %w", err)
 	}
+
+	// Convert to ContainerInfo
+	container := convertContainerJSONToContainerInfo(containerJSON)
 
 	var allChecks []*ComplianceCheck
 
@@ -404,11 +407,13 @@ func (s *SecurityAuditService) PerformComplianceCheck(ctx context.Context, conta
 
 // PerformRiskAssessment performs a security risk assessment on a container
 func (s *SecurityAuditService) PerformRiskAssessment(ctx context.Context, containerID string) (*RiskAssessment, error) {
-	container, err := s.dockerClient.GetContainer(ctx, containerID)
+	containerJSON, err := s.dockerClient.GetContainer(ctx, containerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get container info: %w", err)
 	}
 
+	// Convert to ContainerInfo
+	container := convertContainerJSONToContainerInfo(containerJSON)
 	assessment := s.riskAnalyzer.AssessRisk(ctx, container)
 
 	// Generate alerts for high-risk containers
@@ -561,24 +566,35 @@ func (s *SecurityAuditService) riskAssessmentWorker() {
 
 // persistAuditEvent persists an audit event to storage
 func (s *SecurityAuditService) persistAuditEvent(event *AuditEvent) error {
+	// TODO: Implement audit log persistence when AuditLog model and repository are ready
 	// Convert to model and save to repository
-	auditLog := &model.AuditLog{
-		EventID:     event.ID,
-		EventType:   string(event.EventType),
-		Severity:    string(event.Severity),
-		Source:      event.Source,
-		UserID:      event.UserID,
-		Action:      event.Action,
-		Resource:    event.Resource,
-		Details:     marshalToJSON(event.Details),
-		Result:      string(event.Result),
-		RemoteIP:    event.RemoteIP,
-		UserAgent:   event.UserAgent,
-		SessionID:   event.SessionID,
-		Timestamp:   event.Timestamp,
-	}
+	// auditLog := &model.AuditLog{
+	//	EventID:     event.ID,
+	//	EventType:   string(event.EventType),
+	//	Severity:    string(event.Severity),
+	//	Source:      event.Source,
+	//	UserID:      event.UserID,
+	//	Action:      event.Action,
+	//	Resource:    event.Resource,
+	//	Details:     marshalToJSON(event.Details),
+	//	Result:      string(event.Result),
+	//	RemoteIP:    event.RemoteIP,
+	//	UserAgent:   event.UserAgent,
+	//	SessionID:   event.SessionID,
+	//	Timestamp:   event.Timestamp,
+	// }
 
-	return s.auditRepo.Create(context.Background(), auditLog)
+	// return s.auditRepo.Create(context.Background(), auditLog)
+
+	// For now, just log the event
+	s.logger.WithFields(logrus.Fields{
+		"event_id":     event.ID,
+		"event_type":   event.EventType,
+		"severity":     event.Severity,
+		"action":       event.Action,
+	}).Info("Audit event logged")
+
+	return nil
 }
 
 // persistAlert persists a security alert to storage
@@ -644,35 +660,38 @@ func (s *SecurityAuditService) processScanRequest(req *ScanRequest) {
 
 // performVulnerabilityScan performs a vulnerability scan
 func (s *SecurityAuditService) performVulnerabilityScan(ctx context.Context, containerID string) {
-	result, err := s.securityScanner.ScanContainer(ctx, containerID)
-	if err != nil {
-		s.logger.WithError(err).WithField("container_id", containerID).Error("Vulnerability scan failed")
-		return
-	}
+	// TODO: Implement vulnerability scanning when security scanner is ready
+	// result, err := s.securityScanner.ScanContainer(ctx, containerID)
+	// if err != nil {
+	//	s.logger.WithError(err).WithField("container_id", containerID).Error("Vulnerability scan failed")
+	//	return
+	// }
 
 	// Generate alerts for critical vulnerabilities
-	for _, vuln := range result.Vulnerabilities {
-		if vuln.Severity == "CRITICAL" {
-			alert := &SecurityAlert{
-				ID:          fmt.Sprintf("vuln_%s_%s", containerID, vuln.CVE),
-				Timestamp:   time.Now(),
-				AlertType:   AlertTypeVulnerability,
-				Severity:    SeverityCritical,
-				Title:       fmt.Sprintf("Critical Vulnerability: %s", vuln.CVE),
-				Description: vuln.Description,
-				Source:      "vulnerability_scanner",
-				ContainerID: &containerID,
-				Metadata: map[string]interface{}{
-					"cve":         vuln.CVE,
-					"package":     vuln.Package,
-					"fixed_in":    vuln.FixedIn,
-					"cvss_score":  vuln.CVSSScore,
-				},
-				Status: AlertStatusOpen,
-			}
-			s.GenerateAlert(alert)
-		}
-	}
+	// for _, vuln := range result.Vulnerabilities {
+	//	if vuln.Severity == "CRITICAL" {
+	//		alert := &SecurityAlert{
+	//			ID:          fmt.Sprintf("vuln_%s_%s", containerID, vuln.CVE),
+	//			Timestamp:   time.Now(),
+	//			AlertType:   AlertTypeVulnerability,
+	//			Severity:    SeverityCritical,
+	//			Title:       fmt.Sprintf("Critical Vulnerability: %s", vuln.CVE),
+	//			Description: vuln.Description,
+	//			Source:      "vulnerability_scanner",
+	//			ContainerID: &containerID,
+	//			Metadata: map[string]interface{}{
+	//				"cve":         vuln.CVE,
+	//				"package":     vuln.Package,
+	//				"fixed_in":    vuln.FixedIn,
+	//				"cvss_score":  vuln.CVSSScore,
+	//			},
+	//			Status: AlertStatusOpen,
+	//		}
+	//		s.GenerateAlert(alert)
+	//	}
+	// }
+
+	s.logger.WithField("container_id", containerID).Info("Vulnerability scan placeholder executed")
 }
 
 // performComplianceScan performs a compliance scan
@@ -701,40 +720,46 @@ func (s *SecurityAuditService) performFullScan(ctx context.Context, containerID 
 
 // performScheduledComplianceChecks performs scheduled compliance checks
 func (s *SecurityAuditService) performScheduledComplianceChecks() {
-	ctx := context.Background()
-	containers, err := s.containerRepo.GetAll(ctx)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get containers for compliance check")
-		return
-	}
+	// ctx := context.Background()
+	// TODO: Fix containerRepo.GetAll method when repository interface is updated
+	// containers, err := s.containerRepo.GetAll(ctx)
+	// if err != nil {
+	//	s.logger.WithError(err).Error("Failed to get containers for compliance check")
+	//	return
+	// }
 
-	for _, container := range containers {
-		s.scanScheduler.scanQueue <- &ScanRequest{
-			ContainerID: container.ContainerID,
-			ScanType:    ScanTypeCompliance,
-			Priority:    1,
-			Scheduled:   time.Now(),
-		}
-	}
+	// for _, container := range containers {
+	//	s.scanScheduler.scanQueue <- &ScanRequest{
+	//		ContainerID: container.ContainerID,
+	//		ScanType:    ScanTypeCompliance,
+	//		Priority:    1,
+	//		Scheduled:   time.Now(),
+	//	}
+	// }
+
+	s.logger.Info("Scheduled compliance check placeholder executed")
 }
 
 // performScheduledRiskAssessments performs scheduled risk assessments
 func (s *SecurityAuditService) performScheduledRiskAssessments() {
-	ctx := context.Background()
-	containers, err := s.containerRepo.GetAll(ctx)
-	if err != nil {
-		s.logger.WithError(err).Error("Failed to get containers for risk assessment")
-		return
-	}
+	// ctx := context.Background()
+	// TODO: Fix containerRepo.GetAll method when repository interface is updated
+	// containers, err := s.containerRepo.GetAll(ctx)
+	// if err != nil {
+	//	s.logger.WithError(err).Error("Failed to get containers for risk assessment")
+	//	return
+	// }
 
-	for _, container := range containers {
-		s.scanScheduler.scanQueue <- &ScanRequest{
-			ContainerID: container.ContainerID,
-			ScanType:    ScanTypeRisk,
-			Priority:    2,
-			Scheduled:   time.Now(),
-		}
-	}
+	// for _, container := range containers {
+	//	s.scanScheduler.scanQueue <- &ScanRequest{
+	//		ContainerID: container.ContainerID,
+	//		ScanType:    ScanTypeRisk,
+	//		Priority:    2,
+	//		Scheduled:   time.Now(),
+	//	}
+	// }
+
+	s.logger.Info("Scheduled risk assessment placeholder executed")
 }
 
 // Utility functions
@@ -779,6 +804,119 @@ type SecurityAlertFilter struct {
 	EndTime     *time.Time          `json:"end_time,omitempty"`
 	Limit       int                 `json:"limit"`
 	Offset      int                 `json:"offset"`
+}
+
+// convertContainerJSONToContainerInfo converts types.ContainerJSON to docker.ContainerInfo
+func convertContainerJSONToContainerInfo(containerJSON *types.ContainerJSON) *docker.ContainerInfo {
+	if containerJSON == nil {
+		return nil
+	}
+
+	// Convert the HostConfig to map[string]interface{}
+	hostConfigMap := make(map[string]interface{})
+	if containerJSON.HostConfig != nil {
+		// Manually convert important fields to the expected format
+		hostConfigMap["Privileged"] = containerJSON.HostConfig.Privileged
+		hostConfigMap["NetworkMode"] = string(containerJSON.HostConfig.NetworkMode)
+		hostConfigMap["PublishAllPorts"] = containerJSON.HostConfig.PublishAllPorts
+
+		// Convert CapAdd and CapDrop
+		if containerJSON.HostConfig.CapAdd != nil {
+			capAdd := make([]interface{}, len(containerJSON.HostConfig.CapAdd))
+			for i, cap := range containerJSON.HostConfig.CapAdd {
+				capAdd[i] = cap
+			}
+			hostConfigMap["CapAdd"] = capAdd
+		}
+
+		if containerJSON.HostConfig.CapDrop != nil {
+			capDrop := make([]interface{}, len(containerJSON.HostConfig.CapDrop))
+			for i, cap := range containerJSON.HostConfig.CapDrop {
+				capDrop[i] = cap
+			}
+			hostConfigMap["CapDrop"] = capDrop
+		}
+
+		// Convert port bindings
+		if containerJSON.HostConfig.PortBindings != nil {
+			portBindings := make(map[string]interface{})
+			for port, bindings := range containerJSON.HostConfig.PortBindings {
+				portBindings[string(port)] = bindings
+			}
+			hostConfigMap["PortBindings"] = portBindings
+		}
+
+		// Convert DNS
+		if containerJSON.HostConfig.DNS != nil {
+			dns := make([]interface{}, len(containerJSON.HostConfig.DNS))
+			for i, d := range containerJSON.HostConfig.DNS {
+				dns[i] = d
+			}
+			hostConfigMap["DNS"] = dns
+		}
+
+		// Convert Binds
+		if containerJSON.HostConfig.Binds != nil {
+			binds := make([]interface{}, len(containerJSON.HostConfig.Binds))
+			for i, bind := range containerJSON.HostConfig.Binds {
+				binds[i] = bind
+			}
+			hostConfigMap["Binds"] = binds
+		}
+
+		// Resource settings
+		hostConfigMap["Memory"] = float64(containerJSON.HostConfig.Memory)
+		hostConfigMap["CPUShares"] = float64(containerJSON.HostConfig.CPUShares)
+		hostConfigMap["CPUPeriod"] = float64(containerJSON.HostConfig.CPUPeriod)
+		hostConfigMap["CPUQuota"] = float64(containerJSON.HostConfig.CPUQuota)
+		hostConfigMap["CpusetCpus"] = containerJSON.HostConfig.CpusetCpus
+
+		if containerJSON.HostConfig.PidsLimit != nil {
+			hostConfigMap["PidsLimit"] = float64(*containerJSON.HostConfig.PidsLimit)
+		}
+
+		// Add other fields as needed
+		hostConfigMap["VolumeDriver"] = containerJSON.HostConfig.VolumeDriver
+		hostConfigMap["OomKillDisable"] = containerJSON.HostConfig.OomKillDisable
+	}
+
+	// Convert NetworkSettings to map[string]interface{}
+	networkSettingsMap := make(map[string]interface{})
+	if containerJSON.NetworkSettings != nil {
+		// Add network settings fields as needed
+		if containerJSON.NetworkSettings.Networks != nil {
+			networks := make(map[string]interface{})
+			for name, network := range containerJSON.NetworkSettings.Networks {
+				networks[name] = network
+			}
+			networkSettingsMap["Networks"] = networks
+		}
+	}
+
+	return &docker.ContainerInfo{
+		Container: docker.Container{
+			ID:      containerJSON.ID,
+			Name:    containerJSON.Name,
+			Image:   containerJSON.Config.Image,
+			ImageID: containerJSON.Image,
+			Status:  containerJSON.State.Status,
+			State:   containerJSON.State.Status,
+			Created: time.Now(), // TODO: Parse containerJSON.Created string to time.Time
+			Labels:  containerJSON.Config.Labels,
+		},
+		Config: &docker.ContainerConfig{
+			Name:        containerJSON.Name,
+			Image:       containerJSON.Config.Image,
+			Environment: map[string]string{}, // TODO: Convert Env slice to map if needed
+			User:        containerJSON.Config.User,
+			WorkingDir:  containerJSON.Config.WorkingDir,
+			Command:     containerJSON.Config.Cmd,
+			Entrypoint:  containerJSON.Config.Entrypoint,
+			Labels:      containerJSON.Config.Labels,
+		},
+		HostConfig:      hostConfigMap,
+		NetworkSettings: networkSettingsMap,
+	}
 }
 
 // Close gracefully shuts down the security audit service

@@ -20,6 +20,7 @@ type RouterConfig struct {
 	AuthService                *service.AuthService
 	ContainerService           *service.ContainerService
 	ImageService               *service.ImageService
+	RegistryService            *service.RegistryService
 	NotificationService        *service.NotificationService
 	ContainerMonitoringService *service.ContainerMonitoringService
 	WebSocketManager           *api.WebSocketManager
@@ -299,7 +300,7 @@ func setupSystemRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
 
 // setupRegistryRoutes configures registry management routes
 func setupRegistryRoutes(api *gin.RouterGroup, cfg *RouterConfig) {
-	registryController := NewRegistryController(cfg.ImageService, cfg.Logger)
+	registryController := NewRegistryController(cfg.RegistryService, cfg.ImageService, cfg.Logger)
 
 	registries := api.Group("/registries")
 	{

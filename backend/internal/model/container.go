@@ -19,6 +19,7 @@ type Container struct {
 	Status        ContainerStatus `json:"status" gorm:"not null;default:'stopped';index:idx_containers_status"`
 	ConfigJSON    string          `json:"config_json" gorm:"type:jsonb;not null;default:'{}'"`
 	UpdatePolicy  UpdatePolicy    `json:"update_policy" gorm:"not null;default:'auto';index:idx_containers_update_policy"`
+	Priority      UpdatePriority  `json:"priority" gorm:"not null;default:'normal';index:idx_containers_priority"`
 	RegistryURL   string          `json:"registry_url,omitempty" gorm:"size:255"`
 	RegistryAuth  string          `json:"registry_auth,omitempty" gorm:"type:jsonb"`
 	HealthCheck   string          `json:"health_check,omitempty" gorm:"type:jsonb"`
@@ -71,6 +72,17 @@ const (
 	UpdatePolicyManual    UpdatePolicy = "manual"
 	UpdatePolicyScheduled UpdatePolicy = "scheduled"
 	UpdatePolicyDisabled  UpdatePolicy = "disabled"
+)
+
+// UpdatePriority defines priority levels for container updates
+type UpdatePriority string
+
+const (
+	UpdatePriorityCritical UpdatePriority = "critical"
+	UpdatePriorityHigh     UpdatePriority = "high"
+	UpdatePriorityNormal   UpdatePriority = "normal"
+	UpdatePriorityLow      UpdatePriority = "low"
+	UpdatePriorityDeferred UpdatePriority = "deferred"
 )
 
 // RegistryCredentials represents registry authentication

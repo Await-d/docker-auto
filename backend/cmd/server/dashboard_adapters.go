@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"strconv"
 	"strings"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"docker-auto/pkg/dashboard"
 	"docker-auto/pkg/docker"
 
+	"github.com/docker/docker/api/types"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
@@ -27,21 +30,17 @@ func (dca *DockerClientAdapter) ListContainers(ctx context.Context, all bool) ([
 		return nil, fmt.Errorf("docker client not initialized")
 	}
 
-	dockerContainers, err := dca.client.ListContainers(ctx)
+	dockerContainers, err := dca.client.ListContainers(ctx, types.ContainerListOptions{All: all})
 	if err != nil {
 		return nil, err
 	}
 
 	containers := make([]dashboard.ContainerInfo, 0, len(dockerContainers))
 	for _, container := range dockerContainers {
-		// Extract health status
+		// Extract health status (health info requires container inspection)
 		var health *dashboard.HealthInfo
-		if container.Health != nil {
-			health = &dashboard.HealthInfo{
-				Status:        container.Health.Status,
-				FailingStreak: container.Health.FailingStreak,
-			}
-		}
+		// Health info is not available in the list containers response,
+		// it would need to be retrieved via container inspection if needed
 
 		// Convert ports
 		ports := make([]dashboard.Port, 0, len(container.Ports))
@@ -90,20 +89,56 @@ func (dca *DockerClientAdapter) GetContainerStats(ctx context.Context, container
 
 	// Extract container name
 	name := containerID
-	if len(containerInfo.Names) > 0 {
-		name = strings.TrimPrefix(containerInfo.Names[0], "/")
+	if containerInfo.Name != "" {
+		name = strings.TrimPrefix(containerInfo.Name, "/")
+	}
+
+	// Calculate stats from Docker stats structure
+	var cpuPercent float64
+	var memoryUsage, memoryLimit uint64
+	var networkRx, networkTx uint64
+	var blockRead, blockWrite uint64
+
+	if dockerStats != nil {
+		// Calculate CPU percentage (simplified calculation)
+		if dockerStats.CPUStats.SystemUsage > 0 && dockerStats.PreCPUStats.SystemUsage > 0 {
+			cpuDelta := float64(dockerStats.CPUStats.CPUUsage.TotalUsage - dockerStats.PreCPUStats.CPUUsage.TotalUsage)
+			systemDelta := float64(dockerStats.CPUStats.SystemUsage - dockerStats.PreCPUStats.SystemUsage)
+			if systemDelta > 0 {
+				cpuPercent = (cpuDelta / systemDelta) * float64(len(dockerStats.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+			}
+		}
+
+		// Memory stats
+		memoryUsage = dockerStats.MemoryStats.Usage
+		memoryLimit = dockerStats.MemoryStats.Limit
+
+		// Network stats (sum all interfaces)
+		for _, network := range dockerStats.Networks {
+			networkRx += network.RxBytes
+			networkTx += network.TxBytes
+		}
+
+		// Block I/O stats
+		for _, blkio := range dockerStats.BlkioStats.IoServiceBytesRecursive {
+			if blkio.Op == "Read" {
+				blockRead += blkio.Value
+			} else if blkio.Op == "Write" {
+				blockWrite += blkio.Value
+			}
+		}
 	}
 
 	stats := &dashboard.ContainerStats{
 		ContainerID: containerID,
 		Name:        name,
-		CPUPercent:  dockerStats.CPUPercent,
-		MemoryUsage: dockerStats.MemoryUsage,
-		MemoryLimit: dockerStats.MemoryLimit,
-		NetworkRx:   dockerStats.NetworkRx,
-		NetworkTx:   dockerStats.NetworkTx,
-		BlockRead:   dockerStats.BlockRead,
-		BlockWrite:  dockerStats.BlockWrite,
+		CPUPercent:  cpuPercent,
+		MemoryUsage: memoryUsage,
+		MemoryLimit: memoryLimit,
+		NetworkRx:   networkRx,
+		NetworkTx:   networkTx,
+		BlockRead:   blockRead,
+		BlockWrite:  blockWrite,
 		Timestamp:   time.Now(),
 	}
 
@@ -115,7 +150,7 @@ func (dca *DockerClientAdapter) Ping(ctx context.Context) error {
 		return fmt.Errorf("docker client not initialized")
 	}
 
-	_, err := dca.client.Ping(ctx)
+	err := dca.client.Ping(ctx)
 	return err
 }
 
@@ -316,7 +351,7 @@ func (dsa *DockerServiceAdapter) ListContainers(ctx context.Context) ([]service.
 		return nil, fmt.Errorf("docker client not initialized")
 	}
 
-	dockerContainers, err := dsa.client.ListContainers(ctx)
+	dockerContainers, err := dsa.client.ListContainers(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
 		return nil, err
 	}
@@ -368,33 +403,50 @@ func (dsa *DockerServiceAdapter) GetContainer(ctx context.Context, containerID s
 		return nil, err
 	}
 
-	// Convert ports
-	ports := make([]service.PortInfo, 0, len(container.Ports))
-	for _, port := range container.Ports {
-		ports = append(ports, service.PortInfo{
-			PrivatePort: int(port.PrivatePort),
-			PublicPort:  int(port.PublicPort),
-			Type:        port.Type,
-			IP:          port.IP,
-		})
+	// Convert ports from NetworkSettings
+	var ports []service.PortInfo
+	if container.NetworkSettings != nil && container.NetworkSettings.Ports != nil {
+		for port, bindings := range container.NetworkSettings.Ports {
+			for _, binding := range bindings {
+				publicPort := 0
+				if binding.HostPort != "" {
+					// Convert string port to int (ignoring errors for now)
+					if p, err := strconv.Atoi(binding.HostPort); err == nil {
+						publicPort = p
+					}
+				}
+				privatePort := int(port.Int())
+				ports = append(ports, service.PortInfo{
+					PrivatePort: privatePort,
+					PublicPort:  publicPort,
+					Type:        string(port.Proto()),
+					IP:          binding.HostIP,
+				})
+			}
+		}
 	}
 
 	// Extract name
 	name := container.ID
-	if len(container.Names) > 0 {
-		name = strings.TrimPrefix(container.Names[0], "/")
+	if container.Name != "" {
+		name = strings.TrimPrefix(container.Name, "/")
 	}
 
 	return &service.ContainerInfo{
 		ID:      container.ID,
-		Names:   container.Names,
+		Names:   []string{name}, // ContainerJSON has Name field, not Names array
 		Name:    name,
 		Image:   container.Image,
-		ImageID: container.ImageID,
-		Status:  container.Status,
-		State:   container.State,
-		Created: time.Unix(container.Created, 0),
-		Labels:  container.Labels,
+		ImageID: container.Image, // Use container.Image as ImageID
+		Status:  container.State.Status,
+		State:   container.State.Status, // State should be the status string
+		Created: func() time.Time {
+			if t, err := time.Parse(time.RFC3339, container.Created); err == nil {
+				return t
+			}
+			return time.Now() // fallback
+		}(),
+		Labels:  container.Config.Labels,
 		Ports:   ports,
 	}, nil
 }
@@ -434,7 +486,16 @@ func (dsa *DockerServiceAdapter) PullImage(ctx context.Context, imageName string
 		return fmt.Errorf("docker client not initialized")
 	}
 
-	return dsa.client.PullImage(ctx, imageName)
+	reader, err := dsa.client.PullImage(ctx, imageName, types.ImagePullOptions{})
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	// Read the response to completion (required for pull to finish)
+	// In a real implementation, you might want to process this output
+	_, err = io.ReadAll(reader)
+	return err
 }
 
 func (dsa *DockerServiceAdapter) StopContainer(ctx context.Context, containerID string, timeout time.Duration) error {
@@ -442,7 +503,8 @@ func (dsa *DockerServiceAdapter) StopContainer(ctx context.Context, containerID 
 		return fmt.Errorf("docker client not initialized")
 	}
 
-	return dsa.client.StopContainer(ctx, containerID, int(timeout.Seconds()))
+	timeoutInt := int(timeout.Seconds())
+	return dsa.client.StopContainer(ctx, containerID, &timeoutInt)
 }
 
 func (dsa *DockerServiceAdapter) UpdateContainer(ctx context.Context, containerID, newImage string) error {
@@ -507,15 +569,8 @@ func (ssa *SecurityScannerAdapter) ScanImage(ctx context.Context, imageID, image
 		ImageName:      imageName,
 		Scanner:        "placeholder",
 		ScannerVersion: "1.0.0",
-		StartTime:      time.Now(),
-		EndTime:        time.Now(),
-		Vulnerabilities: []service.SecurityVulnerability{},
-		SecurityScore:   100.0, // No vulnerabilities found
-		TotalVulns:      0,
-		CriticalVulns:   0,
-		HighVulns:       0,
-		MediumVulns:     0,
-		LowVulns:        0,
+		Vulnerabilities: []*service.Vulnerability{}, // Use proper slice type
+		// LowVulns field not available in service.ScanResult
 		Metadata:        make(map[string]interface{}),
 	}, nil
 }
@@ -524,6 +579,6 @@ func (ssa *SecurityScannerAdapter) GetScannerInfo() service.ScannerInfo {
 	return service.ScannerInfo{
 		Name:    "PlaceholderScanner",
 		Version: "1.0.0",
-		Vendor:  "Internal",
+		// Vendor field not available in service.ScannerInfo
 	}
 }

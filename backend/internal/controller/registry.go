@@ -3,7 +3,6 @@ package controller
 import (
 	"strconv"
 	"strings"
-	"time"
 
 	"docker-auto/internal/middleware"
 	"docker-auto/internal/service"
@@ -83,10 +82,10 @@ type RegistryTestResult struct {
 // @Failure 500 {object} utils.APIResponse "Internal server error"
 // @Router /api/registries [get]
 func (rc *RegistryController) ListRegistries(c *gin.Context) {
-	userID, err := middleware.GetUserID(c)
-	if err != nil {
+	userID, exists := middleware.GetUserIDFromContext(c)
+	if !exists {
 		rb := utils.NewResponseBuilder(c)
-		rb.Error(401, "Unauthorized", err)
+		rb.Unauthorized("Authentication required")
 		return
 	}
 
@@ -106,7 +105,7 @@ func (rc *RegistryController) ListRegistries(c *gin.Context) {
 	if enabledStr != "" {
 		enabled, err := strconv.ParseBool(enabledStr)
 		if err != nil {
-			rb.Error(400, "Invalid enabled parameter", err)
+			rb.BadRequest("Invalid enabled parameter")
 			return
 		}
 		filter.IsActive = &enabled
@@ -116,7 +115,7 @@ func (rc *RegistryController) ListRegistries(c *gin.Context) {
 	if limitStr != "" {
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
-			rb.Error(400, "Invalid limit parameter", err)
+			rb.BadRequest("Invalid limit parameter")
 			return
 		}
 		filter.Limit = limit
@@ -125,7 +124,7 @@ func (rc *RegistryController) ListRegistries(c *gin.Context) {
 	if offsetStr != "" {
 		offset, err := strconv.Atoi(offsetStr)
 		if err != nil {
-			rb.Error(400, "Invalid offset parameter", err)
+			rb.BadRequest("Invalid offset parameter")
 			return
 		}
 		filter.Offset = offset
@@ -138,7 +137,7 @@ func (rc *RegistryController) ListRegistries(c *gin.Context) {
 			"user_id": userID,
 			"error":   err.Error(),
 		}).Error("Failed to list registries")
-		rb.Error(500, "Failed to list registries", err)
+		rb.InternalServerError("Failed to list registries")
 		return
 	}
 
@@ -267,16 +266,16 @@ func (rc *RegistryController) CreateRegistry(c *gin.Context) {
 
 		// Handle specific error types
 		if strings.Contains(err.Error(), "already exists") {
-			rb.Error(409, "Registry already exists", err)
+			rb.Conflict("Registry already exists")
 		} else {
-			rb.Error(500, "Failed to create registry", err)
+			rb.InternalServerError("Failed to create registry")
 		}
 		return
 	}
 
 	// Convert to controller response format
 	response := RegistryResponse{
-		ID:          registry.ID,
+		ID:          int64(registry.ID),
 		Name:        registry.Name,
 		URL:         registry.URL,
 		Type:        registry.Type,
@@ -312,10 +311,10 @@ func (rc *RegistryController) CreateRegistry(c *gin.Context) {
 // @Failure 500 {object} utils.APIResponse "Internal server error"
 // @Router /api/registries/{id} [get]
 func (rc *RegistryController) GetRegistry(c *gin.Context) {
-	userID, err := middleware.GetUserID(c)
-	if err != nil {
+	userID, exists := middleware.GetUserIDFromContext(c)
+	if !exists {
 		rb := utils.NewResponseBuilder(c)
-		rb.Error(401, "Unauthorized", err)
+		rb.Unauthorized("Authentication required")
 		return
 	}
 
@@ -340,14 +339,14 @@ func (rc *RegistryController) GetRegistry(c *gin.Context) {
 		if strings.Contains(err.Error(), "not found") {
 			rb.NotFound("Registry not found")
 		} else {
-			rb.Error(500, "Failed to get registry", err)
+			rb.InternalServerError("Failed to get registry")
 		}
 		return
 	}
 
 	// Convert to controller response format
 	response := RegistryResponse{
-		ID:          registry.ID,
+		ID:          int64(registry.ID),
 		Name:        registry.Name,
 		URL:         registry.URL,
 		Type:        registry.Type,
@@ -544,7 +543,7 @@ func (rc *RegistryController) TestRegistryConnection(c *gin.Context) {
 		if strings.Contains(err.Error(), "not found") {
 			rb.NotFound("Registry not found")
 		} else {
-			rb.Error(500, "Failed to test registry connection", err)
+			rb.InternalServerError("Failed to test registry connection")
 		}
 		return
 	}
@@ -555,7 +554,7 @@ func (rc *RegistryController) TestRegistryConnection(c *gin.Context) {
 		Message:      testResult.Message,
 		Duration:     testResult.ResponseTime,
 		Capabilities: testResult.Capabilities,
-		Info:         testResult.Info,
+		Info:         testResult.Info.(*registry.RegistryInfo),
 	}
 
 	if !testResult.Success {
@@ -697,10 +696,10 @@ func (rc *RegistryController) SearchRegistryImages(c *gin.Context) {
 // @Failure 500 {object} utils.APIResponse "Internal server error"
 // @Router /api/registries/{id}/stats [get]
 func (rc *RegistryController) GetRegistryStatistics(c *gin.Context) {
-	userID, err := middleware.GetUserID(c)
-	if err != nil {
+	userID, exists := middleware.GetUserIDFromContext(c)
+	if !exists {
 		rb := utils.NewResponseBuilder(c)
-		rb.Error(401, "Unauthorized", err)
+		rb.Unauthorized("Authentication required")
 		return
 	}
 
@@ -725,7 +724,7 @@ func (rc *RegistryController) GetRegistryStatistics(c *gin.Context) {
 		if strings.Contains(err.Error(), "not found") {
 			rb.NotFound("Registry not found")
 		} else {
-			rb.Error(500, "Failed to get registry statistics", err)
+			rb.InternalServerError("Failed to get registry statistics")
 		}
 		return
 	}

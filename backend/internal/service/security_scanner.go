@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -91,25 +90,19 @@ type SecurityScan struct {
 	UpdatedAt        time.Time               `json:"updatedAt"`
 }
 
-// ScanResult represents the result of a security scan
-type ScanResult struct {
-	ScanID           string                  `json:"scanId"`
-	ContainerID      string                  `json:"containerId"`
-	ImageID          string                  `json:"imageId"`
-	ImageName        string                  `json:"imageName"`
-	Scanner          string                  `json:"scanner"`
-	ScannerVersion   string                  `json:"scannerVersion"`
-	StartTime        time.Time               `json:"startTime"`
-	EndTime          time.Time               `json:"endTime"`
-	Vulnerabilities  []SecurityVulnerability `json:"vulnerabilities"`
-	SecurityScore    float64                 `json:"securityScore"`
-	TotalVulns       int                     `json:"totalVulns"`
-	CriticalVulns    int                     `json:"criticalVulns"`
-	HighVulns        int                     `json:"highVulns"`
-	MediumVulns      int                     `json:"mediumVulns"`
-	LowVulns         int                     `json:"lowVulns"`
-	Metadata         map[string]interface{}  `json:"metadata"`
-	Error            error                   `json:"error,omitempty"`
+// SecurityFinding represents individual security findings
+type SecurityFinding struct {
+	ID          string    `json:"id"`
+	Type        string    `json:"type"`
+	Severity    string    `json:"severity"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Package     string    `json:"package,omitempty"`
+	Version     string    `json:"version,omitempty"`
+	FixVersion  string    `json:"fix_version,omitempty"`
+	CVSS        float64   `json:"cvss,omitempty"`
+	References  []string  `json:"references,omitempty"`
+	FoundAt     time.Time `json:"found_at"`
 }
 
 // SecurityOverview provides security overview statistics
@@ -316,12 +309,14 @@ func (sss *SecurityScannerService) ScanContainer(ctx context.Context, containerI
 	endTime := time.Now()
 	scan.EndTime = &endTime
 	scan.Status = "completed"
-	scan.TotalVulns = finalResult.TotalVulns
-	scan.CriticalVulns = finalResult.CriticalVulns
-	scan.HighVulns = finalResult.HighVulns
-	scan.MediumVulns = finalResult.MediumVulns
-	scan.LowVulns = finalResult.LowVulns
-	scan.SecurityScore = finalResult.SecurityScore
+	if finalResult.VulnerabilityStats != nil {
+		scan.TotalVulns = finalResult.VulnerabilityStats.Total
+		scan.CriticalVulns = finalResult.VulnerabilityStats.Critical
+		scan.HighVulns = finalResult.VulnerabilityStats.High
+		scan.MediumVulns = finalResult.VulnerabilityStats.Medium
+		scan.LowVulns = finalResult.VulnerabilityStats.Low
+	}
+	scan.SecurityScore = finalResult.RiskScore
 
 	if err := sss.db.Save(scan).Error; err != nil {
 		sss.logger.WithError(err).Error("Failed to update scan status")
@@ -330,8 +325,8 @@ func (sss *SecurityScannerService) ScanContainer(ctx context.Context, containerI
 	sss.logger.WithFields(logrus.Fields{
 		"scanId":        scanID,
 		"containerId":   containerID,
-		"totalVulns":    finalResult.TotalVulns,
-		"securityScore": finalResult.SecurityScore,
+		"totalVulns":    func() int { if finalResult.VulnerabilityStats != nil { return finalResult.VulnerabilityStats.Total }; return 0 }(),
+		"securityScore": finalResult.RiskScore,
 	}).Info("Container security scan completed")
 
 	return nil
@@ -346,16 +341,35 @@ func (sss *SecurityScannerService) performBasicScan(ctx context.Context, scanID,
 		ImageName:      imageName,
 		Scanner:        "basic",
 		ScannerVersion: "1.0.0",
-		StartTime:      time.Now(),
-		Vulnerabilities: []SecurityVulnerability{},
-		Metadata:       make(map[string]interface{}),
+		ScanStartTime:  time.Now(),
+		ScanEndTime:    time.Now(),
+		ScanDuration:   0,
+		Vulnerabilities: []*Vulnerability{},
+		VulnerabilityStats: &VulnerabilityStats{
+			Total:    0,
+			Critical: 0,
+			High:     0,
+			Medium:   0,
+			Low:      0,
+			Unknown:  0,
+			Fixable:  0,
+			Unfixable: 0,
+		},
+		ConfigurationIssues: []*ConfigurationIssue{},
+		SecretIssues:       []*SecretIssue{},
+		RiskScore:          0.0,
+		SecurityGrade:      "unknown",
+		Metadata:           make(map[string]interface{}),
+		Success:            true,
 	}
 
 	// Get image history and layers
 	layers, err := sss.dockerClient.GetImageLayers(ctx, imageID)
 	if err != nil {
-		result.Error = fmt.Errorf("failed to get image layers: %w", err)
-		result.EndTime = time.Now()
+		result.ErrorMessage = fmt.Sprintf("failed to get image layers: %v", err)
+		result.ScanEndTime = time.Now()
+		result.ScanDuration = time.Since(result.ScanStartTime)
+		result.Success = false
 		return result, nil
 	}
 
@@ -367,26 +381,55 @@ func (sss *SecurityScannerService) performBasicScan(ctx context.Context, scanID,
 		sss.logger.WithError(err).Warn("Failed to scan for known vulnerabilities")
 	}
 
-	result.Vulnerabilities = vulns
-	result.TotalVulns = len(vulns)
+	// Convert SecurityVulnerability to Vulnerability
+	var vulnerabilities []*Vulnerability
+	for _, vuln := range vulns {
+		vulnerabilities = append(vulnerabilities, &Vulnerability{
+			ID:               vuln.CVE,
+			CVE:              vuln.CVE,
+			Title:            fmt.Sprintf("Vulnerability in %s", vuln.Package),
+			Description:      vuln.Description,
+			Severity:         vuln.Severity,
+			Score:            vuln.Score,
+			ScoringSystem:    "CVSS",
+			Package:          vuln.Package,
+			InstalledVersion: vuln.InstalledVersion,
+			FixedVersion:     vuln.FixedVersion,
+			Layer:            vuln.Layer,
+			PublishedDate:    vuln.FirstDetected,
+			ModifiedDate:     vuln.LastSeen,
+			DiscoveredDate:   vuln.FirstDetected,
+		})
+	}
+
+	result.Vulnerabilities = vulnerabilities
 
 	// Count vulnerabilities by severity
-	for _, vuln := range vulns {
+	var critical, high, medium, low int
+	for _, vuln := range vulnerabilities {
 		switch strings.ToLower(vuln.Severity) {
 		case "critical":
-			result.CriticalVulns++
+			critical++
 		case "high":
-			result.HighVulns++
+			high++
 		case "medium":
-			result.MediumVulns++
+			medium++
 		case "low":
-			result.LowVulns++
+			low++
 		}
 	}
 
+	// Update vulnerability stats
+	result.VulnerabilityStats.Total = len(vulnerabilities)
+	result.VulnerabilityStats.Critical = critical
+	result.VulnerabilityStats.High = high
+	result.VulnerabilityStats.Medium = medium
+	result.VulnerabilityStats.Low = low
+
 	// Calculate security score
-	result.SecurityScore = sss.calculateSecurityScore(result.CriticalVulns, result.HighVulns, result.MediumVulns, result.LowVulns)
-	result.EndTime = time.Now()
+	result.RiskScore = sss.calculateSecurityScore(critical, high, medium, low)
+	result.ScanEndTime = time.Now()
+	result.ScanDuration = time.Since(result.ScanStartTime)
 
 	return result, nil
 }
@@ -440,7 +483,7 @@ func (sss *SecurityScannerService) aggregateScanResults(results []*ScanResult) *
 
 	// Use the first result as base
 	aggregated := results[0]
-	vulnMap := make(map[string]SecurityVulnerability)
+	vulnMap := make(map[string]*Vulnerability)
 
 	// Collect all unique vulnerabilities
 	for _, result := range results {
@@ -458,38 +501,38 @@ func (sss *SecurityScannerService) aggregateScanResults(results []*ScanResult) *
 	}
 
 	// Convert map back to slice
-	aggregated.Vulnerabilities = make([]SecurityVulnerability, 0, len(vulnMap))
+	aggregated.Vulnerabilities = make([]*Vulnerability, 0, len(vulnMap))
 	for _, vuln := range vulnMap {
 		aggregated.Vulnerabilities = append(aggregated.Vulnerabilities, vuln)
 	}
 
-	// Recalculate counts
-	aggregated.TotalVulns = len(aggregated.Vulnerabilities)
-	aggregated.CriticalVulns = 0
-	aggregated.HighVulns = 0
-	aggregated.MediumVulns = 0
-	aggregated.LowVulns = 0
-
+	// Recalculate counts and update vulnerability stats
+	var critical, high, medium, low int
 	for _, vuln := range aggregated.Vulnerabilities {
 		switch strings.ToLower(vuln.Severity) {
 		case "critical":
-			aggregated.CriticalVulns++
+			critical++
 		case "high":
-			aggregated.HighVulns++
+			high++
 		case "medium":
-			aggregated.MediumVulns++
+			medium++
 		case "low":
-			aggregated.LowVulns++
+			low++
 		}
 	}
 
+	// Update vulnerability stats
+	if aggregated.VulnerabilityStats == nil {
+		aggregated.VulnerabilityStats = &VulnerabilityStats{}
+	}
+	aggregated.VulnerabilityStats.Total = len(aggregated.Vulnerabilities)
+	aggregated.VulnerabilityStats.Critical = critical
+	aggregated.VulnerabilityStats.High = high
+	aggregated.VulnerabilityStats.Medium = medium
+	aggregated.VulnerabilityStats.Low = low
+
 	// Recalculate security score
-	aggregated.SecurityScore = sss.calculateSecurityScore(
-		aggregated.CriticalVulns,
-		aggregated.HighVulns,
-		aggregated.MediumVulns,
-		aggregated.LowVulns,
-	)
+	aggregated.RiskScore = sss.calculateSecurityScore(critical, high, medium, low)
 
 	return aggregated
 }
@@ -503,15 +546,29 @@ func (sss *SecurityScannerService) storeScanResults(scan *SecurityScan, result *
 		}
 	}()
 
-	// Store vulnerabilities
+	// Store vulnerabilities - convert to SecurityVulnerability for database storage
 	for _, vuln := range result.Vulnerabilities {
-		vuln.ScanID = result.ScanID
-		vuln.ContainerID = result.ContainerID
-		vuln.ContainerName = scan.ContainerName
-		vuln.ImageID = result.ImageID
-		vuln.ImageName = result.ImageName
+		dbVuln := SecurityVulnerability{
+			CVE:              vuln.CVE,
+			Severity:         vuln.Severity,
+			Score:            vuln.Score,
+			Vector:           vuln.ScoringSystem,
+			Description:      vuln.Description,
+			Package:          vuln.Package,
+			InstalledVersion: vuln.InstalledVersion,
+			FixedVersion:     vuln.FixedVersion,
+			ContainerID:      result.ContainerID,
+			ContainerName:    scan.ContainerName,
+			ImageID:          result.ImageID,
+			ImageName:        result.ImageName,
+			Layer:            vuln.Layer,
+			ScanID:           result.ScanID,
+			Status:           "new",
+			FirstDetected:    vuln.PublishedDate,
+			LastSeen:         vuln.ModifiedDate,
+		}
 
-		if err := tx.Create(&vuln).Error; err != nil {
+		if err := tx.Create(&dbVuln).Error; err != nil {
 			tx.Rollback()
 			return fmt.Errorf("failed to store vulnerability: %w", err)
 		}
@@ -533,13 +590,18 @@ func (sss *SecurityScannerService) storeScanResults(scan *SecurityScan, result *
 // generateSecurityAlerts generates security alerts based on scan results
 func (sss *SecurityScannerService) generateSecurityAlerts(ctx context.Context, result *ScanResult) error {
 	// Check if critical vulnerabilities exceed threshold
-	if result.CriticalVulns >= sss.alertThresholds.CriticalVulns {
+	criticalCount := 0
+	if result.VulnerabilityStats != nil {
+		criticalCount = result.VulnerabilityStats.Critical
+	}
+
+	if criticalCount >= sss.alertThresholds.CriticalVulns {
 		alert := &SecurityAlert{
 			AlertType:     "vulnerability",
 			Severity:      "critical",
 			Title:         fmt.Sprintf("Critical vulnerabilities detected in %s", result.ImageName),
-			Description:   fmt.Sprintf("Found %d critical vulnerabilities", result.CriticalVulns),
-			ContainerID:   result.ContainerID,
+			Description:   fmt.Sprintf("Found %d critical vulnerabilities", criticalCount),
+			ContainerID:   &result.ContainerID,
 			Status:        "new",
 		}
 
@@ -633,15 +695,15 @@ func (sss *SecurityScannerService) GetSecurityOverview(ctx context.Context) (*Se
 		overview.TopVulnerabilities = topVulns
 	}
 
-	// Get compliance status
-	overview.ComplianceStatus = sss.assessComplianceStatus(overview)
+	// Get compliance report
+	overview.ComplianceReport = sss.assessComplianceStatus(overview)
 
 	return overview, nil
 }
 
 // assessComplianceStatus assesses security compliance status
-func (sss *SecurityScannerService) assessComplianceStatus(overview *SecurityOverview) ComplianceStatus {
-	status := ComplianceStatus{
+func (sss *SecurityScannerService) assessComplianceStatus(overview *SecurityOverview) ComplianceReport {
+	status := ComplianceReport{
 		Policies:        make(map[string]bool),
 		Recommendations: make([]string, 0),
 		LastAssessment:  time.Now(),

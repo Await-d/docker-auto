@@ -10,6 +10,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 )
 
@@ -225,12 +226,14 @@ func (tcm *TestCleanupManager) cleanupTestVolumes(ctx context.Context) error {
 	tcm.logger.Println("Cleaning up test volumes...")
 
 	// List all volumes
-	volumeListResponse, err := tcm.dockerClient.VolumeList(ctx, filters.Args{})
+	volumeListResponse, err := tcm.dockerClient.VolumeList(ctx, volume.ListOptions{
+		Filters: filters.NewArgs(),
+	})
 	if err != nil {
 		return fmt.Errorf("failed to list volumes: %w", err)
 	}
 
-	var testVolumes []*types.Volume
+	var testVolumes []*volume.Volume
 	for _, volume := range volumeListResponse.Volumes {
 		// Check for test volumes
 		if hasTestLabel(volume.Labels) || strings.Contains(volume.Name, "test") {

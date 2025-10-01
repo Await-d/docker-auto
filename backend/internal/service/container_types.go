@@ -75,13 +75,7 @@ type BulkUpdateRequest struct {
 	Config       map[string]interface{} `json:"config,omitempty"`
 }
 
-// RegistryAuth represents registry authentication information
-type RegistryAuth struct {
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
-	Token    string `json:"token,omitempty"`
-	AuthType string `json:"auth_type" validate:"oneof=basic token oauth"`
-}
+// Note: RegistryAuth type is defined in security_scanner_interface.go
 
 // Container service response types
 
@@ -397,4 +391,32 @@ func IsValidUpdateStrategy(strategy string) bool {
 		}
 	}
 	return false
+}
+
+// EventsOptions represents options for retrieving container events
+type EventsOptions struct {
+	Since  *time.Time `json:"since,omitempty"`
+	Until  *time.Time `json:"until,omitempty"`
+	Follow bool       `json:"follow,omitempty"`
+}
+
+// ContainerEvent represents a container event from Docker
+type ContainerEvent struct {
+	ID        string                 `json:"id"`
+	Type      string                 `json:"type"`
+	Action    string                 `json:"action"`
+	Time      time.Time              `json:"time"`
+	TimeNano  int64                  `json:"timeNano"`
+	Scope     string                 `json:"scope"`
+	Message   string                 `json:"message"`
+	Level     string                 `json:"level"`
+	Status    string                 `json:"status"`
+	From      string                 `json:"from"`
+	Actor     ContainerEventActor    `json:"actor"`
+}
+
+// ContainerEventActor represents the actor that triggered the event
+type ContainerEventActor struct {
+	ID         string                 `json:"id"`
+	Attributes map[string]interface{} `json:"attributes"`
 }

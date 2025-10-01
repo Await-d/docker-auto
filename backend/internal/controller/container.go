@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -855,7 +856,7 @@ func (cc *ContainerController) SyncContainerStatus(c *gin.Context) {
 }
 
 // WebSocket upgrader for terminal connections
-var upgrader = websocket.Upgrader{
+var terminalUpgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		// Allow connections from any origin in development
 		// In production, you should check the origin properly
@@ -896,7 +897,7 @@ func (cc *ContainerController) ContainerTerminal(c *gin.Context) {
 	cmd := c.DefaultQuery("cmd", "/bin/sh")
 
 	// Upgrade HTTP connection to WebSocket
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	conn, err := terminalUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		cc.logger.WithError(err).Error("Failed to upgrade WebSocket connection")
 		utils.InternalServerErrorJSON(c, "Failed to establish WebSocket connection")
@@ -1021,8 +1022,8 @@ func (cc *ContainerController) executeTerminalSession(conn *websocket.Conn, dock
 	case <-ctx.Done():
 		return nil
 	}
+	*/
 }
-*/
 
 // GetContainerEvents godoc
 // @Summary Get container events
@@ -1099,12 +1100,12 @@ func (cc *ContainerController) GetContainerEvents(c *gin.Context) {
 	}
 
 	// Get historical events from Docker API
-	// TODO: Implement GetContainerEvents method in ContainerService
-	// For now, return empty events list
-	var events []interface{}
-
-	// Convert service events to API events
-	apiEvents := make([]ContainerEvent, 0) // Empty for now
+	apiEvents, err := cc.getContainerEventsHistory(c.Request.Context(), container.ContainerID, since, until)
+	if err != nil {
+		cc.logger.WithError(err).WithField("container_id", containerID).Error("Failed to get container events")
+		rb.InternalServerError("Failed to get container events")
+		return
+	}
 
 	cc.logger.WithFields(logrus.Fields{
 		"user_id":      userID,
@@ -1115,26 +1116,59 @@ func (cc *ContainerController) GetContainerEvents(c *gin.Context) {
 	rb.Success(apiEvents)
 }
 
-// ContainerEvent represents a container event
-type ContainerEvent struct {
-	ID          string                 `json:"id"`
-	Type        string                 `json:"type"`
-	Action      string                 `json:"action"`
-	Actor       map[string]interface{} `json:"actor"`
-	Time        time.Time              `json:"time"`
-	TimeNano    int64                  `json:"timeNano"`
-	Scope       string                 `json:"scope"`
-	Message     string                 `json:"message"`
-	Level       string                 `json:"level"`
+// getContainerEventsHistory retrieves historical events for a container
+func (cc *ContainerController) getContainerEventsHistory(ctx context.Context, dockerID string, since, until *time.Time) ([]ContainerEvent, error) {
+	// Get container events through service layer
+	eventOptions := &service.EventsOptions{
+		Follow: false,
+	}
+
+	if since != nil {
+		eventOptions.Since = since
+	}
+	if until != nil {
+		eventOptions.Until = until
+	}
+
+	// Get events from service
+	events, err := cc.containerService.GetContainerEvents(ctx, dockerID, eventOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container events: %w", err)
+	}
+
+	// Convert service events to API events
+	apiEvents := make([]ContainerEvent, 0, len(events))
+	for _, event := range events {
+		apiEvent := ContainerEvent{
+			ID:        event.ID,
+			Type:      event.Type,
+			Action:    event.Action,
+			Time:      event.Time,
+			TimeNano:  event.TimeNano,
+			Scope:     event.Scope,
+			Message:   event.Message,
+			Level:     event.Level,
+			Timestamp: event.Time,
+			Status:    event.Status,
+			From:      event.From,
+			Actor: Actor{
+				ID:         event.Actor.ID,
+				Attributes: event.Actor.Attributes,
+			},
+		}
+
+		apiEvents = append(apiEvents, apiEvent)
+	}
+
+	return apiEvents, nil
 }
 
-// streamContainerEvents streams real-time container events via WebSocket
+// streamContainerEvents handles WebSocket streaming of container events
 func (cc *ContainerController) streamContainerEvents(c *gin.Context, dockerID string, since *time.Time) {
 	// Upgrade HTTP connection to WebSocket
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	conn, err := terminalUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		cc.logger.WithError(err).Error("Failed to upgrade WebSocket connection for events streaming")
-		utils.InternalServerErrorJSON(c, "Failed to establish WebSocket connection")
+		cc.logger.WithError(err).Error("Failed to upgrade WebSocket connection")
 		return
 	}
 	defer conn.Close()
@@ -1143,11 +1177,13 @@ func (cc *ContainerController) streamContainerEvents(c *gin.Context, dockerID st
 	ctx, cancel := context.WithCancel(c.Request.Context())
 	defer cancel()
 
-	// Start streaming events from Docker API
-	eventStream, err := cc.containerService.StreamContainerEvents(ctx, dockerID, &service.EventsOptions{
-		Since: since,
+	// Start streaming events from container service
+	eventOptions := &service.EventsOptions{
+		Since:  since,
 		Follow: true,
-	})
+	}
+
+	eventStream, err := cc.containerService.StreamContainerEvents(ctx, dockerID, eventOptions)
 	if err != nil {
 		cc.logger.WithError(err).WithField("docker_id", dockerID).Error("Failed to start event stream")
 		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"error": "Failed to start event stream: %v"}`, err)))
@@ -1157,103 +1193,89 @@ func (cc *ContainerController) streamContainerEvents(c *gin.Context, dockerID st
 	// Send initial success message
 	conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "stream_started", "message": "Event stream initialized"}`))
 
-	// Handle WebSocket messages and event streaming
-	errChan := make(chan error, 2)
-
-	// Handle incoming WebSocket messages (for ping/pong and control)
+	// Handle WebSocket messages in a separate goroutine
 	go func() {
 		defer cancel()
-		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-		conn.SetPongHandler(func(string) error {
-			conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-			return nil
-		})
-
 		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				_, message, err := conn.ReadMessage()
-				if err != nil {
-					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-						cc.logger.WithError(err).Error("WebSocket connection error during event streaming")
-						errChan <- err
-					}
-					return
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					cc.logger.WithError(err).Error("WebSocket read error")
 				}
+				return
+			}
 
-				// Handle control messages
-				var controlMsg map[string]interface{}
-				if json.Unmarshal(message, &controlMsg) == nil {
-					if msgType, ok := controlMsg["type"].(string); ok && msgType == "ping" {
-						conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "pong"}`))
-					}
+			// Handle control messages
+			var controlMsg map[string]interface{}
+			if json.Unmarshal(message, &controlMsg) == nil {
+				if msgType, ok := controlMsg["type"].(string); ok && msgType == "ping" {
+					conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "pong"}`))
 				}
 			}
 		}
 	}()
 
-	// Stream events from Docker to WebSocket
-	go func() {
-		defer cancel()
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
+	// Stream events from Docker to WebSocket client
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event, ok := <-eventStream:
+			if !ok {
+				// Event stream closed
+				conn.WriteMessage(websocket.TextMessage, []byte(`{"type": "stream_closed", "message": "Event stream ended"}`))
 				return
-			case event, ok := <-eventStream:
-				if !ok {
-					errChan <- fmt.Errorf("event stream closed")
-					return
-				}
+			}
 
-				// Convert service event to API event
-				apiEvent := ContainerEvent{
-					ID:       event.ID,
-					Type:     event.Type,
-					Action:   event.Action,
-					Time:     event.Time,
-					TimeNano: event.TimeNano,
-					Scope:    event.Scope,
-					Message:  event.Message,
-					Level:    event.Level,
-					Actor:    event.Actor,
-				}
+			// Convert service event to API event
+			apiEvent := ContainerEvent{
+				ID:        event.ID,
+				Type:      event.Type,
+				Action:    event.Action,
+				Time:      event.Time,
+				TimeNano:  event.TimeNano,
+				Scope:     event.Scope,
+				Message:   event.Message,
+				Level:     event.Level,
+				Timestamp: event.Time,
+				Status:    event.Status,
+				From:      event.From,
+				Actor: Actor{
+					ID:         event.Actor.ID,
+					Attributes: event.Actor.Attributes,
+				},
+			}
 
-				// Send event to WebSocket client
-				eventData, _ := json.Marshal(map[string]interface{}{
-					"type": "event",
-					"data": apiEvent,
-				})
+			// Send event to WebSocket client
+			eventData, _ := json.Marshal(map[string]interface{}{
+				"type": "event",
+				"data": apiEvent,
+			})
 
-				conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-				if writeErr := conn.WriteMessage(websocket.TextMessage, eventData); writeErr != nil {
-					cc.logger.WithError(writeErr).Error("Failed to write event to WebSocket")
-					errChan <- writeErr
-					return
-				}
-
-			case <-ticker.C:
-				// Send periodic ping
-				conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-				if pingErr := conn.WriteMessage(websocket.PingMessage, nil); pingErr != nil {
-					errChan <- pingErr
-					return
-				}
+			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if err := conn.WriteMessage(websocket.TextMessage, eventData); err != nil {
+				cc.logger.WithError(err).Error("Failed to send event via WebSocket")
+				return
 			}
 		}
-	}()
-
-	// Wait for error or context cancellation
-	select {
-	case err := <-errChan:
-		if err != context.Canceled {
-			cc.logger.WithError(err).WithField("docker_id", dockerID).Error("Event streaming error")
-		}
-	case <-ctx.Done():
-		cc.logger.WithField("docker_id", dockerID).Debug("Event streaming session ended")
 	}
 }
+
+// ContainerEvent represents a container event
+type ContainerEvent struct {
+	ID        string                 `json:"id"`
+	Type      string                 `json:"type"`
+	Action    string                 `json:"action"`
+	Time      time.Time              `json:"time"`
+	TimeNano  int64                  `json:"timeNano"`
+	Scope     string                 `json:"scope"`
+	Message   string                 `json:"message"`
+	Level     string                 `json:"level"`
+	Actor     Actor                  `json:"actor"`
+	Status    string                 `json:"status"`
+	From      string                 `json:"from"`
+	Timestamp time.Time              `json:"timestamp"`
+}
+
+// Actor represents the actor that initiated the event (alias for service type)
+type Actor = service.ContainerEventActor

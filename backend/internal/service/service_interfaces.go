@@ -53,14 +53,6 @@ type PortInfo struct {
 	IP          string `json:"ip,omitempty"`
 }
 
-// PackageInfo represents installed package information
-type PackageInfo struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Source  string `json:"source"`
-	Layer   string `json:"layer"`
-}
-
 // VulnerabilityInfo represents vulnerability information
 type VulnerabilityInfo struct {
 	CVE          string    `json:"cve"`
@@ -71,11 +63,4 @@ type VulnerabilityInfo struct {
 	FixedVersion string    `json:"fixedVersion"`
 	PublishedAt  time.Time `json:"publishedAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
-}
-
-// ScannerInfo represents security scanner information
-type ScannerInfo struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Vendor  string `json:"vendor"`
 }

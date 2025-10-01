@@ -47,6 +47,7 @@ type ContainerConfig struct {
 	WorkingDir  string            `json:"working_dir,omitempty"`
 	User        string            `json:"user,omitempty"`
 	Networks    []string          `json:"networks,omitempty"`
+	Healthcheck map[string]interface{} `json:"healthcheck,omitempty"`
 }
 
 // ContainerInfo represents detailed container information for security auditing

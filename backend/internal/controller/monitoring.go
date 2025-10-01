@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"docker-auto/internal/middleware"
+	"docker-auto/internal/model"
 	"docker-auto/internal/service"
 	"docker-auto/pkg/utils"
 
@@ -16,6 +17,15 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
+
+// WebSocket upgrader for monitoring connections
+var monitoringUpgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		// Allow connections from any origin in development
+		// In production, you should check the origin properly
+		return true
+	},
+}
 
 // MonitoringController handles container monitoring and metrics endpoints
 type MonitoringController struct {
@@ -118,7 +128,7 @@ func (mc *MonitoringController) GetAllContainerMetrics(c *gin.Context) {
 
 	// Get all containers for user
 	containers, err := mc.containerService.ListContainers(c.Request.Context(), userID, &service.ContainerFilter{
-		ContainerFilter: &service.ContainerFilter{
+		ContainerFilter: &model.ContainerFilter{
 			Limit: 1000, // Get all containers
 		},
 	})
@@ -130,10 +140,18 @@ func (mc *MonitoringController) GetAllContainerMetrics(c *gin.Context) {
 
 	// Get metrics for each container that has monitoring enabled
 	result := make(map[string]*service.ContainerMetrics)
-	for _, container := range containers.Containers {
-		if container.ContainerID != "" {
-			if metrics, metricsErr := mc.monitoringService.GetContainerMetrics(c.Request.Context(), container.ContainerID); metricsErr == nil {
-				result[container.ContainerID] = metrics
+	for _, containerSummary := range containers.Containers {
+		// Get full container details to access ContainerID
+		containerDetail, err := mc.containerService.GetContainer(c.Request.Context(), userID, containerSummary.ID)
+		if err != nil {
+			mc.logger.WithError(err).WithField("container_id", containerSummary.ID).Debug("Failed to get container details for monitoring")
+			continue
+		}
+
+		// Check if container has Docker ID and get metrics
+		if containerDetail.Container.ContainerID != "" {
+			if metrics, metricsErr := mc.monitoringService.GetContainerMetrics(c.Request.Context(), containerDetail.Container.ContainerID); metricsErr == nil {
+				result[containerDetail.Container.ContainerID] = metrics
 			}
 		}
 	}
@@ -201,7 +219,7 @@ func (mc *MonitoringController) StreamContainerMetrics(c *gin.Context) {
 	}
 
 	// Upgrade HTTP connection to WebSocket
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	conn, err := monitoringUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		mc.logger.WithError(err).Error("Failed to upgrade WebSocket connection for metrics streaming")
 		utils.InternalServerErrorJSON(c, "Failed to establish WebSocket connection")

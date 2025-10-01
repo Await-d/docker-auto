@@ -12,6 +12,7 @@ import (
 	"docker-auto/pkg/docker"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/sirupsen/logrus"
 )
 
@@ -927,4 +928,142 @@ func (s *ContainerService) GetTerminalMetrics() *docker.TerminalMetrics {
 	}
 
 	return s.terminalManager.GetMetrics()
+}
+
+// GetContainerEvents retrieves container events based on options
+func (s *ContainerService) GetContainerEvents(ctx context.Context, dockerID string, options *EventsOptions) ([]*ContainerEvent, error) {
+	if s.dockerClient == nil {
+		return nil, fmt.Errorf("Docker client not available")
+	}
+
+	// Get the underlying Docker client
+	client := s.dockerClient.GetClient()
+	if client == nil {
+		return nil, fmt.Errorf("underlying Docker client not available")
+	}
+
+	// Build Docker API filters using filters package
+	eventFilters := filters.NewArgs()
+	eventFilters.Add("container", dockerID)
+
+	// Build Docker API options
+	dockerOptions := types.EventsOptions{
+		Filters: eventFilters,
+	}
+
+	// Set time filters
+	if options.Since != nil {
+		dockerOptions.Since = options.Since.Format(time.RFC3339)
+	}
+	if options.Until != nil {
+		dockerOptions.Until = options.Until.Format(time.RFC3339)
+	}
+
+	// Get events from Docker API
+	dockerEvents, errChan := client.Events(ctx, dockerOptions)
+
+	// Convert Docker events to service events
+	events := make([]*ContainerEvent, 0)
+
+	// Process events from the stream
+	for {
+		select {
+		case <-ctx.Done():
+			return events, ctx.Err()
+		case err := <-errChan:
+			if err != nil {
+				return nil, fmt.Errorf("failed to get Docker events: %w", err)
+			}
+			// Error channel closed, no more events
+			return events, nil
+		case event, ok := <-dockerEvents:
+			if !ok {
+				// Event channel closed, no more events
+				return events, nil
+			}
+
+			// Convert attributes from map[string]string to map[string]interface{}
+			attributes := make(map[string]interface{})
+			for k, v := range event.Actor.Attributes {
+				attributes[k] = v
+			}
+
+			serviceEvent := &ContainerEvent{
+				ID:       event.ID,
+				Type:     string(event.Type),
+				Action:   string(event.Action),
+				Time:     time.Unix(event.Time, 0),
+				TimeNano: event.TimeNano,
+				Scope:    event.Scope,
+				Status:   event.Status,
+				From:     event.From,
+				Actor: ContainerEventActor{
+					ID:         event.Actor.ID,
+					Attributes: attributes,
+				},
+			}
+
+			// Set level based on action type
+			switch string(event.Action) {
+			case "die", "kill", "stop":
+				serviceEvent.Level = "warning"
+			case "start", "restart":
+				serviceEvent.Level = "info"
+			case "create", "destroy":
+				serviceEvent.Level = "info"
+			default:
+				serviceEvent.Level = "debug"
+			}
+
+			// Set message based on action
+			serviceEvent.Message = fmt.Sprintf("Container %s: %s", string(event.Action), event.Status)
+
+			events = append(events, serviceEvent)
+
+			// For non-streaming requests, return after first batch
+			if !options.Follow {
+				return events, nil
+			}
+		}
+	}
+}
+
+// StreamContainerEvents streams real-time container events
+func (s *ContainerService) StreamContainerEvents(ctx context.Context, dockerID string, options *EventsOptions) (<-chan *ContainerEvent, error) {
+	if s.dockerClient == nil {
+		return nil, fmt.Errorf("Docker client not available")
+	}
+
+	// Create event channel
+	eventChan := make(chan *ContainerEvent, 100)
+
+	// Set follow to true for streaming
+	streamOptions := &EventsOptions{
+		Since:  options.Since,
+		Until:  options.Until,
+		Follow: true,
+	}
+
+	// Start background goroutine to stream events
+	go func() {
+		defer close(eventChan)
+
+		// Get events stream
+		events, err := s.GetContainerEvents(ctx, dockerID, streamOptions)
+		if err != nil {
+			logrus.WithError(err).Error("Failed to start container event stream")
+			return
+		}
+
+		// Stream events to channel
+		for _, event := range events {
+			select {
+			case <-ctx.Done():
+				return
+			case eventChan <- event:
+			}
+		}
+	}()
+
+	return eventChan, nil
 }

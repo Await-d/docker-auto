@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -177,7 +176,7 @@ func (ra *RiskAnalyzer) initializeDefaultRiskModel() {
 
 // evaluatePrivilegedRisk evaluates risk from privileged execution
 func (ra *RiskAnalyzer) evaluatePrivilegedRisk(ctx context.Context, container *docker.ContainerInfo) float64 {
-	if container.HostConfig.Privileged {
+	if privileged, ok := container.HostConfig["Privileged"].(bool); ok && privileged {
 		return 100.0 // Maximum risk for privileged containers
 	}
 	return 0.0
@@ -217,23 +216,25 @@ func (ra *RiskAnalyzer) evaluateCapabilityRisk(ctx context.Context, container *d
 	}
 
 	// Check added capabilities
-	if container.HostConfig.CapAdd != nil {
-		for _, cap := range container.HostConfig.CapAdd {
-			capUpper := strings.ToUpper(cap)
-			if capUpper == "ALL" {
-				return 100.0 // Maximum risk for all capabilities
-			}
-			if riskValue, exists := dangerousCaps[capUpper]; exists {
-				risk += riskValue
-			} else {
-				risk += 10.0 // Default risk for unknown capabilities
+	if capAdd, ok := container.HostConfig["CapAdd"].([]interface{}); ok && capAdd != nil {
+		for _, cap := range capAdd {
+			if capStr, ok := cap.(string); ok {
+				capUpper := strings.ToUpper(capStr)
+				if capUpper == "ALL" {
+					return 100.0 // Maximum risk for all capabilities
+				}
+				if riskValue, exists := dangerousCaps[capUpper]; exists {
+					risk += riskValue
+				} else {
+					risk += 10.0 // Default risk for unknown capabilities
+				}
 			}
 		}
 	}
 
 	// Reduce risk if capabilities are explicitly dropped
-	if container.HostConfig.CapDrop != nil {
-		droppedCount := len(container.HostConfig.CapDrop)
+	if capDrop, ok := container.HostConfig["CapDrop"].([]interface{}); ok && capDrop != nil {
+		droppedCount := len(capDrop)
 		if droppedCount > 0 {
 			risk *= (1.0 - float64(droppedCount)*0.05) // Reduce by 5% per dropped capability
 		}
@@ -252,18 +253,18 @@ func (ra *RiskAnalyzer) evaluateNetworkRisk(ctx context.Context, container *dock
 	risk := 0.0
 
 	// Host network mode is high risk
-	if container.HostConfig.NetworkMode == "host" {
+	if networkMode, ok := container.HostConfig["NetworkMode"].(string); ok && networkMode == "host" {
 		risk += 70.0
 	}
 
 	// Publishing all ports is risky
-	if container.HostConfig.PublishAllPorts {
+	if publishAllPorts, ok := container.HostConfig["PublishAllPorts"].(bool); ok && publishAllPorts {
 		risk += 30.0
 	}
 
 	// Check for published ports
-	if container.HostConfig.PortBindings != nil {
-		portCount := len(container.HostConfig.PortBindings)
+	if portBindings, ok := container.HostConfig["PortBindings"].(map[string]interface{}); ok && portBindings != nil {
+		portCount := len(portBindings)
 		if portCount > 5 {
 			risk += 20.0 // Many published ports increase risk
 		} else if portCount > 0 {
@@ -272,14 +273,16 @@ func (ra *RiskAnalyzer) evaluateNetworkRisk(ctx context.Context, container *dock
 	}
 
 	// DNS settings that could be risky
-	if container.HostConfig.DNS != nil && len(container.HostConfig.DNS) > 0 {
-		for _, dns := range container.HostConfig.DNS {
-			// Check for potentially risky DNS servers
-			if dns == "8.8.8.8" || dns == "1.1.1.1" {
-				// Public DNS is generally safe
-				continue
-			} else if strings.HasPrefix(dns, "127.") || strings.HasPrefix(dns, "169.254.") {
-				risk += 15.0 // Local/link-local DNS could be risky
+	if dnsServers, ok := container.HostConfig["DNS"].([]interface{}); ok && dnsServers != nil && len(dnsServers) > 0 {
+		for _, dnsInterface := range dnsServers {
+			if dns, ok := dnsInterface.(string); ok {
+				// Check for potentially risky DNS servers
+				if dns == "8.8.8.8" || dns == "1.1.1.1" {
+					// Public DNS is generally safe
+					continue
+				} else if strings.HasPrefix(dns, "127.") || strings.HasPrefix(dns, "169.254.") {
+					risk += 15.0 // Local/link-local DNS could be risky
+				}
 			}
 		}
 	}
@@ -314,36 +317,38 @@ func (ra *RiskAnalyzer) evaluateMountRisk(ctx context.Context, container *docker
 		"/tmp":           20.0,
 	}
 
-	if container.HostConfig.Binds != nil {
-		for _, bind := range container.HostConfig.Binds {
-			parts := strings.Split(bind, ":")
-			if len(parts) >= 2 {
-				hostPath := parts[0]
+	if binds, ok := container.HostConfig["Binds"].([]interface{}); ok && binds != nil {
+		for _, bindInterface := range binds {
+			if bind, ok := bindInterface.(string); ok {
+				parts := strings.Split(bind, ":")
+				if len(parts) >= 2 {
+					hostPath := parts[0]
 
-				// Check for exact matches
-				if riskValue, exists := criticalPaths[hostPath]; exists {
-					risk += riskValue
-					continue
-				}
-
-				// Check for path prefixes
-				for criticalPath, riskValue := range criticalPaths {
-					if strings.HasPrefix(hostPath, criticalPath+"/") {
-						risk += riskValue * 0.8 // Slightly less risk for subdirectories
-						break
+					// Check for exact matches
+					if riskValue, exists := criticalPaths[hostPath]; exists {
+						risk += riskValue
+						continue
 					}
-				}
 
-				// Check if mount is read-write (more risky)
-				if len(parts) < 3 || !strings.Contains(parts[2], "ro") {
-					risk += 5.0 // Additional risk for read-write mounts
+					// Check for path prefixes
+					for criticalPath, riskValue := range criticalPaths {
+						if strings.HasPrefix(hostPath, criticalPath+"/") {
+							risk += riskValue * 0.8 // Slightly less risk for subdirectories
+							break
+						}
+					}
+
+					// Check if mount is read-write (more risky)
+					if len(parts) < 3 || !strings.Contains(parts[2], "ro") {
+						risk += 5.0 // Additional risk for read-write mounts
+					}
 				}
 			}
 		}
 	}
 
 	// Check for volume mounts from host
-	if container.HostConfig.VolumeDriver != "" {
+	if volumeDriver, ok := container.HostConfig["VolumeDriver"].(string); ok && volumeDriver != "" {
 		risk += 10.0 // External volume drivers add some risk
 	}
 
@@ -360,18 +365,28 @@ func (ra *RiskAnalyzer) evaluateResourceRisk(ctx context.Context, container *doc
 	risk := 0.0
 
 	// Memory limits
-	if container.HostConfig.Memory == 0 {
-		risk += 25.0 // No memory limit is risky
-	} else if container.HostConfig.Memory > 8*1024*1024*1024 { // > 8GB
-		risk += 10.0 // Very high memory limits have some risk
+	if memory, ok := container.HostConfig["Memory"].(float64); ok {
+		if memory == 0 {
+			risk += 25.0 // No memory limit is risky
+		} else if memory > 8*1024*1024*1024 { // > 8GB
+			risk += 10.0 // Very high memory limits have some risk
+		}
+	} else {
+		risk += 25.0 // No memory limit configured
 	}
 
 	// CPU limits
 	hasCPULimit := false
-	if container.HostConfig.CPUShares > 0 ||
-	   container.HostConfig.CPUPeriod > 0 ||
-	   container.HostConfig.CPUQuota > 0 ||
-	   container.HostConfig.CpusetCpus != "" {
+	if cpuShares, ok := container.HostConfig["CPUShares"].(float64); ok && cpuShares > 0 {
+		hasCPULimit = true
+	}
+	if cpuPeriod, ok := container.HostConfig["CPUPeriod"].(float64); ok && cpuPeriod > 0 {
+		hasCPULimit = true
+	}
+	if cpuQuota, ok := container.HostConfig["CPUQuota"].(float64); ok && cpuQuota > 0 {
+		hasCPULimit = true
+	}
+	if cpusetCpus, ok := container.HostConfig["CpusetCpus"].(string); ok && cpusetCpus != "" {
 		hasCPULimit = true
 	}
 
@@ -380,17 +395,17 @@ func (ra *RiskAnalyzer) evaluateResourceRisk(ctx context.Context, container *doc
 	}
 
 	// PID limits
-	if container.HostConfig.PidsLimit == nil || *container.HostConfig.PidsLimit == 0 {
+	if pidsLimit, ok := container.HostConfig["PidsLimit"].(float64); !ok || pidsLimit == 0 {
 		risk += 15.0 // No PID limits can lead to fork bombs
 	}
 
 	// Ulimits
-	if container.HostConfig.Ulimits == nil || len(container.HostConfig.Ulimits) == 0 {
+	if ulimits, ok := container.HostConfig["Ulimits"].([]interface{}); !ok || ulimits == nil || len(ulimits) == 0 {
 		risk += 10.0 // No ulimits set
 	}
 
 	// OOM Kill Disable
-	if container.HostConfig.OomKillDisable != nil && *container.HostConfig.OomKillDisable {
+	if oomKillDisable, ok := container.HostConfig["OomKillDisable"].(bool); ok && oomKillDisable {
 		risk += 20.0 // Disabling OOM killer is risky
 	}
 

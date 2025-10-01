@@ -3,8 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -808,7 +806,7 @@ func (cc *ComplianceChecker) checkBaselineConfiguration(ctx context.Context, con
 	evidence := make(map[string]interface{})
 
 	// Get healthcheck for later use
-	healthcheck, _ := container.Config.Healthcheck.(map[string]interface{})
+	healthcheck := container.Config.Healthcheck
 
 	// Check if image uses specific tag (not latest)
 	if !strings.HasSuffix(container.Config.Image, ":latest") && strings.Contains(container.Config.Image, ":") {
@@ -970,7 +968,8 @@ func (cc *ComplianceChecker) checkNetworkAccessControls(ctx context.Context, con
 	}
 
 	// Check published ports
-	if container.HostConfig.PublishAllPorts {
+	publishAllPorts, _ := container.HostConfig["PublishAllPorts"].(bool)
+	if publishAllPorts {
 		check.Status = ComplianceStatusWarning
 		check.Details = "All ports are published, which may be excessive"
 		check.Remediation = "Only publish necessary ports explicitly"
@@ -1000,7 +999,7 @@ func (cc *ComplianceChecker) checkSystemMonitoring(ctx context.Context, containe
 	evidence := make(map[string]interface{})
 
 	// Get healthcheck for later use
-	healthcheck, _ := container.Config.Healthcheck.(map[string]interface{})
+	healthcheck := container.Config.Healthcheck
 
 	// Check for health check configuration
 	if healthcheck != nil {
@@ -1011,18 +1010,20 @@ func (cc *ComplianceChecker) checkSystemMonitoring(ctx context.Context, containe
 	}
 
 	// Check for logging configuration
-	if container.HostConfig.LogConfig.Type != "" && container.HostConfig.LogConfig.Type != "none" {
+	logConfig, _ := container.HostConfig["LogConfig"].(map[string]interface{})
+	if logType, ok := logConfig["Type"].(string); ok && logType != "" && logType != "none" {
 		monitoringScore++
 		evidence["logging_configured"] = true
-		evidence["log_driver"] = container.HostConfig.LogConfig.Type
+		evidence["log_driver"] = logType
 	} else {
 		evidence["logging_configured"] = false
 	}
 
 	// Check for restart policy (indicates monitoring/recovery capability)
-	if container.HostConfig.RestartPolicy.Name != "" && container.HostConfig.RestartPolicy.Name != "no" {
+	restartPolicy, _ := container.HostConfig["RestartPolicy"].(map[string]interface{})
+	if restartPolicyName, ok := restartPolicy["Name"].(string); ok && restartPolicyName != "" && restartPolicyName != "no" {
 		monitoringScore++
-		evidence["restart_policy"] = container.HostConfig.RestartPolicy.Name
+		evidence["restart_policy"] = restartPolicyName
 	} else {
 		evidence["restart_policy"] = "no"
 	}
