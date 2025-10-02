@@ -10,7 +10,7 @@ WORKDIR /app
 COPY frontend/ ./
 
 # Install dependencies and build
-RUN npm install --frozen-lockfile && npm run build
+RUN npm install --frozen-lockfile && npm run build:prod
 
 # Go backend builder stage
 FROM golang:1.23-alpine AS backend-builder

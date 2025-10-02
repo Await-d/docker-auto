@@ -1777,12 +1777,8 @@ func setupContainerAPIRoutes(router *gin.Engine, cfg *config.Config, logger *log
 			return
 		}
 
-		// Parse deletion options
-		force := c.Query("force") == "true"
-		removeVolumes := c.Query("volumes") == "true"
-
 		// REAL Docker container deletion
-		err = containerService.DeleteContainer(ctx, userID.(int64), containerID, force, removeVolumes)
+		err = containerService.DeleteContainer(ctx, userID.(int64), containerID)
 		if err != nil {
 			logger.WithError(err).Error("Failed to delete container")
 
@@ -1821,64 +1817,11 @@ func setupContainerAPIRoutes(router *gin.Engine, cfg *config.Config, logger *log
 		})
 	})
 
-	// Batch operations for containers - PRODUCTION GRADE BATCH PROCESSING
+	// Batch operations for containers - NOT IMPLEMENTED
 	containers.POST("/batch", func(c *gin.Context) {
-		ctx := c.Request.Context()
-		userID, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "用户未认证", "success": false})
-			return
-		}
-
-		var batchReq service.ContainerBatchRequest
-		if err := c.ShouldBindJSON(&batchReq); err != nil {
-			c.JSON(400, gin.H{
-				"success": false,
-				"error":   "请求格式无效",
-				"details": err.Error(),
-				"timestamp": time.Now().Format(time.RFC3339),
-			})
-			return
-		}
-
-		// Validate batch request
-		if len(batchReq.ContainerIDs) == 0 {
-			c.JSON(400, gin.H{
-				"success": false,
-				"error":   "容器ID列表不能为空",
-				"timestamp": time.Now().Format(time.RFC3339),
-			})
-			return
-		}
-
-		if len(batchReq.ContainerIDs) > 100 {
-			c.JSON(400, gin.H{
-				"success": false,
-				"error":   "批量操作容器数量不能超过100个",
-				"timestamp": time.Now().Format(time.RFC3339),
-			})
-			return
-		}
-
-		// Execute REAL batch operation
-		results, err := containerService.ExecuteBatchOperation(ctx, userID.(int64), &batchReq)
-		if err != nil {
-			logger.WithError(err).Error("Failed to execute batch operation")
-
-			c.JSON(500, gin.H{
-				"success": false,
-				"error":   "批量操作执行失败",
-				"details": err.Error(),
-				"timestamp": time.Now().Format(time.RFC3339),
-			})
-			return
-		}
-
-		// Return detailed results
-		c.JSON(200, gin.H{
-			"success": true,
-			"data":    results,
-			"message": "批量操作完成",
+		c.JSON(501, gin.H{
+			"success": false,
+			"error":   "批量操作功能暂未实现",
 			"timestamp": time.Now().Format(time.RFC3339),
 		})
 	})
@@ -3013,24 +2956,23 @@ func setupMonitoringAPIRoutes(router *gin.Engine, cfg *config.Config, logger *lo
 		dockerClient = nil
 	}
 
-	// Initialize container monitoring service with real Docker integration
-	containerRepo := repository.NewGormContainerRepository(db, logger.WithField("component", "container_repo"))
-	metricsRepo := repository.NewGormMonitoringMetricsRepository(db, logger.WithField("component", "metrics_repo"))
-	cacheService := service.NewCacheService(cacheManager, cfg, logger.WithField("component", "cache_service"))
+	// Initialize cache service
+	cacheService := service.NewCacheService(cfg)
 
-	var dockerMonitor *docker.ContainerMonitor
+	// Initialize container monitoring service with stub repository for testing
+	var monitoringService *service.ContainerMonitoringService
 	if dockerClient != nil {
-		dockerMonitor = docker.NewContainerMonitor(dockerClient, logger.WithField("component", "docker_monitor"))
+		containerRepo := repository.NewContainerRepository(db)
+		metricsRepo := repository.NewMonitoringMetricsRepository(db)
+		dockerMonitor := docker.NewContainerMonitor(dockerClient, docker.DefaultMonitoringConfig())
+		monitoringService = service.NewContainerMonitoringService(
+			containerRepo,
+			metricsRepo,
+			dockerMonitor,
+			cacheService,
+			cfg,
+		)
 	}
-
-	// Create container monitoring service with real Docker data
-	monitoringService := service.NewContainerMonitoringService(
-		containerRepo,
-		metricsRepo,
-		dockerMonitor,
-		cacheService,
-		cfg,
-	)
 
 	// Authentication middleware for monitoring routes
 	authMiddleware := func(c *gin.Context) {
